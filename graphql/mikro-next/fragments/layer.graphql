@@ -310,10 +310,37 @@ fragment SceneLayer on Layer {
   visible
   order
   # Server-resolved path from this layer's source CS to the scene's world
-  # system (null = unregistered, [] = source IS world). The server orders the
-  # edges; the client composes the matrices (transformGraph.ts).
+  # system (null = unregistered, [] = source IS world). Still selected even
+  # though `asAffine` below is what gets composed: scene reconciliation keys
+  # off each step's id + version (platform/model/sceneStructure.ts), and the
+  # placement inspector needs the per-step validity/invariance/provenance.
   pathToWorld {
     ...PlacementStep
+  }
+  # The SAME path, composed by the server -- "`asAffine` is the same path
+  # composed, for when you only need the map". Preferred over re-walking the
+  # edges client-side: identical span, so it drops straight into
+  # `composeLayerAffine` under the same lens prefix, and it cannot be
+  # mis-indexed by an edge whose parameter arity disagrees with its
+  # `inputAxes` (the scene-28 bug -- see transformGraph.ts `paramPositions`).
+  #
+  # Selected on the INTERFACE, so every layer kind gets it: point and track
+  # layers already depended on it (they have no lens for the walk to use), and
+  # lens-backed layers now do too.
+  #
+  # NOTE this field ERRORS rather than returning null when a path exists but
+  # will not condense (a FIELD step has no closed form; a singular step cannot
+  # be inverted). The scene queries therefore set `errorPolicy: "all"` so that
+  # nulls this one field and the client falls back to walking `pathToWorld`,
+  # instead of discarding the whole scene.
+  asAffine {
+    matrix
+    inputAxes
+    outputAxes
+    # False = a partial registration: the map constrains only the axes in
+    # `outputAxes` and the rest pass through as identity. Surfaced as a
+    # warning rather than silently rendering as fully placed.
+    total
   }
   ... on ImageLayer {
     lens {
@@ -422,15 +449,6 @@ fragment SceneLayer on Layer {
     filterBys {
       ...LabelFilterBy
     }
-    # A point layer has no lens, so the client cannot compose its affine the way it does for an
-    # image or a mask -- `composeLayerAffine` walks a lens's render axes. The server already
-    # composes `pathToWorld` into one map, so ask it rather than reimplementing the walk.
-    asAffine {
-      matrix
-      inputAxes
-      outputAxes
-      total
-    }
     # Whether a world-space `pointSize` is a well-defined length at all: from SIMILARITY up.
     placementInvariance
   }
@@ -446,15 +464,6 @@ fragment SceneLayer on Layer {
     colorByColumn
     lineWidth
     colormap
-    # Same reason as the point layer above: a track layer has no lens, so
-    # `composeLayerAffine` -- which walks a lens's render axes -- cannot place
-    # it. The server already composes `pathToWorld` into one map, so ask it.
-    asAffine {
-      matrix
-      inputAxes
-      outputAxes
-      total
-    }
     # Whether a world-space `lineWidth` is a well-defined length at all: from
     # SIMILARITY up. The schema names `lineWidth` explicitly among the scalars
     # this governs.

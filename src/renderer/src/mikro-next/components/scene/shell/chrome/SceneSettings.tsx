@@ -178,8 +178,10 @@ export const SceneSettings = () => {
   const displayMode = useModeStore((s) => s.displayMode);
   const zoomToCursor = useModeStore((s) => s.zoomToCursor);
   const pivotOnProbe = useModeStore((s) => s.pivotOnProbe);
+  const smoothOrbit = useModeStore((s) => s.smoothOrbit);
   const setZoomToCursor = useModeStore((s) => s.setZoomToCursor);
   const setPivotOnProbe = useModeStore((s) => s.setPivotOnProbe);
+  const setSmoothOrbit = useModeStore((s) => s.setSmoothOrbit);
   const isDebug = useViewerStore((state) => state.debug);
   const world = useSceneStore(
     (state) => state.transformContext.worldCoordinateSystem,
@@ -265,23 +267,32 @@ export const SceneSettings = () => {
           <SettingRow label="Debug" checked={isDebug} onChange={setDebug} />
         </div>
 
-        {/* Camera behaviour. These used to be exclusive camera modes; as
-            switches they compose, so you can orbit around the probe *and*
-            zoom to the cursor. Rotation is 2D-disabled, so both are 3D-only. */}
-        {displayMode === "3D" && (
-          <div className="mt-1 border-t pt-1">
-            <SettingRow
-              label="Zoom to cursor"
-              checked={zoomToCursor}
-              onChange={setZoomToCursor}
-            />
-            <SettingRow
-              label="Orbit around probe"
-              checked={pivotOnProbe}
-              onChange={setPivotOnProbe}
-            />
-          </div>
-        )}
+        {/* Camera behaviour. The pivot/zoom pair used to be exclusive camera
+            modes; as switches they compose, so you can orbit around the probe
+            *and* zoom to the cursor. Rotation is 2D-disabled, so those two are
+            3D-only — but smoothing damps panning and dollying as well, so it
+            is offered in both modes. */}
+        <div className="mt-1 border-t pt-1">
+          <SettingRow
+            label="Smooth camera"
+            checked={smoothOrbit}
+            onChange={setSmoothOrbit}
+          />
+          {displayMode === "3D" && (
+            <>
+              <SettingRow
+                label="Zoom to cursor"
+                checked={zoomToCursor}
+                onChange={setZoomToCursor}
+              />
+              <SettingRow
+                label="Orbit around probe"
+                checked={pivotOnProbe}
+                onChange={setPivotOnProbe}
+              />
+            </>
+          )}
+        </div>
 
         <ProbeSettingsSection />
 

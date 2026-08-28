@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hasPendingEncodeWork, occPromotionWorthwhile, resolveReusedAutoRange } from "./brickResidency";
+import { decideStreamingFlag, hasPendingEncodeWork, occPromotionWorthwhile, resolveReusedAutoRange } from "./brickResidency";
 
 describe("hasPendingEncodeWork (the drain idle-latch guard)", () => {
   // The drain's idle latch (`drainNeeded = false`) must never clear while a
@@ -149,5 +149,66 @@ describe("resolveReusedAutoRange (movable-path auto-range carry-over)", () => {
     // preserving a stale one would decouple it from its own pool key.
     expect(resolveReusedAutoRange(pool(false, false), true, false).keepRange).toBe(false);
     expect(resolveReusedAutoRange(pool(false, true), false, true).keepRange).toBe(false);
+  });
+});
+
+/**
+ * The static-camera flicker. Three settle mechanisms reset off the governor's
+ * `streaming` flag — the DPR ladder (`QualityAdapter`), the settle refinement
+ * ladder (`decideSettleRefine`) and the volume frame cache — so an instant
+ * true edge turned ONE brick landing at idle into a canvas resolution change
+ * plus a raymarch-quality restart.
+ */
+describe("decideStreamingFlag (both-edge hysteresis)", () => {
+  const ASSERT = 120;
+  const CLEAR = 300;
+  const decide = (o: Partial<Parameters<typeof decideStreamingFlag>[0]>) =>
+    decideStreamingFlag({
+      busy: false,
+      streaming: false,
+      now: 1000,
+      busySinceAt: null,
+      lastStreamingTrueAt: 0,
+      assertMs: ASSERT,
+      clearMs: CLEAR,
+      ...o,
+    });
+
+  it("does NOT assert on the first busy drain — the bug", () => {
+    expect(decide({ busy: true, busySinceAt: null })).toBe("arm-assert");
+  });
+
+  it("swallows a burst that drains inside the window", () => {
+    // Busy at t=1000, quiet again at t=1050: never asserted, nothing to clear.
+    expect(decide({ busy: true, now: 1000, busySinceAt: 1000 })).toBe("arm-assert");
+    expect(decide({ busy: false, now: 1050, streaming: false })).toBe("hold");
+  });
+
+  it("asserts once work has genuinely persisted", () => {
+    expect(decide({ busy: true, now: 1000 + ASSERT, busySinceAt: 1000 })).toBe("assert");
+  });
+
+  it("holds while already streaming rather than re-asserting", () => {
+    expect(decide({ busy: true, streaming: true, busySinceAt: 500 })).toBe("hold");
+  });
+
+  it("keeps the trailing clear: quiet must persist clearMs", () => {
+    expect(decide({ busy: false, streaming: true, now: 1000, lastStreamingTrueAt: 900 })).toBe(
+      "arm-clear",
+    );
+    expect(
+      decide({ busy: false, streaming: true, now: 1000 + CLEAR, lastStreamingTrueAt: 1000 }),
+    ).toBe("clear");
+  });
+
+  it("is a no-op when quiet and not streaming", () => {
+    expect(decide({ busy: false, streaming: false })).toBe("hold");
+  });
+
+  it("asserts before ACTIVE_DPR_DELAY_MS so real streaming still drops quality", () => {
+    // QualityAdapter waits 250 ms of "active" before touching DPR; the assert
+    // window must be comfortably inside that or genuine loading renders sharp
+    // and janky instead of soft and smooth.
+    expect(ASSERT).toBeLessThan(250);
   });
 });

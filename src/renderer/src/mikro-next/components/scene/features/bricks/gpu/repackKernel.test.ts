@@ -197,6 +197,22 @@ describe("buildKernelDispatches parity with repackBrick", () => {
     },
   );
 
+  /**
+   * The precondition behind `GpuFlushOutcome.unsupported`. When no chunk
+   * overlaps the brick, `buildKernelDispatches` returns EMPTY — and does so
+   * deterministically, which is why retrying such a job on the GPU path can
+   * never succeed. `brickResidency` used to requeue it into `pendingFetch`
+   * unconditionally (a per-job failure does not set `broken`), so the brick
+   * unmapped and refilled its page entry forever with no camera motion.
+   */
+  it("returns NO dispatches when no chunk overlaps, deterministically", () => {
+    const input = makeInput([0, 0, 0]);
+    const disjoint = { ...input, chunks: [] };
+    expect(buildKernelDispatches(disjoint, [0, 0, 0], 0)).toEqual([]);
+    // Same input, same (empty) answer — a retry cannot change the outcome.
+    expect(buildKernelDispatches(disjoint, [0, 0, 0], 0)).toEqual([]);
+  });
+
   it("ownership partitions every output texel across dispatches exactly once", () => {
     const gpu = simulateBrick(makeInput([1, 1, 0]));
     expect(gpu.dispatches.length).toBeGreaterThan(1); // fixture straddles chunks

@@ -58,6 +58,20 @@ export type PlacementStepLike = {
 export type LayerTransformSource = {
   /** Server-resolved path to the scene's world system (null = unregistered). */
   pathToWorld?: readonly PlacementStepLike[] | null;
+  /**
+   * The SAME path, composed by the server ("`asAffine` is the same path
+   * composed, for when you only need the map"). Preferred over walking
+   * `pathToWorld` edge by edge: identical span, one authority, and it cannot
+   * be mis-indexed by a contract-violating edge the way a client-side walk
+   * can. `pathToWorld` stays selected for cache reconciliation and for the
+   * per-step provenance the placement inspector shows.
+   */
+  asAffine?: {
+    matrix: readonly (readonly number[])[];
+    inputAxes: readonly string[];
+    outputAxes: readonly string[];
+    total?: boolean;
+  } | null;
   lens: {
     axisNames: readonly string[];
     renderAxes: { x: string; y: string; z?: string | null };
@@ -162,6 +176,62 @@ export const invert4 = (m: Mat4): Mat4 | null => {
 };
 
 /**
+ * Which index array a per-axis parameter list (`scale` / `translation`) is to
+ * be read with.
+ *
+ * The CONTRACT is `inputAxes`: "`scale`, `translation` and the columns of
+ * `affine` follow this order — which is the input system's axis order". A
+ * conformant edge has `params.length === axesIn.length` and takes `inPos`,
+ * unchanged from before this guard existed.
+ *
+ * The two other arms exist because reading a mis-sized array against
+ * `inputAxes` does not fail — it silently yields a WRONG matrix. A 4-element
+ * `inputAxes: [c,z,y,x]` with a 3-element `scale` aligned to
+ * `outputAxes: [z,y,x]` reads x at index 3 (`undefined` → 1) and slides z's
+ * value onto y and y's onto z: the layer renders at the wrong aspect, the
+ * wrong z spacing AND the wrong world position, with nothing logged.
+ *
+ *  - `params.length === axesOut.length` → read with `outPos`, warn once. This
+ *    is a TOLERANCE for a contract-violating payload, NOT the contract: it
+ *    exists so a bad server build is loud and approximately right instead of
+ *    quiet and wrong. The real fix is server-side (emit `inputAxes` matching
+ *    the parameter arity, and refuse to call such a layer placed).
+ *  - neither length matches → null, so the caller degrades the whole step to
+ *    identity, which is the behaviour this module's header promises.
+ */
+const paramPositions = (
+  transform: NonNullable<TransformLike>,
+  params: readonly number[] | null | undefined,
+  field: "scale" | "translation",
+  axesIn: readonly string[],
+  axesOut: readonly string[],
+  inPos: readonly number[],
+  outPos: readonly number[],
+): readonly number[] | null => {
+  // Nothing to index: every slot falls back to its identity value below.
+  if (!params?.length) return inPos;
+  if (params.length === axesIn.length) return inPos;
+
+  const edge = `${transform.__typename}:${transform.input?.id ?? "?"}→${transform.output?.id ?? "?"}`;
+  if (params.length === axesOut.length) {
+    warnOnce(
+      `arity:${edge}:${field}`,
+      `${edge} declares inputAxes [${axesIn.join(",")}] but its ${field} has ${params.length} entries, ` +
+        `matching outputAxes [${axesOut.join(",")}]; reading it against outputAxes. ` +
+        `This edge violates the schema contract — fix the server so the parameter arity matches inputAxes.`,
+    );
+    return outPos;
+  }
+
+  warnOnce(
+    `arity:${edge}:${field}`,
+    `${edge} has a ${field} of ${params.length} entries matching neither inputAxes ` +
+      `[${axesIn.join(",")}] nor outputAxes [${axesOut.join(",")}]; treating the step as identity.`,
+  );
+  return null;
+};
+
+/**
  * Evaluate one transformation edge into the spatial 4×4.
  *
  * `axesIn` / `axesOut` are the FULL axis-name orders of the edge's input and
@@ -196,17 +266,29 @@ export const evalTransform = (
     case "IdentityTransformation":
       return identity4();
     case "ScaleTransformation": {
+      const pos = paramPositions(transform, transform.scale, "scale", axesIn, axesOut, inPos, outPos);
+      if (!pos) return null;
       const m = identity4();
       spatial.forEach((_, i) => {
-        const p = inPos[i];
+        const p = pos[i];
         if (p !== -1) m[i][i] = transform.scale?.[p] ?? 1;
       });
       return m;
     }
     case "TranslationTransformation": {
+      const pos = paramPositions(
+        transform,
+        transform.translation,
+        "translation",
+        axesIn,
+        axesOut,
+        inPos,
+        outPos,
+      );
+      if (!pos) return null;
       const m = identity4();
       spatial.forEach((_, i) => {
-        const p = inPos[i];
+        const p = pos[i];
         if (p !== -1) m[i][3] = transform.translation?.[p] ?? 0;
       });
       return m;
@@ -454,8 +536,50 @@ export function composeLayerAffine(
   }
 
   if (path) {
-    const pathMatrix = composePlacementPath(path, scene, spatial, dims);
+    // The server's own composition of THIS path, when selected — same span,
+    // so it slots in where the edge walk used to and the local prefix above
+    // is unaffected. Falling back to the walk keeps older/partial documents
+    // (and every existing test fixture) rendering exactly as before.
+    const pathMatrix = layer.asAffine
+      ? placementToSpatialAffine(layer.asAffine, spatial, spatial)
+      : composePlacementPath(path, scene, spatial, dims);
     if (pathMatrix) m = mul4(pathMatrix, m);
+
+    // Dev-only cross-check. `asAffine` is the server's composition of THIS
+    // path, so the two must agree; a disagreement means one of them is
+    // composing the edges wrongly (the scene-28 arity bug is exactly that
+    // shape) and the renderer would show no sign of it. Loud in dev, free in
+    // production — never changes what is rendered.
+    if (import.meta.env.DEV && layer.asAffine && pathMatrix) {
+      const walked = composePlacementPath(path, scene, spatial, dims);
+      if (walked) {
+        const worst = Math.max(
+          ...walked.flatMap((row, i) =>
+            row.map((v, j) => {
+              const d = Math.abs(v - pathMatrix[i][j]);
+              // Relative for the basis, absolute for the translation column,
+              // which carries large world offsets.
+              return j === 3 ? d / Math.max(1, Math.abs(v)) : d;
+            }),
+          ),
+        );
+        if (worst > 1e-6) {
+          warnOnce(
+            `asAffine-mismatch:${lensCsId ?? "?"}`,
+            `server asAffine and the client's walk of the same pathToWorld disagree ` +
+              `(worst component ${worst.toExponential(2)}); rendering the server's. ` +
+              `One of the two is composing this path wrongly — compare them before trusting either.`,
+          );
+        }
+      }
+    }
+    if (layer.asAffine && layer.asAffine.total === false) {
+      warnOnce(
+        `partial:${lensCsId ?? "?"}`,
+        `layer's placement is partial (asAffine.total = false): it constrains only ` +
+          `[${layer.asAffine.outputAxes.join(",")}] of the world's axes; the rest pass through as identity`,
+      );
+    }
   } else if (path === null) {
     warnOnce(
       `unregistered:${lensCsId ?? "?"}`,

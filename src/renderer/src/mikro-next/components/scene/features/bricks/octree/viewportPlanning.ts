@@ -10,6 +10,25 @@ export type VoxelRange = [number, number];
 /** Fraction of the visible extent prefetched on each side of the viewport. */
 export const PREFETCH_MARGIN = 0.25;
 
+/**
+ * The 3D twin of `PREFETCH_MARGIN`: how far a node's own box is grown, as a
+ * fraction of its extent per axis, before the camera-frustum test.
+ *
+ * The frustum test is geometrically EXACT — a ray only ever samples inside the
+ * frustum, so an undilated test culls nothing that is being drawn *this* frame.
+ * What it lacks is HYSTERESIS. A node straddling a side plane flips
+ * visible↔culled on sub-pixel camera motion, and each flip evicts its brick and
+ * refetches it a frame or two later, which reads as flicker along the edges of
+ * the viewport while orbiting or panning.
+ *
+ * Growing the node rather than the frustum keeps the margin scale-free and
+ * costs no plane math: a coarse node (which is expensive to refetch and covers
+ * more screen) gets a proportionally larger margin than a fine one. Nodes that
+ * survive only because of this margin are tagged `fetchBand: 2`, exactly as the
+ * 2D margin's are, so they are fetched LAST and never delay a visible brick.
+ */
+export const FRUSTUM_CULL_MARGIN = 0.25;
+
 /** Expand a voxel range by a fraction of its extent on each side. */
 export function expandVoxelRange(range: VoxelRange, marginFraction: number): VoxelRange {
   const extent = Math.max(0, range[1] - range[0]);

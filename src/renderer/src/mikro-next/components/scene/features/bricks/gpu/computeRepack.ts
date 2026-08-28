@@ -203,8 +203,25 @@ export type GpuRepackResult<Token> = {
 
 export type GpuFlushOutcome<Token> = {
   results: GpuRepackResult<Token>[];
-  /** Bricks whose slot content is NOT valid — the caller must unmap them. */
+  /** Bricks whose slot content is NOT valid — the caller must unmap them.
+   * RETRYABLE: a batch failure marks the repacker `broken`, so the caller's
+   * requeue lands on the CPU path. */
   failed: Token[];
+  /**
+   * Bricks this repacker can NEVER produce, however many times they are
+   * retried — currently "no chunk overlaps the brick", which is a property of
+   * the brick's geometry, not of this attempt.
+   *
+   * Split out of `failed` because the caller's requeue assumes a failure marks
+   * the whole repacker broken and therefore diverts to the CPU path. That is
+   * true of the two BATCH failures (a throw, and `!ready()`) but was never
+   * true of the per-job case below, so those keys were re-dispatched to the
+   * GPU, failed identically, and looped forever at fetch cadence — unmapping
+   * and refilling the page entry each time, with no camera motion required.
+   * The caller must route these to the CPU path (or to a terminal state)
+   * instead of retrying them here.
+   */
+  unsupported: Token[];
 };
 
 export interface GpuRepacker<Token = unknown> {
@@ -487,7 +504,7 @@ class GpuRepackerImpl<Token> implements GpuRepacker<Token> {
     const jobs = this.pending;
     this.pending = [];
     if (!this.ready()) {
-      return Promise.resolve({ results: [], failed: jobs.map((job) => job.token) });
+      return Promise.resolve({ results: [], failed: jobs.map((job) => job.token), unsupported: [] });
     }
     // async fn: sync throws become rejections, so one catch covers both.
     return this.submitAndRead(jobs).catch((error) => {
@@ -495,7 +512,7 @@ class GpuRepackerImpl<Token> implements GpuRepacker<Token> {
         this.broken = true;
         console.warn("[bricks] gpu repack batch failed; reverting to CPU repack", error);
       }
-      return { results: [], failed: jobs.map((job) => job.token) };
+      return { results: [], failed: jobs.map((job) => job.token), unsupported: [] };
     });
   }
 
@@ -504,6 +521,7 @@ class GpuRepackerImpl<Token> implements GpuRepacker<Token> {
     const maxBinding = this.device.limits.maxStorageBufferBindingSize ?? DEFAULT_MAX_STORAGE_BINDING;
 
     const failed: Token[] = [];
+    const unsupported: Token[] = [];
     const live: {
       job: GpuRepackJob<Token>;
       dispatches: ReturnType<typeof buildKernelDispatches>;
@@ -527,7 +545,11 @@ class GpuRepackerImpl<Token> implements GpuRepacker<Token> {
       const slabCount = job.input.spec.channelCount;
       const dispatches = buildKernelDispatches(job.input, slotOrigin, live.length, minmaxEntries);
       if (dispatches.length === 0) {
-        failed.push(job.token); // no chunk overlaps the brick: nothing was written
+        // No chunk overlaps the brick: nothing was written, and nothing WOULD
+        // be written on a retry — this is deterministic for a given brick
+        // geometry. Not `failed`: that bucket means "retry elsewhere", and the
+        // caller's requeue would send it straight back here (see the type).
+        unsupported.push(job.token);
         continue;
       }
       let arenaBase: number | null = null;
@@ -543,7 +565,7 @@ class GpuRepackerImpl<Token> implements GpuRepacker<Token> {
       live.push({ job, dispatches, arenaBase, minmaxBase: minmaxEntries, slabCount });
       minmaxEntries += slabCount;
     }
-    if (live.length === 0) return { results: [], failed };
+    if (live.length === 0) return { results: [], failed, unsupported };
 
     // Defensive: an r8 batch whose combined arena would exceed the storage
     // binding limit is split and processed sequentially (unreachable under the
@@ -555,6 +577,7 @@ class GpuRepackerImpl<Token> implements GpuRepacker<Token> {
       return {
         results: [...first.results, ...second.results],
         failed: [...first.failed, ...second.failed],
+        unsupported: [...first.unsupported, ...second.unsupported],
       };
     }
 
@@ -694,7 +717,7 @@ class GpuRepackerImpl<Token> implements GpuRepacker<Token> {
         ),
       }),
     );
-    return { results, failed };
+    return { results, failed, unsupported };
   }
 
   private ensureChunkEntry(key: string, data: Float32Array | Uint8Array): void {

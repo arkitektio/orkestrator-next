@@ -16,6 +16,7 @@ import { gatherLayerWorldBoxes } from "../visibility/layerBoxes";
 import { computeSceneWorldBox } from "./sceneFit";
 import { useViewStoreApi } from "../stores/viewStore";
 
+import { cameraInteraction } from "./cameraMotion";
 import {
   OrbitControls,
   OrthographicCamera,
@@ -292,6 +293,13 @@ export const CameraController = () => {
   const interactionMode = useModeStore((s) => s.interactionMode);
   const displayMode = useModeStore((s) => s.displayMode);
   const zoomToCursor = useModeStore((s) => s.zoomToCursor);
+  const smoothOrbit = useModeStore((s) => s.smoothOrbit);
+
+  // `onEnd` never fires for controls that unmount mid-drag — a 2D↔3D switch
+  // remounts them (the key carries the display mode), and a stuck `interacting`
+  // would pin `cameraMoving` true, holding the scene at half resolution with
+  // nothing moving. Keyed on displayMode so the remount clears it too.
+  useEffect(() => cameraInteraction.reset, [displayMode]);
   const frustumNear = useViewerStore((s) => s.frustumNear);
   const frustumFar = useViewerStore((s) => s.frustumFar);
   const sceneApi = useSceneStoreApi();
@@ -346,14 +354,48 @@ export const CameraController = () => {
         />
       )}
 
+      {displayMode === "3D" ? (
+        <PerspectiveCamera
+          key="perspective-camera"
+          makeDefault
+          position={[0, -200, 200]}
+          fov={45}
+          up={[0, 0, 1]}
+          near={frustumNear}
+          far={frustumFar}
+        />
+      ) : (
+        <OrthographicCamera
+          key="orthographic-camera"
+          makeDefault
+          zoom={5}
+          position={[0, 0, 50000]}
+          up={[0, 1, 0]}
+          near={frustumNear}
+          far={frustumFar}
+        />
+      )}
+
       {/* Orbit Controls. The key deliberately carries only the display mode:
             camera settings are live props now, so toggling one no longer
             remounts the controls (which used to reset the orbit target to the
-            origin, breaking the probe pivot the moment you enabled it). */}
+            origin, breaking the probe pivot the moment you enabled it).
+
+            `enableDamping` is the user's "Smooth camera" setting, DEFAULT OFF
+            — drei defaults it to true. Even with the coast no longer charged as
+            camera MOTION (`cameraMotion.ts` measures a RELATIVE per-frame
+            change, so the tail settles at full quality), it still pays
+            full-resolution renders and visibility/replan work for the length of
+            the decay. `onStart`/`onEnd` publish the gesture itself, so a drag
+            that pauses still counts as motion even when the mouse is held
+            still. */}
       {displayMode === "3D" ? (
         <OrbitControls
           key="orbit-controls-3d"
           makeDefault
+          enableDamping={smoothOrbit}
+          onStart={cameraInteraction.begin}
+          onEnd={cameraInteraction.end}
           enableRotate={true}
           enablePan={true}
           enableZoom={true}
@@ -366,6 +408,9 @@ export const CameraController = () => {
         <OrbitControls
           key="orbit-controls-2d"
           makeDefault
+          enableDamping={smoothOrbit}
+          onStart={cameraInteraction.begin}
+          onEnd={cameraInteraction.end}
           enableRotate={false}
           enablePan={true}
           enableZoom={true}

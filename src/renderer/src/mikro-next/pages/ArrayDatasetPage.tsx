@@ -43,7 +43,10 @@ export const ArrayDatasetPage = asDetailQueryRoute(useGetArrayDatasetQuery, ({ d
 
   const { data: sceneData, loading: sceneLoading } = useGetSceneQuery({
     variables: { id: activeSceneId as string },
-    skip: !activeSceneId
+    skip: !activeSceneId,
+    // See ScenePage: a layer whose `asAffine` cannot condense must null that
+    // one field, not discard the scene.
+    errorPolicy: 'all'
   })
 
   return (

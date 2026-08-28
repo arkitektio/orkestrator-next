@@ -1,0 +1,104 @@
+/**
+ * What "the camera is moving" means, separated from "the view-projection
+ * matrix changed at all".
+ *
+ * These were the same test, and inertial damping made that wrong. With drei's
+ * default `enableDamping`, releasing the mouse leaves the camera COASTING for
+ * a few hundred milliseconds. Every frame of that coast changed the matrix, so
+ * `cameraMoving` stayed true for the whole tail — and while it is true the
+ * volume renders at HALF resolution (`resolveVolumeScale`), the settle ladder
+ * cannot advance (`decideSettleRefine`), and the plan tracker replans on the
+ * slower motion interval. The decay is exponential, so the tail could also
+ * hover just above the emit threshold, stretching the low-quality window well
+ * past the gesture and ending in a visible snap to full resolution.
+ *
+ * Two distinct questions, two thresholds:
+ *
+ *  - **Did anything change?** (should we publish, recompute visibility, replan)
+ *    An absolute epsilon on the matrix elements. Unchanged — correctness work
+ *    must follow the camera all the way down to rest.
+ *  - **Is it moving enough to degrade quality for?** A RELATIVE threshold, so
+ *    it means the same thing on a scene whose world units are micrometres
+ *    (translation elements ~1e4) as on one in unit space. The absolute epsilon
+ *    cannot answer this: 1e-5 against a translation of 50000 is nine orders of
+ *    magnitude below the value it is compared to.
+ *
+ * `interacting` is OR-ed in so a drag that pauses (mouse held still mid-gesture)
+ * still counts as motion — the user is driving, and snapping to full quality
+ * mid-drag only to drop again is worse than staying cheap. Deriving motion from
+ * the matrix rather than from pointer state alone is deliberate: keyboard
+ * navigation (`shell/keyboard/KeyboardSceneNavigation.tsx`) and animation
+ * playback (`features/animation/AnimationPlayer.tsx`) move the camera with no
+ * pointer involved, and a pointer-only rule would render those full-resolution
+ * every frame.
+ */
+
+/**
+ * Largest RELATIVE change across two 4×4 matrices, element-wise.
+ *
+ * Scale-free: each element's delta is divided by the larger of the two
+ * magnitudes, so a rotation element near 1 and a translation element near 1e4
+ * are held to the same standard. `floor` keeps elements that are both ~0 from
+ * dividing by nothing.
+ */
+export function matrixRelativeDelta(
+  cur: ArrayLike<number>,
+  prev: ArrayLike<number>,
+  floor = 1e-6,
+): number {
+  let worst = 0;
+  for (let i = 0; i < 16; i++) {
+    const a = cur[i];
+    const b = prev[i];
+    const scale = Math.max(Math.abs(a), Math.abs(b), floor);
+    const rel = Math.abs(a - b) / scale;
+    if (rel > worst) worst = rel;
+  }
+  return worst;
+}
+
+/**
+ * Relative per-frame change below which the camera counts as settling rather
+ * than moving.
+ *
+ * An active drag or a keyboard/animation step sits orders of magnitude above
+ * this; a damped coast crosses it early in its decay, which is the point — the
+ * tail finishes at full quality instead of holding the whole scene at half
+ * resolution until it stops.
+ */
+export const MOTION_RELATIVE_THRESHOLD = 1e-3;
+
+/** Is the camera moving enough to render cheaply for? */
+export function isCameraMoving(
+  interacting: boolean,
+  relativeDelta: number,
+  threshold = MOTION_RELATIVE_THRESHOLD,
+): boolean {
+  return interacting || relativeDelta > threshold;
+}
+
+/**
+ * Whether a pointer gesture is currently driving the controls.
+ *
+ * A module singleton rather than store state on purpose: it flips on every
+ * pointer down/up, is read once per frame from `CameraMatrixSync`, and has no
+ * React consumers — routing it through a store would publish a render-hot write
+ * for something nothing renders from (P17).
+ */
+let interacting = false;
+
+export const cameraInteraction = {
+  begin(): void {
+    interacting = true;
+  },
+  end(): void {
+    interacting = false;
+  },
+  isInteracting(): boolean {
+    return interacting;
+  },
+  /** Tests and teardown: controls that unmount mid-drag never fire `onEnd`. */
+  reset(): void {
+    interacting = false;
+  },
+};

@@ -95,7 +95,15 @@ export const asDetailQueryRoute = <T extends any>(
         ...options.queryOptions,
       });
 
-    if (passyProps.error) {
+    // Only bail to the error page when there is genuinely nothing to render.
+    // Under the default `errorPolicy: "none"` Apollo discards `data` whenever
+    // any GraphQL error is present, so this is IDENTICAL to `if (error)` for
+    // every route that does not opt in. It is what lets a route set
+    // `errorPolicy: "all"` and keep rendering: a single nullable field whose
+    // resolver threw (e.g. `Layer.asAffine` on a displacement-registered
+    // layer, which errors rather than returning null) nulls that one field
+    // instead of blanking the whole page, and the consumer degrades.
+    if (passyProps.error && !passyProps.data) {
       if (debug) {
         return <DebugPage data={passyProps.error} />;
       }

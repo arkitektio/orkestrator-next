@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   composeLayerAffine,
   composePlacementPath,
@@ -249,6 +249,115 @@ describe("composePlacementPath", () => {
     )!;
     expect(m[0][0]).toBe(1);
     expect(m[0][3]).toBeCloseTo(30);
+  });
+});
+
+/**
+ * Regression: scene 28's calibration edge, verbatim. The dataset is isometric
+ * in x/y (both 0.2405 µm) yet rendered anisotropic, because the ByDimension
+ * children declare a 4-element `inputAxes` (c,z,y,x) while carrying 3-element
+ * parameter arrays aligned to `outputAxes` (z,y,x). Read against `inputAxes`
+ * that puts `undefined` (→1) on x and slides z's value onto y and y's onto z.
+ *
+ * The payload violates the schema contract; the server is the real fix. These
+ * pin the client's tolerance: loud and approximately right, never quiet and
+ * wrong.
+ */
+describe("evalTransform parameter arity", () => {
+  const calibrationChildren = (id: string) => ({
+    __typename: "ByDimensionTransformation",
+    inputAxes: ["z", "y", "x"],
+    outputAxes: ["z", "y", "x"],
+    input: { id },
+    output: { id: "cs:world" },
+    transformations: [
+      {
+        __typename: "ScaleTransformation",
+        // Contract violation: 4 axis names, 3 values. `input`/`output` are
+        // carried only so each test case hashes to its own warn-once key —
+        // the real payload's nested children have neither.
+        input: { id },
+        output: { id: "cs:world" },
+        inputAxes: ["c", "z", "y", "x"],
+        outputAxes: ["z", "y", "x"],
+        scale: [0.3310351162790698, 0.2405001955034213, 0.2405001955034213],
+      },
+      {
+        __typename: "TranslationTransformation",
+        input: { id },
+        output: { id: "cs:world" },
+        inputAxes: ["c", "z", "y", "x"],
+        outputAxes: ["z", "y", "x"],
+        translation: [0, -56423.85782972, 37785.478700700005],
+      },
+    ],
+  });
+
+  it("reads an outputAxes-aligned scale/translation against outputAxes", () => {
+    const m = composePlacementPath(
+      [{ transformation: calibrationChildren("cs:scene28"), inverted: false }],
+      {},
+      SPATIAL,
+    )!;
+    // x and y isometric — the symptom that started this.
+    expect(m[0][0]).toBeCloseTo(0.2405001955034213);
+    expect(m[1][1]).toBeCloseTo(0.2405001955034213);
+    expect(m[0][0]).toBeCloseTo(m[1][1]);
+    // z keeps its own, larger spacing rather than inheriting y's.
+    expect(m[2][2]).toBeCloseTo(0.3310351162790698);
+    // Translation lands on the axis it was written for.
+    expect(m[0][3]).toBeCloseTo(37785.478700700005);
+    expect(m[1][3]).toBeCloseTo(-56423.85782972);
+    expect(m[2][3]).toBeCloseTo(0);
+  });
+
+  it("warns rather than silently mis-indexing", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    composePlacementPath(
+      [{ transformation: calibrationChildren("cs:scene28:warn"), inverted: false }],
+      {},
+      SPATIAL,
+    );
+    expect(warn).toHaveBeenCalled();
+    expect(warn.mock.calls.map(String).join("\n")).toMatch(/outputAxes/);
+    warn.mockRestore();
+  });
+
+  it("degrades to identity when the arity matches neither axis list", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const m = evalTransform(
+      {
+        __typename: "ScaleTransformation",
+        input: { id: "cs:junk" },
+        output: { id: "cs:world" },
+        inputAxes: ["c", "z", "y", "x"],
+        outputAxes: ["z", "y", "x"],
+        scale: [2, 2],
+      },
+      ["c", "z", "y", "x"],
+      ["z", "y", "x"],
+      SPATIAL,
+    );
+    expect(m).toBeNull();
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it("leaves a conformant subset child on inputAxes (unchanged behaviour)", () => {
+    const m = evalTransform(
+      {
+        __typename: "ScaleTransformation",
+        inputAxes: ["y", "x"],
+        outputAxes: ["y", "x"],
+        scale: [0.65, 0.325],
+      },
+      ["y", "x"],
+      ["y", "x"],
+      SPATIAL,
+    )!;
+    expect(m[0][0]).toBeCloseTo(0.325); // x
+    expect(m[1][1]).toBeCloseTo(0.65); // y
+    expect(m[2][2]).toBe(1); // z unnamed → pass-through
   });
 });
 

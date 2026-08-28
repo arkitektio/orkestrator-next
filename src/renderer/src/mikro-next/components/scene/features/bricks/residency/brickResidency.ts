@@ -312,6 +312,70 @@ const FREE_SLOTS_ONLY: ProtectedKeys = { has: () => true };
  * re-renders the layer components + levels editor. */
 const AUTO_RANGE_BUMP_MS = 150;
 
+/**
+ * One-time diagnostic per brick key for the GPU-repack "no dispatches" case.
+ * Capped so a pathological dataset cannot grow it without bound (past the cap
+ * it degrades to warn-never, which is acceptable for a diagnostics channel —
+ * the same trade `transformGraph`'s warnOnce makes).
+ */
+/**
+ * What the governor's `streaming` flag should do this drain — hysteretic on
+ * BOTH edges. Pure so the timing rules are stated once and testable, in the
+ * idiom of `decideSettleRefine` / `occPromotionWorthwhile`.
+ *
+ * The FALSE edge waits `clearMs` of continuous quiet: the raw predicate flaps
+ * between 200 ms replans during a zoom, and every flap re-rendered all volume
+ * layers and snapped the raymarch step scale mid-gesture.
+ *
+ * The TRUE edge waits `assertMs` of continuous work. It used to fire the
+ * instant `anyPipelineWork()` went true, so a SINGLE brick landing at idle
+ * cost a canvas DPR realloc (`QualityAdapter` re-reads `cameraMoving ||
+ * isStreaming()` every frame) plus a settle-ladder reset to stage 0
+ * (`decideSettleRefine`) — the sharpness pulse, graininess pulse and block pop
+ * reported as "flickering with a static camera", all from one event.
+ *
+ * Debouncing the true edge is safe: this is a QUALITY signal, not a
+ * correctness one. A brick that actually changes the image still re-renders via
+ * its `poolsVersion`/tracker bump and `invalidate()`.
+ *
+ *  - "assert"/"clear": apply the flag now.
+ *  - "arm-assert"/"arm-clear": the edge is pending; the caller arms a timer,
+ *    because under `frameloop="demand"` frames may stop before it elapses.
+ *  - "hold": nothing to do.
+ */
+export type StreamingFlagAction = "assert" | "clear" | "arm-assert" | "arm-clear" | "hold";
+
+export function decideStreamingFlag(input: {
+  /** `anyPipelineWork()` this drain. */
+  busy: boolean;
+  /** The governor's flag right now. */
+  streaming: boolean;
+  now: number;
+  /** When the pipeline last went quiet→busy; null while quiet. */
+  busySinceAt: number | null;
+  /** When `busy` was last true (drives the trailing clear). */
+  lastStreamingTrueAt: number;
+  assertMs: number;
+  clearMs: number;
+}): StreamingFlagAction {
+  const { busy, streaming, now } = input;
+  if (busy) {
+    if (streaming) return "hold";
+    const busySince = input.busySinceAt ?? now;
+    return now - busySince >= input.assertMs ? "assert" : "arm-assert";
+  }
+  if (!streaming) return "hold";
+  return now - input.lastStreamingTrueAt >= input.clearMs ? "clear" : "arm-clear";
+}
+
+const GPU_INELIGIBLE_WARN_CAP = 64;
+const gpuIneligibleWarned = new Set<string>();
+const warnOnceGpuIneligible = (key: string, message: string): void => {
+  if (gpuIneligibleWarned.has(key) || gpuIneligibleWarned.size >= GPU_INELIGIBLE_WARN_CAP) return;
+  gpuIneligibleWarned.add(key);
+  console.warn(message);
+};
+
 /** Per-layer derivation feeding `ensurePool` — side-effect free, so layers can
  * be grouped by `poolKey` before anything is allocated. */
 type PoolDerivation = {
@@ -374,6 +438,12 @@ export type LayerBrickPool = {
   queuedKeys: Set<string>;
   /** Uniform bricks: page-mapped EMPTY, no slot; value = the uniform fill. */
   emptyValues: Map<string, number>;
+  /** Bricks the GPU repacker reported as `unsupported` — it can never produce
+   * them, so they must take the CPU path on every retry. Without this the
+   * requeue re-dispatched them to the GPU, they failed identically, and the
+   * page entry unmapped/refilled forever with no camera motion (see the
+   * `unsupported` bucket in `GpuFlushOutcome`). Bounded by brick count. */
+  gpuIneligibleKeys: Set<string>;
   /** Raw `[min, max]` of every RESIDENT brick (from the repack min/max scan /
    * GPU readback) — backs the occupancy sidecar's re-encode when the pool
    * range moves (quantization is relative to the range, exactly like
@@ -610,6 +680,10 @@ export class BrickResidencyManager {
   /** Trailing hysteresis for the governor's streaming flag (drainUploads). */
   private lastStreamingTrueAt = 0;
   private streamingClearTimer: ReturnType<typeof setTimeout> | null = null;
+  /** LEADING hysteresis: when the pipeline last went from quiet to busy, or
+   * null while quiet / already streaming. See applyStreamingFlag. */
+  private busySinceAt: number | null = null;
+  private streamingAssertTimer: ReturnType<typeof setTimeout> | null = null;
   /** CPU-uploaded bricks whose backing-mirror copy is deferred to idle time
    * (the copy is main-thread work inside the drain budget otherwise). Until
    * it lands the key sits in `gpuStaleKeys`, so probes read the chunk cache. */
@@ -2179,6 +2253,7 @@ export class BrickResidencyManager {
       queue: [],
       queuedKeys: new Set(),
       emptyValues: new Map(),
+      gpuIneligibleKeys: new Set(),
       brickRanges: new Map(),
       fixedChunkCoords,
       fixedOffsets,
@@ -2443,22 +2518,28 @@ export class BrickResidencyManager {
       // axis. A layer with a phasor node therefore always takes the CPU worker
       // path (a follow-up can teach the compute kernel the DFT).
       const reducesPhasor = hasPhasorSlabs(pool.geometry);
+      const gpuIneligible = pool.gpuIneligibleKeys.has(node.key);
       const useGpu =
-        !reducesPhasor && !!gpuRepacker?.ready() && gpuRepacker.supports(pool.atlas, chunks);
+        !reducesPhasor &&
+        !gpuIneligible &&
+        !!gpuRepacker?.ready() &&
+        gpuRepacker.supports(pool.atlas, chunks);
       pool.lastRepackPath = useGpu
         ? "gpu"
-        : reducesPhasor
-          ? "cpu:phasor"
-          : this.renderer === null
-            ? // Pre-attach bricks legitimately take the CPU path; keep it
-              // distinguishable from a genuinely unavailable repacker so the
-              // debug report cannot be misread as the `computeStorage` trap.
-              "cpu:no-renderer"
-            : gpuRepacker === null
-              ? "cpu:no-repacker"
-              : !gpuRepacker.ready()
-                ? `cpu:${gpuRepacker.status()}`
-                : `cpu:unsupported:${pool.atlas.kind}`;
+        : gpuIneligible
+          ? "cpu:gpu-ineligible"
+          : reducesPhasor
+            ? "cpu:phasor"
+            : this.renderer === null
+              ? // Pre-attach bricks legitimately take the CPU path; keep it
+                // distinguishable from a genuinely unavailable repacker so the
+                // debug report cannot be misread as the `computeStorage` trap.
+                "cpu:no-renderer"
+              : gpuRepacker === null
+                ? "cpu:no-repacker"
+                : !gpuRepacker.ready()
+                  ? `cpu:${gpuRepacker.status()}`
+                  : `cpu:unsupported:${pool.atlas.kind}`;
       if (useGpu) {
         // GPU path: the repack IS the upload (a compute dispatch straight
         // into the atlas slot at drain time) — only chunk handles queue here.
@@ -3035,36 +3116,107 @@ export class BrickResidencyManager {
    * flag clears — long enough to bridge the gap between 200 ms replans. */
   private static readonly STREAMING_CLEAR_MS = 300;
 
-  /** Governor streaming flag with a trailing false edge: true applies
-   * immediately (quality must drop as soon as work starts), false only after
-   * STREAMING_CLEAR_MS of continuous quiet. The demand frameloop may render
-   * no further frame once the pipeline drains, so the trailing clear is
-   * timer-driven and re-checks the pipeline freshly when it fires. */
-  private applyStreamingFlag(streaming: boolean): void {
+  /** Leading edge: work must persist this long before it counts as streaming.
+   * Longer than a few frames (so a single brick landing at idle is swallowed),
+   * far shorter than `ACTIVE_DPR_DELAY_MS` (250 ms), so real streaming still
+   * drops quality on time. */
+  private static readonly STREAMING_ASSERT_MS = 120;
+
+
+  private clearStreamingAssertTimer(): void {
+    if (this.streamingAssertTimer !== null) {
+      clearTimeout(this.streamingAssertTimer);
+      this.streamingAssertTimer = null;
+    }
+  }
+
+  /**
+   * Governor streaming flag, hysteretic on BOTH edges.
+   *
+   * False only after STREAMING_CLEAR_MS of continuous quiet. The demand
+   * frameloop may render no further frame once the pipeline drains, so the
+   * trailing clear is timer-driven and re-checks the pipeline when it fires.
+   *
+   * True only after work has PERSISTED for STREAMING_ASSERT_MS. The true edge
+   * used to fire the instant `anyPipelineWork()` went true, which made every
+   * consumer of "active" react to a single brick landing at idle:
+   * `QualityAdapter` re-evaluates `cameraMoving || isStreaming()` per frame and
+   * drops/restores DPR (a render-target realloc), and `decideSettleRefine`
+   * slams the settle ladder back to stage 0 for a two-stage re-climb. So one
+   * stray brick cost a canvas resolution change plus a raymarch-quality restart
+   * — three unrelated-looking symptoms (sharpness pulse, graininess pulse,
+   * block pop) from one event, on a completely stationary camera.
+   *
+   * Debouncing the true edge is safe because this flag is a QUALITY signal, not
+   * a correctness one: a brick that actually changes the image still re-renders
+   * through its `poolsVersion`/tracker bump and `invalidate()`. A burst that
+   * drains inside the window never reaches the ladders; genuine streaming still
+   * asserts well before `ACTIVE_DPR_DELAY_MS` (250 ms) would act on it.
+   */
+  private applyStreamingFlag(busy: boolean): void {
     const now = performance.now();
-    if (streaming) {
-      this.lastStreamingTrueAt = now;
+    if (busy) this.lastStreamingTrueAt = now;
+    const action = decideStreamingFlag({
+      busy,
+      streaming: qualityGovernor.isStreaming(),
+      now,
+      busySinceAt: this.busySinceAt,
+      lastStreamingTrueAt: this.lastStreamingTrueAt,
+      assertMs: BrickResidencyManager.STREAMING_ASSERT_MS,
+      clearMs: BrickResidencyManager.STREAMING_CLEAR_MS,
+    });
+
+    if (busy) {
+      if (this.busySinceAt === null) this.busySinceAt = now;
+      // A busy drain cancels any pending clear.
       if (this.streamingClearTimer !== null) {
         clearTimeout(this.streamingClearTimer);
         this.streamingClearTimer = null;
       }
-      qualityGovernor.setStreaming(true);
-      return;
+    } else {
+      // Quiet: whatever work there was never persisted long enough to count.
+      this.busySinceAt = null;
+      this.clearStreamingAssertTimer();
     }
-    if (!qualityGovernor.isStreaming()) return;
-    if (now - this.lastStreamingTrueAt >= BrickResidencyManager.STREAMING_CLEAR_MS) {
-      qualityGovernor.setStreaming(false);
-      return;
-    }
-    if (this.streamingClearTimer === null) {
-      this.streamingClearTimer = setTimeout(() => {
-        this.streamingClearTimer = null;
-        if (this.disposed) return;
-        if (!this.anyPipelineWork()) {
-          qualityGovernor.setStreaming(false);
-          this.invalidate(); // render one settled-quality frame
-        }
-      }, BrickResidencyManager.STREAMING_CLEAR_MS);
+
+    switch (action) {
+      case "assert":
+        this.clearStreamingAssertTimer();
+        qualityGovernor.setStreaming(true);
+        return;
+      case "clear":
+        qualityGovernor.setStreaming(false);
+        return;
+      case "arm-assert": {
+        // Drains run per FRAME; under `frameloop="demand"` frames can stop
+        // while work is outstanding, so the assert needs a timer of its own.
+        if (this.streamingAssertTimer !== null) return;
+        const busySince = this.busySinceAt ?? now;
+        this.streamingAssertTimer = setTimeout(
+          () => {
+            this.streamingAssertTimer = null;
+            if (this.disposed) return;
+            if (this.anyPipelineWork()) qualityGovernor.setStreaming(true);
+            else this.busySinceAt = null;
+          },
+          Math.max(0, BrickResidencyManager.STREAMING_ASSERT_MS - (now - busySince)),
+        );
+        return;
+      }
+      case "arm-clear": {
+        if (this.streamingClearTimer !== null) return;
+        this.streamingClearTimer = setTimeout(() => {
+          this.streamingClearTimer = null;
+          if (this.disposed) return;
+          if (!this.anyPipelineWork()) {
+            qualityGovernor.setStreaming(false);
+            this.invalidate(); // render one settled-quality frame
+          }
+        }, BrickResidencyManager.STREAMING_CLEAR_MS);
+        return;
+      }
+      case "hold":
+        return;
     }
   }
 
@@ -3383,13 +3535,32 @@ export class BrickResidencyManager {
       touchedPools.add(pool);
     }
 
-    for (const token of outcome.failed) {
+    // Bricks the GPU repacker can NEVER produce. Marked BEFORE the shared
+    // unmap/requeue below so the retry this schedules already sees the key as
+    // GPU-ineligible and takes the CPU path. Skipping this is what made the
+    // requeue an infinite loop: `broken` is only set by a BATCH failure, so a
+    // per-job failure left the repacker healthy and the retry came straight
+    // back here.
+    for (const token of outcome.unsupported) {
+      const pool = this.resolveGpuToken(token);
+      if (!pool) continue;
+      pool.gpuIneligibleKeys.add(token.key);
+      const { level, coords } = parseNodeKey(token.key);
+      warnOnceGpuIneligible(
+        token.key,
+        `[bricks] gpu repack produced no dispatches for brick ${level}:${coords.join(",")} ` +
+          `(no chunk overlaps it); falling back to CPU repack for this brick. ` +
+          `This usually means the planner asked for a brick the level geometry does not cover.`,
+      );
+    }
+
+    for (const token of [...outcome.failed, ...outcome.unsupported]) {
       const pool = this.resolveGpuToken(token);
       if (!pool) continue;
       const { level, coords } = parseNodeKey(token.key);
       // The dispatch never wrote the slot: unmap it and requeue the fetch.
-      // A failed batch marks the repacker broken, so the retry repacks on
-      // the CPU path.
+      // A failed BATCH marks the repacker broken, so that retry repacks on the
+      // CPU path; an `unsupported` job is diverted per-key just above.
       setPageEntry(pool.pageTable, level, coords, null, PAGE_FLAG_UNMAPPED);
       pool.pool.release(token.key);
       pool.gpuStaleKeys.delete(token.key);
@@ -3674,7 +3845,10 @@ export class BrickResidencyManager {
     this.pools.clear();
     this.renderer = null;
     this.invalidateFn = null;
-    // Don't leave the governor thinking a torn-down scene is still streaming.
+    // Don't leave the governor thinking a torn-down scene is still streaming,
+    // and don't let a pending assert re-raise the flag after teardown.
+    this.clearStreamingAssertTimer();
+    this.busySinceAt = null;
     qualityGovernor.setStreaming(false);
   }
 }

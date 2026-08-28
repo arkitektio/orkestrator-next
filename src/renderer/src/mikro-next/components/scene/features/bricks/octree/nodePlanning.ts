@@ -1,6 +1,10 @@
 import * as THREE from "three";
 import { buildSliceSignature } from "../../../platform/model/sliceSignature";
-import { PREFETCH_MARGIN, expandVoxelRange } from "./viewportPlanning";
+import {
+  FRUSTUM_CULL_MARGIN,
+  PREFETCH_MARGIN,
+  expandVoxelRange,
+} from "./viewportPlanning";
 import { affineToMatrix4 } from "../../../platform/coords/worldTransform";
 import type { LayerState } from "../../../platform/model/layerModel";
 import type { LayerViewRange } from "../../../platform/visibility/visibility";
@@ -172,6 +176,14 @@ export type PlanLayerNodesInput = {
   currentZ: number | undefined;
   /** Scene-wide dim-slider selections (t, tau, …) — signature input only. */
   dimSelections?: Record<string, number>;
+  /**
+   * Slack in the 3D frustum test, as a fraction of each node's own extent —
+   * the anti-flicker hysteresis band. Defaults to `FRUSTUM_CULL_MARGIN`; 0 is
+   * the strict test. Injectable so the invariant that MATTERS can be asserted
+   * directly: the strictly-visible set (bands 0 and 1) must not depend on this
+   * value, or the margin has started crowding out visible bricks. See P26.
+   */
+  frustumCullMargin?: number;
   /** GPU ATLAS SLOT bytes the plan may spend. Slot currency only — see
    * `decodeFloorBytes` for the level floor, which is a different currency. */
   maxPlanBytes?: number;
@@ -362,6 +374,7 @@ export function planLayerNodes({
   lodBias,
   currentZ,
   dimSelections,
+  frustumCullMargin = FRUSTUM_CULL_MARGIN,
   maxPlanBytes = Number.POSITIVE_INFINITY,
   decodeFloorBytes,
   decodeCacheShareBytes,
@@ -800,8 +813,17 @@ export function planLayerNodes({
     role: PlannedNode["role"],
     baseBox: VoxelBox,
   ) => {
+    // Band 2 = margin-only prefetch, fetched last. Either margin can put a node
+    // there: the 2D viewport's (outside `strictBox`) or the 3D frustum's (only
+    // inside once dilated by FRUSTUM_CULL_MARGIN). Without this arm the
+    // hysteresis margin would compete with genuinely visible bricks for
+    // in-flight slots and trade edge flicker for centre latency.
     const fetchBand: PlannedNode["fetchBand"] =
-      level === rootLevel ? 0 : strictBox && !boxesOverlap(baseBox, strictBox) ? 2 : 1;
+      level === rootLevel
+        ? 0
+        : (strictBox && !boxesOverlap(baseBox, strictBox)) || !nodeInFrustum(baseBox, 0)
+          ? 2
+          : 1;
     nodes.push({
       key: nodeKey(level, coords),
       level,
@@ -816,14 +838,27 @@ export function planLayerNodes({
     if (role === "target" && level < targetLevel) targetLevel = level;
   };
 
+  /**
+   * Does this node meet the camera frustum, allowing `margin` × its own extent
+   * of slack per axis? `margin: 0` is the strict test.
+   */
+  const nodeInFrustum = (baseBox: VoxelBox, margin: number): boolean => {
+    if (mode !== "3D" || !camera) return true;
+    const mx = (baseBox.max[0] - baseBox.min[0]) * margin;
+    const my = (baseBox.max[1] - baseBox.min[1]) * margin;
+    const mz = (baseBox.max[2] - baseBox.min[2]) * margin;
+    scratchBox.min.set(baseBox.min[0] - mx, baseBox.min[1] - my, baseBox.min[2] - mz);
+    scratchBox.max.set(baseBox.max[0] + mx, baseBox.max[1] + my, baseBox.max[2] + mz);
+    return camera.voxelFrustum.intersectsBox(scratchBox);
+  };
+
   const nodeVisible = (baseBox: VoxelBox): boolean => {
     if (visibleBox && !boxesOverlap(baseBox, visibleBox)) return false;
-    if (mode === "3D" && camera) {
-      scratchBox.min.set(baseBox.min[0], baseBox.min[1], baseBox.min[2]);
-      scratchBox.max.set(baseBox.max[0], baseBox.max[1], baseBox.max[2]);
-      if (!camera.voxelFrustum.intersectsBox(scratchBox)) return false;
-    }
-    return true;
+    // Dilated, not strict: an exact test has no hysteresis, so a node on a side
+    // plane flips in and out on sub-pixel camera motion and its brick is
+    // evicted and refetched each time — the flicker at the viewport edges.
+    // See FRUSTUM_CULL_MARGIN.
+    return nodeInFrustum(baseBox, frustumCullMargin);
   };
 
   const visit = (level: number, coords: Vec3): void => {

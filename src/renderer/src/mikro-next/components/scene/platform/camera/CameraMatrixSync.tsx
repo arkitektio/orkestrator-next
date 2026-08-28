@@ -2,6 +2,7 @@ import { useFrame } from "@react-three/fiber";
 import { useViewStore } from "../stores/viewStore";
 import * as THREE from "three";
 import { useRef, useEffect } from "react";
+import { cameraInteraction, isCameraMoving, matrixRelativeDelta } from "./cameraMotion";
 
 interface CameraMatrixSyncProps {
   /** Max cadence (ms) at which camera data is pushed DURING continuous motion. */
@@ -97,9 +98,10 @@ export const CameraMatrixSync = ({
     // (`viewRange.scale`, the planner's pxPerVoxelAtUnitDistance) depends on
     // the height — without this the store served a stale viewportSize until
     // the camera next moved.
-    let hasChanged =
+    const sizeChanged =
       size.width !== pendingSize.current.width ||
       size.height !== pendingSize.current.height;
+    let hasChanged = sizeChanged;
     const cur = matrixRef.current.elements;
     const prev = previousFrameMatrix.current.elements;
 
@@ -108,6 +110,17 @@ export const CameraMatrixSync = ({
         hasChanged = true;
       }
     }
+
+    // Separate question from `hasChanged`, and a RELATIVE one — see
+    // cameraMotion.ts. `hasChanged` decides whether to PUBLISH (correctness
+    // work must follow the camera to rest); this decides whether the frame is
+    // cheap-quality. A damped coast keeps changing the matrix long after the
+    // gesture, and treating that as motion held the whole scene at half
+    // resolution until it stopped.
+    const moving = isCameraMoving(
+      cameraInteraction.isInteracting(),
+      sizeChanged ? Number.POSITIVE_INFINITY : matrixRelativeDelta(cur, prev),
+    );
 
     // 4. If nothing changed, we exit early to save CPU
     if (!hasChanged) return;
@@ -180,7 +193,7 @@ export const CameraMatrixSync = ({
     // live, instead of only after the camera stops.
     if (nowMs - lastEmitRef.current >= throttleMs) {
       lastEmitRef.current = nowMs;
-      emit(true); // in motion
+      emit(moving); // false while a damped coast decays to rest
     }
   });
 

@@ -66,6 +66,19 @@ export interface ModeState {
    */
   pivotOnProbe: boolean;
   /**
+   * Inertial ("smooth") orbiting: the camera coasts to a stop after the mouse
+   * is released instead of stopping with it.
+   *
+   * OFF by default, overriding drei's `enableDamping = true`. The coast is no
+   * longer charged as camera MOTION (`platform/camera/cameraMotion.ts` measures
+   * a RELATIVE per-frame change, so the tail settles at full quality), but it
+   * still costs full-resolution volume renders for the length of the decay and
+   * still drives visibility/replan work after the gesture is over. Stopping
+   * with the mouse is the cheaper and steadier default; the switch is there for
+   * anyone who prefers the feel.
+   */
+  smoothOrbit: boolean;
+  /**
    * Hover-to-probe. Was the AUTO_PROBE interaction mode, now a modifier of
    * PROBE — on by default, since entering PROBE is already the statement that
    * you want to read values. Lives here rather than on `viewerStore` so the
@@ -80,6 +93,7 @@ export interface ModeState {
   setDisplayMode: (mode: DisplayMode) => void;
   setZoomToCursor: (on: boolean) => void;
   setPivotOnProbe: (on: boolean) => void;
+  setSmoothOrbit: (on: boolean) => void;
   setProbeFollowsCursor: (on: boolean) => void;
 }
 
@@ -98,6 +112,7 @@ export const createModeStore = ({
     displayMode,
     zoomToCursor: false,
     pivotOnProbe: false,
+    smoothOrbit: false,
     probeFollowsCursor: true,
     interactionModeOptions,
     displayModeOptions,
@@ -116,6 +131,10 @@ export const createModeStore = ({
     setPivotOnProbe: (on) =>
       set((state) => {
         state.pivotOnProbe = on;
+      }),
+    setSmoothOrbit: (on) =>
+      set((state) => {
+        state.smoothOrbit = on;
       }),
     setProbeFollowsCursor: (on) =>
       set((state) => {

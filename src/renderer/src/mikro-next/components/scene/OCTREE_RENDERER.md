@@ -1078,6 +1078,68 @@ the slots otherwise; large pools are byte-identical. Symptom to recognise:
 `decodeBytesCharged: 0` (which rules out the decode floor, P24) — `nodeCount: 1`
 and `planBudgetBytes == slotBytes` name it outright.
 
+**P26 — An EXACT frustum test has no hysteresis, and the flip-flop reads as
+edge flicker.** The 2D path prefetches a `PREFETCH_MARGIN` (0.25) band around
+the viewport, but the 3D node test was `voxelFrustum.intersectsBox(nodeBox)`
+with no slack. That test is geometrically correct — a ray only samples inside
+the frustum, so nothing being drawn *this frame* was culled — but a node
+straddling a side plane flips visible↔culled on sub-pixel camera motion, and
+each flip evicts its brick and refetches it a frame or two later. Orbiting or
+panning therefore shimmered along the left/right/top/bottom edges, worst at
+coarse levels where a refetch is most expensive. Fix: `FRUSTUM_CULL_MARGIN`
+(0.25, `viewportPlanning.ts`) — `nodeInFrustum(box, margin)` grows the NODE by
+a fraction of its own extent per axis rather than dilating the frustum planes,
+which keeps the margin scale-free (a coarse node, costlier to refetch and
+covering more screen, gets a proportionally larger one) and costs no plane
+math. Crucially the margin-only survivors are tagged `fetchBand: 2` alongside
+the 2D margin's, so they are fetched LAST: without that arm the hysteresis
+band competes with genuinely visible bricks for in-flight slots and trades
+edge flicker for centre latency. Symptom to recognise: bricks blinking at the
+viewport border during camera motion only, steady once the camera is still.
+
+**P27 — A retry is only a fix if it retries somewhere DIFFERENT.**
+`brickResidency`'s `outcome.failed` handler unmaps the page entry, releases the
+slot and pushes the key back onto `pendingFetch`, on the stated assumption that
+*"a failed batch marks the repacker broken, so the retry repacks on the CPU
+path."* That holds for the two BATCH failures (a throw sets `broken`; `!ready()`
+short-circuits) but never held for the per-job branch in
+`computeRepack.submitAndRead`: `buildKernelDispatches` returning empty ("no
+chunk overlaps the brick") failed one token and left the repacker healthy, so
+the retry came straight back to the GPU path and failed identically —
+deterministically, since the result is a function of the brick's geometry. The
+page entry unmapped and refilled forever at fetch cadence **with no camera
+motion and no replan**, which is what "flickering while standing still" was.
+Fix: `GpuFlushOutcome` now separates `unsupported` (this repacker can never
+produce it) from `failed` (retry elsewhere); `unsupported` keys land in
+`pool.gpuIneligibleKeys`, consulted at the `useGpu` gate so the retry takes the
+CPU worker, and are warned about once (an empty dispatch for a brick the planner
+asked for is a real upstream bug). Symptom to recognise: `stats.fetchErrors`
+climbing with the camera parked; `lastRepackPath` reads `cpu:gpu-ineligible`
+afterwards.
+
+**P28 — Hysteresis on one edge is not hysteresis.** The governor's `streaming`
+flag had a 300 ms trailing clear but asserted TRUE the instant
+`anyPipelineWork()` went true, every drain frame. Three settle mechanisms reset
+off that flag — `QualityAdapter` re-reads `cameraMoving || isStreaming()` per
+frame and drops/restores DPR (a render-target realloc), `decideSettleRefine`
+slams the settle ladder to stage 0 for a two-stage re-climb, and
+`decideVolumeFrame` bypasses the frame cache outright — so ONE brick landing at
+idle cost a canvas resolution change plus a raymarch-quality restart. That is why
+three unrelated-looking symptoms (sharpness pulse, graininess pulse, block pop)
+always appeared together, and why the renderer was fragile to any residual work,
+including legitimate band-2 prefetch (P26). Fix: `decideStreamingFlag` — a pure
+both-edge decision (`assert`/`clear`/`arm-*`/`hold`, in the idiom of
+`decideSettleRefine`) with a `STREAMING_ASSERT_MS` (120 ms) leading debounce, so
+a burst that drains inside the window never reaches the ladders. Safe because
+this is a QUALITY signal, not a correctness one: a brick that changes the image
+still re-renders via its `poolsVersion` bump and `invalidate()`. 120 ms is
+comfortably inside `ACTIVE_DPR_DELAY_MS` (250 ms), so genuine streaming still
+drops quality on time. Related: the occupancy-range promotion
+(`brickResidency.ts` `occPromotionWorthwhile`) deliberately fires *when the
+pipeline is quiet* and bumps `poolsVersion` unthrottled — that is correct and
+converging (post-promotion `observedSpan === encodeSpan`), and it is this
+debounce that keeps its brief burst from tripping the ladders.
+
 **P20 — Handler ATTACHMENT is the raycast gate, not the handler body.** R3F
 puts an object in `internal.interaction` as soon as it carries any event
 handler, and the raycast runs BEFORE the handler does — so a handler that

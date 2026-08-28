@@ -4,7 +4,7 @@ import type { LayerState } from "../../../platform/model/layerModel";
 import type { LayerViewRange } from "../../../platform/visibility/visibility";
 import { resolveBrickSpec } from "./brickSpec";
 import { buildLayerLevelGeometry, type LevelSource } from "../../../platform/coords/levelGeometry";
-import { chunksTouchingBrick } from "./nodeAddress";
+import { chunksTouchingBrick, nodeBaseBox } from "./nodeAddress";
 import {
   adjacentSlabBrickZ,
   anisoEffectiveFactor,
@@ -17,6 +17,7 @@ import {
   type NodeCamera,
   type PlannedNode,
 } from "./nodePlanning";
+import { FRUSTUM_CULL_MARGIN } from "./viewportPlanning";
 
 const makeLayer = (
   overrides: Partial<{ fixedLOD: number | null; zAxis: string | null }> = {},
@@ -404,6 +405,118 @@ describe("planLayerNodes (3D octree)", () => {
     expect(coarseTargets.length).toBeGreaterThan(0);
     // Only the near half (x bricks 0..1 at L0, from refining L1 x-brick 0) is fine.
     expect(fineTargets.every((n) => n.coords[0] <= 1)).toBe(true);
+  });
+
+  /**
+   * The frustum test is dilated by FRUSTUM_CULL_MARGIN so a node straddling a
+   * side plane does not flip visible↔culled on sub-pixel camera motion —
+   * each flip evicted its brick and refetched it, which read as flicker along
+   * the viewport edges. The margin buys hysteresis; the band-2 tag is what
+   * keeps it from costing latency on genuinely visible bricks.
+   */
+  describe("frustum cull margin", () => {
+    // A camera close enough that the volume overflows the frustum sideways,
+    // so there are nodes on both sides of the side planes to discriminate.
+    const camera = perspectiveCamera([-20, 128, 128], 100);
+    const strict = camera.voxelFrustum;
+    const plan = planLayerNodes({
+      layer: volLayer,
+      geometry: geo,
+      spec,
+      mode: "3D",
+      viewRange: VOL_VIEW,
+      camera,
+      lodBias: 1,
+      currentZ: undefined,
+    });
+    const inStrictFrustum = (n: PlannedNode) => {
+      const b = nodeBaseBox(geo, spec, n.level, n.coords);
+      return strict.intersectsBox(
+        new THREE.Box3(
+          new THREE.Vector3(b.min[0], b.min[1], b.min[2]),
+          new THREE.Vector3(b.max[0], b.max[1], b.max[2]),
+        ),
+      );
+    };
+
+    it("keeps nodes just outside the frustum instead of culling them", () => {
+      const refinable = plan.nodes.filter((n) => n.level < 1);
+      expect(refinable.some((n) => !inStrictFrustum(n))).toBe(true);
+    });
+
+    it("tags margin-only nodes band 2 so they never delay a visible brick", () => {
+      for (const n of plan.nodes) {
+        if (n.fetchBand === 0) continue; // rootLevel backdrop, always first
+        if (!inStrictFrustum(n)) expect(n.fetchBand).toBe(2);
+      }
+      // …and the strictly-visible ones are still fetched ahead of them.
+      expect(plan.nodes.some((n) => n.fetchBand === 1)).toBe(true);
+    });
+
+    /**
+     * THE invariant. The margin buys hysteresis at the edges; it must never
+     * buy it with bricks the user is actually looking at. Refinement is
+     * closest-first and margin nodes score farthest, so they only ever consume
+     * budget that nothing visible wanted — but that is an emergent property of
+     * the ordering, not something the code states, so pin it.
+     */
+    it("never displaces a strictly-visible node, at any budget", () => {
+      const MB = 1024 * 1024;
+      for (const maxPlanBytes of [Infinity, 64 * MB, 16 * MB, 4 * MB]) {
+        for (const pos of [
+          [-20, 128, 128],
+          [80, 170, 170],
+        ] as [number, number, number][]) {
+          const base = {
+            layer: volLayer,
+            geometry: geo,
+            spec,
+            mode: "3D" as const,
+            viewRange: VOL_VIEW,
+            camera: perspectiveCamera(pos, 100),
+            lodBias: 1,
+            currentZ: undefined,
+            maxPlanBytes,
+          };
+          const visibleKeys = (margin: number) =>
+            planLayerNodes({ ...base, frustumCullMargin: margin })
+              .nodes.filter((n) => n.fetchBand !== 2)
+              .map((n) => n.key)
+              .sort();
+          expect(visibleKeys(FRUSTUM_CULL_MARGIN)).toEqual(visibleKeys(0));
+        }
+      }
+    });
+
+    it("still culls what the margin cannot reach", () => {
+      // Looking away from the volume entirely: a 25%-of-node margin must not
+      // rescue anything, or the margin has become an "everything" pass.
+      const away = new THREE.PerspectiveCamera(60, 1, 1, 10000);
+      away.position.set(-2000, 128, 128);
+      away.lookAt(-4000, 128, 128);
+      away.updateMatrixWorld(true);
+      away.updateProjectionMatrix();
+      const p = planLayerNodes({
+        layer: volLayer,
+        geometry: geo,
+        spec,
+        mode: "3D",
+        viewRange: VOL_VIEW,
+        camera: {
+          ...camera,
+          voxelFrustum: new THREE.Frustum().setFromProjectionMatrix(
+            new THREE.Matrix4().multiplyMatrices(
+              away.projectionMatrix,
+              away.matrixWorldInverse,
+            ),
+          ),
+          voxelPosition: [-2000, 128, 128],
+        },
+        lodBias: 1,
+        currentZ: undefined,
+      });
+      expect(p.nodes.filter((n) => n.level < 1)).toHaveLength(0);
+    });
   });
 
   it("3D: fetchScore is the foveated box distance from the camera", () => {

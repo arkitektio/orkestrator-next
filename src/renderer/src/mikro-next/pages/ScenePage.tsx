@@ -56,6 +56,17 @@ const DetailPage = asDetailQueryRoute(
       </Scene.Provider>
     );
   },
+  {
+    // Partial data beats no data for a viewer. `Layer.asAffine` is documented
+    // to ERROR (not return null) when a path exists but will not condense — a
+    // FIELD/displacement step has no closed form, a singular step cannot be
+    // walked backwards. Under Apollo's default policy that one field would
+    // discard the entire scene; here it comes back null and
+    // `composeLayerAffine` falls back to walking `pathToWorld`, which degrades
+    // that same step to identity with a warning. Exactly today's behaviour,
+    // scoped to the layer instead of the page.
+    queryOptions: { errorPolicy: "all" },
+  },
 );
 
 /**

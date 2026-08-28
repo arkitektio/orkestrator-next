@@ -43,6 +43,9 @@ const Page = asDetailQueryRoute(useGetAnnotationQuery, ({ data }) => {
   const { data: sceneData, loading: sceneLoading } = useGetSceneQuery({
     variables: { id: scene?.id as string },
     skip: !scene,
+    // See ScenePage: a layer whose `asAffine` cannot condense must null that
+    // one field, not discard the scene.
+    errorPolicy: "all",
   });
 
   return (

@@ -4,11 +4,16 @@
  * visibility inside the frame callback, and mutates its own render target —
  * all deliberately outside React's data flow (see useVolumeRayUniforms for
  * the same contract on uniforms). */
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { NodeMaterial } from "three/webgpu";
-import { screenUV, texture } from "three/tsl";
+import {
+  buildVolumeCompositeNode,
+  isPostInert,
+  updateVolumePostUniforms,
+} from "../../platform/gpu/volumePost";
+import { useModeStore } from "../../platform/stores/modeStore";
 import { EXCLUDE_FROM_CAPTURE } from "../../platform/visibility/captureVisibility";
 import {
   COMPOSITOR_INTERNAL,
@@ -124,6 +129,7 @@ export const VolumeCompositor = () => {
   const viewStoreApi = useViewStoreApi();
   const viewerStoreApi = useBrickStoreApi();
   const stats = useMemo(() => createCompositorStats(), []);
+  const invalidate = useThree((state) => state.invalidate);
 
   const target = useMemo(
     () =>
@@ -147,9 +153,29 @@ export const VolumeCompositor = () => {
   // bit-for-bit over any background — including the transparent canvas,
   // where the accumulated ALPHA is what makes volumes visible at all (the
   // scene background is a DOM div behind the canvas).
+  // CINEMATIC post (bloom + grading) lives in this quad's colorNode — see
+  // `platform/gpu/volumePost.ts` for why it runs on the TARGET and not on the
+  // scene. The material is rebuilt when the chain's SHAPE changes (cinematic
+  // on/off, or the settings becoming inert) rather than when its values change:
+  // a strength-0 bloom uniform still executes every downsample and upsample, so
+  // scientific mode has to emit no bloom nodes at all, not zeroed ones. Value
+  // changes ride the live uniforms in the effect below.
+  const cinematic = useModeStore((s) => s.cinematic);
+  const post = useModeStore((s) => s.post);
+  const postActive = cinematic && !isPostInert(post);
+  // Read by the material builder without making it a dep: the SHAPE of the
+  // chain depends on `postActive`, its VALUES ride live uniforms.
+  const postRef = useRef(post);
+  postRef.current = post;
+
   const quad = useMemo(() => {
     const material = new NodeMaterial();
-    material.colorNode = texture(target.texture, screenUV);
+    const chain = buildVolumeCompositeNode(
+      target.texture,
+      postActive ? postRef.current : null,
+    );
+    material.colorNode = chain.colorNode;
+    material.userData.postChain = chain;
     material.transparent = true;
     material.blending = THREE.CustomBlending;
     material.blendEquation = THREE.AddEquation;
@@ -178,16 +204,35 @@ export const VolumeCompositor = () => {
     mesh.userData[COMPOSITOR_INTERNAL] = true;
     mesh.userData[EXCLUDE_FROM_CAPTURE] = true;
     return mesh;
-  }, [target]);
+    // `postActive` only — the SHAPE of the chain. Rebuilding on every slider
+    // tick would thrash the bloom node's mip targets.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [target, postActive]);
 
   useEffect(
     () => () => {
       target.dispose();
       quad.geometry.dispose();
-      (quad.material as THREE.Material).dispose();
+      const material = quad.material as THREE.Material;
+      // Release the bloom node's mip render targets before the material.
+      (material.userData.postChain as { dispose: () => void } | undefined)?.dispose();
+      material.dispose();
     },
     [target, quad],
   );
+
+  // Slider drags: push into the live uniforms and request a frame. The target
+  // itself does not need re-rendering (post is applied at COMPOSITE time, in
+  // the canvas pass, which runs every frame) — so this deliberately does not
+  // invalidate the volume-frame cache.
+  useEffect(() => {
+    const chain = (quad.material as THREE.Material).userData.postChain as
+      | Parameters<typeof updateVolumePostUniforms>[0]
+      | undefined;
+    if (!chain) return;
+    updateVolumePostUniforms(chain, post);
+    invalidate();
+  }, [quad, post, invalidate]);
 
   const lastScaleRef = useRef(0);
   const brokenRef = useRef(false);

@@ -354,6 +354,21 @@ describe("resolveSmoothThreshold", () => {
     expect(resolveSmoothThreshold(TIER_LOW, false)).toBe(0);
     expect(resolveSmoothThreshold(TIER_LOW, true)).toBe(0);
   });
+
+  it("is off in SCIENTIFIC mode on every tier", async () => {
+    const { resolveSmoothThreshold, SMOOTH_ZOOM_THRESHOLD_PX, TIER_HIGH, TIER_MEDIUM } =
+      await import("./qualityGovernor");
+    // The tricubic is a display-space reconstruction filter, so it is the
+    // preset's to own — unlike clim or gamma. Measurements are unaffected
+    // either way (CPU probes read RAW voxel values).
+    expect(resolveSmoothThreshold(TIER_HIGH, false, false)).toBe(0);
+    expect(resolveSmoothThreshold(TIER_MEDIUM, false, false)).toBe(0);
+    expect(resolveSmoothThreshold(TIER_HIGH, true, false)).toBe(0);
+    // CINEMATIC restores the tier/activity gate unchanged.
+    expect(resolveSmoothThreshold(TIER_HIGH, false, true)).toBe(SMOOTH_ZOOM_THRESHOLD_PX);
+    // Omitting the argument must keep the pre-preset behaviour.
+    expect(resolveSmoothThreshold(TIER_HIGH, false)).toBe(SMOOTH_ZOOM_THRESHOLD_PX);
+  });
 });
 
 describe("resolveMaxRaySteps (adaptive depth)", () => {

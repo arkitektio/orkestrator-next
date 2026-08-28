@@ -1,12 +1,23 @@
-# RFC: cinematic mode (lit volume)
+# Cinematic mode (lit volume)
 
-**Status: proposal. Nothing here is implemented.** The code shapes below are
-sketches — see §8, none of this TSL has been compiled.
+**Status: IMPLEMENTED (Phases 0-2 of §5, plus the tone-mapping and smoothing
+gates §5 did not anticipate).** The TSL sketches below are kept for their
+rationale, not as current code — read them beside
+`features/bricks/gpu/brickNodeMaterials.ts` (`emitFieldGradient` / `emitShade`)
+and its CPU mirror `platform/gpu/shading.ts`. The invariants in §3 are the
+load-bearing part of this document and are restated at each site that must
+honour them.
+
+**The user-facing shape is a CINEMATIC <-> SCIENTIFIC toggle**, session-only on
+`modeStore.cinematic`, default OFF (scientific), in the `SceneSettings` gear
+popover. It gates three display-space effects: volume shading (this document),
+ACES tone mapping (see the correction in §2) and tricubic zoom smoothing
+(`resolveSmoothThreshold`). It touches nothing quantitative — see C1.
 
 A "cinematic mode" that shades the volume: gradient-derived normals,
 Blinn-Phong key/fill, and a surface gate. Today the volume renderer has **no
 lighting of any kind** — no gradients, no normals, `material.lights = false`
-(`features/bricks/gpu/brickNodeMaterials.ts`, `commonMaterialSettings`, line 688). The
+(`features/bricks/gpu/brickNodeMaterials.ts`, `commonMaterialSettings`, line 1256). The
 ISOSURFACE projection is a first-hit test that paints a flat colormap colour, so
 it renders a silhouette rather than an object.
 
@@ -35,7 +46,7 @@ The chain is structural, not incidental — *3D ⟺ border ⟺ linear*:
 | fact | where |
 |---|---|
 | `border = mode === "3D" ? 1 : 0` | `features/bricks/octree/brickSpec.ts:59` |
-| `filter: spec.border > 0 ? "linear" : "nearest"` | `features/bricks/residency/brickResidency.ts:657` |
+| `filter: spec.border > 0 ? "linear" : "nearest"` | `features/bricks/residency/brickResidency.ts:2182` |
 | "3D: payload 64³, border 1 (stored 66³), LinearFilter" | `OCTREE_RENDERER.md` §2.3 |
 
 Note the border is edge-replicated at the *volume's* outer boundary and holds
@@ -54,9 +65,29 @@ Lighting modulates colour **inside** the march, before accumulation. So
 they are. No HDR target, no depth pass, no post-processing, no change to the 2D
 plane compositor.
 
-This is worth stating because the *other* reading of "cinematic" — bloom, depth of
-field, tone-mapped grading — is genuinely structural and roughly an order of
-magnitude more work. It needs the volume writing real alpha **and** depth into a
+**CORRECTION (2026-08-28) — tone mapping was already ON, by accident.** Nothing
+in the tree ever set `toneMapping`, and the `<Canvas>` in
+`shell/SceneViewport.tsx` sets neither `flat` nor `linear`, so R3F's default
+(`ACESFilmicToneMapping` + `SRGBColorSpace`) applied to every frame the scene has
+ever drawn. `material.toneMapped = false` does NOT prevent this — it is a
+documented no-op on the WebGPU backend (read only by WebGLRenderer/
+WebGLPrograms, while the output transform runs as a separate full-screen pass).
+So the scene's default was the PRETTY end, and the scientific direction is one
+line: `ToneMappingSync` in `SceneViewport.tsx` now switches
+ACES <-> `NoToneMapping` with the preset. Cost is bounded — three's
+`getOutputCacheKey()` keys only the output pass on `renderer.toneMapping`, so a
+flip recompiles one full-screen quad and leaves every brick pipeline alone.
+
+The honest limit: the brick materials blend ADDITIVELY, so under `NoToneMapping`
+a multi-channel sum above 1.0 HARD CLIPS where ACES rolled it off monotonically.
+Scientific mode is therefore linear and monotone up to 1.0 and saturated above
+it. That is deliberate — ACES does not fix oversaturation, it hides it — but it
+is a real limit on the "screen value is a function of data value" claim and must
+be stated wherever that claim is made.
+
+The rest of this section still holds for the OTHER reading of "cinematic" —
+bloom, depth of field, tone-mapped GRADING — which is genuinely structural and
+roughly an order of magnitude more work. It needs the volume writing real alpha **and** depth into a
 float target, which means rewriting the final resolve of all four projection modes
 plus the 2D plane material, then adding three's own TSL `PostProcessing`. (Note
 `@react-three/postprocessing` is in `package.json` but is WebGL-only and cannot
@@ -114,11 +145,36 @@ near the limit with five (`uPageOffset`, `uLevelShape`, `uLevelScale`,
 `uniform()` nodes share one object UBO and are free. Every uniform this design
 adds is scalar or vec3.
 
-**C7 — MIP and attenuated MIP stay unlit, by construction.** Only the
-`projectionMode == 2` (VOLUME) and `== 3` (ISOSURFACE) branches consult the
-cinematic uniform, so this falls out with no code. Lighting a max-projection would
-break its quantitative contract: brightness *is* max intensity. The UI implication
-is in §6.
+**C7 — MIP and attenuated MIP stay unlit, by construction.**
+**↳ RELAXED (2026-08-28), at the user's request.** In cinematic mode an intensity
+layer sits on MIP, so under the original C7 it stayed flat while every VOLUME and
+ISOSURFACE layer beside it lit up — which reads as broken, and was the complaint
+that forced this. All four projections now shade.
+
+*What is surrendered:* in a MIP, screen brightness IS max intensity along the ray,
+a value you can read off the picture by eye. Shading breaks that — a bright voxel
+on a grazing surface renders dimmer than the same voxel face-on. This is true
+**only in cinematic mode**; scientific mode is unaffected, and that is the mode the
+fidelity guarantee is written against.
+
+*What still holds — C1, untouched.* The winner is still selected on the UNSHADED
+`sampleNorm` (and for attenuated MIP on the unshaded `sampleNorm · atten`); only
+the colour stored for the winner is lit. Probe readings, the shaderspec mirrors and
+every early-termination bound are unchanged. A diff that shades `sampleNorm`, `av`
+or either early-out is the bug.
+
+*The dial.* Rather than pick the tradeoff by assertion, `LightRig.mipShading`
+weights the diffuse term for the MAX projections only:
+`diffuse_mip = mix(1, diffuse, mipShading)`. At `0` a MIP keeps its brightness
+exactly and gains only highlights; at `1` it is treated identically to VOLUME.
+Default `0.5`, exposed as a slider. Specular is never weighted — it ADDS light, so
+it can never darken a MIP below its true value.
+
+*Cost.* Not the iso path's 2-5%: a gradient fires on every running-max improvement,
+which on a smooth monotone ramp is most steps until the `bestNorm >= 0.995`
+early-out — worst case the same ~1.5-2× as lit VOLUME. It therefore rides the same
+`resolveCinematic` / `litVolumeWhileActive` governor gate, inheriting
+flat-while-dragging → lit-on-settle and the R2 tour override for free.
 
 **C8 — This is not a `ProjectionMode` and not a `DisplayMode`.**
 `ProjectionMode` is a backend enum (`api/graphql.ts:6402`) — a fifth member needs
@@ -212,15 +268,20 @@ one line if it reads wrong in review.
 
 ## 5. Phases
 
-**Phase 0 — unblock the iso threshold (~3h).** `isoThreshold` is a uniform node
-(`brickNodeMaterials.ts:834`, default 0.5) that **nothing ever writes** — grep
-returns only its declaration, its read at line 1040, and its export. Isosurface is
+**Phase 0 — unblock the iso threshold (~3h). DONE.** *(Premise corrected: the
+uniform IS written — `BrickVolumeLayer.tsx` pushed a hardcoded `0.5` through
+`updateMergedMemberNodes`, so the plumbing already existed and only a store
+field and a control were missing.)* `isoThreshold` is a per-member uniform node
+(`brickNodeMaterials.ts:1552`, default 0.5). Isosurface is
 permanently pinned at 0.5, and a shaded iso is worthless without a working
-threshold. It *must* be session-only: `ProjectionNode` (`api/graphql.ts:6414`) is
-`{children, kind, label, mode}` — there is no threshold field to persist to. Mirror
-`viewerStore.probeThreshold` + the threshold block of
-`features/probe/SelectedPointPanel.tsx` (the probe HUD) verbatim. Worth
-landing on its own merit, independent of cinematic.
+threshold. It *must* be session-only: `ProjectionNode` (`api/graphql.ts`) is
+`{children, kind, label, mode}` — there is no threshold field to persist to.
+
+It landed on `modeStore.isoThreshold`, NOT on `probeSlice`: it is a render
+uniform that defines what the isosurface IS, whereas `probeThreshold` only tunes
+how a first-hit probe marches. The probe HUD's slider block is the right UI
+template (now factored out as `SliderRow` in `SceneSettings.tsx`), not the right
+home.
 
 **Phase 1 — lit ISOSURFACE (~1 day). The honest first cut.** One gradient per
 *ray* — at the hit, then `Break` — so ~2-5% cost. The best win per unit effort in
@@ -244,14 +305,15 @@ shadowing hazard bites hardest. Loop iterator names are not auto-renamed the way
 
 | file | change |
 |---|---|
-| `features/volume/shading.ts` | **new, pure**: `GRADIENT_H`, `physicalGradient`, `surfaceness`, `blinnPhong`, `CINEMATIC_DEFAULTS`. House style of `platform/model/phasor.ts`. |
+| `platform/gpu/shading.ts` | **new, pure**: `GRADIENT_H`, `physicalGradient`, `surfaceness`, `blinnPhong`, `CINEMATIC_DEFAULTS`. House style of `platform/model/phasor.ts`. |
 | `features/bricks/gpu/brickNodeMaterials.ts` | `length` into the TSL destructure; scalar uniforms `uCinematic`, `uBaseScale`, `uAmbient`, `uSpecular`, `uShininess`, `uSurfaceGain` (C6); `emitFieldGradient` + `emitShade`; argmax `domSlot` in the channel loop (~991); hoist `vPhys`; shade in the ISO (~1039) and VOLUME (~1028) branches. |
 | `features/bricks/layers/BrickVolumeLayer.tsx` | read `useModeStore(s => s.cinematic)`; push `uCinematic` in the existing uniform effect (~179-200); set `uBaseScale` in the `bundle` useMemo beside `uBaseShape`. |
 | `platform/stores/modeStore.ts` | `cinematic` + setter. |
-| `platform/stores/viewerStore.ts` | Phase 0: `isoThreshold` + setter. |
-| `features/volume/IsoThresholdPanel.tsx` | Phase 0: new, from `SelectedPointPanel.tsx`'s threshold block. |
-| `shell/chrome/SceneSettings.tsx` | one `SettingRow` in the Settings2 popover. |
-| `platform/quality/qualityGovernor.ts` | Phase 2: `litVolumeWhileActive` + pure `resolveCinematic`. |
+| `platform/stores/modeStore.ts` | Phase 0: `isoThreshold` + setter; plus `cinematic` and `lightRig`. |
+| `shell/SceneViewport.tsx` | `ToneMappingSync` — the ACES <-> NoToneMapping gate (§2 correction). |
+| `shell/chrome/SceneSettings.tsx` | `CinematicSection`: the toggle, the iso-threshold slider, and the light rig. |
+| `platform/quality/qualityGovernor.ts` | `litVolumeWhileActive` + pure `resolveCinematic`; `resolveSmoothThreshold` gained the `cinematic` argument. |
+| `features/bricks/layers/useVolumeRayUniforms.ts` | `uCinematic` joins the step-scale driver's per-variant values (tier/activity cadence); `animationPlaying` rides the variant for R2. |
 | `OCTREE_RENDERER.md` | C2 as a numbered invariant beside the existing pitfalls. |
 
 `uCinematic` is dynamically uniform across the draw, so the branch is coherent on
@@ -302,7 +364,7 @@ and does not touch a headlight. Rare. Documented, not fixed.
 ## 8. What can and cannot be verified
 
 **Automatable (vitest + tsc):**
-- `features/volume/shading.ts` pure math: dot-product invariance under the y-flip reflection
+- `platform/gpu/shading.ts` pure math: dot-product invariance under the y-flip reflection
   (C4); headlight never dark; `surfaceness` clamps; `physicalGradient` exact under
   anisotropic scale.
 - **The highest-value test here:** assert `GRADIENT_H <= resolveBrickSpec(geo,
@@ -320,19 +382,100 @@ and does not touch a headlight. Rare. Documented, not fixed.
   wrong on first run — budget a debug round-trip.
 - Normal orientation, specular blowout, whether `surfaceGain = 6` and the fill
   direction flatter real data, actual frame cost.
-- `features/volume/shading.ts` would prove the TS is right, **not** that the TSL matches it —
+- `platform/gpu/shading.ts` would prove the TS is right, **not** that the TSL matches it —
   the same caveat the existing `phasor.ts` / `opacityCorrection.ts` mirrors carry.
   Do not oversell it.
 
 ## 9. Deferred on purpose
 
-- **Post-processing** (bloom, DOF, tone-mapped grading) — §2. Needs alpha + depth
-  from the volume and a rewrite of every projection mode's resolve. An order of
-  magnitude more work than lit volume; genuinely a separate project.
+- **Post-processing** — **NO LONGER DEFERRED for bloom and grading**; see §10.
+  DOF remains deferred, and §10 records exactly why.
 - **Volumetric shadows / half-angle slicing** — R3.
-- **Persisting cinematic** — session-only by choice. There is no precedent for
-  persisting a viewer preference to the backend; the two options are the
-  render-graph mutation (per-layer, wrong granularity for a scene-wide light) or
-  the `localStorage` pattern `qualityGovernor` uses for its learned tier.
-- **A configurable light rig** (direction, colour, multiple lights) — the zero-
-  configuration key+fill is the point. Revisit only if real data demands it.
+- **Persisting cinematic** — session-only by choice, and it stayed that way.
+  There is no precedent for persisting a viewer preference to the backend; the
+  two options are the render-graph mutation (per-layer, wrong granularity for a
+  scene-wide light) or the `localStorage` pattern `qualityGovernor` uses for its
+  learned tier.
+- **A configurable light DIRECTION rig** (direction, colour, multiple lights) —
+  the zero-configuration key+fill is the point. *(The four scalars — ambient,
+  specular, shininess, surfaceGain — were shipped as sliders because
+  `surfaceGain` in particular needs tuning against real data. The directions are
+  still fixed by design.)*
+
+---
+
+## 10. Post-processing (2026-08-28) — bloom + grading, on the target
+
+**Three corrections to §2/§9's premise**, all verified against the installed three
+0.184:
+
+1. **`PostProcessing` is deprecated** — renamed `RenderPipeline` in r183, and
+   `renderAsync()` deprecated in r181 in favour of a synchronous `render()`. The
+   `frameloop="demand"` objection dissolves. (In the end neither is needed — see
+   below.)
+2. **The TSL display nodes are NOT in `three/tsl`.** That barrel ships only the core
+   `src/nodes/display/*` set — `pass`, `renderOutput`, `luminance`, `nodeObject` and
+   the `ColorAdjustment` family (`saturation`, `vibrance`, `hue`). Bloom and the rest
+   live in the addons: `three/examples/jsm/tsl/display/BloomNode.js` → `bloom`.
+   `platform/gpu/volumePost.test.ts` asserts that specifier still resolves and that
+   the graph builds.
+3. **"Filmic grading" is not `film`** — `FilmNode` is grain and scanlines. Grading is
+   `renderOutput` tone mapping (already wired to the preset), `lut3D`, and
+   `ColorAdjustment`.
+
+### The design: post the VOLUME TARGET, not the scene
+
+`VolumeCompositor` already renders volumes — and only volumes — into a private
+offscreen `HalfFloatType` target and adds it back with `(One, One)` on both colour
+and alpha. The whole chain therefore lives in that composite quad's `colorNode`
+(`platform/gpu/volumePost.ts`), which buys:
+
+- **Furniture excluded for free** — no glow on the scale grid, origin axis, ROI
+  outlines, `Line2` track lines, vertex handles or point sprites. There is no
+  post-eligibility mechanism in the scene (`passVisibility.ts` gates per PASS), so
+  the `pass(scene, camera)` route would have needed a second pass for chrome.
+- **No frame-loop takeover** — the compositor already owns the frame via
+  `useFrame(cb, 1)` and a second priority>0 subscriber would double-render. Nothing
+  new subscribes; no render call changes.
+- **No `RenderPipeline` at all** — `BloomNode.updateBefore` sizes itself from the
+  renderer and saves/restores renderer state via `RendererUtils`, so it is
+  self-contained inside any material's node graph.
+
+**Alpha is the load-bearing detail.** The canvas is transparent over a DOM
+background div, so accumulated alpha is what makes a volume visible (§2's note on
+`commonMaterialSettings`). A bloom halo extends past the volume's footprint where
+`base.a` is 0: leave alpha alone and the halo never appears; sum the bloom's own
+alpha and the frame goes milky. The chain uses
+`alpha = clamp(base.a + luminance(glow.rgb), 0, 1)` — the halo earns exactly as much
+coverage as it has brightness. **This is the thing to check first on a GPU**;
+`GaussianBlurNode`'s `premultipliedGaussianBlur` is the fallback.
+
+**Scientific mode emits nothing.** A strength-0 bloom uniform still executes every
+downsample and upsample, so the material is REBUILT on the cinematic edge and the
+passthrough build is bit-for-bit the old `texture(map, screenUV)`. Value changes ride
+BloomNode's own uniform nodes and never rebuild.
+
+### Known limitations, deliberate
+
+- **Screenshots have no post.** `SceneScreenshot` hides the composite quad (it is
+  `EXCLUDE_FROM_CAPTURE`) and re-raymarches the volumes live at capture resolution —
+  the capture takes the DIRECT path and never touches this chain. Fixing it means
+  routing the capture through a compositor-like path at capture size.
+- **3D only**, and it rides the `orkestrator.volumeTarget` kill switch: with the
+  compositor off there is no target, so there is no post. `TwoDScene` gets none.
+- **`CanvasHueProbe`** samples canvas pixels for the brand hue; bloom shifts it.
+
+### DOF: still deferred, and now with the reasons
+
+- The volume is `depthWrite = false`, additive and `BackSide`, and its resolve
+  returns `vec4(outColor, 1.0)` — there is no per-pixel depth today.
+- The target has `depthBuffer: true` but **no `depthTexture`**, so nothing is
+  sampleable.
+- **MIP and attenuated MIP have no meaningful depth at all** — an argmax position is
+  not a surface. VOLUME has only a statistical depth (a `volAlpha` crossing).
+  ISOSURFACE is the one mode with a defensible depth: `rayT` at the first hit.
+- `PassNode.getViewZNode()` calls `perspectiveDepthToViewZ` unconditionally in
+  0.184, so it is wrong under the orthographic cameras this scene supports.
+
+The door that is open: ISOSURFACE-only, perspective-only DOF, by storing `rayT` at
+the hit and adding a `DepthTexture` to the volume target.

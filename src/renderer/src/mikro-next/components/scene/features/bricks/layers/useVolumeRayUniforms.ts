@@ -12,6 +12,7 @@ import {
   qualityGovernor,
   resolveMaxRaySteps,
   resolveStepScale,
+  resolveCinematic,
   resolveSmoothThreshold,
 } from "../../../platform/quality/qualityGovernor";
 import { isSmoothZoomEnabled, isWorldLodEnabled } from "../gpu/shaderFlags";
@@ -20,6 +21,8 @@ import type * as THREE from "three";
 import type { LayerBrickPool } from "../residency/brickResidency";
 import { useViewStore, useViewStoreApi } from "../../../platform/stores/viewStore";
 import { useViewerStoreApi } from "../../../platform/stores/viewerStore";
+import { useModeStore } from "../../../platform/stores/modeStore";
+import { useAnimationStore } from "../../../platform/stores/animationStore";
 import { useBrickStore } from "../store/brickSlice";
 
 /**
@@ -57,6 +60,8 @@ export type StepScaleUniformHandle = {
   uStepScale: { value: number };
   uMaxSteps: { value: number };
   uSmoothThreshold?: { value: number };
+  /** Volume material only — the label raymarcher has no shading path. */
+  uCinematic?: { value: number };
 };
 
 /**
@@ -219,6 +224,11 @@ export const useStepScaleUniform = (
   const viewStoreApi = useViewStoreApi();
   const viewerStoreApi = useViewerStoreApi();
   const invalidate = useThree((state) => state.invalidate);
+  // A rare-cadence scalar (a deliberate user toggle), so a reactive
+  // subscription here is P17-clean — unlike anything that varies per frame.
+  const cinematic = useModeStore((s) => s.cinematic);
+  // Rare-cadence scalar (a tour starts or stops), so this is P17-clean.
+  const animationPlaying = useAnimationStore((s) => s.playingId !== null);
 
   useEffect(() => {
     if (!nodes) return;
@@ -227,10 +237,19 @@ export const useStepScaleUniform = (
     const smoothZoom = isSmoothZoomEnabled();
     return stepScaleDriverFor(viewStoreApi).register(
       nodes,
-      { settleRefine, canvasPass, smoothZoom },
+      { settleRefine, canvasPass, smoothZoom, cinematic, animationPlaying },
       { viewerStoreApi, invalidate },
     );
-  }, [nodes, settleRefine, canvasPass, viewStoreApi, viewerStoreApi, invalidate]);
+  }, [
+    nodes,
+    settleRefine,
+    canvasPass,
+    cinematic,
+    animationPlaying,
+    viewStoreApi,
+    viewerStoreApi,
+    invalidate,
+  ]);
 };
 
 // ---------------------------------------------------------------------------
@@ -242,9 +261,23 @@ export type StepScaleVariant = {
   settleRefine: boolean;
   canvasPass: boolean;
   smoothZoom: boolean;
+  /** `modeStore.cinematic`. Scientific mode disables tricubic reconstruction —
+   * see `resolveSmoothThreshold`. A deliberate, rare toggle, so it re-registers
+   * the variant rather than joining the per-emission snapshot. */
+  cinematic: boolean;
+  /** A camera TOUR is playing. Flips only at a tour's start/stop, so like
+   * `cinematic` it rides the variant rather than the per-emission snapshot.
+   * Consumed by `resolveCinematic` ONLY — see R2 there. */
+  animationPlaying: boolean;
 };
 
-export type StepScaleValues = { step: number; maxSteps: number; smooth: number };
+export type StepScaleValues = {
+  step: number;
+  maxSteps: number;
+  smooth: number;
+  /** `uCinematic`: 1 = shade the volume this frame, 0 = flat. */
+  lit: number;
+};
 
 /** The governor + motion inputs `resolveStepValues` reads — a snapshot, so
  * the resolution itself is pure and testable. */
@@ -277,21 +310,34 @@ export const resolveStepValues = (
       inputs.volumePassCount,
       variant.settleRefine ? inputs.settleRefineStage : 0,
     ),
-    smooth: variant.smoothZoom ? resolveSmoothThreshold(inputs.tier, active) : 0,
+    smooth: variant.smoothZoom
+      ? resolveSmoothThreshold(inputs.tier, active, variant.cinematic)
+      : 0,
+    // Lit VOLUME is a settled-image luxury on slow tiers, exactly like the
+    // tricubic above — but a playing tour overrides the activity gate (R2).
+    lit: resolveCinematic(inputs.profile, variant.cinematic, active, variant.animationPlaying)
+      ? 1
+      : 0,
   };
 };
 
 const sameStepValues = (a: StepScaleValues | null, b: StepScaleValues): boolean =>
-  a !== null && a.step === b.step && a.maxSteps === b.maxSteps && a.smooth === b.smooth;
+  a !== null &&
+  a.step === b.step &&
+  a.maxSteps === b.maxSteps &&
+  a.smooth === b.smooth &&
+  a.lit === b.lit;
 
 const writeStepValues = (handle: StepScaleUniformHandle, values: StepScaleValues): void => {
   handle.uStepScale.value = values.step;
   handle.uMaxSteps.value = values.maxSteps;
   if (handle.uSmoothThreshold) handle.uSmoothThreshold.value = values.smooth;
+  // Absent on the LABEL material, which has no shading path.
+  if (handle.uCinematic) handle.uCinematic.value = values.lit;
 };
 
 const variantKeyOf = (v: StepScaleVariant): string =>
-  `${v.settleRefine ? 1 : 0}${v.canvasPass ? 1 : 0}${v.smoothZoom ? 1 : 0}`;
+  `${v.settleRefine ? 1 : 0}${v.canvasPass ? 1 : 0}${v.smoothZoom ? 1 : 0}${v.cinematic ? 1 : 0}${v.animationPlaying ? 1 : 0}`;
 
 type StepScaleSinks = {
   viewerStoreApi: { getState(): { volumeInputs: { bump(reason: string): void } } };

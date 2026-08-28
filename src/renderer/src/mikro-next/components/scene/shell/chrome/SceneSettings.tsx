@@ -13,6 +13,9 @@ import { resolveProbeStrategy } from "../../platform/probe/probeModes";
 import type { ProbeMode } from "../../platform/probe/probeTypes";
 import { effectiveProbeLayerId } from "../../platform/probe/probeTargeting";
 import { useModeStore } from "../../platform/stores/modeStore";
+import { LIGHT_RIG_RANGES } from "../../platform/gpu/shading";
+import { VOLUME_POST_RANGES } from "../../platform/gpu/volumePost";
+import { ProjectionMode } from "@/mikro-next/api/graphql";
 import { useSceneStore } from "../../platform/stores/sceneStore";
 import { useViewerStore } from "../../platform/stores/viewerStore";
 
@@ -30,6 +33,217 @@ const SettingRow = ({
     <Switch checked={checked} onCheckedChange={onChange} />
   </div>
 );
+
+/** The label + mono value chip + slider shape used by every numeric setting
+ * in this popover (probe threshold, iso threshold, the light rig). */
+const SliderRow = ({
+  label,
+  value,
+  min,
+  max,
+  step,
+  decimals = 2,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  decimals?: number;
+  onChange: (v: number) => void;
+}) => (
+  <div className="mt-2">
+    <div className="flex items-center justify-between text-[10px] font-medium text-muted-foreground">
+      <span>{label}</span>
+      <span className="rounded bg-muted px-1 font-mono">{value.toFixed(decimals)}</span>
+    </div>
+    <Slider
+      min={min}
+      max={max}
+      step={step}
+      value={[value]}
+      onValueChange={([next]) => onChange(next)}
+      className="py-2"
+    />
+  </div>
+);
+
+/**
+ * The CINEMATIC <-> SCIENTIFIC preset, and the light rig it enables.
+ *
+ * SCIENTIFIC (the default, and what this renderer has always been) means
+ * screen value is a documented function of data value: no volume shading, no
+ * filmic grading, no reconstruction filter. CINEMATIC adds all three.
+ *
+ * INVARIANT C1 — everything the preset gates is display-space. It never
+ * touches clim, the transfer curve, gamma, the colormap or the projection
+ * mode, so a probe reading is identical in both modes. See
+ * `../../CINEMATIC_MODE.md`.
+ *
+ * The toggle stays ENABLED even when no layer would be shaded: `cinematic` is
+ * scene-wide while `projection` is per-layer, and "disable it when it would do
+ * nothing" needs a scene-to-layer coupling that does not exist and is not
+ * worth building. The label carries the truth instead.
+ */
+const CinematicSection = () => {
+  const cinematic = useModeStore((s) => s.cinematic);
+  const setCinematic = useModeStore((s) => s.setCinematic);
+  const lightRig = useModeStore((s) => s.lightRig);
+  const setLightRig = useModeStore((s) => s.setLightRig);
+  const resetLightRig = useModeStore((s) => s.resetLightRig);
+  const post = useModeStore((s) => s.post);
+  const setPost = useModeStore((s) => s.setPost);
+  const resetPost = useModeStore((s) => s.resetPost);
+  const isoThreshold = useModeStore((s) => s.isoThreshold);
+  const setIsoThreshold = useModeStore((s) => s.setIsoThreshold);
+  const layers = useSceneStore((s) => s.layers);
+
+  // The iso threshold defines the surface, so it is only meaningful when some
+  // visible layer actually extracts one.
+  const hasIsosurface = layers.some(
+    (candidate) =>
+      candidate.visible !== false && candidate.projection === ProjectionMode.Isosurface,
+  );
+
+  return (
+    <div className="mt-1 border-t pt-1">
+      <SettingRow label="Cinematic" checked={cinematic} onChange={setCinematic} />
+      <p className="text-[10px] leading-4 text-muted-foreground">
+        {cinematic
+          ? "Lights every projection, with filmic grading. On MIP, brightness no longer reads as intensity."
+          : "Faithful: unlit, no grading, no smoothing. Values map straight to screen."}
+      </p>
+
+      {hasIsosurface && (
+        <SliderRow
+          label="Iso threshold"
+          value={isoThreshold}
+          min={0}
+          max={1}
+          step={0.005}
+          decimals={3}
+          onChange={setIsoThreshold}
+        />
+      )}
+
+      {cinematic && (
+        <div className="mt-2 border-t pt-1">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-medium text-muted-foreground">
+              Light rig
+            </span>
+            <button
+              onClick={resetLightRig}
+              className="rounded px-1 text-[10px] text-muted-foreground hover:text-foreground"
+              title="Restore the default key + fill rig"
+            >
+              Reset
+            </button>
+          </div>
+          <SliderRow
+            label="Ambient"
+            value={lightRig.ambient}
+            {...LIGHT_RIG_RANGES.ambient}
+            onChange={(ambient) => setLightRig({ ambient })}
+          />
+          <SliderRow
+            label="Specular"
+            value={lightRig.specular}
+            {...LIGHT_RIG_RANGES.specular}
+            onChange={(specular) => setLightRig({ specular })}
+          />
+          <SliderRow
+            label="Shininess"
+            value={lightRig.shininess}
+            {...LIGHT_RIG_RANGES.shininess}
+            decimals={0}
+            onChange={(shininess) => setLightRig({ shininess })}
+          />
+          <SliderRow
+            label="Surface gain"
+            value={lightRig.surfaceGain}
+            {...LIGHT_RIG_RANGES.surfaceGain}
+            decimals={1}
+            onChange={(surfaceGain) => setLightRig({ surfaceGain })}
+          />
+          {/* The MIP tradeoff, as a dial rather than a hardcoded choice. At 0 a
+              max projection keeps its quantitative reading and gains only
+              highlights; at 1 it is shaded exactly like a VOLUME layer and sits
+              naturally beside one. Tune it against real data. */}
+          <SliderRow
+            label="MIP shading"
+            value={lightRig.mipShading}
+            {...LIGHT_RIG_RANGES.mipShading}
+            onChange={(mipShading) => setLightRig({ mipShading })}
+          />
+          <p className="text-[10px] leading-4 text-muted-foreground">
+            0 keeps MIP brightness equal to max intensity; 1 shades it like a volume.
+          </p>
+
+          {/* Post-processing. Applied to the VOLUME TARGET only, so it never
+              touches the grid, axis, ROI outlines, track lines or handles —
+              see platform/gpu/volumePost.ts. 3D only, and it rides the
+              `orkestrator.volumeTarget` kill switch: with the compositor off
+              there is no target and therefore no post. */}
+          <div className="mt-2 border-t pt-1">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-medium text-muted-foreground">
+                Glow &amp; grading
+              </span>
+              <button
+                onClick={resetPost}
+                className="rounded px-1 text-[10px] text-muted-foreground hover:text-foreground"
+                title="Restore the default glow and grading"
+              >
+                Reset
+              </button>
+            </div>
+            <SliderRow
+              label="Bloom"
+              value={post.bloomStrength}
+              {...VOLUME_POST_RANGES.bloomStrength}
+              onChange={(bloomStrength) => setPost({ bloomStrength })}
+            />
+            <SliderRow
+              label="Bloom radius"
+              value={post.bloomRadius}
+              {...VOLUME_POST_RANGES.bloomRadius}
+              onChange={(bloomRadius) => setPost({ bloomRadius })}
+            />
+            <SliderRow
+              label="Bloom threshold"
+              value={post.bloomThreshold}
+              {...VOLUME_POST_RANGES.bloomThreshold}
+              onChange={(bloomThreshold) => setPost({ bloomThreshold })}
+            />
+            <SliderRow
+              label="Saturation"
+              value={post.saturation}
+              {...VOLUME_POST_RANGES.saturation}
+              onChange={(saturation) => setPost({ saturation })}
+            />
+            <SliderRow
+              label="Vibrance"
+              value={post.vibrance}
+              {...VOLUME_POST_RANGES.vibrance}
+              onChange={(vibrance) => setPost({ vibrance })}
+            />
+            <SliderRow
+              label="Vignette"
+              value={post.vignette}
+              {...VOLUME_POST_RANGES.vignette}
+              onChange={(vignette) => setPost({ vignette })}
+            />
+            <p className="text-[10px] leading-4 text-muted-foreground">
+              3D only. Vignette dims real data at the frame edge.
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const PROBE_MODES: { mode: ProbeMode; label: string }[] = [
   { mode: "auto", label: "Auto" },
@@ -293,6 +507,8 @@ export const SceneSettings = () => {
             </>
           )}
         </div>
+
+        <CinematicSection />
 
         <ProbeSettingsSection />
 

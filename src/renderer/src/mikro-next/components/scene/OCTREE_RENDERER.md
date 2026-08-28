@@ -939,6 +939,24 @@ single-level cubes are untouched (the check is budget-based, not
 instead — partial coarsest coverage would violate the shader's fallback
 invariant. The real fix for such data is a server-side pyramid.
 
+**P29 — The gradient half-step is bounded by the brick BORDER, not by taste.**
+Cinematic shading takes six central-difference taps at `±GRADIENT_H` texels off
+the resolved `texelBase` (`emitFieldGradient` in
+`features/bricks/gpu/brickNodeMaterials.ts`). This is free — no extra page-table
+walk — precisely because a 3D brick carries a 1-voxel replicated border and the
+3D atlas is linear-filtered (`brickSpec.ts` `border = 1`, `brickResidency.ts`
+`filter: spec.border > 0 ? "linear" : "nearest"`). The safe range of a slot is
+`[slot + 0.5, slot + slotSize - 0.5]` while the payload occupies
+`[slot + 1, slot + 1 + payload)` — exactly 0.5 texel of margin per side. So
+`GRADIENT_H = 0.5` is an INVARIANT, not a tuning knob: `h > 0.5` reaches past
+the border into the neighbouring slot in x/y, and in z into the neighbouring
+CHANNEL SLAB (`slotSize.z = stored.z * channelCount`), silently mixing another
+channel's data into the normals. Nothing crashes; the picture is just quietly
+wrong. `platform/gpu/shading.test.ts` asserts `GRADIENT_H <= spec.border` across
+every spec `resolveBrickSpec` can produce, the payload-doubling path included.
+If a wider baseline is ever genuinely needed, the correct move is a full
+`emitResolveBrickResidency` per tap (~7× the march), not a bigger `h`.
+
 **P19 — Byte budgets lie on integrated GPUs: budget main-thread GPU uploads by
 TIME.** The 6 MB / 12-brick per-frame upload budget was calibrated on a
 dedicated GPU where a `texSubImage3D` costs ≪1 ms. On an Apple M2 (ANGLE-Metal)

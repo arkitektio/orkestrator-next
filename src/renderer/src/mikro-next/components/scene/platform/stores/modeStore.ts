@@ -1,6 +1,14 @@
 import { createStore } from "zustand/vanilla";
 import { immer } from "zustand/middleware/immer";
 import { createScopedStoreHooks } from "@/lib/generic/createScopedStore";
+import {
+  CINEMATIC_DEFAULTS,
+  type LightRig,
+} from "../gpu/shading";
+import {
+  VOLUME_POST_DEFAULTS,
+  type VolumePostSettings,
+} from "../gpu/volumePost";
 
 /**
  * Three modes, not seven. What used to be MOVE (no behaviour at all) and META
@@ -87,6 +95,45 @@ export interface ModeState {
    * re-renders.
    */
   probeFollowsCursor: boolean;
+  /**
+   * The presentation/faithful switch. OFF is the SCIENTIFIC look and is the
+   * renderer as it has always been, plus `NoToneMapping`; ON adds volume
+   * shading, ACES grading and tricubic zoom smoothing.
+   *
+   * Session-only and per scene, by choice — see `CINEMATIC_MODE.md` §4.3/§9.
+   * It lives here rather than on `viewerStore`'s chrome slice (where its
+   * popover siblings live) because `BrickVolumeLayer` already subscribes to
+   * this store, so the flag costs no new subscription on the hot path.
+   *
+   * INVARIANT C1: everything this gates is display-space. It never touches
+   * clim, the transfer curve, gamma, the colormap, `volAlpha`, or the iso hit
+   * test — which is what keeps the CPU transfer mirrors
+   * (`shaderspec/raymarchStep.ts`, `shaderspec/opacityCorrection.ts`,
+   * `octree/brickSampling.ts`, `model/phasor.ts`) valid with zero changes.
+   */
+  cinematic: boolean;
+  /**
+   * Normalized value at which the ISOSURFACE projection extracts its surface.
+   *
+   * Lives here and not on `probeSlice` despite the identical-looking slider:
+   * this is a RENDER uniform that defines what the isosurface IS, whereas
+   * `probeThreshold` only tunes how a first-hit probe marches. It must stay
+   * session-only — `ProjectionNode` in `api/graphql.ts` is
+   * `{children, kind, label, mode}`, so there is no field to persist it to.
+   */
+  isoThreshold: number;
+  /**
+   * Cinematic light rig. Defaults from `CINEMATIC_DEFAULTS` in
+   * `platform/gpu/shading.ts`; exposed because `surfaceGain` in particular
+   * needs tuning against real data. Inert while `cinematic` is false.
+   */
+  lightRig: LightRig;
+  /**
+   * Post-processing for the cinematic preset — bloom and grading, applied to
+   * the volume target only (see `platform/gpu/volumePost.ts`). Session-only and
+   * inert in scientific mode.
+   */
+  post: VolumePostSettings;
   interactionModeOptions: InteractionModeOption[];
   displayModeOptions: DisplayModeOption[];
   setInteractionMode: (mode: InteractionMode) => void;
@@ -95,6 +142,12 @@ export interface ModeState {
   setPivotOnProbe: (on: boolean) => void;
   setSmoothOrbit: (on: boolean) => void;
   setProbeFollowsCursor: (on: boolean) => void;
+  setCinematic: (on: boolean) => void;
+  setIsoThreshold: (value: number) => void;
+  setLightRig: (patch: Partial<LightRig>) => void;
+  resetLightRig: () => void;
+  setPost: (patch: Partial<VolumePostSettings>) => void;
+  resetPost: () => void;
 }
 
 /**
@@ -114,6 +167,10 @@ export const createModeStore = ({
     pivotOnProbe: false,
     smoothOrbit: false,
     probeFollowsCursor: true,
+    cinematic: false,
+    isoThreshold: 0.5,
+    lightRig: { ...CINEMATIC_DEFAULTS },
+    post: { ...VOLUME_POST_DEFAULTS },
     interactionModeOptions,
     displayModeOptions,
     setInteractionMode: (mode) =>
@@ -139,6 +196,30 @@ export const createModeStore = ({
     setProbeFollowsCursor: (on) =>
       set((state) => {
         state.probeFollowsCursor = on;
+      }),
+    setCinematic: (on) =>
+      set((state) => {
+        state.cinematic = on;
+      }),
+    setIsoThreshold: (value) =>
+      set((state) => {
+        state.isoThreshold = value;
+      }),
+    setLightRig: (patch) =>
+      set((state) => {
+        Object.assign(state.lightRig, patch);
+      }),
+    resetLightRig: () =>
+      set((state) => {
+        state.lightRig = { ...CINEMATIC_DEFAULTS };
+      }),
+    setPost: (patch) =>
+      set((state) => {
+        Object.assign(state.post, patch);
+      }),
+    resetPost: () =>
+      set((state) => {
+        state.post = { ...VOLUME_POST_DEFAULTS };
       }),
     })),
   );

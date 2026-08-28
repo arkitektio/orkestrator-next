@@ -15,10 +15,11 @@ import { useViewStoreApi } from "../stores/viewStore";
  * THE PROBE MUST NOT RENDER. It used to measure from a `useFrame(cb, 1)` that
  * called `gl.render(scene, camera)` itself. r3f suppresses its own render as
  * soon as ANY subscriber has priority > 0, so that was correct in isolation —
- * but `GizmoHelper` (SceneViewport) wraps drei's `Hud`, whose `RenderHud` also
- * subscribes at priority 1 and, in that branch, renders the full main scene
- * before its own overlay. Both subscribers ran, so arming a recording rasterized
- * the whole scene TWICE per frame and the report blamed the resulting ~half
+ * but `GizmoHelper` (then in SceneViewport) wraps drei's `Hud`, whose
+ * `RenderHud` also subscribes at priority 1 and, in that branch, renders the
+ * full main scene before its own overlay. Both subscribers ran, so arming a
+ * recording rasterized the whole scene TWICE per frame and the report blamed
+ * the resulting ~half
  * framerate on the scene. Measuring from `addEffect`/`addAfterEffect` brackets
  * the frame without participating in it: the Hud stays the sole renderer, and
  * the recording measures the same pipeline the user experiences when idle.
@@ -34,6 +35,17 @@ import { useViewStoreApi } from "../stores/viewStore";
  * with the occluder depth prepass; a cached-composite frame stays at 2.
  * NOTE: a SECOND priority>0 useFrame subscriber (e.g. drei Hud) would
  * double-render alongside the compositor's takeover — keep it the only one.
+ * As of 2026-08-28 no `GizmoHelper` is mounted, so the compositor's is the
+ * ONLY priority>0 subscriber in the scene. Cinematic post-processing
+ * (`platform/gpu/volumePost.ts`) deliberately relies on that: it lives in the
+ * composite quad's node graph rather than in a pipeline of its own, precisely
+ * so it adds no subscriber.
+ *
+ * CINEMATIC BLOOM ADDS RENDER CALLS. `BloomNode.updateBefore` runs a high-pass
+ * plus a horizontal and a vertical blur per mip level and a composite — each a
+ * counted `render()` — so a bloomed frame's `renderCalls` is far above the
+ * counts quoted here. Those baselines describe SCIENTIFIC mode (and cinematic
+ * with glow off, which emits no bloom nodes at all).
  */
 
 /** React subscription to the monitor's recording flag. */

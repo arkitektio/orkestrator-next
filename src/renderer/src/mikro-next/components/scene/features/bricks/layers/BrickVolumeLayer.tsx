@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
+import { voxelWorldSizeOf } from "../../../platform/coords/worldTransform";
 
 import { ProjectionMode } from "@/mikro-next/api/graphql";
 import { marchResidentBricks } from "../octree/brickSampling";
@@ -38,6 +39,7 @@ import {
   createVolumeNodeMaterial,
   updateChannelNodes,
   updateMergedMemberNodes,
+  updateCinematicNodes,
 } from "../gpu/brickNodeMaterials";
 import { buildChannelDataSignature } from "../gpu/channelDataSignature";
 import { buildMergeMembers } from "../gpu/mergeMembers";
@@ -211,6 +213,9 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   );
   const layer = useMemo(() => layers.find((l) => l.id === layerId), [layers, layerId]);
   const interactionMode = useModeStore((s) => s.interactionMode);
+  // Rare-cadence scalars: a deliberate slider drag and a deliberate toggle.
+  const isoThreshold = useModeStore((s) => s.isoThreshold);
+  const lightRig = useModeStore((s) => s.lightRig);
   const probeFollowsCursor = useModeStore((s) => s.probeFollowsCursor);
   // A RENDER subscription, unlike the event-time `roiDrawingApi.getState()`
   // reads it replaces: the handler PROPS below are the raycast gate (P20), so
@@ -463,10 +468,10 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
         slotCount: m.slotCount,
         blendMode: m.blendMode,
         projectionMode: m.projectionMode,
-        // Nothing has ever written this from the layer — the uniform keeps its
-        // default. Kept per-member so an iso threshold can be plumbed later
-        // without touching the shader.
-        isoThreshold: 0.5,
+        // Scene-wide, session-only (`modeStore.isoThreshold`): ProjectionNode
+        // has no threshold field to persist to. Per-member because the shader
+        // reads it per member, not because it varies per layer today.
+        isoThreshold,
         // The fixed-shape arms read these instead of the slot arrays.
         fixed: fixedMemberUniforms(channelData, m),
       })),
@@ -474,7 +479,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     viewerStoreApi.getState().volumeInputs.bump("channel-uniforms");
     invalidate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bundle, channelData, planTargetLevel, layer?.projection, invalidate]);
+  }, [bundle, channelData, planTargetLevel, layer?.projection, isoThreshold, invalidate]);
 
   // Range-decode uniforms, tracked on every poolsVersion bump: the pool's
   // ranges MOVE at runtime (float auto-contrast; occupancy observed-range
@@ -513,6 +518,31 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     // in the merge grouping), so the primary's matrix speaks for the group.
     worldMatrix: affineMatrix,
   });
+
+  // The CINEMATIC light rig. Six scalar writes, no rebuild — and `uBaseScale`
+  // rides along because the shading normal is meaningless without it (C3): the
+  // gradient is taken in level voxels, and microscopy z-steps are routinely 5×
+  // the lateral pitch, so an uncorrected normal visibly tilts toward z.
+  //
+  // NOTE this uses the layer's true voxel→world scale unconditionally, unlike
+  // `uVoxelWorldSize` above, which the `orkestrator.worldLod` flag can pin to
+  // (1,1,1): that flag is an LOD-metric policy, while anisotropy correction is
+  // a geometric fact about the data.
+  useEffect(() => {
+    const nodes = bundle?.nodes;
+    if (!nodes) return;
+    const worldSize = affineMatrix ? voxelWorldSizeOf(affineMatrix) : null;
+    updateCinematicNodes(nodes, {
+      baseScale: new THREE.Vector3(
+        worldSize?.[0] ?? 1,
+        worldSize?.[1] ?? 1,
+        worldSize?.[2] ?? 1,
+      ),
+      ...lightRig,
+    });
+    viewerStoreApi.getState().volumeInputs.bump("cinematic");
+    invalidate();
+  }, [bundle, lightRig, affineMatrix, invalidate, viewerStoreApi]);
 
   useStepScaleUniform(bundle?.nodes, /* settleRefine — image material */ true);
   useVolumePassRegistration(!!bundle);

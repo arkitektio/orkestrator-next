@@ -61,7 +61,13 @@ describe("resolveStepValues", () => {
       volumePassCount: 3,
       settleRefineStage: 2,
     };
-    const variant = { settleRefine: true, canvasPass: false, smoothZoom: true };
+    const variant = {
+      settleRefine: true,
+      canvasPass: false,
+      smoothZoom: true,
+      cinematic: false,
+      animationPlaying: false,
+    };
     expect(resolveStepValues(inputs, variant)).toEqual({
       step: resolveStepScale({
         base: inputs.profile.activeStepScale * 1.5,
@@ -69,13 +75,79 @@ describe("resolveStepValues", () => {
         canvasPass: false,
       }),
       maxSteps: resolveMaxRaySteps(inputs.profile, true, 3, 2),
-      smooth: resolveSmoothThreshold(inputs.tier, true),
+      smooth: resolveSmoothThreshold(inputs.tier, true, false),
+      lit: 0,
     });
     // The variant bits gate exactly what they gated before.
     expect(resolveStepValues(inputs, { ...variant, smoothZoom: false }).smooth).toBe(0);
     expect(resolveStepValues(inputs, { ...variant, settleRefine: false }).maxSteps).toBe(
       resolveMaxRaySteps(inputs.profile, true, 3, 0),
     );
+  });
+
+  it("gates lit VOLUME on the tier while active, and a playing tour overrides it (R2)", () => {
+    const g = new QualityGovernor();
+    const base = {
+      profile: g.getProfile(),
+      tier: g.getTier(),
+      loadFactor: 1,
+      volumePassCount: 1,
+      settleRefineStage: 0,
+    };
+    const variant = {
+      settleRefine: true,
+      canvasPass: false,
+      smoothZoom: true,
+      cinematic: true,
+      animationPlaying: false,
+    };
+    // Settled always lights, on every tier.
+    expect(resolveStepValues({ ...base, active: false }, variant).lit).toBe(1);
+    // Active follows the profile's `litVolumeWhileActive`.
+    expect(resolveStepValues({ ...base, active: true }, variant).lit).toBe(
+      base.profile.litVolumeWhileActive ? 1 : 0,
+    );
+    // A camera TOUR is a deliberate artifact, not an interaction: quality wins
+    // over framerate, so it stays lit even on a tier that would go flat.
+    expect(
+      resolveStepValues(
+        { ...base, active: true, profile: { ...base.profile, litVolumeWhileActive: false } },
+        { ...variant, animationPlaying: true },
+      ).lit,
+    ).toBe(1);
+    // SCIENTIFIC is never lit, whatever the tier says.
+    expect(
+      resolveStepValues({ ...base, active: false }, { ...variant, cinematic: false }).lit,
+    ).toBe(0);
+  });
+
+  it("writes uCinematic only where the material has one (labels do not)", () => {
+    const withShading: StepScaleUniformHandle = {
+      uStepScale: { value: -1 },
+      uMaxSteps: { value: -1 },
+      uSmoothThreshold: { value: -1 },
+      uCinematic: { value: -1 },
+    };
+    const view = fakeViewStore();
+    const driver = new StepScaleDriver(view, new QualityGovernor());
+    const { sinks } = fakeSinks();
+    const labelLike = handle(false);
+    driver.register(withShading, {
+      settleRefine: true,
+      canvasPass: false,
+      smoothZoom: true,
+      cinematic: true,
+      animationPlaying: false,
+    }, sinks);
+    driver.register(labelLike, {
+      settleRefine: false,
+      canvasPass: true,
+      smoothZoom: false,
+      cinematic: true,
+      animationPlaying: false,
+    }, sinks);
+    expect(withShading.uCinematic!.value).toBe(1);
+    expect(labelLike.uCinematic).toBeUndefined();
   });
 });
 
@@ -84,7 +156,13 @@ describe("StepScaleDriver", () => {
     const view = fakeViewStore();
     const driver = new StepScaleDriver(view, new QualityGovernor());
     const { sinks } = fakeSinks();
-    const variant = { settleRefine: false, canvasPass: false, smoothZoom: false };
+    const variant = {
+      settleRefine: false,
+      canvasPass: false,
+      smoothZoom: false,
+      cinematic: false,
+      animationPlaying: false,
+    };
     const a = driver.register(handle(), variant, sinks);
     const b = driver.register(handle(), variant, sinks);
     const c = driver.register(handle(), { ...variant, canvasPass: true }, sinks);
@@ -126,7 +204,13 @@ describe("StepScaleDriver", () => {
     const view = fakeViewStore();
     const driver = new StepScaleDriver(view, new QualityGovernor());
     const { sinks, calls } = fakeSinks();
-    const variant = { settleRefine: false, canvasPass: false, smoothZoom: false };
+    const variant = {
+      settleRefine: false,
+      canvasPass: false,
+      smoothZoom: false,
+      cinematic: false,
+      animationPlaying: false,
+    };
     const handles = [handle(), handle(), handle(false)];
     for (const h of handles) driver.register(h, variant, sinks);
     const settled = handles.map((h) => h.uStepScale.value);

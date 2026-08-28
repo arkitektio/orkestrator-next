@@ -48,6 +48,16 @@ export type QualityProfile = {
   maxInflightBricks: number;
   /** residencyVersion bump throttle while streaming. */
   residencyBumpMs: number;
+  /**
+   * Whether the CINEMATIC volume stays LIT while the frame is active.
+   *
+   * Lit VOLUME costs a six-tap gradient per contributing sample (~1.5-2×), so
+   * slow GPUs go flat while you drag and snap back to lit when you settle —
+   * the same active/settled contract the scene already applies to DPR, step
+   * scale and the tricubic. The ISOSURFACE path is ~2-5% (one gradient per
+   * ray, at the hit) and is never gated.
+   */
+  litVolumeWhileActive: boolean;
 };
 
 export const QUALITY_PROFILES: Record<QualityTier, QualityProfile> = {
@@ -65,6 +75,7 @@ export const QUALITY_PROFILES: Record<QualityTier, QualityProfile> = {
     // capped by the drain budget regardless of arrival rate.
     maxInflightBricks: 16,
     residencyBumpMs: 150,
+    litVolumeWhileActive: true,
   },
   [TIER_MEDIUM]: {
     settledDprCap: Number.POSITIVE_INFINITY,
@@ -76,6 +87,7 @@ export const QUALITY_PROFILES: Record<QualityTier, QualityProfile> = {
     uploadBudgetMs: 3,
     maxInflightBricks: 12,
     residencyBumpMs: 150,
+    litVolumeWhileActive: false,
   },
   [TIER_LOW]: {
     settledDprCap: 1.5,
@@ -87,6 +99,7 @@ export const QUALITY_PROFILES: Record<QualityTier, QualityProfile> = {
     uploadBudgetMs: 2,
     maxInflightBricks: 6,
     residencyBumpMs: 300,
+    litVolumeWhileActive: false,
   },
 };
 
@@ -353,9 +366,45 @@ export const SMOOTH_ZOOM_THRESHOLD_PX = 3;
  * on every tier, and entirely on TIER_LOW. Returning 0 disables the filter
  * at runtime with no material rebuild (the shader gates on `> 0`).
  */
-export function resolveSmoothThreshold(tier: QualityTier, active: boolean): number {
-  if (active || tier === TIER_LOW) return 0;
+export function resolveSmoothThreshold(
+  tier: QualityTier,
+  active: boolean,
+  /**
+   * SCIENTIFIC mode (`modeStore.cinematic === false`) turns the reconstruction
+   * filter off outright: a tricubic B-spline is a display-space smoothing
+   * kernel, so magnified voxels read as blobs rather than as the samples they
+   * are. Measurements are unaffected either way — CPU probes read RAW voxel
+   * values (`OCTREE_RENDERER.md` §2.10) — which is exactly why this is a
+   * legitimate preset knob and clim/gamma are not.
+   */
+  cinematic = true,
+): number {
+  if (!cinematic || active || tier === TIER_LOW) return 0;
   return SMOOTH_ZOOM_THRESHOLD_PX;
+}
+
+/**
+ * Whether the volume should be LIT this frame.
+ *
+ * R2 — a camera TOUR must not render unlit, which is exactly where cinematic
+ * matters most. `AnimationPlayer` drives the camera continuously, so a playing
+ * tour sets `cameraMoving` every frame and would read as permanently "active":
+ * on MEDIUM/LOW the whole tour would render flat. A tour is a deliberate
+ * artifact, not an interaction, so quality wins over framerate there.
+ *
+ * The caller must apply `animationPlaying` to THIS decision only — DPR and
+ * step scale keep treating a tour as active, because those govern whether the
+ * tour plays back smoothly at all.
+ */
+export function resolveCinematic(
+  profile: QualityProfile,
+  cinematic: boolean,
+  active: boolean,
+  animationPlaying = false,
+): boolean {
+  if (!cinematic) return false;
+  if (!active || animationPlaying) return true;
+  return profile.litVolumeWhileActive;
 }
 
 /**

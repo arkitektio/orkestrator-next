@@ -2,11 +2,13 @@ import {
   Canvas,
   events as createPointerEvents,
   useStore as useThreeStore,
+  useThree,
 } from "@react-three/fiber";
 import { useEffect, type ReactNode } from "react";
 import { LongCommitProfiler } from "../platform/perf/commitProfiler";
 import { useViewStoreApi } from "../platform/stores/viewStore";
 import { WebGPURenderer } from "three/webgpu";
+import * as THREE from "three";
 import { CameraMatrixSync } from "../platform/camera/CameraMatrixSync";
 import { PerfFrameProbe } from "../platform/perf/PerfFrameProbe";
 import { ScaleBar } from "./chrome/ScaleBar";
@@ -106,6 +108,44 @@ const PointerMoveGate = () => {
     pointerMoveGates.set(store, () => viewApi.getState().cameraMoving);
     return () => void pointerMoveGates.delete(store);
   }, [store, viewApi]);
+  return null;
+};
+
+/**
+ * The tone-mapping half of the CINEMATIC <-> SCIENTIFIC preset.
+ *
+ * The scene was ACES-graded by accident until this existed: nothing in the
+ * tree ever set `toneMapping`, so R3F's default (`ACESFilmicToneMapping`)
+ * applied. The brick materials pin `material.toneMapped = false`, but that
+ * flag is a documented NO-OP on the WebGPU backend — it is read only by
+ * WebGLRenderer/WebGLPrograms, while the WebGPU output transform runs as a
+ * separate full-screen pass. See the note beside `commonMaterialSettings` in
+ * `features/bricks/gpu/brickNodeMaterials.ts`.
+ *
+ * SCIENTIFIC is `NoToneMapping`: a channel's screen value is its transfer
+ * output, unfiltered. Note the honest limit — the brick materials blend
+ * ADDITIVELY, so a multi-channel sum above 1.0 hard-clips here where ACES
+ * would have rolled it off monotonically. That is deliberate: ACES does not
+ * fix oversaturation, it HIDES it, and a clipping composite is something the
+ * user should see and fix with per-channel opacity or clim.
+ *
+ * `outputColorSpace` is deliberately NOT touched — sRGB encoding is display
+ * transfer, not grading, and `SceneScreenshot` reads it for capture.
+ *
+ * Cost: `NodeLibrary.getOutputCacheKey()` keys ONLY the output pass on
+ * `renderer.toneMapping`, so flipping this recompiles one full-screen quad and
+ * leaves every brick pipeline alone.
+ */
+const ToneMappingSync = () => {
+  const cinematic = useModeStore((s) => s.cinematic);
+  const gl = useThree((state) => state.gl);
+  const invalidate = useThree((state) => state.invalidate);
+
+  useEffect(() => {
+    gl.toneMapping = cinematic ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping;
+    invalidate();
+  }, [cinematic, gl, invalidate]);
+
   return null;
 };
 
@@ -321,6 +361,7 @@ export const SceneViewport = (props: { children?: ReactNode }) => {
         <BrickSystemHost />
         <SceneWrapper>
           <LongCommitProfiler id="scene-canvas">
+          <ToneMappingSync />
           <ambientLight intensity={0.7} />
           <pointLight position={[100, 100, 100]} />
 

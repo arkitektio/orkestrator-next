@@ -1,6 +1,12 @@
 import * as THREE from "three";
 import { NodeMaterial } from "three/webgpu";
 import * as TSLTyped from "three/tsl";
+import {
+  CINEMATIC_DEFAULTS,
+  FILL_DIRECTION,
+  FILL_WEIGHT,
+  GRADIENT_H,
+} from "../../../platform/gpu/shading";
 
 // three's TSL TypeScript surface lags the runtime API this module needs
 // (int/ivec3 uniforms, node-valued Loop bounds, tuple Fn params, method
@@ -880,6 +886,181 @@ export const emitScalarNormalize = (
   return normalized;
 };
 
+/** The cinematic light rig as scalar uniform nodes.
+ *
+ * INVARIANT C6 — every one of these is a scalar or a plain vec3 `uniform()`,
+ * never a `uniformArray`. Scalar uniforms share one object UBO and are free;
+ * each `uniformArray` is its OWN binding, and this material already sits near
+ * the WebGPU 12-uniform-buffers-per-stage limit with five of them
+ * (`uPageOffset`, `uLevelShape`, `uLevelScale`, `chParamsA`, `chParamsB`).
+ */
+export type CinematicUniforms = {
+  /** 0 = SCIENTIFIC (unlit), 1 = CINEMATIC. Dynamically uniform across the
+   * draw, so the branch is coherent on GPU — no divergence, and one material
+   * per pool `structureSignature` still holds. */
+  uCinematic: UniformNodeLike<number>;
+  /** Physical size of one BASE voxel, per axis (C3). */
+  uBaseScale: UniformNodeLike<THREE.Vector3>;
+  uAmbient: UniformNodeLike<number>;
+  uSpecular: UniformNodeLike<number>;
+  uShininess: UniformNodeLike<number>;
+  uSurfaceGain: UniformNodeLike<number>;
+  /** Diffuse weight for the MAX projections — see `LightRig.mipShading`. */
+  uMipShading: UniformNodeLike<number>;
+};
+
+// ---------------------------------------------------------------------------
+// Cinematic shading (CPU mirror: `platform/gpu/shading.ts`)
+// ---------------------------------------------------------------------------
+
+/**
+ * Central-difference gradient of the NORMALIZED field, six taps off the
+ * already-resolved `texelBase`.
+ *
+ * Emits NO Loop of its own — that is the only reason it is safe to inline
+ * inside the ray loop (see the `emitResolveBrickResidency` shadowing hazard in
+ * `OCTREE_RENDERER.md`).
+ *
+ * ZERO extra page-table walks: 3D bricks carry a 1-voxel replicated border
+ * holding real neighbour data (`octree/brickSpec.ts`, `border = 1`) and the 3D
+ * atlas is always linear-filtered (`brickResidency.ts`,
+ * `filter: spec.border > 0 ? "linear" : "nearest"`). Six taps at ±0.5 texel
+ * land inside that border, which is what the border is FOR. At the volume's
+ * outer boundary the border is edge-replicated, so the outward gradient is
+ * zero — correct, there is no data out there.
+ *
+ * NORMALIZED, not raw: the iso surface is DEFINED in normalized space
+ * (`sampleNorm >= isoThreshold`), so the normal must be the gradient of that
+ * same field. The transfer is monotone, so raw would give the right direction
+ * except where clim clamps — where the raw gradient is nonzero but the visible
+ * field is flat, and you would light a region that is not there.
+ *
+ * The taps are deliberately SINGLE-tap (never tricubic): a tricubic gradient
+ * would be 48 fetches.
+ *
+ * @param normalize maps a raw atlas value to the sample's normalized field.
+ * @returns d(norm)/d(level voxel).
+ */
+function emitFieldGradient(
+  t: any,
+  resolved: ResolvedResidency,
+  slabIndex: any,
+  normalize: (raw: any) => any,
+  name: string,
+): any {
+  const g = vec3(0.0).toVar(`${name}GradLvl`);
+  // An EMPTY brick (status 2) is a uniform field: no surface, no normal. A
+  // non-resident one (status 0) has nothing to differentiate at all.
+  If(resolved.status.greaterThanEqual(0.5).and(resolved.status.lessThan(1.5)), () => {
+    const base = vec3(resolved.texelBase).toVar(`${name}GradBase`);
+    const address = slabAddress(t, slabIndex);
+    base.z.addAssign(address.zOffset);
+    const tap = (offset: any) =>
+      float(
+        normalize(
+          selectLane(
+            texture3D(t.brickAtlas, base.add(offset).div(t.uAtlasTexels)).level(0),
+            address.mask,
+          ).mul(t.uAtlasScale),
+        ),
+      );
+    const h = float(GRADIENT_H);
+    const hn = float(-GRADIENT_H);
+    g.assign(
+      vec3(
+        tap(vec3(h, 0.0, 0.0)).sub(tap(vec3(hn, 0.0, 0.0))),
+        tap(vec3(0.0, h, 0.0)).sub(tap(vec3(0.0, hn, 0.0))),
+        tap(vec3(0.0, 0.0, h)).sub(tap(vec3(0.0, 0.0, hn))),
+      ).mul(float(0.5 / GRADIENT_H)),
+    );
+  });
+  return g;
+}
+
+/**
+ * Blinn-Phong headlight key + fixed object-space fill, gated by Levoy
+ * surfaceness. TSL port of `shadeSample` in `platform/gpu/shading.ts`.
+ *
+ * INVARIANT C1: returns a COLOUR. The caller must never feed this back into
+ * `sampleNorm`, `weight`, `volAlpha` or the iso hit test.
+ * INVARIANT C3: the normal comes from the PHYSICAL gradient (anisotropic z is
+ * routine in microscopy; a base-voxel normal visibly tilts toward the thin axis).
+ * INVARIANT C5: surfaceness is gated on the LEVEL-voxel gradient, which keeps
+ * `uSurfaceGain` a constant instead of a per-dataset knob.
+ *
+ * @param gradLevel d(norm)/d(level voxel).
+ * @param voxelExtent level voxel size in physical units (levelScale · baseScale).
+ * @param view unit vector from the sample TOWARD the eye.
+ */
+function emitShade(
+  u: any,
+  baseColor: any,
+  gradLevel: any,
+  voxelExtent: any,
+  view: any,
+  /**
+   * How much of the diffuse term to apply: `null` (VOLUME / ISOSURFACE) means
+   * the full term; `u.uMipShading` compresses it toward 1 for the MAX
+   * projections. See `LightRig.mipShading` in the CPU mirror.
+   */
+  diffuseWeight: any = null,
+): any {
+  const out = vec3(baseColor).toVar("shadedColor");
+  const s = clamp(length(gradLevel).mul(u.uSurfaceGain), 0.0, 1.0).toVar("surfaceness");
+  // Where the field is flat — homogeneous interior, noise floor — there is no
+  // surface, and lighting a noise gradient turns dim tissue into glitter.
+  If(s.greaterThan(0.0), () => {
+    const gPhys = gradLevel.div(max(voxelExtent, vec3(1e-9))).toVar("gradPhys");
+    const n = TSL.normalize(gPhys).toVar("shadeNormal");
+    // Face N at the viewer: the gradient points UP the intensity ramp — into
+    // the object from outside, out of it from inside — so a surface would
+    // otherwise go black purely because the ray entered from the dense side.
+    // Only dot products follow, so this survives a consistent reflection (C4).
+    If(dot(n, view).lessThan(0.0), () => {
+      n.assign(n.negate());
+    });
+
+    const fill = vec3(FILL_DIRECTION[0], FILL_DIRECTION[1], FILL_DIRECTION[2]);
+    const w = float(FILL_WEIGHT);
+    const total = float(1.0 + FILL_WEIGHT);
+
+    // Key = the view vector (headlight); fill = fixed in the SPECIMEN frame.
+    // A pure headlight is flat exactly at frame centre (dot(N,V) = 1, no shape
+    // cue where you are looking); a pure fixed key can leave the specimen
+    // black. The specimen is static, so the fill reads as "lit in a room"
+    // while you orbit, at no per-frame CPU cost.
+    const ndlKey = max(dot(n, view), 0.0).toVar("ndlKey");
+    const ndlFill = max(dot(n, fill), 0.0).toVar("ndlFill");
+    const diffuseFull = mix(
+      u.uAmbient,
+      float(1.0),
+      clamp(ndlKey.add(w.mul(ndlFill)).div(total), 0.0, 1.0),
+    ).toVar("diffuseFull");
+    // `mix(1, diffuse, weight)` and NOT `diffuse * weight`: at weight 0 the
+    // colour must pass through UNTOUCHED (a max projection keeps reading as
+    // intensity), not go black. Specular is deliberately not weighted — it
+    // adds light, so it can never darken a MIP below its true value.
+    const diffuse = (
+      diffuseWeight ? mix(float(1.0), diffuseFull, clamp(diffuseWeight, 0.0, 1.0)) : diffuseFull
+    ).toVar("diffuse");
+
+    // Blinn's half vector. For the key it reduces to H = V.
+    const specKey = pow(max(dot(n, view), 0.0), u.uShininess);
+    const specFill = pow(max(dot(n, TSL.normalize(fill.add(view))), 0.0), u.uShininess);
+    const specular = u.uSpecular
+      .mul(specKey.mul(select(ndlKey.greaterThan(0.0), float(1.0), float(0.0))))
+      .add(
+        u.uSpecular.mul(w).mul(specFill.mul(select(ndlFill.greaterThan(0.0), float(1.0), float(0.0)))),
+      )
+      .div(total)
+      .toVar("specular");
+
+    const shaded = baseColor.mul(diffuse).add(vec3(specular));
+    out.assign(mix(baseColor, shaded, s));
+  });
+  return out;
+}
+
 /** TSL port of `channelNormalize` (lockstep with core mirrors). */
 function makeChannelNormalize(c: any) {
   return Fn(([i, rawValue]: any[]) => {
@@ -1210,7 +1391,8 @@ export function createPlaneNodeMaterial(
 // ---------------------------------------------------------------------------
 
 export type VolumeMaterialNodes = TraversalNodesPublic &
-  ChannelNodesPublic & {
+  ChannelNodesPublic &
+  CinematicUniforms & {
     uDesiredLevel: UniformNodeLike<number>;
     uLodBias: UniformNodeLike<number>;
     uPxPerVoxelAtUnitDist: UniformNodeLike<number>;
@@ -1513,6 +1695,20 @@ export function createVolumeNodeMaterial(
   // uMaxSteps Break either way. The default here is overwritten at mount by
   // useStepScaleUniform.
   const uMaxSteps = uniform(MAX_RAY_STEPS, "float");
+  // The CINEMATIC light rig (C6: all scalar/vec3, no uniformArray). 0 pushes
+  // the shading branch out of every accumulator at runtime, with no rebuild.
+  // Typed `any` like the rest of the node graph — `CinematicUniforms` is the
+  // hand-written PUBLIC surface (a `.value` box per uniform), not the node API.
+  const cine: any = {
+    uCinematic: uniform(0, "float"),
+    uBaseScale: uniform(new THREE.Vector3(1, 1, 1), "vec3"),
+    uAmbient: uniform(CINEMATIC_DEFAULTS.ambient, "float"),
+    uSpecular: uniform(CINEMATIC_DEFAULTS.specular, "float"),
+    uShininess: uniform(CINEMATIC_DEFAULTS.shininess, "float"),
+    uSurfaceGain: uniform(CINEMATIC_DEFAULTS.surfaceGain, "float"),
+    uMipShading: uniform(CINEMATIC_DEFAULTS.mipShading, "float"),
+  };
+
   // Back-compat aliases: the single-layer call site writes `projectionMode` /
   // `isoThreshold` directly, which is member 0.
   const projectionMode = memberNodes[0].projectionMode;
@@ -1605,6 +1801,13 @@ export function createVolumeNodeMaterial(
     // the settled stride exactly.)
     const jitterAmp = anisoStride ? levelPitch(uDesiredLevel) : float(uMinDelta);
     const rayT = boundsX.add(float(rand2(screenCoordinate.xy)).mul(jitterAmp)).toVar("rayT");
+
+    // The cinematic view vector is LOOP-INVARIANT (rayT > 0 always), so it is
+    // hoisted here: zero per-sample cost, still per-fragment correct under
+    // perspective. `dirB` is unit-length in BASE-VOXEL space; scaling by the
+    // base voxel's physical size takes it to physical space (C3), and the
+    // negation makes it point from the sample TOWARD the eye.
+    const viewPhys = TSL.normalize(dirB.mul(cine.uBaseScale)).negate().toVar("viewPhys");
 
     // Per-member accumulators. Deliberately UNNAMED `.toVar()`: TSL mints a
     // unique name for each, which is what makes unrolling members into one
@@ -2011,10 +2214,16 @@ export function createVolumeNodeMaterial(
             );
           });
           maxSampleNorm.assign(max(maxSampleNorm, sampleNorm));
-          return { sampleColor, sampleNorm };
+          return {
+            sampleColor,
+            sampleNorm,
+            gradSlab: int(mem.fixed.uSlab0),
+            gradNormalize: (raw: any) => fixedNormalize(m, raw),
+          };
         }
 
         if (memberFns[m].emitRgb) {
+          const gradSlab = int(mem.fixed.uSlab0).toVar();
           // THREE basis-tinted slots over ONE window: the general path's
           // per-slot contribution is a CONSTANT tint row × (opacity 1 · norm),
           // summed additively — i.e. `vec3(normR, normG, normB)` with no LUT
@@ -2036,11 +2245,34 @@ export function createVolumeNodeMaterial(
             const nB = float(fixedNormalize(m, raw.b)).toVar(nm("fxNb"));
             sampleColor.assign(vec3(nR, nG, nB));
             sampleNorm.assign(max(nR, max(nG, nB)));
+            // Shade the structure actually on screen: the brightest of the
+            // three basis slabs. One window covers all three, so the gradient's
+            // normalize is the member's plain `fixedNormalize` either way.
+            // Two sequential Ifs over the same var, and the second CANNOT
+            // undo the first: its `nB > nG` excludes the `nG >= nB` that armed
+            // the first. Ties resolve R > G > B, and an all-zero sample keeps
+            // the seed (slab0) rather than drifting to the last slab tested.
+            If(nG.greaterThan(nR).and(nG.greaterThanEqual(nB)), () => {
+              gradSlab.assign(int(mem.fixed.uSlab1));
+            });
+            If(nB.greaterThan(nR).and(nB.greaterThan(nG)), () => {
+              gradSlab.assign(int(mem.fixed.uSlab2));
+            });
           });
           maxSampleNorm.assign(max(maxSampleNorm, sampleNorm));
-          return { sampleColor, sampleNorm };
+          return {
+            sampleColor,
+            sampleNorm,
+            gradSlab,
+            gradNormalize: (raw: any) => fixedNormalize(m, raw),
+          };
         }
 
+        // The slot whose intensity dominates this sample — the structure the
+        // gradient should describe. `chParamsA.x` is the intensity slab for
+        // channels AND phasors, so one path covers both kinds, and the cost is
+        // six taps regardless of how many slots the member has.
+        const domSlot = int(mem.slotFirst).toVar();
         If(resolved.status.greaterThanEqual(0.5), () => {
           Loop(
             {
@@ -2080,7 +2312,18 @@ export function createVolumeNodeMaterial(
               // through a lifetime overlay must pick the brightest voxel along the
               // ray and show ITS lifetime — not the longest lifetime, which would
               // pick out the dimmest background pixels.
+              // Compare against the PRE-max value with a STRICT `>`. Testing
+              // `>=` after the max would latch on every TIE — including the
+              // ubiquitous 0 == 0 of a dark voxel — so the last slot to read
+              // zero would win the argmax instead of the brightest slot.
+              const prevMax = float(sampleNorm).toVar();
               sampleNorm.assign(max(sampleNorm, sample.norm));
+              // For a phasor member the gradient is of INTENSITY while the
+              // colour is the lifetime hue — correct, and the same rule as the
+              // ranking directly above.
+              If(sample.norm.greaterThan(prevMax), () => {
+                domSlot.assign(slot);
+              });
 
               If(int(mem.blendMode).equal(1), () => {
                 sampleColor.mulAssign(mix(vec3(1.0), color, weight));
@@ -2095,7 +2338,12 @@ export function createVolumeNodeMaterial(
           );
         });
         maxSampleNorm.assign(max(maxSampleNorm, sampleNorm));
-        return { sampleColor, sampleNorm };
+        return {
+          sampleColor,
+          sampleNorm,
+          gradSlab: int(vec4(c.chParamsA.element(domSlot)).x),
+          gradNormalize: (raw: any) => memberFns[m].channelNormalize(domSlot, raw),
+        };
       });
 
       // LEGACY empty-space skipping (fast path decides BEFORE sampling, above):
@@ -2117,17 +2365,61 @@ export function createVolumeNodeMaterial(
 
       memberNodes.forEach((mem, m) => {
         const a = acc[m];
-        const { sampleColor, sampleNorm } = samples[m];
+        const { sampleColor, sampleNorm, gradSlab, gradNormalize } = samples[m];
+        /**
+         * Shade this sample's colour, for the VOLUME and ISOSURFACE arms only.
+         *
+         * C7 RELAXED — every projection calls this now. MIP and ATTENUATED_MIP
+         * pass `cine.uMipShading` as the diffuse weight, so at 0 they keep the
+         * "brightness IS max intensity" reading and gain only highlights, and
+         * at 1 they are treated exactly like VOLUME. What is surrendered at
+         * weight > 0 is that quantitative reading, and ONLY in cinematic mode.
+         *
+         * INVARIANT C1 — the result is used as a COLOUR and nothing else. The
+         * caller must keep feeding the UNSHADED `sampleNorm` to the hit test
+         * and `av`/`volAlpha` to the compositor, which is what keeps the CPU
+         * transfer mirrors valid with zero changes.
+         */
+        const shadeColor = (
+          name: string,
+          extraCondition: any = null,
+          /** MAX projections compress the diffuse term — see `uMipShading`. */
+          diffuseWeight: any = null,
+        ): any => {
+          const shaded = vec3(sampleColor).toVar(name);
+          // ONE gating contract: `shadeColor` ALWAYS owns the `uCinematic`
+          // test, and a caller that has a further condition passes it in
+          // rather than wrapping this call. Two call sites gating differently
+          // is how one of them ends up unguarded after an edit.
+          const gate = extraCondition
+            ? cine.uCinematic.greaterThan(0.5).and(extraCondition)
+            : cine.uCinematic.greaterThan(0.5);
+          If(gate, () => {
+            const gradLevel = emitFieldGradient(t, resolved, gradSlab, gradNormalize, name);
+            // Level voxel size in physical units — the C3 divisor.
+            const voxelExtent = vec3(t.uLevelScale.element(resolved.residentLevel)).mul(
+              cine.uBaseScale,
+            );
+            shaded.assign(
+              emitShade(cine, sampleColor, gradLevel, voxelExtent, viewPhys, diffuseWeight),
+            );
+          });
+          return shaded;
+        };
         // A finished member contributes nothing further; the others march on.
         If(a.done.not(), () => {
           If(int(mem.projectionMode).equal(1), () => {
             const depthFrac = rayT.sub(boundsX).div(rayLen);
             if (fastPath) {
               const atten = exp(float(-1.5).mul(depthFrac)).toVar();
+              // The winner is chosen on the UNSHADED norm × attenuation (C1);
+              // only the colour stored for it is lit. The exp() depth fade is
+              // deliberately kept — it composes with shading as a depth cue,
+              // and touching it would change which sample WINS.
               const av = sampleNorm.mul(atten);
               If(av.greaterThan(a.attenuatedMax), () => {
                 a.attenuatedMax.assign(av);
-                a.attenuatedColor.assign(sampleColor);
+                a.attenuatedColor.assign(shadeColor(`amipFastGrad${m}`, null, cine.uMipShading));
               });
               // Early ray termination (CPU mirror: attenuatedMipDone). atten
               // strictly decreases along the ray and sampleNorm ≤ 1, so every
@@ -2141,7 +2433,7 @@ export function createVolumeNodeMaterial(
               const av = sampleNorm.mul(exp(float(-1.5).mul(depthFrac)));
               If(av.greaterThan(a.attenuatedMax), () => {
                 a.attenuatedMax.assign(av);
-                a.attenuatedColor.assign(sampleColor);
+                a.attenuatedColor.assign(shadeColor(`amipGrad${m}`, null, cine.uMipShading));
               });
             }
           })
@@ -2150,23 +2442,37 @@ export function createVolumeNodeMaterial(
               const av = oneMinus(
                 pow(max(oneMinus(sampleNorm), 0.0), stepLen.div(max(refStep, 1e-5))),
               );
-              a.volColor.addAssign(oneMinus(a.volAlpha).mul(av).mul(sampleColor));
+              // Gate on a CONTRIBUTING sample: one gradient per sample that
+              // actually reaches the accumulator, none for the rest.
+              const volShaded = shadeColor(`volGrad${m}`, av.greaterThan(0.01));
+              a.volColor.addAssign(oneMinus(a.volAlpha).mul(av).mul(volShaded));
+              // `av` and `volAlpha` are UNTOUCHED by shading (C1).
               a.volAlpha.addAssign(oneMinus(a.volAlpha).mul(av));
               If(a.volAlpha.greaterThanEqual(0.98), () => {
                 a.done.assign(true);
               });
             })
             .ElseIf(int(mem.projectionMode).equal(3), () => {
+              // The hit test reads the UNSHADED norm (C1); only the colour
+              // that is stored is lit. One gradient per RAY — the ray is done
+              // here — which is why the iso path costs ~2-5% and not 1.5×.
               If(sampleNorm.greaterThanEqual(mem.isoThreshold), () => {
                 a.isoHit.assign(true);
-                a.isoColor.assign(sampleColor);
+                a.isoColor.assign(shadeColor(`isoGrad${m}`));
                 a.done.assign(true);
               });
             })
             .Else(() => {
+              // The max is still selected on the UNSHADED norm (C1) — so the
+              // probe, the shaderspec mirrors and the 0.995 early-out below are
+              // all unchanged. Only the colour stored for the winner is lit.
+              // Cost note: a gradient fires on every running-max IMPROVEMENT,
+              // which on a smooth monotone ramp is most steps until the early
+              // out — i.e. worst case the same ~1.5-2x as lit VOLUME, not the
+              // iso path's ~2-5%. That is why it rides the governor gate.
               If(sampleNorm.greaterThan(a.bestNorm), () => {
                 a.bestNorm.assign(sampleNorm);
-                a.bestColor.assign(sampleColor);
+                a.bestColor.assign(shadeColor(`mipGrad${m}`, null, cine.uMipShading));
               });
               // Early ray termination: the normalize clamps to [0, 0.999] before
               // gamma (invert can reach exactly 1.0), so a max >= 0.995 is within
@@ -2240,11 +2546,47 @@ export function createVolumeNodeMaterial(
       uMaxSteps,
       uSmoothThreshold,
       uBaseShape,
+      ...cine,
       projectionMode,
       isoThreshold,
       members: memberNodes,
     } as VolumeMaterialNodes,
   };
+}
+
+/**
+ * Push the CINEMATIC light rig and the layer's base-voxel scale.
+ *
+ * `uCinematic` itself is deliberately NOT written here: whether the volume is
+ * lit on a given frame depends on the quality tier and camera activity, which
+ * is a vanilla-subscription cadence — so it is owned by the step-scale driver
+ * (`useVolumeRayUniforms`), alongside `uStepScale` / `uMaxSteps` /
+ * `uSmoothThreshold`, and value-deduped with them.
+ *
+ * `uBaseScale` is a property of the layer's GEOMETRY, not of the preset, but it
+ * rides along because the shading normal is meaningless without it (C3).
+ *
+ * Cheap and idempotent: six scalar writes into the shared object UBO, no
+ * texture adoption and no material rebuild.
+ */
+export function updateCinematicNodes(
+  nodes: VolumeMaterialNodes,
+  source: {
+    baseScale: THREE.Vector3;
+    ambient: number;
+    specular: number;
+    shininess: number;
+    surfaceGain: number;
+    mipShading: number;
+  },
+): void {
+  if (!nodes.uBaseScale) return;
+  nodes.uBaseScale.value.copy(source.baseScale);
+  nodes.uAmbient.value = source.ambient;
+  nodes.uSpecular.value = source.specular;
+  nodes.uShininess.value = source.shininess;
+  nodes.uSurfaceGain.value = source.surfaceGain;
+  nodes.uMipShading.value = source.mipShading;
 }
 
 /**

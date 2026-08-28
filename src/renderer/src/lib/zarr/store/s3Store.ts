@@ -1,5 +1,5 @@
 import { type AbsolutePath } from "@zarrita/storage";
-import { LRUCache } from "../caches/inMemoryLru";
+import { ByteBudgetByteCache } from "../caches/byteBudgetByteCache";
 import { fetchS3Path, type S3FetchConfig } from "@/lib/zarr/runner/s3-request";
 import { CredentialRotation, type S3FetchConfigRefresher } from "./credentialRotation";
 import type { ZarrStore } from "./types";
@@ -55,7 +55,12 @@ async function handle_response(
   );
 }
 
-const global_cache = new LRUCache<string, ArrayBuffer>(500);
+// Byte-bounded, not count-bounded: on the streaming path this mostly holds
+// zarr.json documents (chunk GETs happen inside the codec workers), but any
+// consumer routing chunk reads through `store.get` would otherwise pin
+// unbounded memory behind a 500-entry count cap.
+const RAW_BYTE_CACHE_BUDGET = 64 * 1024 * 1024;
+const global_cache = new ByteBudgetByteCache(RAW_BYTE_CACHE_BUDGET);
 
 const defaultMetadataKeys: AbsolutePath[] = ["/zarr.json"];
 
@@ -71,7 +76,7 @@ export type { S3FetchConfigRefresher };
 
 export class ConfiguredS3Store implements ZarrStore {
   url: string | URL;
-  private cache: LRUCache<string, ArrayBuffer>;
+  private cache: ByteBudgetByteCache;
   private lockManager: AsyncLockManager;
   private metadataPromise: Promise<void>;
   /** Credential lifecycle: freshness, single-flight rotation, 403 recovery. */

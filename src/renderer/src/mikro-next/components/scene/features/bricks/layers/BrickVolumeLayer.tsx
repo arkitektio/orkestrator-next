@@ -174,12 +174,16 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
 
   const sceneStoreApi = useSceneStoreApi();
   const pool = brickSystem?.getLayerPool(layerId) ?? null;
-  // Read out of the live Set every render (it holds a handful of ids) and key
-  // the memo on the CONTENT. `pool.members` is replaced wholesale on each
-  // reconcile without bumping poolsVersion, and a swap like {a,b,c,d} →
-  // {a,b,c,e} changes neither the pool identity nor the Set size — so keying on
-  // either would silently serve a stale membership.
-  const memberKey = pool ? [...pool.members].sort().join(",") : "";
+  // `pool.members` is replaced wholesale (a fresh Set) on each reconcile
+  // without bumping poolsVersion, and a swap like {a,b,c,d} → {a,b,c,e}
+  // changes neither the pool identity nor the Set size — so the Set's own
+  // identity is the one safe memo key. memberIds below re-keys on CONTENT, so
+  // an equal-contents replacement still yields a stable array downstream.
+  const memberSet = pool?.members;
+  const memberKey = useMemo(
+    () => (memberSet ? [...memberSet].sort().join(",") : ""),
+    [memberSet],
+  );
   const memberIds = useMemo(
     () => (memberKey === "" ? [] : memberKey.split(",")),
     [memberKey],

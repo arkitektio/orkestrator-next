@@ -50,6 +50,11 @@ export interface GeneratedListProps<TFilters, TOrder, TOrdering> {
   // Typed as `any` at this boundary because `TItem` is not reliably inferred by
   // the factory; the group-by definitions are strongly typed at their def site.
   groupBy?: GroupByDef<any>;
+  // When set, the grid gives way to justified rows sized by this ratio — see
+  // `GroupableListRenderer`. A per-page prop rather than a factory option: the
+  // same list reads as a picture shelf on a page of planes and as a grid of
+  // readouts everywhere else. Same `any` caveat as `groupBy`.
+  aspectOf?: (item: any) => number;
 }
 
 
@@ -114,6 +119,12 @@ interface CreateListOptions<TData, TFilters, TOrder, TOrdering, TItem> {
   defaultLimit?: number;
   smart?: Smart;
   cardProps?: Record<string, any>;
+  /**
+   * Minimum card width in px. Set it for lists whose cards carry a picture or
+   * several rows of metadata — the grid's default ladder packs up to ten
+   * columns, which is right for scalars and far too narrow for those.
+   */
+  minItemWidth?: number;
 }
 
 export const createList = <
@@ -138,7 +149,8 @@ export const createList = <
     emptyTitle: defaultEmptyTitle = "No items found",
     emptyDescription: defaultEmptyDesc = "No results match your criteria.",
     defaultLimit: initialLimit = 20,
-    cardProps: defaultCardProps = {}
+    cardProps: defaultCardProps = {},
+    minItemWidth,
   } = options;
 
   const GenericList = (props: GeneratedListProps<TFilters, TOrder, TOrdering>) => {
@@ -255,6 +267,8 @@ export const createList = <
             groupBy={props.groupBy}
             ItemComponent={ItemComponent}
             cardProps={cardProps}
+            minItemWidth={minItemWidth}
+            aspectOf={props.aspectOf}
           />
         )}
 

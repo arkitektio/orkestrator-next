@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { LovekitSoloBroadcast } from "@/linkers";
 import { useGetSoloBroadcastQuery } from "../api/graphql";
 
@@ -22,11 +22,11 @@ export default asDetailQueryRoute(
           </div>
         }
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: <LovekitSoloBroadcast.Komments object={data.soloBroadcast} />,
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Knowledge">
+              <LovekitSoloBroadcast.Knowledge object={data.soloBroadcast} />
+            </Sidebars.Tab>
+          </Sidebars>
         }
       >
         <div className={cn("relative h-full w-full overflow-hidden bg-black")}>

@@ -5,32 +5,17 @@ import { Button } from "@/components/ui/button";
 import { RekuestAgent } from "@/linkers";
 import {
   TaskEventKind,
-  TaskStatus,
   Ordering,
   useAgentQuery,
 } from "@/rekuest/api/graphql";
 import TaskList from "@/rekuest/components/lists/TaskList";
-import { parseAsIsoDateTime, parseAsStringLiteral, useQueryState, parseAsArrayOf } from "nuqs";
+import {
+  TASK_DONE_FILTER_OPTIONS as DONE_OPTIONS,
+  TASK_STATE_FILTER_OPTIONS as STATE_OPTIONS,
+} from "@/rekuest/lib/taskStatus";
+import { parseAsBoolean, parseAsIsoDateTime, parseAsStringLiteral, useQueryState, parseAsArrayOf } from "nuqs";
 import Timestamp from "react-timestamp";
 import { X } from "lucide-react";
-
-const STATUS_OPTIONS: { label: string; value: TaskStatus }[] = [
-  { label: "Done", value: TaskStatus.Done },
-  { label: "Ongoing", value: TaskStatus.Ongoing },
-  { label: "Assigning", value: TaskStatus.Assigning },
-  { label: "Cancelled", value: TaskStatus.Cancelled },
-  { label: "Critical", value: TaskStatus.Critical },
-];
-
-const STATE_OPTIONS: { label: string; value: TaskEventKind }[] = [
-  { label: "Queued", value: TaskEventKind.Queued },
-  { label: "Assigned", value: TaskEventKind.Bound },
-  { label: "Yielded", value: TaskEventKind.Yield },
-  { label: "Done", value: TaskEventKind.Completed },
-  { label: "Error", value: TaskEventKind.Failed },
-  { label: "Cancelled", value: TaskEventKind.Cancelled },
-  { label: "Critical", value: TaskEventKind.Critical },
-];
 
 export const AgentTasksPage = asDetailQueryRoute(
   useAgentQuery,
@@ -38,12 +23,7 @@ export const AgentTasksPage = asDetailQueryRoute(
     const [createdAfter, setCreatedAfter] = useQueryState("after", parseAsIsoDateTime);
     const [createdBefore, setCreatedBefore] = useQueryState("before", parseAsIsoDateTime);
 
-    const [statusFilter, setStatusFilter] = useQueryState<TaskStatus[]>(
-      "status",
-      parseAsArrayOf(
-        parseAsStringLiteral(Object.values(TaskStatus)),
-      ).withDefault([]),
-    );
+    const [isDone, setIsDone] = useQueryState("done", parseAsBoolean);
 
     const [stateFilter, setStateFilter] = useQueryState<TaskEventKind[]>(
       "state",
@@ -52,10 +32,8 @@ export const AgentTasksPage = asDetailQueryRoute(
       ).withDefault([]),
     );
 
-    const toggleStatus = (value: TaskStatus) => {
-      setStatusFilter((prev) =>
-        prev.includes(value) ? prev.filter((s) => s !== value) : [...prev, value],
-      );
+    const toggleDone = (value: boolean) => {
+      setIsDone((prev) => (prev === value ? null : value));
     };
 
     const toggleState = (value: TaskEventKind) => {
@@ -67,15 +45,12 @@ export const AgentTasksPage = asDetailQueryRoute(
     const clearFilters = () => {
       setCreatedAfter(null);
       setCreatedBefore(null);
-      setStatusFilter([]);
+      setIsDone(null);
       setStateFilter([]);
     };
 
     const hasActiveFilters =
-      createdAfter ||
-      createdBefore ||
-      statusFilter.length > 0 ||
-      stateFilter.length > 0;
+      createdAfter || createdBefore || isDone !== null || stateFilter.length > 0;
 
     return (
       <RekuestAgent.ModelPage
@@ -105,12 +80,12 @@ export const AgentTasksPage = asDetailQueryRoute(
           <div className="flex flex-col gap-3">
             <div className="flex flex-wrap gap-2 items-center">
               <span className="text-sm font-medium text-muted-foreground">Status:</span>
-              {STATUS_OPTIONS.map(({ label, value }) => (
+              {DONE_OPTIONS.map(({ label, value }) => (
                 <Badge
-                  key={value}
-                  variant={statusFilter.includes(value) ? "default" : "outline"}
+                  key={label}
+                  variant={isDone === value ? "default" : "outline"}
                   className="cursor-pointer select-none"
-                  onClick={() => toggleStatus(value)}
+                  onClick={() => toggleDone(value)}
                 >
                   {label}
                 </Badge>
@@ -153,7 +128,7 @@ export const AgentTasksPage = asDetailQueryRoute(
               agent: id,
               createdAfter: createdAfter ?? undefined,
               createdBefore: createdBefore ?? undefined,
-              status: statusFilter.length > 0 ? statusFilter : undefined,
+              isDone: isDone ?? undefined,
               state: stateFilter.length > 0 ? stateFilter : undefined,
             }}
           />

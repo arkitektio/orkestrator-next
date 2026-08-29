@@ -1,3 +1,10 @@
+// SigV4 request signing for the datalayer's S3 gateway.
+//
+// The contract is one line — the bytes on the wire must be the bytes that were
+// signed — and every way it has been broken so far is written up in
+// SIGV4_SIGNING.md next to this file. Read it before changing how a request is
+// built, and before debugging a 403: a signing mistake surfaces as a bare
+// `403 Forbidden` that blames the credentials, which are usually fine.
 import type { AbsolutePath } from '@zarrita/storage'
 
 export interface SerializedRequestInit {
@@ -84,13 +91,48 @@ async function deriveSigningKey(
 const signingKeyMemo = new Map<string, Promise<Uint8Array<ArrayBuffer>>>()
 const SIGNING_KEY_MEMO_MAX = 8
 
+/**
+ * A short, stable, non-reversible tag for a secret, for use inside a cache key.
+ * FNV-1a run twice with different offset bases and concatenated — synchronous,
+ * which `deriveSigningKeyCached` needs: a digest via `crypto.subtle` would be a
+ * promise, and two concurrent callers would both miss the memo while awaiting
+ * it, which is the deduplication the memo exists for.
+ *
+ * Not a security boundary — the secret is already in memory on `config`. This
+ * only has to tell two secrets apart.
+ */
+function fingerprint(secret: string): string {
+  const fnv1a = (seed: number): string => {
+    let hash = seed
+    for (let index = 0; index < secret.length; index++) {
+      hash ^= secret.charCodeAt(index)
+      hash = Math.imul(hash, 0x01000193) >>> 0
+    }
+    return hash.toString(36)
+  }
+  return `${fnv1a(0x811c9dc5)}${fnv1a(0xdeadbeef)}`
+}
+
 function deriveSigningKeyCached(
   config: S3FetchConfig,
   dateStamp: string,
 ): Promise<Uint8Array<ArrayBuffer>> {
-  // accessKey identifies the credential set (a secret rotation issues a new
-  // access key alongside it); the secret itself stays out of the map key.
-  const memoKey = `${config.accessKey}|${dateStamp}|${config.region}`
+  // The secret has to participate in the key. It is tempting to assume the
+  // access key identifies the credential set — a rotation issues a new access
+  // key alongside the secret — but a datalayer that falls back to its STATIC
+  // credentials when STS is unavailable hands out grant after grant under ONE
+  // access key, and the secret behind it can change between them. Keyed on the
+  // access key alone, the first grant's signing key is then reused for every
+  // later one: `Credential=` on the wire is current, the HMAC behind it is not,
+  // and S3 answers SignatureDoesNotMatch. Nothing recovers it — refreshing the
+  // grant re-derives nothing, because the memo never sees a new key.
+  //
+  // Fingerprinted rather than used directly so the secret is not sitting in a
+  // Map key. FNV-1a twice over, for 64 bits: this only has to separate two
+  // secrets that share an access key, and a collision degrades to the bug above
+  // rather than to anything unsafe.
+  const memoKey = `${config.accessKey}|${fingerprint(config.secretKey)}|${dateStamp}|${config.region}`
+
   const cached = signingKeyMemo.get(memoKey)
   if (cached) return cached
   const derived = deriveSigningKey(config.secretKey, dateStamp, config.region)
@@ -118,10 +160,43 @@ function canonicalQueryString(url: URL): string {
     .join('&')
 }
 
+/**
+ * Every path segment RFC-3986 encoded, with `/` kept as the separator, and
+ * decoded first so an already-escaped input is not escaped twice.
+ *
+ * Encoding the SEGMENTS matters, and it is not what a pathname already gives
+ * you: `URL` leaves reserved sub-delimiters — `=`, `+`, `,`, `:`, `@` —
+ * literal in `pathname`, but SigV4 requires every byte outside the unreserved
+ * set percent-encoded. This went unnoticed for as long as every signed path
+ * was a zarr chunk (`c/0/0/0`, `zarr.json` — unreserved throughout); a
+ * fabriks prefix is hive-partitioned, so its very first geometry read is
+ * `level=0/part-….parquet`.
+ */
+function strictlyEncodedPath(pathname: string): string {
+  return pathname
+    .split('/')
+    .map((segment) => encodeRfc3986(decodeURIComponent(segment)))
+    .join('/')
+}
+
+/** The canonical URI for SigV4 (see `strictlyEncodedPath`). */
 function canonicalUri(url: URL): string {
-  return url.pathname.replace(/[!'()*]/g, (char) =>
-    `%${char.charCodeAt(0).toString(16).toUpperCase()}`,
-  )
+  return strictlyEncodedPath(url.pathname)
+}
+
+/**
+ * Force the WIRE path into exactly the form the canonical request signs.
+ *
+ * The signature is only half the contract: the server recomputes its own
+ * canonical request from the bytes it RECEIVES. MinIO (and AWS's raw-path
+ * comparison) canonicalize from the request path as sent — a literal `=` on
+ * the wire stays a literal `=` in their canonical URI. Signing `%3D` while
+ * sending `=` therefore fails with `SignatureDoesNotMatch` even though our
+ * own canonical form is internally consistent. The wire bytes and the signed
+ * bytes must be the SAME bytes, so the URL is normalized before either.
+ */
+function normalizeWirePath(url: URL): void {
+  url.pathname = strictlyEncodedPath(url.pathname)
 }
 
 function normalizeHeaderValue(value: string): string {
@@ -208,6 +283,7 @@ async function signRequest(
   const signingKey = await deriveSigningKeyCached(config, dateStamp)
   const signature = toHex(await hmacSha256(signingKey, stringToSign))
 
+
   requestHeaders.set(
     'Authorization',
     [
@@ -221,7 +297,28 @@ async function signRequest(
     ...init,
     method,
     headers: requestHeaders,
+    // `range` is a SIGNED header, and the HTTP cache is allowed to rewrite it
+    // before the request leaves the browser. Chromium stores a 206 as a sparse
+    // cache entry, so a later overlapping range is narrowed to just the bytes
+    // it does not already hold: ask for `bytes=10009781-10534068` after the
+    // Parquet footer (the tail of the same object) has been cached, and what
+    // goes on the wire is `bytes=10009781-10528209`. The server canonicalizes
+    // what it RECEIVES, so the signature cannot match, and it fails as
+    // SignatureDoesNotMatch — a credentials error for a caching problem.
+    //
+    // `no-store` opts the request out of that cache entirely. Only ranged
+    // requests pay it: a whole-object GET (every zarr chunk) is never rewritten
+    // and keeps its caching.
+    cache: hasRangeHeader(requestHeaders) ? 'no-store' : init.cache,
   }
+}
+
+/**
+ * Whether this request carries a `Range` — i.e. whether the browser cache is
+ * allowed to rewrite a header we signed. See the `cache` note in `signRequest`.
+ */
+function hasRangeHeader(headers: Headers): boolean {
+  return headers.has('range')
 }
 
 export function resolveStoreUrl(root: string | URL, path: AbsolutePath): URL {
@@ -241,6 +338,8 @@ export async function fetchS3Path(
   init: RequestInit = {},
 ): Promise<Response> {
   const url = resolveStoreUrl(config.baseUrl, path)
+  // Wire bytes == signed bytes, or the server's recomputed signature differs.
+  normalizeWirePath(url)
   return fetch(url, await signRequest(url, config, init))
 }
 
@@ -288,4 +387,25 @@ export function deserializeRequestInit(
 
 export function isExpiredS3FetchConfig(config: S3FetchConfig): boolean {
   return Date.now() >= config.expiresAt
+}
+
+/**
+ * Rotate credentials this far BEFORE they actually expire. A request signed at
+ * `expiresAt - 1ms` still has to cross the network, and one that dies in flight
+ * surfaces as an S3 403 from inside a decode worker — a confusing failure a
+ * long way from its cause. The margin buys every in-flight request time to land
+ * under the credentials it was signed with.
+ */
+export const S3_CREDENTIAL_REFRESH_SKEW_MS = 60_000
+
+/**
+ * Due for rotation — `isExpiredS3FetchConfig` plus the skew. This is the check
+ * on the request hot path, so it stays a single `Date.now()` compare: no
+ * allocation, and no await unless it actually returns true.
+ */
+export function isStaleS3FetchConfig(
+  config: S3FetchConfig,
+  now: number = Date.now(),
+): boolean {
+  return now >= config.expiresAt - S3_CREDENTIAL_REFRESH_SKEW_MS
 }

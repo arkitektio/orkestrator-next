@@ -1,11 +1,10 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { FancyInput } from "@/components/ui/fancy-input";
-import { PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PaneLink, SidePaneGroup } from "@/components/ui/sidepane";
 import { KabinetBackend } from "@/linkers";
 import { CubeIcon } from "@radix-ui/react-icons";
-import { Popover } from "@radix-ui/react-popover";
 import { useDebounce } from "@uidotdev/usehooks";
 import { GitBranch, HelpCircle, Home, ShoppingCart } from "lucide-react";
 import * as React from "react";

@@ -1,5 +1,4 @@
-import { buildModuleLink, buildSmart } from "@/providers/smart/builder";
-import { FileViewFragment } from "./mikro-next/api/graphql";
+import { buildModuleLink, buildScopedSmart, buildSmart } from "@/providers/smart/builder";
 
 // Linkers for the smart models
 // Linkers represent ways to reference a smart model consistently in the ui, and
@@ -128,8 +127,8 @@ export const RekuestInputInterfaceUsage = buildSmart(
 );
 
 export const RekuestOutputInterfaceUsage = buildSmart(
-  "@rekuest/inputstructureusage",
-  "rekuest/inputstructureusages",
+  "@rekuest/outputinterfaceusage",
+  "rekuest/outputinterfaceusages",
   { name: "Output Interface Usage" },
 );
 
@@ -163,16 +162,6 @@ export const RekuestDashboard = buildSmart(
   { name: "Dashboard" },
 );
 
-export const MikroImage = buildSmart(
-  "@mikro/image",
-  "mikro/images",
-  { name: "Image (Mikro)" },
-);
-export const MikroSnapshot = buildSmart(
-  "@mikro/snapshot",
-  "mikro/snapshots",
-  { name: "Snapshot" },
-);
 export const MikroEntityMetric = buildSmart(
   "@mikro/entitymetric",
   "mikro/entitymetric",
@@ -193,16 +182,34 @@ export const MikroRenderedPlot = buildSmart(
   "mikro/renderedplots",
   { name: "Rendered Plot" },
 );
-export const MikroRenderTree = buildSmart(
-  "@mikronext/rendertree",
-  "mikro/rendertrees",
-  { name: "Render Tree" },
+
+export const MikroFolder = buildSmart(
+  "@mikro/folder",
+  "mikro/folders",
+  { name: "Folder" },
 );
 
-export const MikroDataset = buildSmart(
-  "@mikro/dataset",
-  "mikro/datasets",
-  { name: "Dataset (Mikro)" },
+export const MikroArrayDataset = buildSmart(
+  "@mikro/arraydataset",
+  "mikro/arraydatasets",
+  { name: "Array Dataset" },
+);
+
+export const MikroCoordinateSystem = buildSmart(
+  "@mikro/coordinatesystem",
+  "mikro/coordinatesystems",
+  { name: "Coordinate System" },
+);
+
+// A lens is a named SELECTION over an array dataset — the thing a layer renders
+// through, and the thing a crop action names ("this dataset, these channels").
+// Registered so it can be an argument: `MikroLens.Drop` makes a layer row a drop
+// target, and `SmartContext` then assembles (Lens, Annotation) for the rekuest
+// action that does the cropping.
+export const MikroLens = buildSmart(
+  "@mikro/lens",
+  "mikro/lenses",
+  { name: "Lens" },
 );
 
 export const ElektroTrace = buildSmart(
@@ -309,9 +316,10 @@ export const ElektroDataset = buildSmart(
   { name: "Dataset (Elektro)" },
 );
 
-export const KraphNode = buildSmart(
+export const KraphNode = buildScopedSmart(
   "@kraph/node",
-  "kraph/nodes",
+  (graph) => `kraph/graphs/${graph}/nodes`,
+  "kraph/instances",
   { name: "Node" },
 );
 
@@ -333,10 +341,16 @@ export const KraphStructureRelation = buildSmart(
   { name: "Structure Relation" },
 );
 
-export const KraphStructureCategory = buildSmart(
-  "@kraph/structurecategory",
-  "kraph/structurecategories",
-  { name: "Structure Category" },
+// A term is the organization's word. Categories declare it per graph, so the
+// term outlives any one graph's view of it.
+export const KraphTerm = buildSmart("@kraph/term", "kraph/terms", {
+  name: "Term",
+});
+
+export const KraphStructureKind = buildSmart(
+  "@kraph/structurekind",
+  "kraph/structurekinds",
+  { name: "Structure Kind" },
 );
 
 export const KraphNaturalEventCategory = buildSmart(
@@ -351,10 +365,10 @@ export const KraphProtocolEventCategory = buildSmart(
   { name: "Protocol Event Category" },
 );
 
-export const KraphMetricCategory = buildSmart(
-  "@kraph/metriccategory",
-  "kraph/metriccategories",
-  { name: "Metric Category" },
+export const KraphMetricKind = buildSmart(
+  "@kraph/metrickind",
+  "kraph/metrickinds",
+  { name: "Metric Kind" },
 );
 
 export const KraphMeasurementCategory = buildSmart(
@@ -408,19 +422,22 @@ export const KraphReagent = buildSmart(
   "kraph/reagents",
   { name: "Reagent" },
 );
-export const KraphProtocolEvent = buildSmart(
+export const KraphProtocolEvent = buildScopedSmart(
   "@kraph/protocolevent",
-  "kraph/protocolevents",
+  (graph) => `kraph/graphs/${graph}/protocolevents`,
+  "kraph/instances",
   { name: "Protocol Event" },
 );
-export const KraphNaturalEvent = buildSmart(
+export const KraphNaturalEvent = buildScopedSmart(
   "@kraph/naturalevent",
-  "kraph/naturalevents",
+  (graph) => `kraph/graphs/${graph}/naturalevents`,
+  "kraph/instances",
   { name: "Natural Event" },
 );
-export const KraphEntity = buildSmart(
+export const KraphEntity = buildScopedSmart(
   "@kraph/entity",
-  "kraph/entities",
+  (graph) => `kraph/graphs/${graph}/entities`,
+  "kraph/instances",
   { name: "Entity" },
 );
 export const KraphEditEvent = buildSmart(
@@ -443,6 +460,21 @@ export const KraphMetric = buildSmart(
   "kraph/metrics",
   { name: "Metric" },
 );
+// The claim itself, at organization grain. A write returns one of these, and a
+// dropped uuid with no graph in hand resolves here — the page lists `drawnIn`,
+// the views that draw it, and links into each.
+export const KraphInstance = buildSmart(
+  "@kraph/instance",
+  "kraph/instances",
+  { name: "Instance" },
+);
+
+export const KraphLink = buildSmart(
+  "@kraph/link",
+  "kraph/links",
+  { name: "Link" },
+);
+
 export const KraphGraph = buildSmart(
   "@kraph/graph",
   "kraph/graphs",
@@ -474,24 +506,6 @@ export const KraphScatterPlot = buildSmart(
   "kraph/scatterplots",
   { name: "Scatter Plot" },
 );
-export const KraphNodeQuery = buildSmart(
-  "@kraph/nodequery",
-  "kraph/nodequeries",
-  { name: "Node Query" },
-);
-
-export const MikroExperiment = buildSmart(
-  "@mikro/experiment",
-  "mikro/experiments",
-  { name: "Experiment (Mikro)" },
-);
-
-export const MikroInstanceMaskViewLabel = buildSmart(
-  "@mikro/instancemaskviewlabel",
-  "mikro/instancemaskviewlabels",
-  { name: "Instance Mask View Label" },
-);
-
 export const KraphProtocol = buildSmart(
   "@kraph/protocol",
   "kraph/protocols",
@@ -543,69 +557,14 @@ export const MikroHistory = buildSmart(
   { name: "History" },
 );
 
-export const MikroAffineTransformationView = buildSmart(
-  "@mikro/affinetransformationview",
-  "mikro/affinetransformationviews",
-  { name: "Affine Transformation View" },
-);
 
-export const MikroLabelView = buildSmart(
-  "@mikro/labelview",
-  "mikro/labelviews",
-  { name: "Label View" },
-);
 
-export const MikroSpecimenView = buildSmart(
-  "@mikro/specimenview",
-  "mikro/specimenviews",
-  { name: "Specimen View" },
-);
 
-export const MikroFileView = buildSmart<FileViewFragment>(
-  "@mikro/fileview",
-  "mikro/fileviews",
-  { name: "File View" },
-);
-export const MikroHistogramView = buildSmart(
-  "@mikro/histogramview",
-  "mikro/histogramviews",
-  { name: "Histogram View" },
-);
-export const MikroPixelView = buildSmart(
-  "@mikro/pixelview",
-  "mikro/pixelviews",
-  { name: "Pixel View" },
-);
 
-export const MikroROIView = buildSmart(
-  "@mikro/roiview",
-  "mikro/roiviews",
-  { name: "ROI View" },
-);
 
-export const MikroDerivedView = buildSmart(
-  "@mikro/derivedview",
-  "mikro/derivedviews",
-  { name: "Derived View" },
-);
 
-export const MikroProtocolStepView = buildSmart(
-  "@mikro/protocolstepview",
-  "mikro/protocolstepviews",
-  { name: "Protocol Step View" },
-);
 
-export const MikroMultiPositionView = buildSmart(
-  "@mikro/multipositionview",
-  "mikro/multipositionviews",
-  { name: "Multi Position View" },
-);
 
-export const MikroAcquisitionView = buildSmart(
-  "@mikro/acquisitionview",
-  "mikro/acquisitionviews",
-  { name: "Acquisition View" },
-);
 
 export const MikroFluorophore = buildSmart(
   "@mikro/fluorophore",
@@ -618,84 +577,27 @@ export const MikroFile = buildSmart(
   "mikro/files",
   { name: "File (Mikro)" },
 );
-export const MikroMesh = buildSmart(
-  "@mikro/mesh",
-  "mikro/meshes",
-  { name: "Mesh" },
-);
-
-export const MikroStage = buildSmart(
-  "@mikro/stage",
-  "mikro/stages",
-  { name: "Stage" },
-);
 export const MikroScene = buildSmart(
   "@mikro/scene",
   "mikro/scenes",
   { name: "Scene" },
 );
-export const MikroTable = buildSmart(
-  "@mikro/table",
-  "mikro/tables",
-  { name: "Table" },
+export const MikroTableDataset = buildSmart(
+  "@mikro/tabledataset",
+  "mikro/tabledatasets",
+  { name: "Table Dataset" },
 );
 
-export const MikroChannelView = buildSmart(
-  "@mikro/channelview",
-  "mikro/channelviews",
-  { name: "Channel View" },
-);
 
-export const MikroMaskView = buildSmart(
-  "@mikro/maskview",
-  "mikro/maskviews",
-  { name: "Mask View" },
-);
-export const MikroInstanceMaskView = buildSmart(
-  "@mikro/instancemaskview",
-  "mikro/instancemaskviews",
-  { name: "Instance Mask View" },
-);
-export const MikroReferenceView = buildSmart(
-  "@mikro/referenceview",
-  "mikro/referenceviews",
-  { name: "Reference View" },
-);
 
-export const MikroRGBView = buildSmart(
-  "@mikro/rgbview",
-  "mikro/rgbviews",
-  { name: "RGB View" },
-);
 
-export const MikroRGBContext = buildSmart(
-  "@mikro/rgbcontext",
-  "mikro/rgbcontexts",
-  { name: "RGB Context" },
-);
 
-export const MikroOpticsView = buildSmart(
-  "@mikro/opticsview",
-  "mikro/opticsviews",
-  { name: "Optics View" },
-);
 
-export const MikroLightpathView = buildSmart(
-  "@mikro/lightpathview",
-  "mikro/lightpathviews",
-  { name: "Lightpath View" },
-);
 
-export const MikroInstrument = buildSmart(
-  "@mikro/instrument",
-  "mikro/instruments",
-  { name: "Instrument" },
-);
-
-export const MikroROI = buildSmart(
-  "@mikro/roi",
-  "mikro/rois",
-  { name: "R O I" },
+export const MikroAnnotation = buildSmart(
+  "@mikro/annotation",
+  "mikro/annotations",
+  { name: "Annotation" },
 );
 export const MikroEntityRelation = buildSmart(
   "@mikro/entityrelation",
@@ -810,11 +712,6 @@ export const AlpakaCollection = buildSmart(
   "@alpaka/collection",
   "alpaka/collections",
   { name: "Collection" },
-);
-export const LokComment = buildSmart(
-  "@lok/comment",
-  "lok/comments",
-  { name: "Comment" },
 );
 export const LokMapping = buildSmart(
   "@lok/mapping",

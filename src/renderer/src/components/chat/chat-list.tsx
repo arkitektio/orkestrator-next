@@ -1,5 +1,6 @@
 import {
   ListMessageFragment,
+  StructureInput,
 } from "@/alpaka/api/graphql";
 import { Card, CardContent } from "@/components/ui/card";
 import { useResolve } from "@/datalayer/hooks/useResolve";
@@ -20,7 +21,7 @@ interface ChatListProps {
   currentAgentId: string;
   sendMessage: (message: string) => void;
   isMobile: boolean;
-  stagedStructures: { identifier: string; object: string }[];
+  stagedStructures: StructureInput[];
   onRemoveStructure: (index: number) => void;
   prefillText?: string;
   activeTasks?: ActiveTask[];

@@ -7,9 +7,10 @@ query StartPane {
     id
     label
   }
-  structureCategories(filters: { pinned: true }, pagination: { limit: 5 }) {
+  structureKinds(pagination: { limit: 5 }) {
     id
     identifier
+    label
   }
   protocolEventCategories(filters: { pinned: true }, pagination: { limit: 5 }) {
     id

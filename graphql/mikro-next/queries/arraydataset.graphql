@@ -1,0 +1,160 @@
+query GetArrayDataset($id: ID!) {
+  arrayDataset(id: $id) {
+    ...ArrayDataset
+    # The scenes this dataset is rendered in, reached through its lenses'
+    # layers. Selected on the query rather than the fragment because it is an
+    # inverse relation the list views have no use for.
+    scenes {
+      ...ListScene
+    }
+    # Which of them to OPEN — a stored nomination, not something derived from the
+    # list above, and the two can disagree: a nominated scene need not be one
+    # this dataset is rendered in (it stages the dataset's neighbourhood, say).
+    # The page lands here and falls back to the first scene only when nothing is
+    # nominated.
+    defaultScene {
+      ...ListScene
+    }
+  }
+}
+
+# The one dataset, at card depth. For the previews — the hover card and the
+# display widget — which want the snapshot and the spec, and want them without
+# paying for `GetArrayDataset`'s pyramid: that query pulls every `dataArray`,
+# the whole intrinsic system, and every scene the dataset appears in.
+#
+# The fragment is spread EXACTLY as the list query spreads it, and that is the
+# point rather than a tidiness preference: hovering a tile on the datasets page
+# has already written `ListArrayDataset` into the cache under this id, so a
+# cache-first read here resolves with no round trip at all. Inlining a bespoke
+# selection set instead would miss that cache and fetch.
+#
+# `folder` is selected alongside rather than added to the fragment: where a
+# dataset is FILED is worth a line on a preview, but the cards render inside a
+# folder already and have no use for it.
+query GetListArrayDataset($id: ID!) {
+  arrayDataset(id: $id) {
+    ...ListArrayDataset
+    folder {
+      id
+      name
+    }
+  }
+}
+
+query GetArrayDatasets(
+  $filters: ArrayDatasetFilter
+  $pagination: OffsetPaginationInput
+  $ordering: [ArrayDatasetOrder!]
+) {
+  arrayDatasets(filters: $filters, pagination: $pagination, ordering: $ordering) {
+    ...ListArrayDataset
+  }
+}
+
+# Where this dataset came from and what it produced, plus its edit history — the
+# whole provenance panel in one round trip.
+#
+# Downwards: every child that named one of its spaces as a parent — its intrinsic
+# grid, or the space a slicing lens cuts out. `derivedDatasets` already unions both
+# (a lens' space IS a space of the dataset), so the lenses here only LABEL the
+# groups, they do not widen the set. A derivation edge maps the child's own grid
+# BACK INTO the space it was computed from, so `derivedFrom[].output` is the parent
+# space — and `derivedFrom[0]` is the primary parent, the one that places the child.
+#
+# Upwards: this dataset's OWN `derivedFrom`, empty for anything acquired rather than
+# computed. The parent is not on the edge, it is whatever lives in the space the edge
+# lands in, so `output.residents` is the hop back to a dataset — directly for a
+# parent's intrinsic grid, through `Lens.dataset` when the parent was a crop.
+query GetArrayDatasetDerived($id: ID!) {
+  arrayDataset(id: $id) {
+    id
+    # An unsliced lens resolves to this same system, which is why "the dataset itself"
+    # and "its full-array lenses" come out as one group rather than two.
+    intrinsicSystem {
+      id
+      name
+    }
+    provenanceEntries {
+      ...ProvenanceEntry
+    }
+    # Which BYTES, as opposed to which data — read alongside `derivedFrom`, not
+    # instead of it. A file has no coordinate system, so these links claim no
+    # geometry and place nothing; both relations can be non-empty and complete.
+    sourceFiles {
+      ...FileLink
+    }
+    exports {
+      ...FileLink
+    }
+    derivedFrom {
+      id
+      kind
+      valueRelation
+      output {
+        id
+        name
+        residents {
+          __typename
+          ... on ArrayDataset {
+            id
+            name
+          }
+          ... on Lens {
+            id
+            dataset {
+              id
+              name
+            }
+          }
+        }
+      }
+      ... on UnmappableTransformation {
+        reason
+      }
+    }
+    derivedDatasets {
+      ...ListArrayDataset
+      derivedFrom {
+        id
+        kind
+        valueRelation
+        output {
+          id
+          name
+        }
+        ... on UnmappableTransformation {
+          reason
+        }
+      }
+    }
+  }
+  lenses(filters: { dataset: $id }) {
+    id
+    axisNames
+    shape
+    slices {
+      ...DimSlice
+    }
+    coordinateSystem {
+      id
+      name
+    }
+  }
+}
+
+# Just the space a scene would be built over. `createSceneFromDataset` is gone —
+# staging a dataset means calling createSceneFromCoordinateSystem with its
+# intrinsic grid — so an entry point holding only a dataset id needs this one
+# hop first. Deliberately not the full ArrayDataset: the action wants an id, not
+# every pyramid level and its store.
+query GetArrayDatasetIntrinsicSystem($id: ID!) {
+  arrayDataset(id: $id) {
+    id
+    name
+    intrinsicSystem {
+      id
+      name
+    }
+  }
+}

@@ -19,7 +19,7 @@ const ctx = self as unknown as DedicatedWorkerGlobalScope & {
 }
 
 type TextureCompatibleDataType = 'uint8' | 'uint16' | 'float32'
-type TextureFidelity = 'default' | 'low' | 'high'
+type TextureFidelity = 'default' | 'low' | 'high' | 'raw16'
 
 type TextureCompatibleChunk = Chunk<'uint8'> | Chunk<'uint16'> | Chunk<'float32'>
 
@@ -165,6 +165,17 @@ function promoteChunkForTexture(
     }
   }
 
+  // 'raw16': uint16 passes through unwidened (RAW values — no rescale), so a
+  // 16-bit chunk costs 2 B/voxel in caches and transfers instead of the
+  // promoted float32's 4. Every other dtype falls through to the default
+  // widening below. Consumers opting in MUST read Uint16Array chunk data.
+  if (textureFidelity === 'raw16' && chunk.data instanceof Uint16Array) {
+    return {
+      chunk: ensureSharedChunkIfNeeded(chunk as Chunk<'uint16'>, useSharedArrayBuffer),
+      promotedType: 'uint16',
+    }
+  }
+
   const source = chunk.data as ArrayLike<number | bigint>
   const promoted = new Float32Array(
     createBuffer(source.length * Float32Array.BYTES_PER_ELEMENT, useSharedArrayBuffer),
@@ -273,123 +284,6 @@ function getPipeline(metaId: number): ReturnType<typeof create_codec_pipeline> {
   return pipeline
 }
 
-function readZstdFrameContentSize(compressed: Uint8Array): number | null {
-  if (compressed.length < 6) return null
-
-  const magic =
-    compressed[0] |
-    (compressed[1] << 8) |
-    (compressed[2] << 16) |
-    (compressed[3] << 24)
-  if (magic >>> 0 !== 0xfd2fb528) return null
-
-  const fhd = compressed[4]
-  const fcsFlag = (fhd >> 6) & 3
-  const singleSegment = (fhd >> 5) & 1
-  const dictIdFlag = fhd & 3
-  const dictIdSize = [0, 1, 2, 4][dictIdFlag]
-  const windowDescSize = singleSegment ? 0 : 1
-
-  let fcsFieldSize: number
-  if (fcsFlag === 0) fcsFieldSize = singleSegment ? 1 : 0
-  else if (fcsFlag === 1) fcsFieldSize = 2
-  else if (fcsFlag === 2) fcsFieldSize = 4
-  else fcsFieldSize = 8
-
-  if (fcsFieldSize === 0) return null
-
-  const offset = 5 + windowDescSize + dictIdSize
-  if (compressed.length < offset + fcsFieldSize) return null
-
-  if (fcsFieldSize === 1) return compressed[offset]
-  if (fcsFieldSize === 2) {
-    return (compressed[offset] | (compressed[offset + 1] << 8)) + 256
-  }
-  if (fcsFieldSize === 4) {
-    return (
-      (compressed[offset] |
-        (compressed[offset + 1] << 8) |
-        (compressed[offset + 2] << 16) |
-        (compressed[offset + 3] << 24)) >>>
-      0
-    )
-  }
-
-  const dv = new DataView(compressed.buffer, compressed.byteOffset + offset, 8)
-  return Number(dv.getBigUint64(0, true))
-}
-
-function readBloscFrameContentSize(compressed: Uint8Array): number | null {
-  if (compressed.length < 16) return null
-
-  const version = compressed[0]
-  if (version < 1 || version > 2) return null
-
-  const typesize = compressed[3]
-  if (typesize === 0 || typesize > 8) return null
-
-  const nbytes =
-    (compressed[4] |
-      (compressed[5] << 8) |
-      (compressed[6] << 16) |
-      (compressed[7] << 24)) >>>
-    0
-  const cbytes =
-    (compressed[12] |
-      (compressed[13] << 8) |
-      (compressed[14] << 16) |
-      (compressed[15] << 24)) >>>
-    0
-
-  if (cbytes === 0 || cbytes > compressed.length + 16) return null
-  if (nbytes === 0) return null
-
-  return nbytes
-}
-
-async function probeDecompressedSize(
-  rawBytes: Uint8Array,
-  codecMeta: CodecChunkMeta,
-  bytesPerElement: number,
-): Promise<number | null> {
-  const zstdSize = readZstdFrameContentSize(rawBytes)
-  if (zstdSize != null) return zstdSize
-
-  const bloscSize = readBloscFrameContentSize(rawBytes)
-  if (bloscSize != null) return bloscSize
-
-  const hasCompression = codecMeta.codecs.some((codec) => {
-    const name = codec.name.toLowerCase()
-    return (
-      name === 'gzip' ||
-      name === 'zlib' ||
-      name === 'blosc' ||
-      name === 'zstd' ||
-      name === 'lz4' ||
-      name === 'bz2' ||
-      name === 'lzma' ||
-      name === 'snappy'
-    )
-  })
-
-  if (!hasCompression) {
-    return rawBytes.byteLength
-  }
-
-  try {
-    const pipeline = create_codec_pipeline({
-      data_type: codecMeta.data_type,
-      shape: codecMeta.chunk_shape,
-      codecs: codecMeta.codecs,
-    })
-    const chunk = await pipeline.decode(rawBytes)
-    const data = chunk.data as unknown as ArrayLike<unknown>
-    return data.length * bytesPerElement
-  } catch {
-    return null
-  }
-}
-
 async function fetchChunkBytes(
   store: S3FetchConfig,
   path: `/${string}`,
@@ -428,22 +322,6 @@ type WorkerMessage =
       textureFidelity?: TextureFidelity
       useSharedArrayBuffer?: boolean
     }
-  | {
-      type: 'fetch_exists'
-      id: number
-      store: S3FetchConfig
-      path: `/${string}`
-      requestInit?: SerializedRequestInit
-    }
-  | {
-      type: 'fetch_probe_size'
-      id: number
-      store: S3FetchConfig
-      path: `/${string}`
-      metaId: number
-      bytesPerElement: number
-      requestInit?: SerializedRequestInit
-    }
 
 ctx.onmessage = async (event: MessageEvent<WorkerMessage>) => {
   const msg = event.data
@@ -460,37 +338,6 @@ ctx.onmessage = async (event: MessageEvent<WorkerMessage>) => {
         }),
       )
       ctx.postMessage({ type: 'init_ok', id: msg.id })
-      return
-    }
-
-    if (msg.type === 'fetch_exists') {
-      const response = await fetchS3Path(
-        msg.store,
-        msg.path,
-        { ...(deserializeRequestInit(msg.requestInit) ?? {}), method: 'HEAD' },
-      )
-      ctx.postMessage({ type: 'fetch_exists_ok', id: msg.id, exists: response.status !== 404 })
-      return
-    }
-
-    if (msg.type === 'fetch_probe_size') {
-      const rawBytes = await fetchChunkBytes(msg.store, msg.path, msg.requestInit)
-      if (!rawBytes) {
-        ctx.postMessage({ type: 'fetch_probe_size_ok', id: msg.id, decompressedBytes: null })
-        return
-      }
-
-      const meta = metaByMetaId.get(msg.metaId)
-      if (!meta) {
-        throw new Error(`No metadata registered for metaId ${msg.metaId}`)
-      }
-
-      const decompressedBytes = await probeDecompressedSize(
-        rawBytes,
-        meta,
-        msg.bytesPerElement,
-      )
-      ctx.postMessage({ type: 'fetch_probe_size_ok', id: msg.id, decompressedBytes })
       return
     }
 

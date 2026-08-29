@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { buildAssignInput } from "@/rekuest/assign";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -163,11 +163,11 @@ export const TPage = asDetailQueryRoute(useShortcutQuery, ({ data }) => {
       title={data.shortcut.name}
       object={data.shortcut}
       sidebars={
-        <MultiSidebar
-          map={{
-            Comments: <RekuestShortcut.Komments object={data?.shortcut} />,
-          }}
-        />
+        <Sidebars>
+          <Sidebars.Tab label="Knowledge">
+            <RekuestShortcut.Knowledge object={data?.shortcut} />
+          </Sidebars.Tab>
+        </Sidebars>
       }
     >
       <div className=" p-6">

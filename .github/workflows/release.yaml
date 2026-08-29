@@ -19,11 +19,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }         # semantic-release needs full history
+      # Must run before setup-node, or `cache: pnpm` cannot find the executable.
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '22' }
-      - run: yarn install --frozen-lockfile
+        with: { node-version: '22', cache: 'pnpm' }
+      - run: pnpm install --frozen-lockfile
       - name: Run semantic-release
         id: semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }} # needs to be pat token
-        run: npx semantic-release
+        run: pnpm exec semantic-release

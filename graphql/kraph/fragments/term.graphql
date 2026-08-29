@@ -1,0 +1,59 @@
+fragment ListTerm on Term {
+  id
+  kind
+  key
+  label
+  color
+}
+
+fragment Term on Term {
+  ...ListTerm
+  description
+  purl
+  createdAt
+  image {
+    presignedUrl
+  }
+}
+
+# A category is what the word means *in one graph*. The same term declared by
+# another graph sees the same claims, so a term's detail view is the list of
+# graphs that speak the word.
+fragment TermCategory on Category {
+  __typename
+  id
+  label
+  description
+  color
+  graph {
+    id
+    name
+  }
+}
+
+fragment DetailTerm on Term {
+  ...Term
+  categories {
+    ...TermCategory
+  }
+}
+
+# What a picker needs to decide between words: the word itself and whether any
+# graph declares a category for it. A claim under an undeclared word still
+# stands — it just is not drawn anywhere yet, which is worth knowing *before*
+# claiming rather than after.
+fragment AssignableTerm on Term {
+  id
+  kind
+  key
+  label
+  color
+  categories {
+    id
+    label
+    graph {
+      id
+      name
+    }
+  }
+}

@@ -1,39 +1,22 @@
-import { DelegatingStructureWidget } from "@/components/widgets/returns/DelegatingStructureWidget";
-import { KraphNode } from "@/linkers";
-import { PortKind } from "@/rekuest/api/graphql";
-import { useGetNodeQuery } from "../api/graphql";
+import { KraphInstance } from "@/linkers";
+import { useGetInstanceQuery } from "../api/graphql";
 
+/**
+ * Names a claim by its word, from a bare id.
+ *
+ * The `__typename === "Structure"` branch this used to carry is gone with the
+ * schema: `Structure` implements no node interface any more — it is a row of a
+ * different table, pointing at an external datum, never drawn as a vertex. A
+ * structure reached from here is `structure(id:)`, not a node.
+ */
 export const EntityOverlay = (props: { entity: string }) => {
-  const { data } = useGetNodeQuery({
-    variables: {
-      id: props.entity,
-    },
-  });
+  const { data } = useGetInstanceQuery({ variables: { id: props.entity } });
 
   return (
     <div>
-      <KraphNode.DetailLink object={{ id: props.entity }}>
-        {data?.node?.label}
-      </KraphNode.DetailLink>
-
-      {data?.node?.__typename == "Structure" && (
-        <>
-          {data?.node?.object && data?.node.identifier && (
-            <>
-              <DelegatingStructureWidget
-                port={{
-                  kind: PortKind.Structure,
-                  identifier: data.node.identifier,
-                  key: data.node.object,
-                  __typename: "ReturnPort",
-                  nullable: false,
-                }}
-                value={data.node.object}
-              />
-            </>
-          )}
-        </>
-      )}
+      <KraphInstance.DetailLink object={{ id: props.entity }}>
+        {data?.instance?.term.label ?? data?.instance?.term.key}
+      </KraphInstance.DetailLink>
     </div>
   );
 };

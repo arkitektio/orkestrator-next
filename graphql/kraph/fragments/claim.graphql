@@ -1,0 +1,130 @@
+# Claim-grain reads: the recorded statement itself, before any view draws it.
+#
+# `Instance` and `Link` are the evidence rows. `Entity` / `NaturalEvent` /
+# `ProtocolEvent` and `Relation` / `Measurement` / `StructureRelation` are what
+# *one graph* makes of them — they carry a category, derived properties and a
+# label, none of which exist until a view declares a word and draws it.
+#
+# Every write returns a claim, not a drawing, which is why these are the
+# fragments the mutations spread. `drawings` on the payload (and `drawnIn` here)
+# says which views drew it, and an empty list is a real answer: no graph declares
+# this word yet, so the claim stands and nothing has drawn it.
+
+fragment Instance on Instance {
+  id
+  # The claim's own account of what it is — `ENTITY`, `NATURAL_EVENT`,
+  # `PROTOCOL_EVENT`. Never read this off a drawn vertex's label: that label is
+  # one view's private rename of a word, not a type discriminator.
+  kind
+  createdAt
+  term {
+    ...ListTerm
+  }
+  assertion {
+    ...Assertion
+  }
+}
+
+fragment DetailInstance on Instance {
+  ...Instance
+  # Which views draw this claim. The bridge from claim grain back to a graph —
+  # a bare uuid alone cannot address a view-grain page, so this is what a claim
+  # page offers instead.
+  drawnIn {
+    graph {
+      id
+      name
+    }
+    category {
+      id
+      label
+    }
+  }
+  standings {
+    ...Standing
+  }
+}
+
+fragment Link on Link {
+  id
+  # One of eight: RELATION, SAME_AS, CLASSIFIES, INFORMS, MEASUREMENT,
+  # STRUCTURE_RELATION, PARTICIPATES_AS_INPUT, PARTICIPATES_AS_OUTPUT. Only
+  # RELATION and PARTICIPATES_AS_* are ever drawn as graph edges; the rest are
+  # read from the log directly, so a link having no drawing is normal.
+  kind
+  role
+  createdAt
+  sourceRef
+  targetRef
+  term {
+    ...ListTerm
+  }
+  assertion {
+    ...Assertion
+  }
+}
+
+fragment DetailLink on Link {
+  ...Link
+  standings {
+    ...Standing
+  }
+  source {
+    ...ClaimEndpoint
+  }
+  target {
+    ...ClaimEndpoint
+  }
+}
+
+# Either end of a link. A link may point at another link or at a term, not only
+# at an instance or a structure.
+#
+# Every member has a `kind`, and all four are different enums. Fields sharing a
+# response key must have compatible shapes even in mutually exclusive fragments,
+# so each is aliased — the alias also says which `kind` you are looking at, which
+# is the thing worth being explicit about here.
+fragment ClaimEndpoint on ClaimEndpoint {
+  __typename
+  ... on Instance {
+    id
+    instanceKind: kind
+    instanceTerm: term {
+      ...ListTerm
+    }
+  }
+  ... on Structure {
+    id
+    identifier
+    object
+    structureKind: kind {
+      id
+      identifier
+      label
+    }
+  }
+  ... on Link {
+    id
+    linkKind: kind
+    linkTerm: term {
+      ...ListTerm
+    }
+  }
+  ... on Term {
+    id
+    termKind: kind
+    key
+    label
+  }
+}
+
+# Somebody's position on whether a claim still holds. Retraction and attestation
+# both write one; the current answer is the fold over all of them.
+fragment Standing on Standing {
+  id
+  stands
+  at
+  assertion {
+    ...Assertion
+  }
+}

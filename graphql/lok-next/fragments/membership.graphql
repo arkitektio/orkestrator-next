@@ -1,5 +1,7 @@
 fragment Membership on Membership {
   id
+  brandHue
+  brandChroma
   roles {
     identifier
     id

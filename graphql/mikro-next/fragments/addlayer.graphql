@@ -1,0 +1,70 @@
+# What the Add Layer picker needs of one resident of a reachable space.
+#
+# Richer than the shared `Resident` fragment, which fetches a `__typename` and a
+# name — enough for a breadcrumb, not enough to submit. This one also carries
+# what the picker infers from (a lens's render axes and shape, a dataset's spec,
+# a table's declared column roles), so neither choosing a row nor deciding what
+# kind of layer it becomes costs a second round trip.
+#
+# The picker is organised by *source* — a dataset, a mesh collection, a table, a
+# collection of annotations — not by resident, so a lens carries its dataset and
+# an ArrayDataset carries what it structurally is: the two are merged into one
+# entry, whether or not they live in the same space. DataArrays are selected
+# only to be dropped: a pyramid level is an implementation detail of its
+# dataset, never something anyone adds to a scene.
+fragment AddLayerCandidate on Resident {
+  __typename
+  ... on Lens {
+    id
+    shape
+    axisNames
+    slices {
+      ...DimSlice
+    }
+    # Which axis is x, y, z and intensity — derived server-side from the axis
+    # types. The picker infers a volume from a z axis of more than one plane
+    # (`spec: VOLUME` holds for a single-plane stack too, so it cannot answer
+    # this), and offers RGB only where there is a channel axis to index into.
+    renderAxes {
+      x
+      y
+      z
+      intensity
+    }
+    dataset {
+      id
+      name
+      description
+    }
+  }
+  ... on TableDataset {
+    ...ListTableDataset
+    columns {
+      ...TableDatasetColumn
+    }
+  }
+  # A MeshCollection has no name of its own — `version` is all it can honestly
+  # show, which is what `residentName` already assumes.
+  ... on MeshCollection {
+    id
+    version
+    specVersion
+  }
+  ... on AnnotationCollection {
+    id
+    name
+    description
+  }
+  ... on ArrayDataset {
+    id
+    name
+    description
+    # What the dataset structurally is — 3D, timelapse, multichannel. The entry's
+    # icon and its one-line subtitle, in place of a shape nobody reads.
+    spec
+  }
+  ... on DataArray {
+    id
+    level
+  }
+}

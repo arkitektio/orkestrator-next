@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -21,11 +21,11 @@ export const FlavourPage = asDetailQueryRoute(
         title={flavour?.name}
         object={flavour}
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: <KabinetFlavour.Komments object={flavour} />,
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Knowledge">
+              <KabinetFlavour.Knowledge object={flavour} />
+            </Sidebars.Tab>
+          </Sidebars>
         }
         pageActions={<></>}
       >

@@ -1,0 +1,25 @@
+# Named StartProbe (not Probe) because `query GetProbe` targets the same field
+# name — duplicate operation names fail codegen.
+mutation StartProbe($input: ProbeInput!) {
+  probe(input: $input) {
+    ...Probe
+  }
+}
+
+mutation CancelProbe($input: CancelProbeInput!) {
+  cancelProbe(input: $input) {
+    ...Probe
+  }
+}
+
+mutation PauseProbe($input: PauseProbeInput!) {
+  pauseProbe(input: $input) {
+    ...Probe
+  }
+}
+
+mutation ResumeProbe($input: ResumeProbeInput!) {
+  resumeProbe(input: $input) {
+    ...Probe
+  }
+}

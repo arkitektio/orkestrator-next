@@ -1,33 +1,49 @@
 import { DisplayWidgetProps } from "@/lib/display/registry";
-import { KraphEntity } from "@/linkers";
-import { useGetEntityQuery } from "../api/graphql";
+import { KraphInstance } from "@/linkers";
+import { useGetInstanceQuery } from "../api/graphql";
+import { termKindLabel } from "../lib/terms";
 
+/**
+ * Claim-grain, deliberately.
+ *
+ * Displays are registered in `app/display.tsx` and rendered from outside kraph —
+ * the command palette and rekuest return ports — neither of which has a graph to
+ * name. `entity(id:, graph:)` needs one and refuses a node the named view does
+ * not admit, so this reads `instance(id:)` instead and shows the claim's own
+ * word. `category.label` is one view's rename of that word and simply does not
+ * exist out here.
+ */
 export const EntityDisplay = (props: DisplayWidgetProps) => {
-  const { data } = useGetEntityQuery({ variables: { id: props.object } });
+  const { data } = useGetInstanceQuery({ variables: { id: props.object } });
 
-  if (!data?.entity) {
+  if (!data?.instance) {
     return <div className="text-xs text-muted-foreground">Entity not found</div>;
   }
 
-  const entity = data.entity;
+  const instance = data.instance;
+  const word = instance.term.label ?? instance.term.key;
 
   if (props.context === "command") {
     return (
-      <KraphEntity.DetailLink object={entity}>
+      <KraphInstance.DetailLink object={instance}>
         <div className="flex items-center gap-2 min-w-0">
-          <span className="font-medium text-sm truncate">{entity.label}</span>
-          <span className="text-xs text-muted-foreground shrink-0">{entity.category.label}</span>
+          <span className="font-medium text-sm truncate">{word}</span>
+          <span className="text-xs text-muted-foreground shrink-0">
+            {termKindLabel(instance.term.kind)}
+          </span>
         </div>
-      </KraphEntity.DetailLink>
+      </KraphInstance.DetailLink>
     );
   }
 
   return (
-    <KraphEntity.DetailLink object={entity}>
+    <KraphInstance.DetailLink object={instance}>
       <div className="w-full rounded-lg border border-border/60 bg-card p-3 space-y-1">
-        <div className="font-semibold text-sm">{entity.label}</div>
-        <div className="text-xs text-muted-foreground">{entity.category.label}</div>
+        <div className="font-semibold text-sm">{word}</div>
+        <div className="text-xs text-muted-foreground">
+          {termKindLabel(instance.term.kind)}
+        </div>
       </div>
-    </KraphEntity.DetailLink>
+    </KraphInstance.DetailLink>
   );
 };

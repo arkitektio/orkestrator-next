@@ -1,4 +1,4 @@
-query GetFile($id: ID!, $viewPagination: OffsetPaginationInput = { limit: 5, offset: 0 }) {
+query GetFile($id: ID!) {
   file(id: $id) {
     ...File
   }
@@ -11,5 +11,30 @@ query GetFiles(
 ) {
   files(filters: $filters, pagination: $pagination, ordering: $ordering) {
     ...ListFile
+  }
+}
+
+# What this file's bytes became, and what was written out of them — the lineage
+# half of the File Info rail, in one round trip, mirroring GetArrayDatasetDerived.
+#
+# A file has no coordinate system, so there is no `derivedFrom` here and there
+# never can be: these links claim no geometry at all. They say only that the
+# file's bytes and that container's data are the same thing, in one direction or
+# the other — `derivedContainers` for the ingest (the file existed first) and
+# `exportedFrom` for the export (the container did).
+#
+# Made here rather than folded into the `File` fragment because the Info tab is
+# unmounted while inactive (Radix `TabsContent`), so it costs nothing until
+# someone opens it — and because the fragment is also what every file mutation
+# returns, which has no use for the links.
+query GetFileDerived($id: ID!) {
+  file(id: $id) {
+    id
+    derivedContainers {
+      ...FileLink
+    }
+    exportedFrom {
+      ...FileLink
+    }
   }
 }

@@ -1,30 +1,25 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { ListRender } from "@/components/layout/ListRender";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useMikroBigFileDownload } from "@/datalayer/hooks/useMikroBigFileDownload";
-import { WithMikroMediaUrl } from "@/lib/datalayer/mikroAccess";
-import { MikroFile, MikroImage } from "@/linkers";
+import { MikroFile } from "@/linkers";
 import { useDownload } from "@/providers/download/DownloadProvider";
-import {
-  DownloadIcon,
-  FileIcon,
-  ImageIcon,
-  LinkIcon
-} from "lucide-react";
-import { useGetFileQuery, useListFileViewsQuery } from "../api/graphql";
-import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
+import { DownloadIcon, FileIcon, Grid3x3 } from "lucide-react";
+import { useGetFileQuery } from "../api/graphql";
+import { MoveToFolderButton } from "../components/folder/MoveToFolderButton";
+import ArrayDatasetList from "../components/lists/ArrayDatasetList";
+import { FileInfoSidebar } from "../components/sidebars/FileInfoSidebar";
+import { formatBytes } from "../specs";
 
-// Helper for formatting file size
-const formatBytes = (bytes: number | null | undefined): string => {
-  if (bytes == null) return "Unknown Size";
-  if (bytes === 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB", "TB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-};
+// The shared `specs.formatBytes` does the arithmetic — identical 1024 steps and
+// units to the copy that used to live here — so the body and the Info rail
+// cannot render the same byte count two different ways a few hundred pixels
+// apart. Only the null wording is this page's: `size` is nullable and the null
+// is meaningful, since a store that has not reported yet is not a zero-byte
+// file.
+const formatSize = (bytes: number | null | undefined): string =>
+  bytes == null ? "Unknown Size" : formatBytes(bytes);
 
 // Helper for getting clean file extension
 const getFileExtension = (filename: string) => {
@@ -66,11 +61,6 @@ export const FilePage = asDetailQueryRoute(useGetFileQuery, ({ data }) => {
 
   const file = data?.file;
 
-  const viewsQuery = useListFileViewsQuery({
-    variables: { file: file?.id || "" },
-    skip: !file?.id,
-  });
-
   if (!file) return null;
 
 
@@ -84,6 +74,10 @@ export const FilePage = asDetailQueryRoute(useGetFileQuery, ({ data }) => {
       title={file.name}
       pageActions={
         <div className="flex items-center gap-2">
+          {/* No `currentFolder`: `File` is the one filable type with no `folder`
+              field, so the badge stays dark until the schema can answer where
+              this file sits. Moving works regardless. */}
+          <MoveToFolderButton subject={{ kind: "file", ids: [file.id] }} />
           <Button
             onClick={() => {
               startDownload(file.name, async ({ id, signal }) => {
@@ -102,16 +96,17 @@ export const FilePage = asDetailQueryRoute(useGetFileQuery, ({ data }) => {
           <MikroFile.ObjectButton object={file} />
         </div>
       }
-      sidebars={
-        <MultiSidebar
-          map={{
-            Comments: <MikroFile.Komments object={file} />,
-            Provenance: (
-              <ProvenanceSidebar items={file.provenanceEntries} />
-            ),
-          }}
-        />
+      // `additionalSidebars` rather than an explicit `sidebars`: passing the
+      // latter takes over the whole rail, so Knowledge and Chat would have to be
+      // rebuilt here to keep them. The standalone Provenance tab is gone with
+      // it — the history is a section of Info now, next to the links it
+      // explains, exactly as on the array and table pages.
+      additionalSidebars={
+        <Sidebars.Tab label="Info">
+          <FileInfoSidebar file={file} />
+        </Sidebars.Tab>
       }
+      defaultSidebar="Info"
     >
       {/* Enhanced File Header / Title Area */}
       <div className="mb-6">
@@ -139,7 +134,7 @@ export const FilePage = asDetailQueryRoute(useGetFileQuery, ({ data }) => {
         <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-6 text-sm">
           <div>
             <dt className="text-muted-foreground text-xs mb-1">File Size</dt>
-            <dd className="font-medium text-base">{formatBytes(file.size)}</dd>
+            <dd className="font-medium text-base">{formatSize(file.size)}</dd>
           </div>
           <div>
             <dt className="text-muted-foreground text-xs mb-1">MIME Type</dt>
@@ -157,111 +152,33 @@ export const FilePage = asDetailQueryRoute(useGetFileQuery, ({ data }) => {
           </div>
         </dl>
 
-      {/* Origins (Lineage) */}
-      {file.origins && file.origins.length > 0 && (
-        <div className="space-y-4 mb-8 mt-3">
-          <div className="flex items-center gap-2 mb-2 border-b border-border/40 pb-2">
-            <LinkIcon className="h-4 w-4 text-indigo-500" />
-            <h2 className="text-lg font-bold tracking-tight">Origin Images</h2>
-            <Badge variant="outline" className="bg-indigo-500/10 text-indigo-500 border-indigo-500/20 font-semibold text-xs ml-auto">
-              {file.origins.length} Total
-            </Badge>
-          </div>
+      {/* The "Origin Images" section used to sit here. `File.origins` was
+          removed from the mikro schema, so there is nothing left to render:
+          what a file came from is now told by its provenance entries. */}
 
-          <ListRender array={file.origins} fit>
-            {(origin) => (
-              <MikroImage.Smart object={origin} key={origin.id}>
-                <div className="relative rounded group text-white bg-center group-hover:scale-102 bg-background shadow-lg aspect-square rounded-lg hover:bg-back-800 transition-all ease-in-out duration-200 group-hover:shadow-xl overflow-hidden">
-                  {origin.latestSnapshot?.store ? (
-                    <WithMikroMediaUrl media={origin.latestSnapshot.store}>
-                      {(url) => (
-                        <img
-                          src={url}
-                          alt={origin.name}
-                          className="object-cover w-full h-full transition-transform duration-300 rounded-lg"
-                        />
-                      )}
-                    </WithMikroMediaUrl>
-                  ) : (
-                    <div className="h-full w-full flex items-center justify-center bg-muted/30">
-                      <ImageIcon className="h-8 w-8 text-muted-foreground/40" />
-                    </div>
-                  )}
-
-                  <div className="px-2 py-2 h-full w-full absolute rounded-lg top-0 left-0 bg-black/40 hover:bg-black/20 transition-all ease-in-out duration-200 flex flex-col justify-between overflow-hidden">
-                    <div className="flex justify-between items-start gap-2">
-                      <MikroImage.DetailLink
-                        className="z-10 font-bold text-md cursor-pointer break-words line-clamp-2"
-                        object={origin}
-                      >
-                        {origin.name || "Unnamed Image"}
-                      </MikroImage.DetailLink>
-                    </div>
-                  </div>
-                </div>
-              </MikroImage.Smart>
-            )}
-          </ListRender>
-        </div>
-      )}
-
-      {/* Derived Images */}
+      {/* Derived Datasets — the array datasets a converter wrote out of these
+          bytes. Filtered server-side with `sourceFile` rather than walking
+          `file.derivedContainers`: that field is kind-blind (tables, meshes and
+          annotation collections come back on it too), and going through the
+          list keeps the same card, pagination and empty state as every other
+          dataset list. */}
       <div className="space-y-4 mt-4">
-
-        <ListRender
-          array={viewsQuery.data?.file?.views}
-          refetch={async (variables) => {
-            return viewsQuery.refetch(variables);
-          }}
+        <ArrayDatasetList
+          filters={{ sourceFile: file.id }}
           title={
-
-        <div className="flex items-center  pb-2">
-          <ImageIcon className="h-4 w-4 text-emerald-500" />
-          <h2 className="text-lg font-bold tracking-tight">Derived Images</h2>
-        </div>
+            <div className="flex items-center pb-2">
+              <Grid3x3 className="h-4 w-4 text-sky-500" />
+              <h2 className="text-lg font-bold tracking-tight">
+                Derived Datasets
+              </h2>
+            </div>
           }
-          limit={10}
-        >
-          {(view, index) => (
-            <MikroImage.Smart object={view.image} key={index}>
-              <div className="relative rounded group text-white bg-center group-hover:scale-102 bg-background shadow-lg aspect-square rounded-lg hover:bg-back-800 transition-all ease-in-out duration-200 group-hover:shadow-xl overflow-hidden">
-                {view.image.latestSnapshot?.store ? (
-                  <WithMikroMediaUrl media={view.image.latestSnapshot.store}>
-                    {(url) => (
-                      <img
-                        src={url}
-                        alt={view.image.name}
-                        className="object-cover w-full h-full transition-transform duration-300 rounded-lg"
-                      />
-                    )}
-                  </WithMikroMediaUrl>
-                ) : (
-                  <div className="h-full w-full flex items-center justify-center bg-muted/30">
-                    <ImageIcon className="h-8 w-8 text-muted-foreground/40" />
-                  </div>
-                )}
-
-                <div className="px-2 py-2 h-full w-full absolute rounded-lg top-0 left-0 bg-black/40 hover:bg-black/20 transition-all ease-in-out duration-200 flex flex-col justify-between overflow-hidden">
-                  <div className="flex justify-between items-start gap-2">
-                    <MikroImage.DetailLink
-                      className="z-10 font-bold text-md cursor-pointer break-words line-clamp-2"
-                      object={view.image}
-                    >
-                      {view.image?.name || "Unnamed Image"}
-                    </MikroImage.DetailLink>
-
-                    {view.seriesIdentifier && (
-                      <Badge variant="secondary" className="text-xs shrink-0 bg-background/80 backdrop-blur-sm text-foreground shadow-sm">
-                        Series {view.seriesIdentifier}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </MikroImage.Smart>
-          )}
-        </ListRender>
+          emptyTitle="No datasets from this file"
+          emptyDescription="Nothing has been converted out of these bytes yet."
+          defaultLimit={10}
+        />
       </div>
+
     </MikroFile.ModelPage>
   );
 });

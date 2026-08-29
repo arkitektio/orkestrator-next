@@ -1,12 +1,38 @@
+"""Documents to add to an existing collection"""
 input AddDocumentsToCollectionInput {
   collection: ID!
   documents: [DocumentInput!]!
 }
 
-"""Agent(id, room, name, client, user)"""
+"""A participant in a room"""
 type Agent {
+  client: Client!
   id: ID!
+  name: String
   room: Room!
+
+  """The user this agent acts on behalf of"""
+  user: User!
+}
+
+"""Agent(id, room, name, client, user)"""
+input AgentFilter {
+  AND: AgentFilter
+  DISTINCT: Boolean
+  NOT: AgentFilter
+  OR: AgentFilter
+  ids: [ID!]
+  search: String
+}
+
+input AgentOrder @oneOf {
+  name: Ordering
+}
+
+"""An App model to represent an application in the system"""
+type App {
+  id: ID!
+  identifier: String!
 }
 
 """
@@ -14,12 +40,20 @@ Base64EncodedString represents an untyped options object returned by the Dask Ga
 """
 scalar Base64EncodedString
 
-"""A chat message input"""
+"""A chat completion request"""
 input ChatInput {
+  frequencyPenalty: Float = null
+  maxTokens: Int = null
   messages: [ChatMessageInput!]!
   model: ID = null
+  n: Int = null
+  presencePenalty: Float = null
+  responseFormat: JSON = null
+  stop: [String!] = null
   temperature: Float = null
+  toolChoice: JSON = null
   tools: [ToolInput!] = null
+  topP: Float = null
 }
 
 type ChatMessage {
@@ -61,12 +95,22 @@ type Choice {
 
 """A collection of documents searchable by string"""
 type ChromaCollection {
-  count: Int!
+  """
+  The number of documents stored in this collection, or null if the vector database cannot be reached
+  """
+  count: Int
   createdAt: DateTime!
   description: String!
+
+  """The model used to embed this collection's documents"""
+  embedder: LLMModel!
   id: ID!
+
+  """
+  The human-readable name of the collection, unique within its organization
+  """
   name: String!
-  owner: User!
+  owner: User
 }
 
 """Filter for ChromaCollection"""
@@ -79,13 +123,35 @@ input ChromaCollectionFilter {
   search: String
 }
 
+"""A collection of documents searchable by string"""
 input ChromaCollectionInput {
   description: String = null
   embedder: ID!
-  isPublic: Boolean = false
   name: String!
 }
 
+input ChromaCollectionOrder @oneOf {
+  createdAt: Ordering
+  name: Ordering
+}
+
+"""
+An Oauth2 Client
+
+An Oauth2 Client is a model to represent an Oauth2 client that is
+registered when a JWT token is authenticated. It retrieves
+the client_id from the token and uses it to create a new
+app or retrieve an existing app. This allows for the grouping
+of users by app.
+"""
+type Client {
+  clientId: String!
+  id: ID!
+  name: String!
+  release: Release
+}
+
+"""The room to create"""
 input CreateRoomInput {
   description: String = null
   talkingAbout: [StructureInput!] = null
@@ -95,6 +161,13 @@ input CreateRoomInput {
 """Date with time (isoformat)"""
 scalar DateTime
 
+"""A task a model can be made the default for"""
+enum DefaultKind {
+  EMBEDDING
+  IMAGE_GENERATION
+  TEXT_GENERATION
+}
+
 """A default use for a model"""
 type DefaultUse {
   id: ID!
@@ -102,21 +175,45 @@ type DefaultUse {
   model: LLMModel!
 }
 
+"""Filter for DefaultUse"""
+input DefaultUseFilter {
+  AND: DefaultUseFilter
+  DISTINCT: Boolean
+  NOT: DefaultUseFilter
+  OR: DefaultUseFilter
+  ids: [ID!]
+  search: String
+}
+
+input DefaultUseOrder @oneOf {
+  kind: Ordering
+}
+
+"""The collection to delete"""
+input DeleteCollectionInput {
+  id: ID!
+}
+
+"""The provider to delete"""
 input DeleteProviderInput {
   id: ID!
 }
 
+"""The room to delete"""
 input DeleteRoomInput {
   id: ID!
 }
 
+"""A document stored in a collection"""
 type Document {
   content: String!
   distance: Float
   id: String!
+
+  """The metadata stored alongside the document"""
   metadata: JSON
 
-  """A function definition for a large language model"""
+  """The object this document was derived from, if any"""
   structure: Structure
 }
 
@@ -128,11 +225,11 @@ input DocumentInput {
   structure: StructureInput = null
 }
 
-"""The type of the thinking block"""
+"""A capability a model supports"""
 enum FeatureType {
   CHAT
-  CHATTING
   EMBEDDING
+  VISION
 }
 
 """The type of the tool"""
@@ -169,16 +266,9 @@ input ImageInput {
   model: ID = null
 }
 
-type ImageReponse {
+"""A generated image, base64 encoded"""
+type ImageResponse {
   image: Base64EncodedString!
-}
-
-"""Modalities"""
-enum InputModality {
-  AUDIO
-  IMAGE
-  TEXT
-  VIDEO
 }
 
 """
@@ -189,22 +279,22 @@ scalar JSON @specifiedBy(url: "https://ecma-international.org/wp-content/uploads
 """A LLM model to chage with"""
 type LLMModel {
   """The collections that can be embedded with this model"""
-  embedderFor(filters: ChromaCollectionFilter, pagination: OffsetPaginationInput): [ChromaCollection!]!
+  embedderFor(filters: ChromaCollectionFilter, ordering: [ChromaCollectionOrder!]! = [], pagination: OffsetPaginationInput): [ChromaCollection!]!
 
   """The features supported by the model"""
   features: [FeatureType!]!
   id: ID!
 
-  """The input modalities"""
-  inputModalities: [InputModality!]!
+  """The modalities this model accepts as input"""
+  inputModalities: [Modality!]!
   label: String!
 
   """The string to use for the LLM model"""
   llmString: String!
   modelId: String!
 
-  """The input modalities"""
-  outputModalities: [InputModality!]!
+  """The modalities this model produces as output"""
+  outputModalities: [Modality!]!
   provider: Provider!
 }
 
@@ -214,10 +304,17 @@ input LLMModelFilter {
   DISTINCT: Boolean
   NOT: LLMModelFilter
   OR: LLMModelFilter
+  features: [FeatureType!]
   ids: [ID!]
-  inputModalities: [InputModality!]
-  outputModalities: [InputModality!]
+  inputModalities: [Modality!]
+  outputModalities: [Modality!]
+  provider: ID
   search: String
+}
+
+input LLMModelOrder @oneOf {
+  label: Ordering
+  modelId: Ordering
 }
 
 """Message represent the message of an agent on a room"""
@@ -225,14 +322,29 @@ type Message {
   """The user that created this comment"""
   agent: Agent!
 
-  """The collections that can be embedded with this model"""
+  """The objects this message was posted about"""
   attachedStructures: [Structure!]!
   before(filters: MessageFilter = null, pagination: OffsetPaginationInput = null): [Message!]!
 
   """The time this comment got created"""
   createdAt: DateTime!
+
+  """The rich-text representation of the message"""
+  descendants: JSON!
   id: ID!
+
+  """The message this one replies to, if any"""
+  isReplyTo: Message
+
+  """Whether this message is still being written"""
+  isStreaming: Boolean!
+
+  """The messages replying to this one"""
+  replies(filters: MessageFilter, ordering: [MessageOrder!]! = [], pagination: OffsetPaginationInput): [Message!]!
   room: Room!
+
+  """The agents this message is addressed to"""
+  targets(filters: AgentFilter, ordering: [AgentOrder!]! = [], pagination: OffsetPaginationInput): [Agent!]!
 
   """A clear text representation of the rich comment"""
   text: String!
@@ -253,19 +365,59 @@ input MessageOrder @oneOf {
   createdAt: Ordering
 }
 
+"""A modality a model can read or emit"""
+enum Modality {
+  AUDIO
+  IMAGE
+  TEXT
+  VIDEO
+}
+
+"""The root mutation type"""
 type Mutation {
+  """Embed documents and add them to a collection"""
   addDocumentsToCollection(input: AddDocumentsToCollectionInput!): [Document!]!
+
+  """Send a chat completion request"""
   chat(input: ChatInput!): ChatResponse!
+
+  """Create a searchable collection of documents"""
   createCollection(input: ChromaCollectionInput!): ChromaCollection!
+
+  """Configure a new LLM provider and list the models it offers"""
   createProvider(input: ProviderInput!): Provider!
+
+  """Open a new room"""
   createRoom(input: CreateRoomInput!): Room!
-  deleteCollection(input: AddDocumentsToCollectionInput!): ID!
+
+  """Delete a collection and its documents"""
+  deleteCollection(input: DeleteCollectionInput!): ID!
+
+  """Delete a provider and the models it offers"""
   deleteProvider(input: DeleteProviderInput!): ID!
+
+  """Delete a room and its messages"""
   deleteRoom(input: DeleteRoomInput!): ID!
+
+  """Create a collection, or update it if it already exists"""
   ensureCollection(input: ChromaCollectionInput!): ChromaCollection!
-  generateImage(input: ImageInput!): ImageReponse!
+
+  """Generate an image from a text description"""
+  generateImage(input: ImageInput!): ImageResponse!
+
+  """Pull a model into an Ollama provider"""
   pull(input: PullInput!): OllamaPullResult!
+
+  """Re-list the models a provider offers"""
+  refreshProvider(input: RefreshProviderInput!): Provider!
+
+  """Post a message into a room"""
   send(input: SendMessageInput!): Message!
+
+  """Update a provider in place, e.g. to rotate its credential"""
+  updateProvider(input: UpdateProviderInput!): Provider!
+
+  """Register a model as the caller's default for a kind of task"""
   useModelFor(input: UseModelForInput!): DefaultUse!
 }
 
@@ -274,6 +426,7 @@ input OffsetPaginationInput {
   offset: Int! = 0
 }
 
+"""The outcome of pulling a model"""
 type OllamaPullResult {
   detail: String
   status: String!
@@ -290,20 +443,25 @@ enum Ordering {
 
 """An Organization model to represent an organization in the system"""
 type Organization {
-  id: String!
+  id: ID!
   slug: String!
 }
 
 """A provider of LLMs"""
 type Provider {
-  additionalConfig: JSON!
-  apiBase: String!
-  apiKey: String!
-  id: String!
+  """Provider configuration, with credential-bearing keys redacted."""
+  additionalConfig: JSON
+  apiBase: String
+
+  """
+  Whether an API key is configured for this provider. The key itself is never exposed.
+  """
+  hasApiKey: Boolean!
+  id: ID!
 
   """The kind of the provider"""
   kind: ProviderKind!
-  models(filters: LLMModelFilter, pagination: OffsetPaginationInput): [LLMModel!]!
+  models(filters: LLMModelFilter, ordering: [LLMModelOrder!]! = [], pagination: OffsetPaginationInput): [LLMModel!]!
   name: String!
 }
 
@@ -352,23 +510,82 @@ enum ProviderKind {
   VERTEX_AI
 }
 
+input ProviderOrder @oneOf {
+  createdAt: Ordering
+  name: Ordering
+}
+
+"""The model to pull, and the provider to pull it into"""
 input PullInput {
   modelName: String!
+  provider: ID = null
 }
 
 type Query {
+  _entities(representations: [_Any!]!): [_Entity]!
+  _service: _Service!
+
+  """Get a single Chroma collection by ID"""
   chromaCollection(id: ID!): ChromaCollection!
-  chromaCollections(filters: ChromaCollectionFilter, pagination: OffsetPaginationInput): [ChromaCollection!]!
-  documents(collection: ID!, nResults: Int = 3, queryTexts: [String!] = null, where: JSON = null): [Document!]!
+
+  """List this organization's Chroma collections"""
+  chromaCollections(filters: ChromaCollectionFilter, ordering: [ChromaCollectionOrder!]! = [], pagination: OffsetPaginationInput): [ChromaCollection!]!
+
+  """The model the caller uses by default for one kind of task, if any"""
+  defaultModelFor(kind: DefaultKind!): LLMModel
+
+  """The models the caller has registered as defaults"""
+  defaultUses(filters: DefaultUseFilter, ordering: [DefaultUseOrder!]! = [], pagination: OffsetPaginationInput): [DefaultUse!]!
+
+  """Search a collection for the documents most similar to some text"""
+  documents(input: QueryInput!): [Document!]!
+
+  """Get a single LLM model by ID"""
   llmModel(id: ID!): LLMModel!
-  llmModels(filters: LLMModelFilter, pagination: OffsetPaginationInput): [LLMModel!]!
+
+  """List the LLM models reachable through this organization's providers"""
+  llmModels(filters: LLMModelFilter, ordering: [LLMModelOrder!]! = [], pagination: OffsetPaginationInput): [LLMModel!]!
+
+  """Get a single message by ID"""
   message(id: ID!): Message!
+
+  """List the messages in this organization's rooms"""
   messages(filters: MessageFilter, ordering: [MessageOrder!]! = [], pagination: OffsetPaginationInput): [Message!]!
+
+  """Get a single provider by ID"""
   provider(id: ID!): Provider!
-  providers(filters: ProviderFilter, pagination: OffsetPaginationInput): [Provider!]!
+
+  """List the LLM providers configured for this organization"""
+  providers(filters: ProviderFilter, ordering: [ProviderOrder!]! = [], pagination: OffsetPaginationInput): [Provider!]!
+
+  """Get a single room by ID"""
   room(id: ID!): Room!
+
+  """Aggregate statistics over this organization's rooms"""
   roomStats(filters: RoomFilter = null): RoomStats!
-  rooms(filters: RoomFilter, pagination: OffsetPaginationInput): [Room!]!
+
+  """List the rooms in this organization"""
+  rooms(filters: RoomFilter, ordering: [RoomOrder!]! = [], pagination: OffsetPaginationInput): [Room!]!
+}
+
+"""A similarity query against a collection"""
+input QueryInput {
+  collection: ID!
+  nResults: Int! = 3
+  queryTexts: [String!]!
+  where: JSON = null
+}
+
+"""The provider whose model list should be re-synced"""
+input RefreshProviderInput {
+  id: ID!
+}
+
+"""A Release model to represent a release of an application in the system"""
+type Release {
+  app: App!
+  id: ID!
+  version: String!
 }
 
 """The type of the message sender"""
@@ -380,10 +597,14 @@ enum Role {
   USER
 }
 
-"""Room(id, title, description, creator, organization, created_at)"""
+"""A room agents and users converse in"""
 type Room {
-  agents(pagination: OffsetPaginationInput): [Agent!]!
-  description: String!
+  agents(filters: AgentFilter, ordering: [AgentOrder!]! = [], pagination: OffsetPaginationInput): [Agent!]!
+
+  """The time this room got created"""
+  createdAt: DateTime!
+  creator: User
+  description: String
   id: ID!
   messages(filters: MessageFilter, ordering: [MessageOrder!]! = [], pagination: OffsetPaginationInput): [Message!]!
 
@@ -394,6 +615,7 @@ type Room {
   title: String!
 }
 
+"""Something that happened in a room"""
 type RoomEvent {
   join: Agent
   leave: Agent
@@ -414,6 +636,11 @@ input RoomFilter {
   ids: [ID!]
   search: String
   talkingAbout: StructureInput
+}
+
+input RoomOrder @oneOf {
+  createdAt: Ordering
+  title: Ordering
 }
 
 type RoomStats {
@@ -444,6 +671,7 @@ enum RoomTimestampField {
   CREATED_AT
 }
 
+"""The message to send"""
 input SendMessageInput {
   agentId: String!
   attachStructures: [StructureInput!] = null
@@ -453,19 +681,21 @@ input SendMessageInput {
   text: String!
 }
 
-"""The type of the tool"""
+"""A reference to an object held by another Arkitekt service"""
 type Structure {
   identifier: String!
-  object: String!
+  object: Int!
 }
 
-"""A function definition for a large language model"""
+"""A reference to an object held by another Arkitekt service"""
 input StructureInput {
   identifier: String!
-  object: String!
+  object: Int!
 }
 
+"""The root subscription type"""
 type Subscription {
+  """Join a room and receive its messages as they are posted"""
   room(agentId: ID!, filterOwn: Boolean! = true, room: ID!): RoomEvent!
 }
 
@@ -515,6 +745,16 @@ enum ToolType {
   FUNCTION
 }
 
+"""The provider to update, and the fields to change"""
+input UpdateProviderInput {
+  additionalConfig: JSON = null
+  apiBase: String = null
+  apiKey: String = null
+  description: String = null
+  id: ID!
+  name: String = null
+}
+
 type Usage {
   completionTokenDetails: JSON
   completionTokens: Int!
@@ -525,13 +765,22 @@ type Usage {
 
 """The input for using a model for a specific task"""
 input UseModelForInput {
-  kind: String!
+  kind: DefaultKind!
   model: ID!
 }
 
 """A reflection on the real User"""
 type User {
   activeOrganization: Organization
+  id: ID!
   preferredUsername: String!
   sub: String!
+}
+
+scalar _Any
+
+union _Entity = Agent | App | Client | Message | Organization | Release | Room | User
+
+type _Service {
+  sdl: String!
 }

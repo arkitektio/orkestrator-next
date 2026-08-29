@@ -29,12 +29,12 @@ import {
   useService,
   useServiceState,
 } from "./hooks";
-import { login } from "./oauth/login";
 import {
   AppContext,
   AppFunctions,
   ConnectedContext,
   EnhancedManifest,
+  GetToken,
   ModuleRegistry,
   Service,
   ServiceBuilder,
@@ -56,6 +56,7 @@ import {
   createModuleRegistryFromServices,
 } from "./runtime/state";
 import { createArkitektStateStore } from "./store";
+import { TokenRotation } from "./runtime/tokenRotation";
 
 // Bootstrap/token tracing is noisy and some of it sits on hot paths (e.g. the
 // token check runs on every GraphQL request via the Apollo auth link). Keep the
@@ -99,13 +100,11 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
   const controllerRef = useRef<AbortController | null>(null);
   const validationRunIdsRef = useRef<Record<string, number>>({});
 
-  // Async lock: only one token refresh at a time
-  const refreshLockRef = useRef<Promise<void> | null>(null);
   const refreshInitialized = useRef(false);
 
   // The single refreshToken function passed to all service builders.
   // Behind an async lock so concurrent callers wait for the same refresh.
-  const refreshTokenRef = useRef<() => Promise<import("./fakts/tokenSchema").TokenResponse>>(
+  const refreshTokenRef = useRef<GetToken>(
     () => { throw new Error("Provider not initialized"); },
   );
 
@@ -132,19 +131,62 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
   if (!refreshInitialized.current) {
     refreshInitialized.current = true;
     dlog("[ArkitektProvider] Initializing refreshToken function");
-    refreshTokenRef.current = async () => {
-      // If a refresh is already in flight, wait for it and return the new token
-      if (refreshLockRef.current) {
-        dlog("[ArkitektProvider] Refresh already in flight, waiting for lock...");
-        await refreshLockRef.current;
-        const s = store.getState().storedSession;
-        if (!s) {
-          console.error("[ArkitektProvider] No stored session after waiting for refresh lock");
-          throw new Error("No stored session after refresh");
-        }
-        dlog("[ArkitektProvider] Lock released, returning refreshed token");
-        return normalizeToken(s.token);
+
+    // The coalescing + forced-vs-raced rule lives in TokenRotation
+    // (runtime/tokenRotation.ts); this callback is just the round-trip.
+    const rotation = new TokenRotation(async () => {
+      const session = store.getState().storedSession;
+      if (!session) {
+        console.error("[ArkitektProvider] No stored session available to refresh");
+        throw new Error("No stored session available");
       }
+
+      const currentToken = normalizeToken(session.token);
+      if (!currentToken.refresh_token) {
+        console.error("[ArkitektProvider] Token expired but no refresh_token available");
+        throw new Error("No refresh token available – cannot refresh");
+      }
+
+      try {
+        // Every refresh response re-renders the fakts envelope, so this is
+        // also how instance/alias changes reach us without re-approval.
+        const { token: nextToken, fakts: refreshedFakts } = await refreshAccessToken(
+          session.endpoint.token_endpoint,
+          currentToken,
+          controllerRef.current || undefined,
+        );
+        // No envelope on the response means the server could not re-render it,
+        // not that our config went away.
+        const nextFakts = refreshedFakts ?? session.fakts;
+        const storage = await storageProviderRef.current();
+
+        dlog("[ArkitektProvider] Token refresh succeeded");
+        const nextSession = { ...session, token: nextToken, fakts: nextFakts };
+        writeStoredToken(nextToken, storage);
+        writeStoredArkitektSession(nextSession, storage);
+
+        const connection = store.getState().connection;
+        store.setState({
+          storedSession: nextSession,
+          connection: connection
+            ? {
+                ...connection,
+                token: nextToken,
+                fakts: nextFakts,
+                serviceInstanceMap: nextFakts.instances,
+              }
+            : connection,
+        });
+
+        return nextToken;
+      } catch (refreshError) {
+        console.error("[ArkitektProvider] Token refresh failed:", refreshError);
+        throw refreshError;
+      }
+    });
+
+    refreshTokenRef.current = async (options = {}) => {
+      const forceRefresh = Boolean(options.forceRefresh);
 
       const session = store.getState().storedSession;
       if (!session) {
@@ -152,48 +194,20 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
         throw new Error("No stored session available");
       }
 
+      // `forceRefresh` deliberately skips this: the caller is here because the
+      // server rejected the token, so how fresh the clock says it is tells us
+      // nothing. `isForcedInFlight` extends that to everyone else — while some
+      // other client is replacing a rejected token, a "still fresh" cached
+      // token is the rejected one, so join the rotation instead of handing it
+      // out. Twelve Apollo clients share this token; they fail together.
       const currentToken = normalizeToken(session.token);
-      if (!shouldRefreshToken(currentToken)) {
+      if (!forceRefresh && !rotation.isForcedInFlight() && !shouldRefreshToken(currentToken)) {
         dlog("[ArkitektProvider] Token still valid, returning current token");
         return currentToken;
       }
 
-      if (!currentToken.refresh_token) {
-        console.error("[ArkitektProvider] Token expired but no refresh_token available");
-        throw new Error("No refresh token available – cannot refresh");
-      }
-
-      dlog("[ArkitektProvider] Token expired, starting refresh...");
-      let resolve: () => void;
-      refreshLockRef.current = new Promise<void>((r) => { resolve = r; });
-
-      try {
-        const nextToken = await refreshAccessToken(
-          session.fakts,
-          currentToken,
-          controllerRef.current || undefined,
-        );
-        const storage = await storageProviderRef.current();
-
-        dlog("[ArkitektProvider] Token refresh succeeded");
-        const nextSession = { ...session, token: nextToken };
-        writeStoredToken(nextToken, storage);
-        writeStoredArkitektSession(nextSession, storage);
-
-        const connection = store.getState().connection;
-        store.setState({
-          storedSession: nextSession,
-          connection: connection ? { ...connection, token: nextToken } : connection,
-        });
-
-        return nextToken;
-      } catch (refreshError) {
-        console.error("[ArkitektProvider] Token refresh failed:", refreshError);
-        throw refreshError;
-      } finally {
-        refreshLockRef.current = null;
-        resolve!();
-      }
+      dlog("[ArkitektProvider] Refreshing token (forced:", forceRefresh, ")");
+      return rotation.rotate({ forceRefresh });
     };
   }
 
@@ -339,12 +353,18 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
       return parsedSession.data;
     }
 
-    const validationErrors = parsedSession.error.issues
-      .map((issue) => `${issue.path.join(".") || "root"}: ${issue.message}`)
-      .join("; ");
-
-    console.error("[ArkitektProvider] Invalid stored session schema:", parsedSession.error.issues);
-    throw new Error(`Invalid stored Arkitekt config: ${validationErrors}`);
+    // A session we can no longer read is a session we no longer have. Chiefly
+    // this is the fakts protocol-2 migration: sessions written by the old
+    // start/challenge/claim flow carry an `auth` block and no `client_id`, and
+    // nothing can be salvaged from them. Throwing here would strand the user on
+    // an error screen that survives reload, because the unreadable entries
+    // would stay in storage — so drop them and fall back to a fresh connect.
+    console.warn(
+      "[ArkitektProvider] Discarding unreadable stored session:",
+      parsedSession.error.issues,
+    );
+    clearStoredArkitektStorage(undefined, storage);
+    return null;
   }, []);
 
   const validateService = useCallback(
@@ -417,7 +437,7 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
               manifest: current.manifest,
               alias,
               fakts: nextSession.fakts,
-              getToken: () => refreshTokenRef.current(),
+              getToken: (options) => refreshTokenRef.current(options),
             });
             validationResult.supersededService =
               current.connection.serviceMap[serviceKey] as Service | undefined;
@@ -541,12 +561,16 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
         dlog("[ArkitektProvider] connect: manifest enhanced, node_id:", enhancedManifest.node_id);
         writeStoredEndpoint(endpoint, storage);
 
-        const fakts = await flow({ endpoint, controller, manifest: enhancedManifest });
+        // One grant, one response: tokens and the rendered instances together.
+        const { fakts, token: grantToken } = await flow({
+          endpoint,
+          controller,
+          manifest: enhancedManifest,
+        });
         dlog("[ArkitektProvider] connect: fakts resolved, services:", Object.keys(fakts.instances || {}));
         writeStoredFakts(fakts, storage);
 
-        const token = normalizeToken(await login(fakts.auth));
-        dlog("[ArkitektProvider] connect: login succeeded");
+        const token = normalizeToken(grantToken);
         const { aliasReports, aliasMap } = await buildAliases({
           fakts,
           manifest: enhancedManifest,
@@ -556,9 +580,8 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
         dlog("[ArkitektProvider] connect: aliases built, keys:", Object.keys(aliasMap));
 
         writeStoredAliasMap({ aliasMap }, storage);
-        await report(fakts.auth.report_url, {
+        await report(endpoint.base_url, token.access_token, {
           alias_reports: aliasReports,
-          token: fakts.auth.client_token,
           functional: Object.values(aliasReports).every((r) => r.valid),
         });
 
@@ -682,9 +705,11 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
     });
 
     const functional = Object.values(aliasReports).every((r) => r.valid);
-    const ok = await report(conn.fakts.auth.report_url, {
+    // Report with a live token: this runs long after connect, so the one on
+    // the connection may already have aged out.
+    const { access_token } = await refreshTokenRef.current();
+    const ok = await report(conn.endpoint.base_url, access_token, {
       alias_reports: aliasReports,
-      token: conn.fakts.auth.client_token,
       functional,
     });
 

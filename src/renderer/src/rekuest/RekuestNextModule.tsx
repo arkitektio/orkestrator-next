@@ -1,7 +1,7 @@
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { Guard } from "@/app/Arkitekt";
 import React from "react";
-import { Route, Routes } from "react-router";
+import { Route, Routes } from "react-router-dom";
 import Action from "./pages/ActionPage";
 import Actions from "./pages/ActionsPage";
 import AgentPage from "./pages/AgentPage";
@@ -43,6 +43,7 @@ import StatePage from "./pages/StatePage";
 import SpaceEditPage from "./pages/SpaceEditPage";
 import SpacePage from "./pages/SpacePage";
 import SpacesPage from "./pages/SpacesPage";
+import { NotFound } from "@/app/components/fallbacks/NotFound";
 
 /**
  *
@@ -97,6 +98,7 @@ const Module: React.FC = () => {
           <Route path="tasks/:id/log" element={<TaskLogPage />} />
           <Route path="tasks/:id/space" element={<TaskSpacePage />} />
           <Route path="tasks/:id/timeline" element={<TaskTimelinePage />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
 
       </Guard.Rekuest>

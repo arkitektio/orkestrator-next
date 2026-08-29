@@ -33,7 +33,12 @@ export type MetricsTableItem = {
   createdBy?: string | null;
   createdApp?: string | null;
   createdThrough?: string | null;
-  category?: { label?: string | null } | null;
+  // A metric names its measurement word. `Metric.category` was replaced by the
+  // organization-scoped `kind`, so reading `category` here left the Metric
+  // column blank.
+  key?: string | null;
+  unit?: string | null;
+  kind?: { key?: string | null; label?: string | null } | null;
 };
 
 export type MetricsTableProps = {
@@ -43,8 +48,8 @@ export type MetricsTableProps = {
 
 const columns: ColumnDef<MetricsTableItem>[] = [
   {
-    id: "category",
-    accessorFn: (row) => row.category?.label ?? "",
+    id: "kind",
+    accessorFn: (row) => row.kind?.label ?? row.kind?.key ?? row.key ?? "",
     header: ({ column }) => (
       <Button
         variant="ghost"
@@ -71,7 +76,12 @@ const columns: ColumnDef<MetricsTableItem>[] = [
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
-    cell: ({ row }) => <div className="truncate">{row.original.value}</div>,
+    cell: ({ row }) => (
+      <div className="truncate">
+        {row.original.value}
+        {row.original.unit ? ` ${row.original.unit}` : ""}
+      </div>
+    ),
   },
   {
     id: "createdThrough",

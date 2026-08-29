@@ -12,7 +12,6 @@ fragment ListAction on Action {
       id
     }
   }
-  logo
   key
   version
   app {
@@ -29,7 +28,6 @@ fragment SearchAction on Action {
   name
   description
   hash
-  logo
   kind
   scope
 }
@@ -40,7 +38,6 @@ fragment GraphNodeAction on Action {
   kind
   hash
   id
-  logo
   stateful
   collections {
     id
@@ -81,6 +78,7 @@ fragment DetailAction on Action {
     identifier
   }
   hash
+  allowProbe
 }
 
 fragment PrimaryAction on Action {
@@ -88,7 +86,6 @@ fragment PrimaryAction on Action {
   stateful
   name
   hash
-  logo
   implementations {
     id
     interface
@@ -109,7 +106,6 @@ fragment HoverAction on Action {
   description
   kind
   stateful
-  logo
   app {
     identifier
   }

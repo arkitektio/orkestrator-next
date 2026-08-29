@@ -31,22 +31,10 @@ interface ReturnColumnBuilderProps {
 
 // Property configurations for different node types
 const NODE_PROPERTIES: Record<string, Array<{ property: string; label: string; isId?: boolean; type?: string }>> = {
-  metriccategory: [
-    { property: "id", label: "ID", isId: true },
-    { property: "value", label: "Value", type: "number" },
-    { property: "label", label: "Label" },
-    { property: "valueKind", label: "Metric Kind" },
-    { property: "description", label: "Description" },
-  ],
   entitycategory: [
     { property: "id", label: "ID", isId: true },
     { property: "label", label: "Label" },
     { property: "instanceKind", label: "Instance Kind" },
-    { property: "description", label: "Description" },
-  ],
-  structurecategory: [
-    { property: "id", label: "ID", isId: true },
-    { property: "identifier", label: "Identifier" },
     { property: "description", label: "Description" },
   ],
   protocoleventcategory: [

@@ -1,0 +1,22 @@
+# Create a coordinate system, and in the same call author every edge that
+# registers a source into it. One mutation covers both things the client makes:
+#
+#   a WORLD      — axes, no registrations (or several, one per source placed
+#                  into it); nothing lives in it, so it stays a reference frame.
+#   a CALIBRATION — a physical space (its axes carry the units) plus exactly one
+#                  SCALE registration from the dataset whose pixels map into it.
+#                  There is no dedicated calibrate mutation any more: a
+#                  calibration IS a system plus its one edge, said in one call.
+#
+# `axes` order defines `scale` order: entry i of a registration's `scale` is the
+# pixel size of axis i of `axes`, and `inputAxes`/`outputAxes` name that same
+# order explicitly. Same discipline as CreateTransformation — the form emits all
+# of them from one ordered row list so they cannot disagree.
+#
+# Returns the new system in full, so the caller can navigate straight to it and
+# the coordinate graph redraws without a follow-up round trip.
+mutation CreateCoordinateSystem($input: CreateCoordinateSystemInput!) {
+  createCoordinateSystem(input: $input) {
+    ...CoordinateSystem
+  }
+}

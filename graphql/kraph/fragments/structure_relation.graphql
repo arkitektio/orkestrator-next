@@ -1,7 +1,6 @@
 fragment DetailStructureRelation on StructureRelation {
   id
-  measuredFrom
-  measuredTo
+  label
   category {
     id
     label

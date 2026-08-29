@@ -1,0 +1,90 @@
+# What a colouring needs to read one slice of a sparse matrix, and nothing more.
+#
+# Everything here the server already publishes off the artifact at
+# `finishSparseUpload`, which is why the client needs NO `zarr.json` reads of
+# its own: `describe()` in the reference reader costs five metadata GETs per
+# layout to recover exactly these fields.
+#
+# `path` is the layout's own value, never a guess. The real value is
+# `layouts/axis{k}`; several descriptions in this schema still say
+# `layouts/csr_matrix`, which is stale prose the writer has not emitted for a
+# long time.
+fragment SparseLayoutRead on SparseLayout {
+  path
+  # Which axis `indptr` walks — the axis one contiguous read selects along.
+  # A colouring needs the layout indexed on the FEATURE axis; asking the other
+  # one has no range to read at all, only a scan of every byte.
+  indexedAxis
+  # The uncompressed axes in the order `indices` was raveled over them. At rank
+  # two it says nothing; above it a wrong reading does not fail, it reads a
+  # different cell.
+  indexOrder
+  nnz
+  dtype
+  # The chunk length of each of `data`, `indices` and `indptr` — what decides
+  # what a read costs.
+  chunks
+  # A byte-addressable store is ONE uncompressed chunk per array, so a range
+  # read is the whole array. The reader refuses these rather than pulling
+  # hundreds of megabytes to answer for one gene.
+  rangeReadable
+}
+
+fragment SparseStoreRead on SparseStore {
+  id
+  key
+  bucket
+  path
+  shape
+  spec
+  layouts {
+    ...SparseLayoutRead
+  }
+}
+
+# Rooted on the dataset a `SPARSE` colorBy names, so a colouring can resolve
+# the layout, the object axis and the slot count before reading a single byte.
+fragment SparseColouringSource on SparseDataset {
+  id
+  name
+  axisNames
+  # The axes a single contiguous read can select along — one per stored layout.
+  # An axis absent here is one this dataset cannot answer about quickly.
+  indexableAxes
+  shape
+  arrays {
+    id
+    indexedAxis
+    indexedAxisName
+    path
+    store {
+      ...SparseStoreRead
+    }
+  }
+  # Where a position along an identified axis gets its name: the client finds a
+  # gene's row index in the table the axis references.
+  axisReferences {
+    axis
+    # The table whose ROWS are this axis' positions, keyed by its single INDEX
+    # coordinate column. Selecting the store and the columns is what lets the
+    # client turn "IL7R" into the row index an `at` takes — the schema's own
+    # instruction, and the reason a 19,059-feature matrix is one picker row.
+    references {
+      id
+      name
+      axisNames
+      store {
+        ...ParquetStore
+      }
+      columns {
+        ...TableDatasetColumn
+      }
+    }
+  }
+}
+
+query SparseColouringSource($id: ID!) {
+  sparseDataset(id: $id) {
+    ...SparseColouringSource
+  }
+}

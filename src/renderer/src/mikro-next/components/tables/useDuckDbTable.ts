@@ -1,17 +1,30 @@
 import type { SortingState } from "@tanstack/react-table";
-import * as duckdb from "@duckdb/duckdb-wasm";
-import duckdbEhWasm from "@duckdb/duckdb-wasm/dist/duckdb-eh.wasm?url";
-import duckdbMvpWasm from "@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm?url";
-import duckdbEhWorker from "@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js?url";
-import duckdbMvpWorker from "@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js?url";
+import type * as duckdb from "@duckdb/duckdb-wasm";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
-  type TableFragment,
+  ensureHttpfs,
+  getDuckDb,
+  resolveDuckDbEndpoint,
+} from "@/mikro-next/lib/duckdb/duckdb";
+// Re-exported for the existing consumers of this module's singletons
+// (scene mesh collections, attribute lookup engine wiring).
+export { ensureHttpfs, getDuckDb, resolveDuckDbEndpoint } from "@/mikro-next/lib/duckdb/duckdb";
+
+import {
   useRequestParquetAccessMutation,
   useRequestGeneralParquetAccessMutation,
 } from "@/mikro-next/api/graphql";
 import { useDatalayerEndpoint } from "@/app/Arkitekt";
+
+// The minimal shape the DuckDB reader needs from a parquet-backed model: a
+// ParquetStore id to request an access grant against, and the declared column
+// names to build search/filter/export SQL. Both `Table` and `TableDataset`
+// satisfy this, so the hook backs either.
+export type DuckDbParquetSource = {
+  store: { id: string };
+  columns: { name: string }[];
+};
 
 type PaginationState = {
   pageIndex: number;
@@ -50,20 +63,6 @@ type CachedGrant = {
   expiresAt: number;
 };
 
-const MANUAL_BUNDLES: duckdb.DuckDBBundles = {
-  mvp: {
-    mainModule: duckdbMvpWasm,
-    mainWorker: duckdbMvpWorker,
-  },
-  eh: {
-    mainModule: duckdbEhWasm,
-    mainWorker: duckdbEhWorker,
-  },
-};
-
-let duckDbPromise: Promise<duckdb.AsyncDuckDB> | null = null;
-let httpfsReadyPromise: Promise<void> | null = null;
-
 const escapeSqlIdentifier = (value: string) =>
   `"${value.replaceAll('"', '""')}"`;
 
@@ -73,20 +72,17 @@ const escapeSqlLiteral = (value: string) =>
 const resolveParquetUrl = (grant: CachedGrant) =>
   `s3://${grant.bucket}/${grant.key}`;
 
-const resolveDuckDbEndpoint = (datalayerEndpoint?: string) => {
-  if (!datalayerEndpoint) {
-    return null;
-  }
-
-  const parsedEndpoint = new URL(datalayerEndpoint);
-  const path = parsedEndpoint.pathname.replace(/\/+$/, "");
-
-  return {
-    endpoint: `${parsedEndpoint.host}${path === "/" ? "" : path}`,
-    useSsl: parsedEndpoint.protocol === "https:",
-  };
-};
-
+// CORS gotcha (dev / any browser origin): DuckDB-WASM's httpfs cannot set the
+// forbidden `Host`/`User-Agent` request headers, so it rewrites them to
+// `X-Host-Override` / `X-user-agent` on every S3 range request it makes below.
+// The browser then lists `x-host-override` in the preflight's
+// `Access-Control-Request-Headers`, and the datalayer's S3/MinIO endpoint must
+// echo it back in `Access-Control-Allow-Headers` (plus `Range`, `Authorization`,
+// the `x-amz-*` signing headers, and GET/HEAD) or the read is blocked with
+// "Request header field x-host-override is not allowed". Wildcarding
+// `AllowedHeaders: ["*"]` on the bucket CORS is the standard fix. This only
+// bites from an http(s) origin like the Vite dev server; the packaged Electron
+// app does not enforce CORS the same way.
 const buildCreateSecretQuery = (
   grant: CachedGrant,
   datalayerEndpoint?: string,
@@ -163,50 +159,7 @@ const rowToRecord = (row: unknown): Record<string, unknown> => {
   >;
 };
 
-// Intentional app-lifetime singleton: the DuckDB instance and its Web Worker are
-// created once and reused for every table query (per-query connections are opened
-// and closed by callers). We deliberately do NOT terminate the worker on component
-// unmount — tables mount/unmount frequently and re-instantiating WASM each time is
-// expensive. The single worker persists for the life of the renderer process.
-const getDuckDb = async () => {
-  if (!duckDbPromise) {
-    duckDbPromise = (async () => {
-      const bundle = await duckdb.selectBundle(MANUAL_BUNDLES);
-      const worker = new Worker(bundle.mainWorker!);
-      const logger = new duckdb.ConsoleLogger(duckdb.LogLevel.WARNING);
-      const db = new duckdb.AsyncDuckDB(logger, worker);
-
-      await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
-      await db.open({
-        query: {
-          castBigIntToDouble: true,
-          castDecimalToDouble: true,
-          castTimestampToDate: true,
-        },
-      });
-
-      return db;
-    })();
-  }
-
-  return duckDbPromise;
-};
-
-const ensureHttpfs = async (connection: duckdb.AsyncDuckDBConnection) => {
-  if (!httpfsReadyPromise) {
-    httpfsReadyPromise = (async () => {
-      await connection.query("INSTALL httpfs");
-      await connection.query("LOAD httpfs");
-    })().catch((error) => {
-      httpfsReadyPromise = null;
-      throw error;
-    });
-  }
-
-  await httpfsReadyPromise;
-};
-
-const buildSearchClause = (table: TableFragment, search: string) => {
+const buildSearchClause = (table: DuckDbParquetSource, search: string) => {
   const trimmedSearch = search.trim();
   if (!trimmedSearch) {
     return "";
@@ -224,7 +177,7 @@ const buildSearchClause = (table: TableFragment, search: string) => {
 };
 
 const buildWhereClause = (
-  table: TableFragment,
+  table: DuckDbParquetSource,
   search: string,
   columnFilters: DuckDbColumnFilters,
 ) => {
@@ -263,7 +216,7 @@ const buildSortingClause = (sorting: SortingState) => {
 };
 
 const buildCountQuery = (
-  table: TableFragment,
+  table: DuckDbParquetSource,
   parquetUrl: string,
   search: string,
   columnFilters: DuckDbColumnFilters,
@@ -274,7 +227,7 @@ const buildCountQuery = (
 };
 
 const buildRowsQuery = (
-  table: TableFragment,
+  table: DuckDbParquetSource,
   parquetUrl: string,
   search: string,
   columnFilters: DuckDbColumnFilters,
@@ -299,7 +252,7 @@ const buildRowsQuery = (
 };
 
 const buildExportQuery = (
-  table: TableFragment,
+  table: DuckDbParquetSource,
   parquetUrl: string,
   search: string,
   columnFilters: DuckDbColumnFilters,
@@ -340,8 +293,25 @@ const escapeCsvValue = (value: unknown) => {
   return text;
 };
 
+// Shared by the hook's own full-table export and by callers that already hold
+// the rows they want to write (a selection kept in component state), so both
+// paths quote and order cells identically.
+export const rowsToCsv = (
+  rows: Record<string, unknown>[],
+  columns: string[],
+) => {
+  const headerRow = columns
+    .map((columnName) => escapeCsvValue(columnName))
+    .join(",");
+  const csvRows = rows.map((row) =>
+    columns.map((columnName) => escapeCsvValue(row[columnName])).join(","),
+  );
+
+  return [headerRow, ...csvRows].join("\n");
+};
+
 const buildHistogramQuery = (
-  table: TableFragment,
+  table: DuckDbParquetSource,
   parquetUrl: string,
   search: string,
   columnFilters: DuckDbColumnFilters,
@@ -371,7 +341,7 @@ export const useDuckDbTable = ({
   search,
   columnFilters,
 }: {
-  table: TableFragment;
+  table: DuckDbParquetSource;
   pagination: PaginationState;
   sorting: SortingState;
   search: string;
@@ -495,12 +465,7 @@ export const useDuckDbTable = ({
         selectedColumns?.filter((columnName) => availableColumns.has(columnName)) ??
         table.columns.map((column) => column.name);
 
-      const headerRow = exportColumns.map((columnName) => escapeCsvValue(columnName)).join(",");
-      const csvRows = exportRows.map((row) =>
-        exportColumns.map((columnName) => escapeCsvValue(row[columnName])).join(","),
-      );
-
-      return [headerRow, ...csvRows].join("\n");
+      return rowsToCsv(exportRows, exportColumns);
     },
     [columnFilters, search, sorting, table, withDuckDbConnection],
   );

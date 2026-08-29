@@ -12,6 +12,7 @@ import { useConnection } from "@/lib/arkitekt/provider";
 import { Action, ActionState } from "@/lib/localactions/LocalActionProvider";
 import type { ServiceMap } from "@/lib/arkitekt/provider";
 import type { OnDone } from "@/providers/smart/extensions/types";
+import { useSelectionSelector } from "@/providers/selection/SelectionContext";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -47,6 +48,8 @@ export const usePerformAction = (props: {
   const connection = useConnection();
   const dialog = useDialog();
   const navigate = useNavigate();
+  const setSelection = useSelectionSelector((state) => state.setSelection);
+  const setBSelection = useSelectionSelector((state) => state.setBSelection);
   const modifierStateRef = useRef<ModifierState>({
     ctrlKey: false,
     shiftKey: false,
@@ -115,7 +118,7 @@ export const usePerformAction = (props: {
     setController(newController);
 
     try {
-      await props.action.execute({
+      const result = await props.action.execute({
         onProgress: (p) => {
           setProgress(p);
         },
@@ -128,6 +131,14 @@ export const usePerformAction = (props: {
         location: window.location,
         state: props.state,
       });
+
+      // An action may hand back the selection it leaves behind (a delete returns
+      // an empty one, since the structures it acted on are gone).
+      if (result) {
+        setSelection(result.left);
+        setBSelection(result.right ?? []);
+      }
+
       setController(null);
       setProgress(undefined);
       if (props.onDone) {

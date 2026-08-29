@@ -4,7 +4,11 @@ import {
   ColumnInput,
   ColumnKind,
   CreateGraphTableQueryInput,
-  ValueKind
+  MatchPathInput,
+  ReturnStatementInput,
+  ValueKind,
+  WhereClauseInput,
+  WhereOperator
 } from '@/kraph/api/graphql'
 
 export interface EnrichedPath {
@@ -68,18 +72,12 @@ function getRelationshipType(edge: MyEdge): string {
   const role = edge.data && 'role' in edge.data ? edge.data.role : undefined
 
   switch (edge.type) {
-    case 'measurement':
-      return ageName || 'MEASURED_BY'
     case 'relation':
       return ageName || 'RELATED_TO'
-    case 'structure_relation':
-      return 'STRUCTURE_RELATION'
     case 'reagentrole':
       return role || 'PARTICIPATES'
     case 'entityrole':
       return role || 'PARTICIPATES'
-    case 'describe':
-      return 'DESCRIBES'
     default:
       return ageName || 'CONNECTED_TO'
   }
@@ -497,15 +495,33 @@ function slugifyKey(name: string): string {
   )
 }
 
+/** The builder's operator strings, in the schema's enum. */
+const WHERE_OPERATORS: Record<WhereCondition['operator'], WhereOperator> = {
+  '=': WhereOperator.Equals,
+  '!=': WhereOperator.NotEquals,
+  '>': WhereOperator.GreaterThan,
+  '<': WhereOperator.LessThan,
+  '>=': WhereOperator.GreaterOrEqual,
+  '<=': WhereOperator.LessOrEqual,
+  CONTAINS: WhereOperator.Contains,
+  'STARTS WITH': WhereOperator.StartsWith,
+  'ENDS WITH': WhereOperator.EndsWith,
+  IN: WhereOperator.In
+}
+
 /**
- * Generates a GraphQueryInput for creating/updating a graph query.
+ * Turns the builder's state into a `TableQueryPlan`.
  *
- * Note: the backend schema no longer exposes the builder-derived `matches` /
- * `wheres` / `returns` / `kind` fields on CreateGraphTableQueryInput /
- * UpdateGraphTableQueryInput (those concepts moved to
- * CreateGraphTableQueryThroughBuilderInput, which is not used by the
- * QueryBuilderGraph create/update flow). Only the generated Cypher query and
- * column definitions are sent now.
+ * The builder has always held exactly this — paths, WHERE conditions, RETURN
+ * columns — and then flattened it into a Cypher string, because that string was
+ * what the input took. It is not any more: the plan is the contract, and each
+ * projection kind compiles it (`Projector.render_table`). So the flattening step
+ * is gone from the write path rather than reimplemented.
+ *
+ * Two things follow. Values are JSON rather than Cypher literals, so nothing has
+ * to be quoted or escaped here. And render filters and orders address a returned
+ * *alias*, which is why the old approach — splicing a filter in ahead of the
+ * query\'s last RETURN — got `WITH` and `UNION` wrong.
  */
 export function generateGraphQueryInput(
   enrichedPaths: EnrichedPath[],
@@ -516,14 +532,6 @@ export function generateGraphQueryInput(
   description?: string,
   globalWhereClauses?: NodeWhereClause[]
 ): CreateGraphTableQueryInput {
-  // Generate the Cypher query
-  const query = generateUnifiedCypherQueryWithColumns(
-    enrichedPaths,
-    allNodes,
-    returnColumns,
-    globalWhereClauses
-  )
-
   // Build node mapping for column generation
   const nodeMap = buildNodeMapping(enrichedPaths, allNodes)
 
@@ -549,12 +557,9 @@ export function generateGraphQueryInput(
 
     // Generate a column for each occurrence
     matchingMappings.forEach((mapping) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const nodeData = node.data as any
-
       // Determine column kind based on property
       let columnKind = ColumnKind.Value
-      let valueType: ValueKind = ValueKind.String
+      const valueType: ValueKind = ValueKind.String
       let isIdForKey: string | undefined = undefined
 
       if (col.property === 'id') {
@@ -565,11 +570,6 @@ export function generateGraphQueryInput(
         columnKind = ColumnKind.Value
       } else if (col.property === 'label' || col.property === 'identifier') {
         columnKind = ColumnKind.Value
-      }
-
-      // Try to infer ValueKind if it's a metric node
-      if (node.type === 'metriccategory' && nodeData?.valueKind) {
-        valueType = nodeData.valueKind as ValueKind
       }
 
       // Use variable name when multiple occurrences, otherwise use alias or variable_property
@@ -595,13 +595,56 @@ export function generateGraphQueryInput(
     })
   })
 
+  const matches: MatchPathInput[] = enrichedPaths.map((enriched) => ({
+    nodes: enriched.path.nodes,
+    relations: enriched.path.relations,
+    optional: enriched.path.optional,
+    title: enriched.path.title,
+    color: enriched.path.color,
+    relationDirections: enriched.path.relationDirections,
+    // Which category each node position is constrained to. The compiled Cypher
+    // used to bake this into the label in the string.
+    nodeCategories: enriched.nodeDetails.map((node) => node.id)
+  }))
+
+  // A path index is the plan\'s address for a match, so a clause names the path
+  // it belongs to and, within it, the node.
+  const pathOfNode = new Map<string, number>()
+  enrichedPaths.forEach((enriched, index) => {
+    enriched.path.nodes.forEach((nodeId) => {
+      if (!pathOfNode.has(nodeId)) pathOfNode.set(nodeId, index)
+    })
+  })
+
+  const clauseSources: NodeWhereClause[] = [
+    ...enrichedPaths.flatMap((enriched) => enriched.path.whereClauses || []),
+    ...(globalWhereClauses || [])
+  ]
+
+  const wheres: WhereClauseInput[] = clauseSources.flatMap((clause) =>
+    clause.conditions.map((condition) => ({
+      path: String(pathOfNode.get(clause.nodeId) ?? 0),
+      node: clause.nodeId,
+      property: condition.property,
+      operator: WHERE_OPERATORS[condition.operator],
+      // JSON, not a Cypher literal — nothing to quote.
+      value: condition.value
+    }))
+  )
+
+  const returns: ReturnStatementInput[] = returnColumns.map((col) => ({
+    path: String(pathOfNode.get(col.nodeId) ?? 0),
+    node: col.nodeId,
+    property: col.property,
+    alias: col.alias
+  }))
+
   return {
     graph: graphId,
     key: slugifyKey(name),
     name,
     description: description || `Generated query: ${name}`,
-    query,
-    cypher: query,
+    plan: { matches, wheres, returns },
     columnInput: columns.length > 0 ? columns : undefined
   }
 }

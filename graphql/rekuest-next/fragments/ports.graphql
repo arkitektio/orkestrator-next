@@ -257,6 +257,11 @@ fragment ArgPort on ArgPort {
   validators {
     ...Validator
   }
+  requires {
+    key
+    operator
+    value
+  }
 }
 
 fragment ReturnPort on ReturnPort {

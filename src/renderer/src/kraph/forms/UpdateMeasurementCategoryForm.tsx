@@ -1,5 +1,4 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
-import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,6 @@ import { useForm } from "react-hook-form";
 import {
   MeasurementCategoryFragment,
   UpdateMeasurementCategoryMutationVariables,
-  useSearchTagsLazyQuery,
   useUpdateMeasurementCategoryMutation
 } from "../api/graphql";
 
@@ -29,13 +27,11 @@ const TForm = (props: {
       key: props.measurementCategory.key,
       label: props.measurementCategory.label,
       description: props.measurementCategory.description,
-      source: props.measurementCategory.sourceDescriptor,
-      target: props.measurementCategory.targetDescriptor,
-      tags: props.measurementCategory.tags.map((tag) => tag.id),
+      // No `source` / `target`. The update input carries decoration only now —
+      // a category's descriptors are declared when it is created, and changing
+      // what a measurement may connect would change which claims the view draws.
     },
   });
-
-  const [searchTags] = useSearchTagsLazyQuery();
 
   return (
     <>
@@ -62,12 +58,6 @@ const TForm = (props: {
                 label="Description"
                 name="description"
                 description="What describes your expression the best? (e.g. 'A person is a human being')"
-              />
-              <GraphQLListSearchField
-                searchQuery={searchTags}
-                label="Tags"
-                name="tags"
-                description="Search for related entities"
               />
             </div>
           </div>

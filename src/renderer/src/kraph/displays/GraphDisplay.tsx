@@ -32,7 +32,7 @@ export const GraphDisplay = (props: DisplayWidgetProps) => {
           <div className="text-xs text-muted-foreground line-clamp-2">{graph.description}</div>
         )}
         <div className="text-xs text-muted-foreground">
-          {graph.structureCategories?.length ?? 0} structure categories
+          {graph.entityCategories?.length ?? 0} entity categories
         </div>
       </div>
     </KraphGraph.DetailLink>

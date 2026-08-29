@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { LovekitStream } from "@/linkers";
 import { useGetStreamQuery } from "../api/graphql";
 
@@ -16,11 +16,11 @@ export default asDetailQueryRoute(
           </div>
         }
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: <LovekitStream.Komments object={data.stream} />,
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Knowledge">
+              <LovekitStream.Knowledge object={data.stream} />
+            </Sidebars.Tab>
+          </Sidebars>
         }
       >
         {data.stream.id}

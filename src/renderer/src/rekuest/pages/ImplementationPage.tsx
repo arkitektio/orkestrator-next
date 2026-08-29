@@ -1,4 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { buildAssignInput } from "@/rekuest/assign";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,7 @@ import { useImplementationAction } from "../hooks/useImplementationAction";
 import { useImplementationForm } from "../hooks/useImplementationForm";
 import { ImplementationStatsSidebar } from "../sidebars/ImplementationStatistics";
 import { ReturnsContainer } from "../widgets/tailwind";
+import PortConstraintBadges from "../components/displays/PortConstraintBadges";
 import { portToLabel } from "../widgets/utils";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
 
@@ -160,6 +162,7 @@ export const DoForm = ({ id }: { id: string }) => {
                         <div className="text-xs text-muted-foreground">
                           {portToLabel(p)}
                         </div>
+                        <PortConstraintBadges items={p.provides} className="mt-1" />
                       </div>
                     ))}
                   </div>
@@ -616,9 +619,11 @@ const TPage = asDetailQueryRoute(
           </>
         }
         object={data.implementation}
-        additionalSidebars={{
-          "Stats": <ImplementationStatsSidebar implementation={data.implementation.id} />,
-        }}
+        additionalSidebars={
+          <Sidebars.Tab label="Stats">
+            <ImplementationStatsSidebar implementation={data.implementation.id} />
+          </Sidebars.Tab>
+        }
         pageActions={
           <>
             <>

@@ -3,11 +3,15 @@ import { useListTasksQuery } from "../api/graphql";
 import ListTaskCard from "../components/cards/ListTaskCard";
 
 export const AgentTasksSidebar = (props: { agent: string }) => {
+  // cache-and-network so a remount shows fresh rows. New tasks are not pushed
+  // live into this sidebar (only status updates flow in via the normalized
+  // cache when an updater is running elsewhere).
   const { data, error } = useListTasksQuery({
     variables: {
       filter: { agent: props.agent },
       pagination: { limit: 10, offset: 0 },
     },
+    fetchPolicy: "cache-and-network",
   });
 
   if (error) {

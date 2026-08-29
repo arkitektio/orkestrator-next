@@ -1,6 +1,6 @@
 import { createStore } from "zustand/vanilla";
 import { ExperimentFragment } from "../../api/graphql";
-import { createScopedStoreHooks } from "@/mikro-next/components/scene/store/createScopedStore";
+import { createScopedStoreHooks } from "@/lib/generic/createScopedStore";
 
 export type RangeSelection = {
   left: number | null;

@@ -70,13 +70,12 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 app.commandLine.appendSwitch("ignore-certificate-errors", "true");
-// WebGPU for the scene renderer: macOS (Metal) and Windows (D3D) enable it by
-// default in this Chromium; Linux still needs Vulkan + the unsafe flag. Where
-// WebGPU is unavailable anyway, three's WebGPURenderer falls back to its
-// WebGL2 backend automatically (TSL shaders compile for both).
-if (process.platform === "linux") {
-  //pass
-}
+// The scene renderer requires WebGPU and no longer has a WebGL2 fallback — a
+// machine without it gets an explicit "cannot be rendered" message from the
+// scene rather than a degraded picture. This Chromium enables WebGPU by default
+// on every platform we ship (Metal / D3D / Vulkan), so no switches are needed
+// here; if that regresses, this is where the flags would go.
+
 // Core Services
 const appManager = new AppManager();
 const transport = new IpcTransport();

@@ -6,15 +6,238 @@ fragment TransferFunction on TransferFunction {
   gamma
   opacity
   invert
-  categorical
+  # The intensity transfer CURVE: raw value (`position`, data units) → the
+  # normalized 0..1 the colormap is indexed with. Replaces the clim+gamma
+  # power law when present; gamma is the fallback.
+  stops {
+    position
+    value
+  }
+}
+
+# One entry of a label layer's colour picker: a column of the table this mask's
+# FIELD edge keys its pixel values into (see `attributePlans`), instead of
+# hashing each id to a hue. Same shape and same relation as `MeshColorBy` — a
+# mask's pixel values dereference into a table exactly as a collection's object
+# ids do — plus the `label` a picker needs to caption the entry.
+fragment LabelColorBy on LabelColorBy {
+  table
+  column
+  # The `references` hops from the table the mask's ids land in to `table`;
+  # empty is the direct case. NOT optional to select: `colorBys` is a
+  # whole-array replace on the write path, so an entry read back without its
+  # join path and re-sent flattens to `[]` — the same column name resolved
+  # against the wrong table, silently.
+  joinPath {
+    table
+    column
+  }
+  colormap
+  # Clims: the ramp runs between these instead of the column's own range. The
+  # same whole-array-replace hazard as `joinPath` — read an entry without them
+  # and send it back and the server stores nulls over what the card set.
+  min
+  max
+  label
+  # The SPARSE arm: `kind` says which of the two an entry is, and a SPARSE one
+  # names a matrix and a position along its own axes instead of a column,
+  # leaving `table`/`column` null. Nothing here renders one yet — they are
+  # selected so the whole-array replace above round-trips them intact.
+  kind
+  dataset
+  at {
+    axis
+    value
+  }
+}
+
+# One entry of a label layer's filter picker: which of the mask's objects are
+# DRAWN, over the same FIELD edge its colourings use. Which half applies follows
+# from the column's role — `min`/`max` bound a measure, `values` enumerate a
+# categorical — and `exclude` inverts the rule. The sibling of `LabelColorBy`,
+# exactly as `MeshFilterBy` is of `MeshColorBy`.
+fragment LabelFilterBy on LabelFilterBy {
+  table
+  column
+  # Same read-modify-write hazard as `LabelColorBy.joinPath` — see there.
+  joinPath {
+    table
+    column
+  }
+  label
+  min
+  max
+  values
+  exclude
+  # The SPARSE arm, exactly as on `LabelColorBy`: a rule may bound one slice of
+  # a matrix rather than a column of a table, and then names `dataset` and a
+  # position `at` with `table`/`column` null. Selected for the same two reasons
+  # — it renders, and `filterBys` is a whole-array replace, so an entry read
+  # back without these and re-sent comes back a column rule naming nothing.
+  kind
+  dataset
+  at {
+    axis
+    value
+  }
+}
+
+# One entry of a mesh layer's colour picker. Same shape and same relation as
+# `LabelColorBy` — a collection's object ids reach a table exactly as a mask's
+# pixel values do — plus the `label` a picker needs to caption the entry.
+fragment MeshColorBy on MeshColorBy {
+  table
+  column
+  # The `references` hops from the table the collection's ids land in to
+  # `table`; empty is the direct case. NOT optional to select: `colorBys` is a
+  # whole-array replace on the write path, so an entry read back without its
+  # join path and re-sent flattens to `[]` — the same column name resolved
+  # against the wrong table, silently.
+  joinPath {
+    table
+    column
+  }
+  colormap
+  # Clims: the ramp runs between these instead of the column's own range. The
+  # same whole-array-replace hazard as `joinPath` — read an entry without them
+  # and send it back and the server stores nulls over what the card set.
+  min
+  max
+  label
+  # The SPARSE arm: `kind` says which of the two an entry is, and a SPARSE one
+  # names a matrix and a position along its own axes instead of a column,
+  # leaving `table`/`column` null. Nothing here renders one yet — they are
+  # selected so the whole-array replace above round-trips them intact.
+  kind
+  dataset
+  at {
+    axis
+    value
+  }
+}
+
+# One entry of a mesh layer's filter picker: which objects are DRAWN, over the
+# same FIELD edge its colourings use. Which half applies follows from the
+# column's role — `min`/`max` bound a measure, `values` enumerate a categorical
+# — and `exclude` inverts the rule.
+fragment MeshFilterBy on MeshFilterBy {
+  table
+  column
+  # Same read-modify-write hazard as `MeshColorBy.joinPath` — see there.
+  joinPath {
+    table
+    column
+  }
+  label
+  min
+  max
+  values
+  exclude
+  # The SPARSE arm — see `LabelFilterBy`, which is this fragment over the other
+  # layer kind.
+  kind
+  dataset
+  at {
+    axis
+    value
+  }
+}
+
+# Not a TransferFunction: a label map has one source, no compositing tree, and
+# none of an intensity image's vocabulary. `background` is the id painted fully
+# transparent; `seed` seeds the id->color hash.
+#
+# Like a mesh layer, this publishes PICKERS rather than a single choice:
+# `colorBys`/`filterBys` are what the layer offers (server-checked to be
+# reachable and to exist) and the active indices are the choice. The deprecated
+# singular `colorBy` is deliberately NOT selected — it is
+# `colorBys[activeColorBy]` re-derived, and a second copy of a choice is a
+# second thing to keep in sync.
+fragment LabelRender on LabelRender {
+  intensityAxis
+  intensityIndex
+  seed
+  background
+  opacity
+  contour
+  contourWidth
+  selected
+  selectionColor
+  showUnselected
+  colorBys {
+    ...LabelColorBy
+  }
+  activeColorBy
+  filterBys {
+    ...LabelFilterBy
+  }
+  activeFilterBys
 }
 
 fragment ChannelSourceNode on ChannelSourceNode {
-  intensityDim
+  intensityAxis
   intensityIndex
   visible
   transfer {
     ...TransferFunction
+  }
+}
+
+# A region of phasor space and the color the pixels inside it are painted — a
+# color rule on the image, not a plot widget.
+fragment PhasorCursor on PhasorCursor {
+  kind
+  label
+  visible
+  color
+  g
+  s
+  radius
+  points
+}
+
+# Not a TransferFunction: it maps the reduction's output — a (g, s) pair plus a
+# photon count — rather than a sampled scalar. `intensity` is the ordinary
+# transfer applied to that photon count.
+fragment PhasorTransfer on PhasorTransfer {
+  colormap
+  mode
+  min
+  max
+  weightByIntensity
+  intensity {
+    ...TransferFunction
+  }
+  cursors {
+    ...PhasorCursor
+  }
+}
+
+fragment PhasorNode on PhasorNode {
+  phasorAxis
+  harmonic
+  intensityAxis
+  intensityIndex
+  visible
+  # Aliased: `transfer` on a ChannelSourceNode is a TransferFunction, here it is
+  # a PhasorTransfer. Same response key, different types — GraphQL rejects the
+  # merge, so the phasor one gets its own key.
+  phasorTransfer: transfer {
+    ...PhasorTransfer
+  }
+}
+
+# The fixed-shape phasor recipe a `PhasorLayer` carries as FIELDS, instead of a
+# PhasorNode buried in a render graph. Same reduction, same transfer — the
+# difference is only that the shape is declared rather than discovered, which is
+# what lets the client skip the graph walk and specialise the material.
+fragment PhasorRender on PhasorRender {
+  phasorAxis
+  intensityAxis
+  intensityIndex
+  harmonic
+  transfer {
+    ...PhasorTransfer
   }
 }
 
@@ -23,6 +246,9 @@ fragment RenderNodeCommon on LayerRenderNode {
   label
   ... on ChannelSourceNode {
     ...ChannelSourceNode
+  }
+  ... on PhasorNode {
+    ...PhasorNode
   }
   ... on BlendNode {
     blending
@@ -78,51 +304,157 @@ fragment SceneLayer on Layer {
   __typename
   id
   kind
-  status
-  affineMatrix
+  name
   blending
   opacity
   visible
   order
+  # Server-resolved path from this layer's source CS to the scene's world
+  # system (null = unregistered, [] = source IS world). Still selected even
+  # though `asAffine` below is what gets composed: scene reconciliation keys
+  # off each step's id + version (platform/model/sceneStructure.ts), and the
+  # placement inspector needs the per-step validity/invariance/provenance.
+  pathToWorld {
+    ...PlacementStep
+  }
+  # The SAME path, composed by the server -- "`asAffine` is the same path
+  # composed, for when you only need the map". Preferred over re-walking the
+  # edges client-side: identical span, so it drops straight into
+  # `composeLayerAffine` under the same lens prefix, and it cannot be
+  # mis-indexed by an edge whose parameter arity disagrees with its
+  # `inputAxes` (the scene-28 bug -- see transformGraph.ts `paramPositions`).
+  #
+  # Selected on the INTERFACE, so every layer kind gets it: point and track
+  # layers already depended on it (they have no lens for the walk to use), and
+  # lens-backed layers now do too.
+  #
+  # NOTE this field ERRORS rather than returning null when a path exists but
+  # will not condense (a FIELD step has no closed form; a singular step cannot
+  # be inverted). The scene queries therefore set `errorPolicy: "all"` so that
+  # nulls this one field and the client falls back to walking `pathToWorld`,
+  # instead of discarding the whole scene.
+  asAffine {
+    matrix
+    inputAxes
+    outputAxes
+    # False = a partial registration: the map constrains only the axes in
+    # `outputAxes` and the rest pass through as identity. Surfaced as a
+    # warning rather than silently rendering as fully placed.
+    total
+  }
   ... on ImageLayer {
     lens {
       ...SceneLens
     }
-    xDim
-    yDim
-    zDim
-    intensityDim
-    tDim
+    # levelPaths is deliberately NOT selected: the octree renderer uses one
+    # matrix per layer + relative level factors, so selecting it would pay a
+    # server-side path resolution per pyramid level (duplicating the shared
+    # registration tail) for zero client benefit. Reselect it when per-level
+    # placement lands (COORDINATE_SYSTEMS.md §3.1).
     renderGraph {
       ...LayerRenderGraph
     }
   }
-  ... on ShapeLayer {
-    dataRoi {
-      ...DataRoi
+  # The three FIXED-SHAPE lens recipes. Each states its whole rendering as flat
+  # fields rather than a render graph, which is exactly what lets the client
+  # normalize them without a graph walk and specialise the material at build
+  # time (see platform/model/layerModel.ts `renderKind`). `levelPaths` is
+  # omitted for the same reason as on ImageLayer above.
+  ... on IntensityLayer {
+    lens {
+      ...SceneLens
     }
-    strokeColor
-    fillColor
-    strokeWidth
-    filled
+    intensityAxis
+    intensityIndex
+    # Aliased: `colormap` is `ColorMap!` here and `ColorMap` on Point/Track
+    # layers. Same response key, different nullability — GraphQL rejects the
+    # merge, so the non-null one gets its own key (as `phasorTransfer` does).
+    intensityColormap: colormap
+    # The channel TINT, the same one an ImageLayer's channel node carries. A
+    # monochrome acquisition shown in magenta is still ONE scalar source, so it
+    # stays the "intensity" recipe — the tint is baked into the colormap-atlas
+    # row exactly as a named ramp is (`buildColormapAtlas`).
+    color
+    climMin
+    climMax
+    gamma
+    # A projection collapses z, it does not composite anything — which is why
+    # `createVolumeLayer` returns an IntensityLayer with this set rather than a
+    # kind of its own.
+    projectionMode
+  }
+  ... on RgbLayer {
+    lens {
+      ...SceneLens
+    }
+    intensityAxis
+    redIndex
+    greenIndex
+    blueIndex
+    # ONE clim for all three planes: an RGB image is three views of one
+    # acquisition, so per-plane contrast would misrepresent it.
+    climMin
+    climMax
+  }
+  ... on PhasorLayer {
+    lens {
+      ...SceneLens
+    }
+    phasorRender {
+      ...PhasorRender
+    }
+  }
+  # Shares ImageLayer's source (a Lens over an array) and none of its render
+  # settings: clim, gamma, colormaps and projections are all meaningless over
+  # object ids. `labelRender` carries what replaces them. `levelPaths` is
+  # omitted for the same reason as on ImageLayer above.
+  ... on LabelLayer {
+    lens {
+      ...SceneLens
+    }
+    labelRender {
+      ...LabelRender
+    }
+  }
+  # A whole collection, not one shape: the styling that used to sit on the
+  # layer moved onto each Annotation, so the layer selects only the drawing
+  # surface and the renderer queries the shapes inside it.
+  ... on AnnotationLayer {
+    annotationCollection {
+      ...AnnotationCollection
+    }
   }
   ... on PointLayer {
-    table {
-      ...Table
+    tableDataset {
+      ...TableDataset
     }
     xColumn
     yColumn
     zColumn
     tColumn
     sizeColumn
-    colorColumn
     idColumn
     pointSize
     colormap
+    # The picker, the same one a label and a mesh layer publish. `colorColumn`
+    # above it is the flat single colouring that predates the picker and cannot
+    # name a sparse matrix; it stays selected only so a layer written before this
+    # still reads.
+    colorColumn
+    activeColorBy
+    colorBys {
+      ...LabelColorBy
+    }
+    activeFilterBys
+    filterBys {
+      ...LabelFilterBy
+    }
+    # Whether a world-space `pointSize` is a well-defined length at all: from SIMILARITY up.
+    placementInvariance
   }
   ... on TrackLayer {
-    table {
-      ...Table
+    tableDataset {
+      ...TableDataset
     }
     trackIdColumn
     xColumn
@@ -132,12 +464,29 @@ fragment SceneLayer on Layer {
     colorByColumn
     lineWidth
     colormap
+    # Whether a world-space `lineWidth` is a well-defined length at all: from
+    # SIMILARITY up. The schema names `lineWidth` explicitly among the scalars
+    # this governs.
+    placementInvariance
   }
   ... on MeshLayer {
-    mesh {
-      ...Mesh
+    collection {
+      ...MeshCollection
     }
     materialColor
     wireframe
+    # The layer publishes PICKERS, not a single choice: `colorBys`/`filterBys`
+    # are what it offers (server-checked to be reachable and to exist), and the
+    # active indices are the choice. The deprecated singular `colorBy` is
+    # deliberately NOT selected — it is `colorBys[activeColorBy]` re-derived,
+    # and a second copy of a choice is a second thing to keep in sync.
+    colorBys {
+      ...MeshColorBy
+    }
+    activeColorBy
+    filterBys {
+      ...MeshFilterBy
+    }
+    activeFilterBys
   }
 }

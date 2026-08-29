@@ -2,7 +2,7 @@ import { Guard } from "@/app/Arkitekt";
 import { NotFound } from "@/app/components/fallbacks/NotFound";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import React from "react";
-import { Route, Routes } from "react-router";
+import { Route, Routes } from "react-router-dom";
 import EntityCategoriesPage from "./pages/EntityCategoriesPage";
 import EntityCategoryPage from "./pages/EntityCategoryPage";
 import EntityPage from "./pages/EntityPage";
@@ -10,10 +10,12 @@ import GraphPage from "./pages/GraphPage";
 import GraphQueryPage from "./pages/GraphTableQueryPage";
 import GraphsPage from "./pages/GraphsPage";
 import HomePage from "./pages/HomePage";
+import InstancePage from "./pages/InstancePage";
+import LinkPage from "./pages/LinkPage";
 import MeasurementCategoriesPage from "./pages/MeasurementCategoriesPage";
 import MeasurementCategoryPage from "./pages/MeasurementCategoryPage";
-import MetricCategoriesPage from "./pages/MetricCategoriesPage";
-import MetricCategoryPage from "./pages/MetricCategoryPage";
+import MetricKindsPage from "./pages/MetricKindsPage";
+import MetricKindPage from "./pages/MetricKindPage";
 import MetricPage from "./pages/MetricPage";
 import NaturalEventCategoriesPage from "./pages/NaturalEventCategoriesPage";
 import NaturalEventCategoryPage from "./pages/NaturalEventCategoryPage";
@@ -25,11 +27,13 @@ import RelationCategoriesPage from "./pages/RelationCategoriesPage";
 import RelationCategoryPage from "./pages/RelationCategoryPage";
 import RelationPage from "./pages/RelationPage";
 import ScatterPlotPage from "./pages/ScatterPlotPage";
-import StructureCategoriesPage from "./pages/StructureCategoriesPage";
+import StructureKindsPage from "./pages/StructureKindsPage";
+import TermPage from "./pages/TermPage";
+import TermsPage from "./pages/TermsPage";
 import {
   default as ExpressionPage,
-  default as StructureCategoryPage,
-} from "./pages/StructureCategoryPage";
+  default as StructureKindPage,
+} from "./pages/StructureKindPage";
 import StructurePage from "./pages/StructurePage";
 import StructureRelationCategoriesPage from "./pages/StructureRelationCategoriesPage";
 import StuctureRelationCategoryPage from "./pages/StructureRelationCategoryPage";
@@ -37,32 +41,51 @@ import StructureRelationPage from "./pages/StructureRelationPage";
 import BuilderPage from "./pages/graph/BuilderPage";
 import GraphGraphQueriesPage from "./pages/graph/GraphGraphQueriesPage";
 import StandardPane from "./panes/StandardPane";
+import { GraphScopeLayout } from "./providers/GraphScopeProvider";
 
 import { EntityCategorySchemaBuilderPage } from "./pages/EntityCategorySchemaBuilderPage";
 interface Props { }
 
 export const KraphModule: React.FC<Props> = () => {
   return (
-    <Guard.Mikro unavailable={<>Loading</>} unconfigured={<>Loading</>} configuring={<>Loading</>} challenging={<>Loading</>}>
+    <Guard.Kraph unavailable={<>Loading</>} unconfigured={<>Loading</>} configuring={<>Loading</>} challenging={<>Loading</>}>
       <ModuleLayout pane={<StandardPane />}>
         <Routes>
           <Route index element={<HomePage />} />
           <Route path="home" element={<HomePage />} />
           <Route path="expressions/:id" element={<ExpressionPage />} />
-          <Route path="nodes/:id" element={<NodePage />} />
+          {/*
+            Claim grain: a bare uuid, no graph. Where a dropped id lands when
+            nothing supplies a view — the page then offers `drawnIn`.
+          */}
+          <Route path="instances/:id" element={<InstancePage />} />
+          <Route path="links/:id" element={<LinkPage />} />
           <Route path="relations/:id" element={<RelationPage />} />
           <Route
             path="structurerelations/:id"
             element={<StructureRelationPage />}
           />
-          <Route path="entities/:id" element={<EntityPage />} />
           <Route path="metrics/:id" element={<MetricPage />} />
           <Route path="scatterplots/:id" element={<ScatterPlotPage />} />
           <Route path="structures/:id" element={<StructurePage />} />
-          <Route path="protocolevents/:id" element={<ProtocolEventPage />} />
           <Route path="graphs" element={<GraphsPage />} />
-          <Route path="graphs/:id/queries" element={<GraphGraphQueriesPage />} />
-          <Route path="graphs/:id" element={<GraphPage />} />
+          {/*
+            Nested under the graph, because these are *view-grain* reads:
+            `entity(id:, graph:)` answers for one graph's drawing of a claim and
+            refuses a node that view does not admit. `GraphScopeLayout` turns the
+            `:graph` segment into context so the pages below never thread it.
+
+            The claim itself lives at a flat bare-uuid route — `instances/:id`,
+            `structures/:id`, `links/:id` — which is where a dropped id with no
+            graph in hand lands.
+          */}
+          <Route path="graphs/:graph" element={<GraphScopeLayout />}>
+            <Route index element={<GraphPage />} />
+            <Route path="queries" element={<GraphGraphQueriesPage />} />
+            <Route path="nodes/:id" element={<NodePage />} />
+            <Route path="entities/:id" element={<EntityPage />} />
+            <Route path="protocolevents/:id" element={<ProtocolEventPage />} />
+          </Route>
           <Route path="graphqueries/:id" element={<GraphQueryPage />} />
           <Route path="graphqueries/:id/builder" element={<BuilderPage />} />
           <Route path="entitycategories" element={<EntityCategoriesPage />} />
@@ -74,9 +97,10 @@ export const KraphModule: React.FC<Props> = () => {
             path="structurerelationcategories/:id"
             element={<StuctureRelationCategoryPage />}
           />
+          <Route path="terms" element={<TermsPage />} />
           <Route
-            path="structurecategories"
-            element={<StructureCategoriesPage />}
+            path="structurekinds"
+            element={<StructureKindsPage />}
           />
           <Route
             path="measurementcategories"
@@ -94,13 +118,14 @@ export const KraphModule: React.FC<Props> = () => {
             path="protocoleventcategories"
             element={<ProtocolEventCategoriesPage />}
           />
-          <Route path="metriccategories" element={<MetricCategoriesPage />} />
+          <Route path="metrickinds" element={<MetricKindsPage />} />
 
+          <Route path="terms/:id" element={<TermPage />} />
           <Route
-            path="structurecategories/:id"
-            element={<StructureCategoryPage />}
+            path="structurekinds/:id"
+            element={<StructureKindPage />}
           />
-          <Route path="metriccategories/:id" element={<MetricCategoryPage />} />
+          <Route path="metrickinds/:id" element={<MetricKindPage />} />
           <Route
             path="relationcategories/:id"
             element={<RelationCategoryPage />}
@@ -123,11 +148,10 @@ export const KraphModule: React.FC<Props> = () => {
             path="measurementcategories/:id"
             element={<MeasurementCategoryPage />}
           />
-          <Route path="graphs/:id/view/:viewid" element={<GraphPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </ModuleLayout>
-    </Guard.Mikro>
+    </Guard.Kraph>
   );
 };
 

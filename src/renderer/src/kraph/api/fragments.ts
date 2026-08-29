@@ -9,31 +9,36 @@
     "Category": [
       "EntityCategory",
       "MeasurementCategory",
-      "MetricCategory",
       "NaturalEventCategory",
       "ProtocolEventCategory",
       "RelationCategory",
-      "StructureCategory",
       "StructureRelationCategory"
     ],
+    "ClaimEndpoint": [
+      "Instance",
+      "Link",
+      "Structure",
+      "Term"
+    ],
+    "Descendant": [
+      "LeafDescendant",
+      "MentionDescendant",
+      "ParagraphDescendant"
+    ],
     "Edge": [
-      "Assertion",
+      "Classification",
       "Description",
       "InputParticipation",
       "Measurement",
       "OutputParticipation",
       "Relation",
+      "Sameness",
       "StructureRelation"
     ],
     "EdgeCategory": [
       "MeasurementCategory",
       "RelationCategory",
       "StructureRelationCategory"
-    ],
-    "EdgeQuery": [
-      "EdgePairsQuery",
-      "EdgePathQuery",
-      "EdgeTableQuery"
     ],
     "Event": [
       "NaturalEvent",
@@ -44,75 +49,47 @@
       "ProtocolEventCategory"
     ],
     "GraphQuery": [
-      "GraphNodesQuery",
-      "GraphPairsQuery",
-      "GraphPathQuery",
       "GraphTableQuery"
     ],
-    "Node": [
-      "Activity",
+    "InformsTarget": [
       "Entity",
-      "MeasurementShadowLink",
-      "Metric",
+      "Link",
       "NaturalEvent",
-      "ProtocolEvent",
-      "RelationShadowLink",
-      "Structure",
-      "StructureRelationShadowLink"
+      "ProtocolEvent"
     ],
-    "NodeCategory": [
-      "EntityCategory",
-      "MetricCategory",
-      "NaturalEventCategory",
-      "ProtocolEventCategory",
-      "StructureCategory"
-    ],
-    "NodeQuery": [
-      "NodePairsQuery",
-      "NodePathQuery",
-      "NodeTableQuery"
-    ],
-    "PathLike": [
-      "GraphPathRender"
-    ],
-    "Plottable": [
-      "EdgeTableQuery",
-      "GraphTableQuery",
-      "NodeTableQuery"
-    ],
-    "VersionedNode": [
+    "Node": [
       "Entity",
       "NaturalEvent",
       "ProtocolEvent"
     ],
+    "NodeCategory": [
+      "EntityCategory",
+      "NaturalEventCategory",
+      "ProtocolEventCategory"
+    ],
+    "Plottable": [
+      "GraphTableQuery"
+    ],
     "_Entity": [
+      "Assertion",
       "BigFileStore",
-      "CategoryTag",
-      "EdgePairsQuery",
-      "EdgePathQuery",
-      "EdgeTableQuery",
+      "Comment",
       "EntityCategory",
       "Graph",
-      "GraphNodesQuery",
-      "GraphPairsQuery",
-      "GraphPathQuery",
       "GraphTableQuery",
-      "MaterializedEdge",
-      "MaterializedMeasurementEdge",
-      "MaterializedRelationEdge",
-      "MaterializedStructureRelationEdge",
+      "Instance",
+      "Link",
       "MeasurementCategory",
       "MediaStore",
-      "MetricCategory",
+      "MetricKind",
       "NaturalEventCategory",
-      "NodePairsQuery",
-      "NodePathQuery",
-      "NodeTableQuery",
       "ProtocolEventCategory",
       "RelationCategory",
       "ScatterPlot",
-      "StructureCategory",
+      "Standing",
+      "StructureKind",
       "StructureRelationCategory",
+      "Term",
       "ZarrStore"
     ]
   }

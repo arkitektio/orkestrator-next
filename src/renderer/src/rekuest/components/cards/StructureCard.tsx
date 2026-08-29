@@ -19,7 +19,7 @@ const TheCard = ({ item }: Props) => {
               {" "}
               <h1>{item.key}</h1>
               <span className="text-muted-foreground font-light">
-                {item.description}
+                {item.identifier}
               </span>
             </RekuestStructure.DetailLink>
           </CardTitle>

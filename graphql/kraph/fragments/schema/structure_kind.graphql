@@ -1,0 +1,22 @@
+fragment StructureKind on StructureKind {
+  id
+  identifier
+  label
+  description
+  purl
+  color
+  image {
+    presignedUrl
+  }
+  createdAt
+}
+
+fragment ListStructureKind on StructureKind {
+  id
+  identifier
+  label
+  description
+  image {
+    presignedUrl
+  }
+}

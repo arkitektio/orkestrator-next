@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Button } from "@/components/ui/button";
 import { KraphGraph, KraphGraphQuery, KraphGraphView } from "@/linkers";
 import {
@@ -25,7 +25,6 @@ const Page = asDetailQueryRoute(
           <div className="flex flex-row gap-2">
             <KraphGraph.DetailLink
               object={{ id: data.graphTableQuery.graph.id }}
-              subroute="entities"
             >
               <Button variant="outline" size="sm">
                 Graph
@@ -51,23 +50,19 @@ const Page = asDetailQueryRoute(
               <CreateScatterPlotForm graphQuery={data.graphTableQuery} />
             </FormDialog>
 
-            <KraphGraphQuery.DetailLink
-              object={{ id: data.graphTableQuery.id }}
-              subroute="designer"
-            >
-              <Button variant="outline" size="sm">
-                Designer
-              </Button>
-            </KraphGraphQuery.DetailLink>
             <KraphGraphQuery.ObjectButton object={{ id: data.graphTableQuery.id }} />
           </div>
         }
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: <KraphGraphView.Komments object={{ id: data.graphTableQuery.id }} />,
-              Cypher: <CypherSidebar cypher={data.graphTableQuery.query || ""} />,
-              Plots: <div className="px-6 py-4">
+          <Sidebars>
+            <Sidebars.Tab label="Knowledge">
+              <KraphGraphView.Knowledge object={{ id: data.graphTableQuery.id }} />
+            </Sidebars.Tab>
+            <Sidebars.Tab label="Cypher">
+              <CypherSidebar cypher={data.graphTableQuery.query || ""} />
+            </Sidebars.Tab>
+            <Sidebars.Tab label="Plots">
+              <div className="px-6 py-4">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-2xl font-bold">Visualizations</h2>
 
@@ -85,9 +80,9 @@ const Page = asDetailQueryRoute(
                     No scatter plots yet. Create one to visualize your data.
                   </Card>
                 )}
-              </div>,
-            }}
-          />
+              </div>
+            </Sidebars.Tab>
+          </Sidebars>
         }
       >
         <div className="grid md:grid-cols-12 gap-4 md:gap-8 xl:gap-20 md:items-center px-6 py-2">

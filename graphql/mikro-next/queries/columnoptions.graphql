@@ -1,0 +1,168 @@
+# The candidate columns a mesh collection's objects can be COLOURED or FILTERED
+# by, and how each is reached.
+#
+# `colorByOptions` and `filterByOptions` return the SAME set — one relation, one
+# coordinate-graph walk, two names so each reads right where it is used. What
+# differs is only what a control means downstream: MEASURE takes a colormap plus
+# a range in a colouring and a `min`/`max` bound in a rule. The two option types
+# are therefore structurally identical, and both fragments below select the same
+# fields so the client can collapse them into one `ColumnOption` shape
+# (`panels/layer/columnOptions.ts`).
+#
+# Everything returned is something `createMeshLayer(colorBys:)` / `filterBys`
+# accepts, and every column omitted is one it refuses — that invariant is why
+# this exists rather than the client filtering `attributePlans`, which walks a
+# different set for a different question.
+#
+# The ROOT queries, not `MeshCollection.colorByOptions`: the nested field is
+# colour-only and carries no search or paging, and options must never ride the
+# `SceneLayer` fragment — that would walk the coordinate graph once per layer on
+# every scene load.
+#
+# `store` and `columns` are selected on the option's table because the picker
+# reads the column's real values (distinct set, numeric domain) client-side from
+# the parquet — the server publishes no values.
+
+fragment ColumnOptionJoinStep on ColumnOptionJoinStep {
+  table {
+    id
+    name
+    store {
+      ...ParquetStore
+    }
+  }
+  column {
+    ...TableDatasetColumn
+  }
+}
+
+fragment ColorByOption on ColorByOption {
+  control
+  # The SPARSE arm. An option is a table column OR a matrix, never both, so
+  # these are null exactly when `table`/`column` are set.
+  #
+  # ONE option per matrix, never one per position: a 19,059-feature matrix would
+  # otherwise be 19,059 rows in a dropdown. `axes` names the axes a position has
+  # to be given along, and the client finds the position in the table that axis
+  # references — which is why the gene list is a second interaction rather than
+  # part of this list.
+  axes
+  sparseDataset {
+    ...SparseColouringSource
+  }
+  table {
+    ...ListTableDataset
+    store {
+      ...ParquetStore
+    }
+    columns {
+      ...TableDatasetColumn
+    }
+  }
+  column {
+    ...TableDatasetColumn
+  }
+  joinPath {
+    ...ColumnOptionJoinStep
+  }
+}
+
+# Same selection as ColorByOption — see the note above.
+fragment FilterByOption on FilterByOption {
+  control
+  # The SPARSE arm, offered here as it is in colour mode: `LabelFilterByInput`
+  # and `MeshFilterByInput` take `kind: SPARSE` with a `dataset` and an `at`,
+  # their `table`/`column` nullable, so a rule can bound one slice of a matrix.
+  # (It could not when this fragment was written, which is why the picker used
+  # to drop these.) The full source fragment rather than id + name: the same
+  # position picker authors a rule as authors a colouring, and it reads the
+  # matrix's axes off this.
+  axes
+  sparseDataset {
+    ...SparseColouringSource
+  }
+  table {
+    ...ListTableDataset
+    store {
+      ...ParquetStore
+    }
+    columns {
+      ...TableDatasetColumn
+    }
+  }
+  column {
+    ...TableDatasetColumn
+  }
+  joinPath {
+    ...ColumnOptionJoinStep
+  }
+}
+
+query MeshColorByOptions(
+  $meshCollection: ID!
+  $filters: ColumnOptionFilter
+  $maxJoinDepth: Int
+) {
+  options: colorByOptions(
+    meshCollection: $meshCollection
+    filters: $filters
+    maxJoinDepth: $maxJoinDepth
+  ) {
+    ...ColorByOption
+  }
+}
+
+query MeshFilterByOptions(
+  $meshCollection: ID!
+  $filters: ColumnOptionFilter
+  $maxJoinDepth: Int
+) {
+  options: filterByOptions(
+    meshCollection: $meshCollection
+    filters: $filters
+    maxJoinDepth: $maxJoinDepth
+  ) {
+    ...FilterByOption
+  }
+}
+
+# The same two questions for a LABEL layer, rooted on the LENS it renders rather
+# than on a mesh collection — a mask's pixel values dereference into a table by
+# exactly the FIELD edge a collection's ids do, so the walk, the
+# measure-vs-categorical rule and the `joinPath` to pass back are one. The
+# option types are unchanged, which is why both reuse `ColorByOption` /
+# `FilterByOption` verbatim: the label pickers and the mesh pickers consume the
+# identical candidate shape, and `panels/layer/columnOptions.ts` collapses all
+# four into one `ColumnOption`.
+#
+# The set these return is exactly what `createLabelLayer(render: {colorBys:})` /
+# `filterBys` accept. Aliased to `options:` for the same reason the mesh pair is:
+# `ColumnOptionPicker` reads one response key regardless of which it asked.
+query LabelColorByOptions(
+  $lens: ID!
+  $filters: ColumnOptionFilter
+  $maxJoinDepth: Int
+) {
+  options: labelColorByOptions(
+    lens: $lens
+    filters: $filters
+    maxJoinDepth: $maxJoinDepth
+  ) {
+    ...ColorByOption
+  }
+}
+
+# Same selection and same candidate set as `LabelColorByOptions` — see above.
+query LabelFilterByOptions(
+  $lens: ID!
+  $filters: ColumnOptionFilter
+  $maxJoinDepth: Int
+) {
+  options: labelFilterByOptions(
+    lens: $lens
+    filters: $filters
+    maxJoinDepth: $maxJoinDepth
+  ) {
+    ...FilterByOption
+  }
+}

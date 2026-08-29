@@ -3,3 +3,132 @@ mutation UpdateLater($input: UpdateLayerInput!) {
     ...SceneLayer
   }
 }
+
+# Creates an image layer whose render graph reduces one axis of the lens to a
+# phasor: a lifetime overlay over a FLIM (microtime) cube, a spectral one over a
+# hyperspectral cube.
+mutation CreatePhasorLayer($input: CreatePhasorLayerInput!) {
+  createPhasorLayer(input: $input) {
+    ...SceneLayer
+  }
+}
+
+mutation CreateIntensityLayer($input: CreateIntensityLayerInput!) {
+  createIntensityLayer(input: $input) {
+    ...SceneLayer
+  }
+}
+
+mutation CreateRgbLayer($input: CreateRgbLayerInput!) {
+  createRgbLayer(input: $input) {
+    ...SceneLayer
+  }
+}
+
+mutation CreateVolumeLayer($input: CreateVolumeLayerInput!) {
+  createVolumeLayer(input: $input) {
+    ...SceneLayer
+  }
+}
+
+mutation CreateLabelLayer($input: CreateLabelLayerInput!) {
+  createLabelLayer(input: $input) {
+    ...SceneLayer
+  }
+}
+
+# Retune how a label layer is drawn. A patch at BOTH levels: an omitted field on
+# the input keeps its value, and `LabelRenderInput` is itself a patch, so writing
+# a picker choice never has to resend the hashing seed or the background id.
+#
+# Unlike `UpdateMeshLayerInput` — which carries `colorBys`/`filterBys` flat on the
+# layer — a label layer's picker lives under `render`, because everything about
+# how a mask becomes colour is one object on this type. The card therefore sends
+# `{ id, render: { colorBys, activeColorBy } }`.
+mutation UpdateLabelLayer($input: UpdateLabelLayerInput!) {
+  updateLabelLayer(input: $input) {
+    ...SceneLayer
+  }
+}
+
+mutation CreatePointLayer($input: CreatePointLayerInput!) {
+  createPointLayer(input: $input) {
+    ...SceneLayer
+  }
+}
+
+mutation CreateTrackLayer($input: CreateTrackLayerInput!) {
+  createTrackLayer(input: $input) {
+    ...SceneLayer
+  }
+}
+
+# Retunes a track layer's display choices. Which columns provide the
+# coordinates, the time and the track identity is NOT here: the dataset
+# declares them by role, so there is nothing per-layer to change.
+mutation UpdateTrackLayer($input: UpdateTrackLayerInput!) {
+  updateTrackLayer(input: $input) {
+    ...SceneLayer
+  }
+}
+
+# Retunes a point layer -- above all its pickers, which are replaced wholesale
+# rather than merged: their order IS the display order, so there is nothing to
+# merge on. `[]` clears, an omitted field leaves alone.
+mutation UpdatePointLayer($input: UpdatePointLayerInput!) {
+  updatePointLayer(input: $input) {
+    ...SceneLayer
+  }
+}
+
+# Removes a layer from its scene. Returns the deleted id; the scene view
+# reinitializes its stores when GetScene refetches, so the layer disappears
+# without any store plumbing.
+mutation DeleteLayer($input: DeleteLayerInput!) {
+  deleteLayer(input: $input)
+}
+
+# Adds a mesh collection (surface reconstructions / isosurfaces) to a scene. The
+# collection's own coordinate system is the layer's space, so it must already
+# have a path to the scene's world — which is exactly what the Add Layer picker
+# lists it from.
+mutation CreateMeshLayer($input: CreateMeshLayerInput!) {
+  createMeshLayer(input: $input) {
+    ...SceneLayer
+  }
+}
+
+# Retune how a mesh layer is drawn. A patch: an omitted field keeps its current
+# value, so switching the colouring cannot silently drop the material or the
+# wireframe. The card uses it for the two PICKER choices — `activeColorBy` (one
+# index, or null for the flat material color) and `activeFilterBys` (the subset
+# of rules that apply, AND-combined) — which are stored, unlike the card's
+# session-local render settings.
+mutation UpdateMeshLayer($input: UpdateMeshLayerInput!) {
+  updateMeshLayer(input: $input) {
+    ...SceneLayer
+  }
+}
+
+# Retune a fixed-shape lens layer. These are patches — an omitted field keeps its
+# value. The generic `updateLayer` cannot serve them: it takes a `renderGraph`
+# and returns an `ImageLayer`, and none of these three HAS a graph. That is the
+# point of the split, so the client dispatches on `__typename` at the one
+# persistence site (`features/volume/rendergraph/RenderNodeEditor.tsx`).
+mutation UpdateIntensityLayer($input: UpdateIntensityLayerInput!) {
+  updateIntensityLayer(input: $input) {
+    ...SceneLayer
+  }
+}
+
+mutation UpdateRgbLayer($input: UpdateRgbLayerInput!) {
+  updateRgbLayer(input: $input) {
+    ...SceneLayer
+  }
+}
+
+mutation UpdatePhasorLayer($input: UpdatePhasorLayerInput!) {
+  updatePhasorLayer(input: $input) {
+    ...SceneLayer
+  }
+}

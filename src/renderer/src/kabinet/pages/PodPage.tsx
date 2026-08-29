@@ -1,3 +1,4 @@
+import { buildAssignInput } from "@/rekuest/assign";
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,15 +40,13 @@ export const AssignButton = (props: {
 
   const doassign = async () => {
     console.log(
-      await assign({
-        cached: false,
-        capture: false,
-        ephemeral: false,
-        log: false,
-        args: {
-          pod: { __identifier: KabinetPod.identifier, object: props.pod },
-        },
-      }),
+      await assign(
+        buildAssignInput({
+          args: {
+            pod: { __identifier: KabinetPod.identifier, object: props.pod },
+          },
+        }),
+      ),
       props.refetch(),
     );
   };

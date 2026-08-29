@@ -1,0 +1,59 @@
+mutation CreateTerm($input: CreateTermInput!) {
+  createTerm(input: $input) {
+    ...Term
+  }
+}
+
+mutation UpdateTerm($input: UpdateTermInput!) {
+  updateTerm(input: $input) {
+    ...Term
+  }
+}
+
+mutation DeleteTerm($id: String!) {
+  deleteTerm(input: { id: $id })
+}
+
+# Typing a word the organization has not used before claims it. The key is the
+# value the picker stores, so these return it rather than the id.
+mutation CreateEntityTermInline($input: String!) {
+  result: createTerm(input: { kind: ENTITY, key: $input }) {
+    value: key
+    label: key
+  }
+}
+
+mutation CreateProtocolEventTermInline($input: String!) {
+  result: createTerm(input: { kind: PROTOCOL_EVENT, key: $input }) {
+    value: key
+    label: key
+  }
+}
+
+mutation CreateNaturalEventTermInline($input: String!) {
+  result: createTerm(input: { kind: NATURAL_EVENT, key: $input }) {
+    value: key
+    label: key
+  }
+}
+
+mutation CreateRelationTermInline($input: String!) {
+  result: createTerm(input: { kind: RELATION, key: $input }) {
+    value: key
+    label: key
+  }
+}
+
+mutation CreateStructureRelationTermInline($input: String!) {
+  result: createTerm(input: { kind: STRUCTURE_RELATION, key: $input }) {
+    value: key
+    label: key
+  }
+}
+
+mutation CreateMeasurementTermInline($input: String!) {
+  result: createTerm(input: { kind: MEASUREMENT, key: $input }) {
+    value: key
+    label: key
+  }
+}

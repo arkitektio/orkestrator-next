@@ -54,7 +54,7 @@ export const SmartLink = ({
   return (
     <NavLink
       {...props}
-      to={`/${model.path}/${object}${subroute ? `/${subroute}` : ""}${subobject ? `/${subobject}` : ""}${deeproute ? `/${deeproute}` : ""}`}
+      to={`/${model.path}/${encodeURIComponent(object)}${subroute ? `/${subroute}` : ""}${subobject ? `/${subobject}` : ""}${deeproute ? `/${deeproute}` : ""}`}
       title="Open"
       className={props.className}
     >
@@ -74,7 +74,7 @@ export const buildModelLink = <T extends Object>(to: string) => {
     return (
       <NavLink
         {...props}
-        to={`/${to}/${props.object.id}${subroute ? `/${subroute}` : ""}${subobject ? `/${subobject}` : ""}${deeproute ? `/${deeproute}` : ""}`}
+        to={`/${to}/${encodeURIComponent(props.object.id)}${subroute ? `/${subroute}` : ""}${subobject ? `/${subobject}` : ""}${deeproute ? `/${deeproute}` : ""}`}
         title="Open"
         className={cn("hover:text-primary transition-colors", props.className)}
       >
@@ -96,7 +96,7 @@ export const buildPaneLink = <T extends Object>(to: string) => {
     return (
       <PaneLink
         {...props}
-        to={`/${to}/${props.object.id}${subroute ? `/${subroute}` : ""}${subobject ? `/${subobject}` : ""}${deeproute ? `/${deeproute}` : ""}`}
+        to={`/${to}/${encodeURIComponent(props.object.id)}${subroute ? `/${subroute}` : ""}${subobject ? `/${subobject}` : ""}${deeproute ? `/${deeproute}` : ""}`}
 
       >
         {children}
@@ -110,7 +110,7 @@ export const linkBuilder = (to: string) => (objectId: string | undefined) => {
     return `/error`;
   }
 
-  return `/${to}/${objectId}`;
+  return `/${to}/${encodeURIComponent(objectId)}`;
 };
 
 export const listLinkBuilder = (to: string) => () => {
@@ -151,15 +151,11 @@ const buildSelfActions = (_model: Identifier) => {
   };
 };
 
-const buildKomments = <T extends Object> (model: Identifier) => {
-  return ({ ...props }: ObjectProps<T>) => {
-    return getSmartBuilderAdapters().renderKomments({
-      identifier: model,
-      object: props.object,
-    });
-  };
-};
-
+/**
+ * The claims made about this object and the discussion about it are one
+ * surface (`KnowledgeSidebar`), so there is one builder for them. The old
+ * `Komments` half is gone — pages ask for `Knowledge` and get both.
+ */
 const buildKnowledge = <T extends Object>(model: Identifier) => {
   return ({ ...props }: ObjectProps<T>) => {
     return getSmartBuilderAdapters().renderKnowledge({
@@ -269,7 +265,6 @@ export const buildSmart = <T extends Object>(
     Smart: buildSmartModel<T>(model),
     Drop: buildDropModel<T>(model),
     Actions: buildSelfActions(model),
-    Komments: buildKomments(model),
     Knowledge: buildKnowledge(model),
     EnhanceButton: buildEnhanceButton(model),
     TinyKnowledge: buildTinyKnowledge(model),
@@ -283,6 +278,52 @@ export const buildSmart = <T extends Object>(
       buildUseProgress(model, { id: object }),
     useLive: ({ object }: { object: string }) =>
       buildUseLive(model, { id: object }),
+  };
+};
+
+/**
+ * A model whose detail page lives *inside* something else — for kraph, inside the
+ * graph that draws it.
+ *
+ * Two grains, one identity. A claim (`Instance`, `Link`) is organization-grain
+ * and addressed by a bare uuid; a *drawing* of it exists only inside one graph
+ * and carries everything a rich detail page shows. Identity stays claim-grain —
+ * `Smart`, `Drop`, `ObjectButton` and every local-action `condition` keep taking
+ * `{ identifier, id }` with that bare uuid, which is the only thing a
+ * drag-and-drop payload can honestly carry. Only the *destination* varies.
+ *
+ * So `scope` is optional, and the fallback is the point: a call site that knows
+ * its graph gets the view page; one that does not — the command palette, a drop
+ * from another module, a rekuest return port — gets `claimTo`, the claim page,
+ * which lists `drawnIn` and links onward. No caller is ever forced to invent a
+ * graph, and nothing re-encodes `graph:id` back into one string, which is
+ * precisely the `GraphID` scalar the backend deleted.
+ */
+export const buildScopedSmart = <T extends Object>(
+  model: Identifier,
+  scopedTo: (scope: string) => string,
+  claimTo: string,
+  options?: {
+    name?: string;
+    description?: string;
+    searchFunction?: SearchFunction;
+  },
+) => {
+  const pathFor = (scope?: string) => (scope ? scopedTo(scope) : claimTo);
+
+  // Registers under `claimTo`: the registry answers "where does a bare id of
+  // this kind go", and that is the claim page. Generic navigate/popout actions
+  // resolve through it.
+  const base = buildSmart<T>(model, claimTo, options);
+
+  return {
+    ...base,
+    DetailLink: ({ scope, ...props }: ModelLinkProps<T> & { scope?: string }) =>
+      buildModelLink<T>(pathFor(scope))(props),
+    PaneLink: ({ scope, ...props }: SmartPaneLinkProps<T> & { scope?: string }) =>
+      buildPaneLink<T>(pathFor(scope))(props),
+    linkBuilder: (objectId: string | undefined, scope?: string) =>
+      linkBuilder(pathFor(scope))(objectId),
   };
 };
 

@@ -179,19 +179,6 @@ export const buildCypherSchemaFromGraph = (
 
 
 
-  graph.structureCategories.forEach((node) => {
-    schema.nodes[node.ageName] = {
-      type: node.__typename || "Unknown",
-      label: node.identifier,
-      description: node.description || "No Description",
-      properties: {
-        identifier: { description: "Unique identifier" },
-        object: { description: "The object being described as an ID" },
-        created_at: { description: "Creation timestamp" },
-        category_id: { description: "ID linking to the category group" },
-      },
-    };
-  });
 
   graph.naturalEventCategories.forEach((node) => {
     schema.nodes[node.ageName] = {
@@ -205,18 +192,6 @@ export const buildCypherSchemaFromGraph = (
     };
   });
 
-  graph.metricCategories.forEach((node) => {
-    schema.nodes[node.ageName] = {
-      type: node.__typename || "Unknown",
-      label: node.label,
-      description: node.description || "No Description",
-      properties: {
-        created_at: { description: "Creation timestamp" },
-        category_id: { description: "ID linking to the category group" },
-        value: { description: "The value of the metric" },
-      },
-    };
-  });
 
   graph.protocolEventCategories.forEach((node) => {
     schema.nodes[node.ageName] = {

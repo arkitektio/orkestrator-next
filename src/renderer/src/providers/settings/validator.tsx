@@ -16,6 +16,8 @@ export const settingsValidator = zod.object({
   agentExpanded: zod.boolean().optional(),
   brandHue: zod.number().min(0).max(360).optional(),
   brandChroma: zod.number().min(0).max(1).optional(),
+  /** Let the open scene's main layer drive the brand hue. */
+  sceneThemeSync: zod.boolean(),
 });
 
 export const defaultSettings: Settings = {
@@ -34,6 +36,7 @@ export const defaultSettings: Settings = {
   agentExpanded: false,
   brandHue: 267.256,
   brandChroma: 0.20962,
+  sceneThemeSync: true,
 };
 
 export type Settings = zod.infer<typeof settingsValidator>;

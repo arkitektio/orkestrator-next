@@ -5,56 +5,32 @@ import {
   EntityDescriptorFragment,
   GraphFragment,
   ListEntityCategoryFragment,
-  ListStructureCategoryFragment,
-  StructureDescriptorFragment
 } from "@/kraph/api/graphql";
 import {
   MarkerType
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import DescribeEdge from "./edges/DescribeEdge";
 import EntityRoleEdge from "./edges/EntityRoleEdge";
-import MeasurementEdge from "./edges/MeasurementEdge";
 import ReagentRoleEdge from "./edges/ReagentRoleEdge";
 import RelationEdge from "./edges/RelationEdge";
-import StructureRelationEdge from "./edges/StructureRelationEdge";
 import "./index.css";
 import EntityCategoryBuilderNode from "./nodes/builder/EntityCategoryBuilderNode";
-import MetricCategoryBuilderNode from "./nodes/builder/MetricCategoryBuilderNode";
 import NaturalEventCategoryBuilderNode from "./nodes/builder/NaturalEventCategoryBuilderNode";
 import ProtocolEventCategoryBuilderNode from "./nodes/builder/ProtocolEventCategoryBuilderNode";
 import ReagentCategoryBuilderNode from "./nodes/builder/ReagentCategoryBuilderNode";
-import StructureCategoryBuilderNode from "./nodes/builder/StructureCategoryBuilderNode";
 import GenericCategoryNode from "./nodes/EntityCategoryNode";
-import MetricCategoryNode from "./nodes/MetricCategoryNode";
 import NaturalEventNode from "./nodes/NaturalEventCategoryNode";
 import ProtocolEventNode from "./nodes/ProtocolEventCategoryNode";
 import ReagentCategoryNode from "./nodes/ReagentCategoryNode";
-import StructureCategoryNode from "./nodes/StructureCategoryNode";
 import {
   MyEdge,
   MyNode
 } from "./types";
-import MeasurementBuilderEdge from "./edges/builder/MeasurementBuilderEdge";
-import StructureRelationBuilderEdge from "./edges/builder/StructureRelationBuilderEdge";
 import RelationBuilderEdge from "./edges/builder/RelationBuilderEdge";
 import EntityRoleBuilderEdge from "./edges/builder/EntityRoleBuilderEdge";
-import DescribeBuilderEdge from "./edges/builder/DescribeBuilderEdge";
 import ReagentRoleBuilderEdge from "./edges/builder/ReagentRoleBuilderEdge";
 
 export const ontologyToNodes = (graph: GraphFragment): MyNode[] => {
-  const structureNodes = graph.structureCategories.map((cat) => ({
-    id: cat.id,
-    position: {
-      x: cat.positionX || 300,
-      y: cat.positionY || 300,
-    },
-    height: cat.height || 100,
-    width: cat.width || 100,
-    data: cat,
-    type: "structurecategory" as const,
-  }));
-
   const genericNodes = graph.entityCategories.map((entity) => ({
     id: entity.id,
     position: {
@@ -95,51 +71,19 @@ export const ontologyToNodes = (graph: GraphFragment): MyNode[] => {
     }),
   );
 
-  const metricNode = graph.metricCategories.map((entity) => ({
-    id: entity.id,
-    position: {
-      x: entity.positionX || 300,
-      y: entity.positionY || 300,
-    },
-    height: entity.height || 100,
-    width: entity.width || 100,
-    data: entity,
-    type: "metriccategory" as const,
-  }));
-
   return [
-    ...structureNodes,
     ...genericNodes,
     ...protocolEventCategory,
     ...naturalEventCategory,
-    ...metricNode,
   ];
 };
 
-const buildStructureFilter = (descriptor: StructureDescriptorFragment) => {
-  return (cat: ListStructureCategoryFragment) => {
-    if (descriptor.tags && descriptor.tags.length > 0) {
-      return descriptor.tags.some((tag) =>
-        cat.tags.find((t) => t.name == tag),
-      );
-    }
-    if (descriptor.keys && descriptor.keys.length > 0) {
-      return descriptor.keys.some(key => key == cat.key);
-    }
-
-    return true;
-  };
-};
-
+// Tags are gone from the schema, so a descriptor now selects categories by key
+// alone. An empty descriptor still matches everything.
 const buildEntityFilter = (descriptor: EntityDescriptorFragment) => {
   return (cat: ListEntityCategoryFragment) => {
-    if (descriptor.tags && descriptor.tags.length > 0) {
-      return descriptor.tags.some((tag) =>
-        cat.tags.find((t) => t.name == tag),
-      );
-    }
     if (descriptor.keys && descriptor.keys.length > 0) {
-      return descriptor.keys.some(key => key == cat.key);
+      return descriptor.keys.some((key) => key == cat.key);
     }
 
     return true;
@@ -148,28 +92,6 @@ const buildEntityFilter = (descriptor: EntityDescriptorFragment) => {
 
 export const ontologyToEdges = (graph: GraphFragment) => {
   const edges: MyEdge[] = [];
-
-  graph.structureRelationCategories.forEach((cat) => {
-    const source_nodes = graph.structureCategories.filter(buildStructureFilter(cat.sourceDescriptor)).map((c) => c.id);
-    const target_nodes = graph.structureCategories.filter(buildStructureFilter(cat.targetDescriptor)).map((c) => c.id);
-
-    for (const source of source_nodes) {
-      for (const target of target_nodes) {
-    edges.push({
-          id: `${cat.id}`,
-          source: source,
-          target: target,
-          data: cat,
-          type: "structure_relation" as const,
-      markerEnd: {
-        type: MarkerType.Arrow,
-      },
-    });
-  }
-}
-
-
-  });
 
   graph.relationCategories.forEach((cat) => {
     const source_nodes = graph.entityCategories.filter(buildEntityFilter(cat.sourceDescriptor)).map((c) => c.id);
@@ -193,87 +115,33 @@ export const ontologyToEdges = (graph: GraphFragment) => {
 
   });
 
-  graph.measurementCategories.forEach((cat) => {
-    const source_nodes = graph.structureCategories.filter(buildStructureFilter(cat.sourceDescriptor)).map((c) => c.id);
-    const target_nodes = graph.entityCategories.filter(buildEntityFilter(cat.targetDescriptor)).map((c) => c.id);
-
-    for (const source of source_nodes) {
-      for (const target of target_nodes) {
-    edges.push({
-          id: `${cat.id}`,
-          source: source,
-          target: target,
-          data: cat,
-          type: "measurement" as const,
-      markerEnd: {
-        type: MarkerType.Arrow,
-      },
-    });
-  }
-}
-
-
-
-
-  });
-
-  graph.metricCategories.forEach((cat) => {
-    const source_nodes = cat.id
-    const target_nodes = cat.structureCategory.id
-
-    for (const source of source_nodes) {
-      for (const target of target_nodes) {
-    edges.push({
-          id: `${cat.id}`,
-          source: source,
-          target: target,
-          data: cat,
-          type: "describe" as const,
-      markerEnd: {
-        type: MarkerType.Arrow,
-      },
-    });
-  }
-}
-  });
-
   return edges;
 };
 
 export const NODE_TYPES = {
-  structurecategory: StructureCategoryNode,
   entitycategory: GenericCategoryNode,
   naturaleventcategory: NaturalEventNode,
   protocoleventcategory: ProtocolEventNode,
   reagentcategory: ReagentCategoryNode,
-  metriccategory: MetricCategoryNode,
 };
 
 export const BUILDER_NODE_TYPES = {
-  structurecategory: StructureCategoryBuilderNode,
   entitycategory: EntityCategoryBuilderNode,
   naturaleventcategory: NaturalEventCategoryBuilderNode,
   protocoleventcategory: ProtocolEventCategoryBuilderNode,
   reagentcategory: ReagentCategoryBuilderNode,
-  metriccategory: MetricCategoryBuilderNode,
 };
 
 
 export const EDGE_TYPES = {
-  measurement: MeasurementEdge,
-  structure_relation: StructureRelationEdge,
   relation: RelationEdge,
   entityrole: EntityRoleEdge,
-  describe: DescribeEdge,
   reagentrole: ReagentRoleEdge,
 };
 
 export const BUILDER_EDGE_TYPES = {
-  measurement: MeasurementBuilderEdge,
-  structure_relation: StructureRelationBuilderEdge,
   relation: RelationBuilderEdge,
   entityrole: EntityRoleBuilderEdge,
-  describe: DescribeBuilderEdge,
   reagentrole: ReagentRoleBuilderEdge,
 };
 

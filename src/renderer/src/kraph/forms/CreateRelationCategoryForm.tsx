@@ -3,6 +3,7 @@ import { GraphQLCreatableSearchField } from "@/components/fields/GraphQLCreateab
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
+import { SwitchField } from "@/components/fields/SwitchField";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { DialogFooter } from "@/components/ui/dialog";
@@ -15,7 +16,6 @@ import {
   useCreateRelationCategoryMutation,
   useSearchEntityCategoryLazyQuery,
   useSearchGraphsLazyQuery,
-  useSearchTagsLazyQuery
 } from "../api/graphql";
 
 
@@ -38,10 +38,10 @@ export const TForm = (props: { graph?: string; onSuccess?: (data: CreateRelation
   const form = useForm<CreateRelationCategoryMutationVariables["input"]>({
     defaultValues: {
       graph: props.graph,
+      backfill: false,
     },
   });
 
-  const [searchTags] = useSearchTagsLazyQuery();
   const [searchEntityCategory] = useSearchEntityCategoryLazyQuery();
 
   const [search] = useSearchGraphsLazyQuery();
@@ -93,12 +93,6 @@ export const TForm = (props: { graph?: string; onSuccess?: (data: CreateRelation
                   />
                   <div className="col-span-2 flex-col gap-1 flex">
                     <GraphQLSearchField
-                      name={`sourceDefinition.tagFilters`}
-                      label="Tag Filters"
-                      searchQuery={searchTags}
-                      description="Filters for the entity's tags."
-                    />
-                    <GraphQLSearchField
                       name={`sourceDefinition.categoryFilters`}
                       label="Category Filters"
                       searchQuery={searchEntityCategory}
@@ -106,12 +100,6 @@ export const TForm = (props: { graph?: string; onSuccess?: (data: CreateRelation
                     />
                   </div>
                   <div className="col-span-2 flex-col gap-1 flex">
-                    <GraphQLSearchField
-                      name={`targetDefinition.tagFilters`}
-                      label="Tag Filters"
-                      searchQuery={searchTags}
-                      description="Filters for the entity's tags."
-                    />
                     <GraphQLSearchField
                       name={`targetDefinition.categoryFilters`}
                       label="Category Filters"
@@ -124,6 +112,11 @@ export const TForm = (props: { graph?: string; onSuccess?: (data: CreateRelation
             </div>
           </div>
 
+              <SwitchField
+                label="Draw existing evidence"
+                name="backfill"
+                description="Claims already made under this word are in the organization's evidence base. With this on they are projected into the graph now, instead of waiting for the next reproject — which takes as long as the evidence base is large."
+              />
           <DialogFooter className="mt-2">
             <Button type="submit">Create</Button>
           </DialogFooter>

@@ -6,10 +6,10 @@ import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  CreateMeasurementDefinitionInput,
+  CreateMeasurementCategoryInput,
   useCreateMeasurementCategoryMutation,
   useListEntityCategoryQuery,
-  useListStructureCategoryQuery,
+  useListStructureKindsQuery,
 } from "@/kraph/api/graphql";
 import { ageNameify, validateAgeName } from "@/kraph/forms/utils";
 import { Structure } from "@/types";
@@ -19,24 +19,20 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 const normalizeInput = (
-  data: CreateMeasurementDefinitionInput,
-): CreateMeasurementDefinitionInput => ({
+  data: CreateMeasurementCategoryInput,
+): CreateMeasurementCategoryInput => ({
   ...data,
   label: data.label || undefined,
   description: data.description || undefined,
   source: {
     ...data.source,
     identifiers: data.source.identifiers?.length ? data.source.identifiers : undefined,
-    keys: data.source.keys?.length ? data.source.keys : undefined,
-    tags: data.source.tags?.length ? data.source.tags : undefined,
-    ontotologyTerms: data.source.ontotologyTerms?.length ? data.source.ontotologyTerms : undefined,
     defaultCategoryKey: data.source.defaultCategoryKey || undefined,
   },
   target: {
     ...data.target,
     keys: data.target.keys?.length ? data.target.keys : undefined,
-    tags: data.target.tags?.length ? data.target.tags : undefined,
-    ontotologyTerms: data.target.ontotologyTerms?.length ? data.target.ontotologyTerms : undefined,
+    ontologyTerms: data.target.ontologyTerms?.length ? data.target.ontologyTerms : undefined,
     defaultCategoryKey: data.target.defaultCategoryKey || undefined,
   },
 });
@@ -62,7 +58,7 @@ export const CreateNewMeasurement = (props: {
   const debouncedStructureSearch = useDebounce(structureSearch);
   const debouncedEntitySearch = useDebounce(entitySearch);
 
-  const form = useForm<CreateMeasurementDefinitionInput>({
+  const form = useForm<CreateMeasurementCategoryInput>({
     defaultValues: {
       graph: props.graph,
       label: "",
@@ -70,15 +66,11 @@ export const CreateNewMeasurement = (props: {
       description: "",
       source: {
         identifiers: props.left.map((s) => s.identifier),
-        keys: [],
-        tags: [],
-        ontotologyTerms: [],
         defaultCategoryKey: "",
       },
       target: {
         keys: [],
-        tags: [],
-        ontotologyTerms: [],
+        ontologyTerms: [],
         defaultCategoryKey: "",
       },
     },
@@ -87,10 +79,11 @@ export const CreateNewMeasurement = (props: {
   const selectedIdentifiers: string[] = form.watch("source.identifiers") ?? [];
   const selectedEntityKeys: string[] = form.watch("target.keys") ?? [];
 
-  const { data: structureData } = useListStructureCategoryQuery({
+  const { data: structureData } = useListStructureKindsQuery({
     variables: {
       filters: {
-        graph: { id: props.graph },
+        // Structure kinds are organization-scoped, so they are no longer
+        // filterable by graph.
         search: debouncedStructureSearch || undefined,
       },
       pagination: { limit: 50, offset: 0 },
@@ -131,7 +124,7 @@ export const CreateNewMeasurement = (props: {
     }
   };
 
-  const handleSubmit = async (data: CreateMeasurementDefinitionInput) => {
+  const handleSubmit = async (data: CreateMeasurementCategoryInput) => {
     try {
       await createMeasurementCategory({
         variables: { input: normalizeInput({ ...data, graph: props.graph }) },
@@ -187,7 +180,7 @@ export const CreateNewMeasurement = (props: {
               )}
               <ScrollArea className="flex-1">
                 <div className="flex flex-col gap-1 pr-2">
-                  {structureData?.structureCategories.map((cat) => {
+                  {structureData?.structureKinds.map((cat) => {
                     const selected = selectedIdentifiers.includes(cat.identifier);
                     return (
                       <button
@@ -215,7 +208,7 @@ export const CreateNewMeasurement = (props: {
                       </button>
                     );
                   })}
-                  {structureData?.structureCategories.length === 0 && (
+                  {structureData?.structureKinds.length === 0 && (
                     <p className="text-xs text-muted-foreground text-center py-4">
                       No structure categories found
                     </p>

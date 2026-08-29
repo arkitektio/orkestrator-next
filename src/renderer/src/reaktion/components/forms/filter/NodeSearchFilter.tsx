@@ -2,13 +2,8 @@ import { ToggleField } from "@/components/fields/ToggleField";
 import { AutoSubmitter } from "@/components/form/AutoSubmitter";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { GlobalSearchQueryVariables } from "@/lok-next/api/graphql";
-import { PopoverAnchor } from "@radix-ui/react-popover";
 import { ArrowDown } from "lucide-react";
 import { useForm } from "react-hook-form";
 

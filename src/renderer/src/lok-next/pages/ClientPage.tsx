@@ -19,6 +19,7 @@ import {
   User,
 } from "lucide-react";
 import { useDetailClientQuery } from "../api/graphql";
+import { clientAppIdentifier } from "../lib/clientLabels";
 
 const FailedTasks = ({ clientId }: { clientId: string }) => {
   const { openDialog } = useDialog();
@@ -122,7 +123,7 @@ export default asDetailQueryRoute(useDetailClientQuery, ({ data }) => {
           ))}
         </>
       }
-      title={data?.client?.release.app.identifier}
+      title={data?.client && clientAppIdentifier(data.client)}
     >
       <div className="space-y-8 p-4">
         {/* Header Section */}
@@ -140,11 +141,13 @@ export default asDetailQueryRoute(useDetailClientQuery, ({ data }) => {
             <div className="space-y-2">
               <div className="flex items-center gap-3">
                 <h1 className="text-4xl font-bold tracking-tight">
-                  {data.client.release.app.identifier}
+                  {clientAppIdentifier(data.client)}
                 </h1>
-                <Badge variant="secondary" className="text-sm px-2 py-0.5">
-                  v{data.client.release.version}
-                </Badge>
+                {data.client.release && (
+                  <Badge variant="secondary" className="text-sm px-2 py-0.5">
+                    v{data.client.release.version}
+                  </Badge>
+                )}
               </div>
 
               <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
@@ -167,7 +170,7 @@ export default asDetailQueryRoute(useDetailClientQuery, ({ data }) => {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-mono bg-muted px-1.5 py-0.5 rounded text-xs">
-                    {data.client.oauth2Client.clientId}
+                    {data.client.clientId}
                   </span>
                 </div>
               </div>
@@ -181,7 +184,7 @@ export default asDetailQueryRoute(useDetailClientQuery, ({ data }) => {
 
 
         {/* Failed Tasks Section */}
-        <FailedTasks clientId={data.client.oauth2Client.clientId} />
+        <FailedTasks clientId={data.client.clientId} />
       </div>
     </LokClient.ModelPage>
   );

@@ -1,21 +1,51 @@
-mutation CreateMetric($input: CreateMetricInput!) {
-  createMetric(input: $input) {
-    ...Metric
+# `assertMetricValueForStructure` names an existing structure by its graph id;
+# `assertMetricValue` names the structure by identifier/object and lets the
+# backend reach it, creating it on demand.
+mutation AssertMetricValueForStructure($input: AssertMetricValueForStructureInput!) {
+  assertMetricValueForStructure(input: $input) {
+    assertion {
+      ...Assertion
+    }
+    metric {
+      ...Metric
+    }
   }
 }
 
-mutation DeleteMetric($id: String!) {
-  deleteMetric(input: { id: $id })
-}
-
-mutation ArchiveMetric($id: String!) {
-  archiveMetric(input: { id: $id }) {
-    ...Metric
+mutation RetractMetric($id: String!) {
+  retractMetric(input: { id: $id }) {
+    assertion {
+      ...Assertion
+    }
+    metric {
+      ...Metric
+    }
   }
 }
 
-mutation UpdateMetric($input: UpdateMetricInput!) {
-  updateMetric(input: $input) {
-    ...Metric
+# Correcting a value does not erase the old one: the superseded claim stays in
+# the log, and this records the claim that replaces it.
+mutation SupersedeMetricValue($input: SupersedeMetricValueInput!) {
+  supersedeMetricValue(input: $input) {
+    assertion {
+      ...Assertion
+    }
+    metric {
+      ...Metric
+    }
+  }
+}
+
+# A hand-entered value is still evidence, just the simplest kind: an
+# "itoldyouso" structure carries no measurement behind it, only the assertion.
+# The backend creates the structure and its measurement edge on demand.
+mutation AssertMetricValue($input: AssertMetricValueInput!) {
+  assertMetricValue(input: $input) {
+    assertion {
+      ...Assertion
+    }
+    metric {
+      ...Metric
+    }
   }
 }

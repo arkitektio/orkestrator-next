@@ -55,11 +55,6 @@ export const FileDisplay = (props: DisplayWidgetProps) => {
             </span>
           )}
         </div>
-        {data.file.views && data.file.views.length > 0 && (
-          <div className="text-xs text-muted-foreground">
-            {data.file.views.length} linked {data.file.views.length === 1 ? "image" : "images"}
-          </div>
-        )}
       </div>
     </MikroFile.DetailLink>
   );

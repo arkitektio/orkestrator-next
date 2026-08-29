@@ -22,26 +22,60 @@ export type Scalars = {
   DateTime: { input: any; output: any; }
   /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf). */
   JSON: { input: any; output: any; }
+  _Any: { input: any; output: any; }
 };
 
+/** Documents to add to an existing collection */
 export type AddDocumentsToCollectionInput = {
   collection: Scalars['ID']['input'];
   documents: Array<DocumentInput>;
 };
 
-/** Agent(id, room, name, client, user) */
+/** A participant in a room */
 export type Agent = {
   __typename?: 'Agent';
+  client: Client;
   id: Scalars['ID']['output'];
+  name?: Maybe<Scalars['String']['output']>;
   room: Room;
+  /** The user this agent acts on behalf of */
+  user: User;
 };
 
-/** A chat message input */
+/** Agent(id, room, name, client, user) */
+export type AgentFilter = {
+  AND?: InputMaybe<AgentFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<AgentFilter>;
+  OR?: InputMaybe<AgentFilter>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type AgentOrder =
+  { name: Ordering; };
+
+/** An App model to represent an application in the system */
+export type App = {
+  __typename?: 'App';
+  id: Scalars['ID']['output'];
+  identifier: Scalars['String']['output'];
+};
+
+/** A chat completion request */
 export type ChatInput = {
+  frequencyPenalty?: InputMaybe<Scalars['Float']['input']>;
+  maxTokens?: InputMaybe<Scalars['Int']['input']>;
   messages: Array<ChatMessageInput>;
   model?: InputMaybe<Scalars['ID']['input']>;
+  n?: InputMaybe<Scalars['Int']['input']>;
+  presencePenalty?: InputMaybe<Scalars['Float']['input']>;
+  responseFormat?: InputMaybe<Scalars['JSON']['input']>;
+  stop?: InputMaybe<Array<Scalars['String']['input']>>;
   temperature?: InputMaybe<Scalars['Float']['input']>;
+  toolChoice?: InputMaybe<Scalars['JSON']['input']>;
   tools?: InputMaybe<Array<ToolInput>>;
+  topP?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type ChatMessage = {
@@ -87,12 +121,16 @@ export type Choice = {
 /** A collection of documents searchable by string */
 export type ChromaCollection = {
   __typename?: 'ChromaCollection';
-  count: Scalars['Int']['output'];
+  /** The number of documents stored in this collection, or null if the vector database cannot be reached */
+  count?: Maybe<Scalars['Int']['output']>;
   createdAt: Scalars['DateTime']['output'];
   description: Scalars['String']['output'];
+  /** The model used to embed this collection's documents */
+  embedder: LlmModel;
   id: Scalars['ID']['output'];
+  /** The human-readable name of the collection, unique within its organization */
   name: Scalars['String']['output'];
-  owner: User;
+  owner?: Maybe<User>;
 };
 
 /** Filter for ChromaCollection */
@@ -105,18 +143,47 @@ export type ChromaCollectionFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** A collection of documents searchable by string */
 export type ChromaCollectionInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   embedder: Scalars['ID']['input'];
-  isPublic?: InputMaybe<Scalars['Boolean']['input']>;
   name: Scalars['String']['input'];
 };
 
+export type ChromaCollectionOrder =
+  { createdAt: Ordering; name?: never; }
+  |  { createdAt?: never; name: Ordering; };
+
+/**
+ * An Oauth2 Client
+ *
+ * An Oauth2 Client is a model to represent an Oauth2 client that is
+ * registered when a JWT token is authenticated. It retrieves
+ * the client_id from the token and uses it to create a new
+ * app or retrieve an existing app. This allows for the grouping
+ * of users by app.
+ */
+export type Client = {
+  __typename?: 'Client';
+  clientId: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  release?: Maybe<Release>;
+};
+
+/** The room to create */
 export type CreateRoomInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   talkingAbout?: InputMaybe<Array<StructureInput>>;
   title?: InputMaybe<Scalars['String']['input']>;
 };
+
+/** A task a model can be made the default for */
+export enum DefaultKind {
+  Embedding = 'EMBEDDING',
+  ImageGeneration = 'IMAGE_GENERATION',
+  TextGeneration = 'TEXT_GENERATION'
+}
 
 /** A default use for a model */
 export type DefaultUse = {
@@ -126,21 +193,43 @@ export type DefaultUse = {
   model: LlmModel;
 };
 
+/** Filter for DefaultUse */
+export type DefaultUseFilter = {
+  AND?: InputMaybe<DefaultUseFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<DefaultUseFilter>;
+  OR?: InputMaybe<DefaultUseFilter>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type DefaultUseOrder =
+  { kind: Ordering; };
+
+/** The collection to delete */
+export type DeleteCollectionInput = {
+  id: Scalars['ID']['input'];
+};
+
+/** The provider to delete */
 export type DeleteProviderInput = {
   id: Scalars['ID']['input'];
 };
 
+/** The room to delete */
 export type DeleteRoomInput = {
   id: Scalars['ID']['input'];
 };
 
+/** A document stored in a collection */
 export type Document = {
   __typename?: 'Document';
   content: Scalars['String']['output'];
   distance?: Maybe<Scalars['Float']['output']>;
   id: Scalars['String']['output'];
+  /** The metadata stored alongside the document */
   metadata?: Maybe<Scalars['JSON']['output']>;
-  /** A function definition for a large language model */
+  /** The object this document was derived from, if any */
   structure?: Maybe<Structure>;
 };
 
@@ -152,11 +241,11 @@ export type DocumentInput = {
   structure?: InputMaybe<StructureInput>;
 };
 
-/** The type of the thinking block */
+/** A capability a model supports */
 export enum FeatureType {
   Chat = 'CHAT',
-  Chatting = 'CHATTING',
-  Embedding = 'EMBEDDING'
+  Embedding = 'EMBEDDING',
+  Vision = 'VISION'
 }
 
 /** The type of the tool */
@@ -194,18 +283,11 @@ export type ImageInput = {
   model?: InputMaybe<Scalars['ID']['input']>;
 };
 
-export type ImageReponse = {
-  __typename?: 'ImageReponse';
+/** A generated image, base64 encoded */
+export type ImageResponse = {
+  __typename?: 'ImageResponse';
   image: Scalars['Base64EncodedString']['output'];
 };
-
-/** Modalities */
-export enum InputModality {
-  Audio = 'AUDIO',
-  Image = 'IMAGE',
-  Text = 'TEXT',
-  Video = 'VIDEO'
-}
 
 /** A LLM model to chage with */
 export type LlmModel = {
@@ -215,14 +297,14 @@ export type LlmModel = {
   /** The features supported by the model */
   features: Array<FeatureType>;
   id: Scalars['ID']['output'];
-  /** The input modalities */
-  inputModalities: Array<InputModality>;
+  /** The modalities this model accepts as input */
+  inputModalities: Array<Modality>;
   label: Scalars['String']['output'];
   /** The string to use for the LLM model */
   llmString: Scalars['String']['output'];
   modelId: Scalars['String']['output'];
-  /** The input modalities */
-  outputModalities: Array<InputModality>;
+  /** The modalities this model produces as output */
+  outputModalities: Array<Modality>;
   provider: Provider;
 };
 
@@ -230,6 +312,7 @@ export type LlmModel = {
 /** A LLM model to chage with */
 export type LlmModelEmbedderForArgs = {
   filters?: InputMaybe<ChromaCollectionFilter>;
+  ordering?: Array<ChromaCollectionOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -239,24 +322,40 @@ export type LlmModelFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<LlmModelFilter>;
   OR?: InputMaybe<LlmModelFilter>;
+  features?: InputMaybe<Array<FeatureType>>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  inputModalities?: InputMaybe<Array<InputModality>>;
-  outputModalities?: InputMaybe<Array<InputModality>>;
+  inputModalities?: InputMaybe<Array<Modality>>;
+  outputModalities?: InputMaybe<Array<Modality>>;
+  provider?: InputMaybe<Scalars['ID']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type LlmModelOrder =
+  { label: Ordering; modelId?: never; }
+  |  { label?: never; modelId: Ordering; };
 
 /** Message represent the message of an agent on a room */
 export type Message = {
   __typename?: 'Message';
   /** The user that created this comment */
   agent: Agent;
-  /** The collections that can be embedded with this model */
+  /** The objects this message was posted about */
   attachedStructures: Array<Structure>;
   before: Array<Message>;
   /** The time this comment got created */
   createdAt: Scalars['DateTime']['output'];
+  /** The rich-text representation of the message */
+  descendants: Scalars['JSON']['output'];
   id: Scalars['ID']['output'];
+  /** The message this one replies to, if any */
+  isReplyTo?: Maybe<Message>;
+  /** Whether this message is still being written */
+  isStreaming: Scalars['Boolean']['output'];
+  /** The messages replying to this one */
+  replies: Array<Message>;
   room: Room;
+  /** The agents this message is addressed to */
+  targets: Array<Agent>;
   /** A clear text representation of the rich comment */
   text: Scalars['String']['output'];
   title: Scalars['String']['output'];
@@ -266,6 +365,22 @@ export type Message = {
 /** Message represent the message of an agent on a room */
 export type MessageBeforeArgs = {
   filters?: InputMaybe<MessageFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+/** Message represent the message of an agent on a room */
+export type MessageRepliesArgs = {
+  filters?: InputMaybe<MessageFilter>;
+  ordering?: Array<MessageOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+/** Message represent the message of an agent on a room */
+export type MessageTargetsArgs = {
+  filters?: InputMaybe<AgentFilter>;
+  ordering?: Array<AgentOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -282,84 +397,135 @@ export type MessageFilter = {
 export type MessageOrder =
   { createdAt: Ordering; };
 
+/** A modality a model can read or emit */
+export enum Modality {
+  Audio = 'AUDIO',
+  Image = 'IMAGE',
+  Text = 'TEXT',
+  Video = 'VIDEO'
+}
+
+/** The root mutation type */
 export type Mutation = {
   __typename?: 'Mutation';
+  /** Embed documents and add them to a collection */
   addDocumentsToCollection: Array<Document>;
+  /** Send a chat completion request */
   chat: ChatResponse;
+  /** Create a searchable collection of documents */
   createCollection: ChromaCollection;
+  /** Configure a new LLM provider and list the models it offers */
   createProvider: Provider;
+  /** Open a new room */
   createRoom: Room;
+  /** Delete a collection and its documents */
   deleteCollection: Scalars['ID']['output'];
+  /** Delete a provider and the models it offers */
   deleteProvider: Scalars['ID']['output'];
+  /** Delete a room and its messages */
   deleteRoom: Scalars['ID']['output'];
+  /** Create a collection, or update it if it already exists */
   ensureCollection: ChromaCollection;
-  generateImage: ImageReponse;
+  /** Generate an image from a text description */
+  generateImage: ImageResponse;
+  /** Pull a model into an Ollama provider */
   pull: OllamaPullResult;
+  /** Re-list the models a provider offers */
+  refreshProvider: Provider;
+  /** Post a message into a room */
   send: Message;
+  /** Update a provider in place, e.g. to rotate its credential */
+  updateProvider: Provider;
+  /** Register a model as the caller's default for a kind of task */
   useModelFor: DefaultUse;
 };
 
 
+/** The root mutation type */
 export type MutationAddDocumentsToCollectionArgs = {
   input: AddDocumentsToCollectionInput;
 };
 
 
+/** The root mutation type */
 export type MutationChatArgs = {
   input: ChatInput;
 };
 
 
+/** The root mutation type */
 export type MutationCreateCollectionArgs = {
   input: ChromaCollectionInput;
 };
 
 
+/** The root mutation type */
 export type MutationCreateProviderArgs = {
   input: ProviderInput;
 };
 
 
+/** The root mutation type */
 export type MutationCreateRoomArgs = {
   input: CreateRoomInput;
 };
 
 
+/** The root mutation type */
 export type MutationDeleteCollectionArgs = {
-  input: AddDocumentsToCollectionInput;
+  input: DeleteCollectionInput;
 };
 
 
+/** The root mutation type */
 export type MutationDeleteProviderArgs = {
   input: DeleteProviderInput;
 };
 
 
+/** The root mutation type */
 export type MutationDeleteRoomArgs = {
   input: DeleteRoomInput;
 };
 
 
+/** The root mutation type */
 export type MutationEnsureCollectionArgs = {
   input: ChromaCollectionInput;
 };
 
 
+/** The root mutation type */
 export type MutationGenerateImageArgs = {
   input: ImageInput;
 };
 
 
+/** The root mutation type */
 export type MutationPullArgs = {
   input: PullInput;
 };
 
 
+/** The root mutation type */
+export type MutationRefreshProviderArgs = {
+  input: RefreshProviderInput;
+};
+
+
+/** The root mutation type */
 export type MutationSendArgs = {
   input: SendMessageInput;
 };
 
 
+/** The root mutation type */
+export type MutationUpdateProviderArgs = {
+  input: UpdateProviderInput;
+};
+
+
+/** The root mutation type */
 export type MutationUseModelForArgs = {
   input: UseModelForInput;
 };
@@ -369,6 +535,7 @@ export type OffsetPaginationInput = {
   offset?: Scalars['Int']['input'];
 };
 
+/** The outcome of pulling a model */
 export type OllamaPullResult = {
   __typename?: 'OllamaPullResult';
   detail?: Maybe<Scalars['String']['output']>;
@@ -387,17 +554,19 @@ export enum Ordering {
 /** An Organization model to represent an organization in the system */
 export type Organization = {
   __typename?: 'Organization';
-  id: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
   slug: Scalars['String']['output'];
 };
 
 /** A provider of LLMs */
 export type Provider = {
   __typename?: 'Provider';
-  additionalConfig: Scalars['JSON']['output'];
-  apiBase: Scalars['String']['output'];
-  apiKey: Scalars['String']['output'];
-  id: Scalars['String']['output'];
+  /** Provider configuration, with credential-bearing keys redacted. */
+  additionalConfig?: Maybe<Scalars['JSON']['output']>;
+  apiBase?: Maybe<Scalars['String']['output']>;
+  /** Whether an API key is configured for this provider. The key itself is never exposed. */
+  hasApiKey: Scalars['Boolean']['output'];
+  id: Scalars['ID']['output'];
   /** The kind of the provider */
   kind: ProviderKind;
   models: Array<LlmModel>;
@@ -408,6 +577,7 @@ export type Provider = {
 /** A provider of LLMs */
 export type ProviderModelsArgs = {
   filters?: InputMaybe<LlmModelFilter>;
+  ordering?: Array<LlmModelOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -456,24 +626,53 @@ export enum ProviderKind {
   VertexAi = 'VERTEX_AI'
 }
 
+export type ProviderOrder =
+  { createdAt: Ordering; name?: never; }
+  |  { createdAt?: never; name: Ordering; };
+
+/** The model to pull, and the provider to pull it into */
 export type PullInput = {
   modelName: Scalars['String']['input'];
+  provider?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type Query = {
   __typename?: 'Query';
+  _entities: Array<Maybe<_Entity>>;
+  _service: _Service;
+  /** Get a single Chroma collection by ID */
   chromaCollection: ChromaCollection;
+  /** List this organization's Chroma collections */
   chromaCollections: Array<ChromaCollection>;
+  /** The model the caller uses by default for one kind of task, if any */
+  defaultModelFor?: Maybe<LlmModel>;
+  /** The models the caller has registered as defaults */
+  defaultUses: Array<DefaultUse>;
+  /** Search a collection for the documents most similar to some text */
   documents: Array<Document>;
+  /** Get a single LLM model by ID */
   llmModel: LlmModel;
+  /** List the LLM models reachable through this organization's providers */
   llmModels: Array<LlmModel>;
+  /** Get a single message by ID */
   message: Message;
+  /** List the messages in this organization's rooms */
   messages: Array<Message>;
+  /** Get a single provider by ID */
   provider: Provider;
+  /** List the LLM providers configured for this organization */
   providers: Array<Provider>;
+  /** Get a single room by ID */
   room: Room;
+  /** Aggregate statistics over this organization's rooms */
   roomStats: RoomStats;
+  /** List the rooms in this organization */
   rooms: Array<Room>;
+};
+
+
+export type Query_EntitiesArgs = {
+  representations: Array<Scalars['_Any']['input']>;
 };
 
 
@@ -484,15 +683,25 @@ export type QueryChromaCollectionArgs = {
 
 export type QueryChromaCollectionsArgs = {
   filters?: InputMaybe<ChromaCollectionFilter>;
+  ordering?: Array<ChromaCollectionOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryDefaultModelForArgs = {
+  kind: DefaultKind;
+};
+
+
+export type QueryDefaultUsesArgs = {
+  filters?: InputMaybe<DefaultUseFilter>;
+  ordering?: Array<DefaultUseOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
 export type QueryDocumentsArgs = {
-  collection: Scalars['ID']['input'];
-  nResults?: InputMaybe<Scalars['Int']['input']>;
-  queryTexts?: InputMaybe<Array<Scalars['String']['input']>>;
-  where?: InputMaybe<Scalars['JSON']['input']>;
+  input: QueryInput;
 };
 
 
@@ -503,6 +712,7 @@ export type QueryLlmModelArgs = {
 
 export type QueryLlmModelsArgs = {
   filters?: InputMaybe<LlmModelFilter>;
+  ordering?: Array<LlmModelOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -526,6 +736,7 @@ export type QueryProviderArgs = {
 
 export type QueryProvidersArgs = {
   filters?: InputMaybe<ProviderFilter>;
+  ordering?: Array<ProviderOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -542,7 +753,29 @@ export type QueryRoomStatsArgs = {
 
 export type QueryRoomsArgs = {
   filters?: InputMaybe<RoomFilter>;
+  ordering?: Array<RoomOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+/** A similarity query against a collection */
+export type QueryInput = {
+  collection: Scalars['ID']['input'];
+  nResults?: Scalars['Int']['input'];
+  queryTexts: Array<Scalars['String']['input']>;
+  where?: InputMaybe<Scalars['JSON']['input']>;
+};
+
+/** The provider whose model list should be re-synced */
+export type RefreshProviderInput = {
+  id: Scalars['ID']['input'];
+};
+
+/** A Release model to represent a release of an application in the system */
+export type Release = {
+  __typename?: 'Release';
+  app: App;
+  id: Scalars['ID']['output'];
+  version: Scalars['String']['output'];
 };
 
 /** The type of the message sender */
@@ -554,11 +787,14 @@ export enum Role {
   User = 'USER'
 }
 
-/** Room(id, title, description, creator, organization, created_at) */
+/** A room agents and users converse in */
 export type Room = {
   __typename?: 'Room';
   agents: Array<Agent>;
-  description: Scalars['String']['output'];
+  /** The time this room got created */
+  createdAt: Scalars['DateTime']['output'];
+  creator?: Maybe<User>;
+  description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   messages: Array<Message>;
   /** The organization this room belongs to */
@@ -568,19 +804,22 @@ export type Room = {
 };
 
 
-/** Room(id, title, description, creator, organization, created_at) */
+/** A room agents and users converse in */
 export type RoomAgentsArgs = {
+  filters?: InputMaybe<AgentFilter>;
+  ordering?: Array<AgentOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
-/** Room(id, title, description, creator, organization, created_at) */
+/** A room agents and users converse in */
 export type RoomMessagesArgs = {
   filters?: InputMaybe<MessageFilter>;
   ordering?: Array<MessageOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+/** Something that happened in a room */
 export type RoomEvent = {
   __typename?: 'RoomEvent';
   join?: Maybe<Agent>;
@@ -603,6 +842,10 @@ export type RoomFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
   talkingAbout?: InputMaybe<StructureInput>;
 };
+
+export type RoomOrder =
+  { createdAt: Ordering; title?: never; }
+  |  { createdAt?: never; title: Ordering; };
 
 export type RoomStats = {
   __typename?: 'RoomStats';
@@ -659,6 +902,7 @@ export enum RoomTimestampField {
   CreatedAt = 'CREATED_AT'
 }
 
+/** The message to send */
 export type SendMessageInput = {
   agentId: Scalars['String']['input'];
   attachStructures?: InputMaybe<Array<StructureInput>>;
@@ -668,25 +912,28 @@ export type SendMessageInput = {
   text: Scalars['String']['input'];
 };
 
-/** The type of the tool */
+/** A reference to an object held by another Arkitekt service */
 export type Structure = {
   __typename?: 'Structure';
   identifier: Scalars['String']['output'];
-  object: Scalars['String']['output'];
+  object: Scalars['Int']['output'];
 };
 
-/** A function definition for a large language model */
+/** A reference to an object held by another Arkitekt service */
 export type StructureInput = {
   identifier: Scalars['String']['input'];
-  object: Scalars['String']['input'];
+  object: Scalars['Int']['input'];
 };
 
+/** The root subscription type */
 export type Subscription = {
   __typename?: 'Subscription';
+  /** Join a room and receive its messages as they are posted */
   room: RoomEvent;
 };
 
 
+/** The root subscription type */
 export type SubscriptionRoomArgs = {
   agentId: Scalars['ID']['input'];
   filterOwn?: Scalars['Boolean']['input'];
@@ -742,6 +989,16 @@ export enum ToolType {
   Function = 'FUNCTION'
 }
 
+/** The provider to update, and the fields to change */
+export type UpdateProviderInput = {
+  additionalConfig?: InputMaybe<Scalars['JSON']['input']>;
+  apiBase?: InputMaybe<Scalars['String']['input']>;
+  apiKey?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['ID']['input'];
+  name?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type Usage = {
   __typename?: 'Usage';
   completionTokenDetails?: Maybe<Scalars['JSON']['output']>;
@@ -753,7 +1010,7 @@ export type Usage = {
 
 /** The input for using a model for a specific task */
 export type UseModelForInput = {
-  kind: Scalars['String']['input'];
+  kind: DefaultKind;
   model: Scalars['ID']['input'];
 };
 
@@ -761,23 +1018,31 @@ export type UseModelForInput = {
 export type User = {
   __typename?: 'User';
   activeOrganization?: Maybe<Organization>;
+  id: Scalars['ID']['output'];
   preferredUsername: Scalars['String']['output'];
   sub: Scalars['String']['output'];
 };
 
-export type ChromaCollectionFragment = { __typename?: 'ChromaCollection', id: string, name: string, description: string, createdAt: any };
+export type _Entity = Agent | App | Client | Message | Organization | Release | Room | User;
 
-export type ListChromaCollectionFragment = { __typename?: 'ChromaCollection', id: string, name: string, description: string };
+export type _Service = {
+  __typename?: '_Service';
+  sdl: Scalars['String']['output'];
+};
 
-export type DocumentFragment = { __typename?: 'Document', id: string, content: string, metadata?: any | null, distance?: number | null, structure?: { __typename?: 'Structure', identifier: string, object: string } | null };
+export type ChromaCollectionFragment = { __typename?: 'ChromaCollection', id: string, name: string, description: string, createdAt: any, count?: number | null, embedder: { __typename?: 'LLMModel', id: string, label: string, llmString: string } };
 
-export type LlmModelFragment = { __typename?: 'LLMModel', id: string, modelId: string, llmString: string, features: Array<FeatureType>, inputModalities: Array<InputModality>, outputModalities: Array<InputModality>, provider: { __typename?: 'Provider', id: string, name: string, kind: ProviderKind, models: Array<{ __typename?: 'LLMModel', id: string, modelId: string }> }, embedderFor: Array<{ __typename?: 'ChromaCollection', id: string, name: string }> };
+export type ListChromaCollectionFragment = { __typename?: 'ChromaCollection', id: string, name: string, description: string, count?: number | null };
 
-export type ListLlmModelFragment = { __typename?: 'LLMModel', id: string, modelId: string, llmString: string, features: Array<FeatureType>, inputModalities: Array<InputModality>, outputModalities: Array<InputModality>, provider: { __typename?: 'Provider', id: string, name: string, kind: ProviderKind }, embedderFor: Array<{ __typename?: 'ChromaCollection', id: string, name: string }> };
+export type DocumentFragment = { __typename?: 'Document', id: string, content: string, metadata?: any | null, distance?: number | null, structure?: { __typename?: 'Structure', identifier: string, object: number } | null };
 
-export type MessageFragment = { __typename?: 'Message', id: string, text: string, createdAt: any, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> };
+export type LlmModelFragment = { __typename?: 'LLMModel', id: string, modelId: string, llmString: string, features: Array<FeatureType>, inputModalities: Array<Modality>, outputModalities: Array<Modality>, provider: { __typename?: 'Provider', id: string, name: string, kind: ProviderKind, models: Array<{ __typename?: 'LLMModel', id: string, modelId: string }> }, embedderFor: Array<{ __typename?: 'ChromaCollection', id: string, name: string }> };
 
-export type ListMessageFragment = { __typename?: 'Message', id: string, text: string, createdAt: any, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> };
+export type ListLlmModelFragment = { __typename?: 'LLMModel', id: string, modelId: string, llmString: string, features: Array<FeatureType>, inputModalities: Array<Modality>, outputModalities: Array<Modality>, provider: { __typename?: 'Provider', id: string, name: string, kind: ProviderKind }, embedderFor: Array<{ __typename?: 'ChromaCollection', id: string, name: string }> };
+
+export type MessageFragment = { __typename?: 'Message', id: string, text: string, createdAt: any, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: number }> };
+
+export type ListMessageFragment = { __typename?: 'Message', id: string, text: string, createdAt: any, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: number }> };
 
 export type ProviderFragment = { __typename?: 'Provider', id: string, name: string, kind: ProviderKind, models: Array<{ __typename?: 'LLMModel', id: string, modelId: string }> };
 
@@ -785,9 +1050,9 @@ export type ListProviderFragment = { __typename?: 'Provider', id: string, name: 
 
 export type ChatResponseFragment = { __typename?: 'ChatResponse', id: string, object: string, created: number, model: string, usage?: { __typename?: 'Usage', promptTokens: number, completionTokens: number, totalTokens: number } | null, choices: Array<{ __typename?: 'Choice', index: number, finishReason?: string | null, message: { __typename?: 'ChatMessage', role: Role, content?: string | null, name?: string | null, toolCallId?: string | null, functionCall?: { __typename?: 'FunctionCall', name: string, arguments: string } | null, toolCalls?: Array<{ __typename?: 'ToolCall', id: string, type: ToolType, function: { __typename?: 'FunctionCall', name: string, arguments: string } }> | null } }> };
 
-export type RoomFragment = { __typename?: 'Room', id: string, title: string, description: string, messages: Array<{ __typename?: 'Message', id: string, text: string, createdAt: any, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> }> };
+export type RoomFragment = { __typename?: 'Room', id: string, title: string, description?: string | null, messages: Array<{ __typename?: 'Message', id: string, text: string, createdAt: any, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: number }> }> };
 
-export type ListRoomFragment = { __typename?: 'Room', id: string, title: string, description: string };
+export type ListRoomFragment = { __typename?: 'Room', id: string, title: string, description?: string | null };
 
 export type ChatMutationVariables = Exact<{
   input: ChatInput;
@@ -801,35 +1066,35 @@ export type CreateCollectionMutationVariables = Exact<{
 }>;
 
 
-export type CreateCollectionMutation = { __typename?: 'Mutation', createCollection: { __typename?: 'ChromaCollection', id: string, name: string, description: string, createdAt: any } };
+export type CreateCollectionMutation = { __typename?: 'Mutation', createCollection: { __typename?: 'ChromaCollection', id: string, name: string, description: string, createdAt: any, count?: number | null, embedder: { __typename?: 'LLMModel', id: string, label: string, llmString: string } } };
 
 export type EnsureCollectionMutationVariables = Exact<{
   input: ChromaCollectionInput;
 }>;
 
 
-export type EnsureCollectionMutation = { __typename?: 'Mutation', ensureCollection: { __typename?: 'ChromaCollection', id: string, name: string, description: string, createdAt: any } };
+export type EnsureCollectionMutation = { __typename?: 'Mutation', ensureCollection: { __typename?: 'ChromaCollection', id: string, name: string, description: string, createdAt: any, count?: number | null, embedder: { __typename?: 'LLMModel', id: string, label: string, llmString: string } } };
 
 export type AddDocumentsToCollectionMutationVariables = Exact<{
   input: AddDocumentsToCollectionInput;
 }>;
 
 
-export type AddDocumentsToCollectionMutation = { __typename?: 'Mutation', addDocumentsToCollection: Array<{ __typename?: 'Document', id: string, content: string, metadata?: any | null, distance?: number | null, structure?: { __typename?: 'Structure', identifier: string, object: string } | null }> };
+export type AddDocumentsToCollectionMutation = { __typename?: 'Mutation', addDocumentsToCollection: Array<{ __typename?: 'Document', id: string, content: string, metadata?: any | null, distance?: number | null, structure?: { __typename?: 'Structure', identifier: string, object: number } | null }> };
 
 export type GenerateImageMutationVariables = Exact<{
   input: ImageInput;
 }>;
 
 
-export type GenerateImageMutation = { __typename?: 'Mutation', generateImage: { __typename?: 'ImageReponse', image: any } };
+export type GenerateImageMutation = { __typename?: 'Mutation', generateImage: { __typename?: 'ImageResponse', image: any } };
 
 export type SendMessageMutationVariables = Exact<{
   input: SendMessageInput;
 }>;
 
 
-export type SendMessageMutation = { __typename?: 'Mutation', send: { __typename?: 'Message', id: string, text: string, createdAt: any, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> } };
+export type SendMessageMutation = { __typename?: 'Mutation', send: { __typename?: 'Message', id: string, text: string, createdAt: any, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: number }> } };
 
 export type UseModelForMutationVariables = Exact<{
   input: UseModelForInput;
@@ -864,7 +1129,7 @@ export type CreateRoomMutationVariables = Exact<{
 }>;
 
 
-export type CreateRoomMutation = { __typename?: 'Mutation', createRoom: { __typename?: 'Room', id: string, title: string, description: string, messages: Array<{ __typename?: 'Message', id: string, text: string, createdAt: any, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> }> } };
+export type CreateRoomMutation = { __typename?: 'Mutation', createRoom: { __typename?: 'Room', id: string, title: string, description?: string | null, messages: Array<{ __typename?: 'Message', id: string, text: string, createdAt: any, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: number }> }> } };
 
 export type DeleteRoomMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -878,7 +1143,7 @@ export type GetChromaCollectionQueryVariables = Exact<{
 }>;
 
 
-export type GetChromaCollectionQuery = { __typename?: 'Query', chromaCollection: { __typename?: 'ChromaCollection', id: string, name: string, description: string, createdAt: any } };
+export type GetChromaCollectionQuery = { __typename?: 'Query', chromaCollection: { __typename?: 'ChromaCollection', id: string, name: string, description: string, createdAt: any, count?: number | null, embedder: { __typename?: 'LLMModel', id: string, label: string, llmString: string } } };
 
 export type SearchChromaCollectionQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -894,17 +1159,14 @@ export type ListChromaCollectionsQueryVariables = Exact<{
 }>;
 
 
-export type ListChromaCollectionsQuery = { __typename?: 'Query', chromaCollections: Array<{ __typename?: 'ChromaCollection', id: string, name: string, description: string }> };
+export type ListChromaCollectionsQuery = { __typename?: 'Query', chromaCollections: Array<{ __typename?: 'ChromaCollection', id: string, name: string, description: string, count?: number | null }> };
 
 export type QueryDocumentsQueryVariables = Exact<{
-  collection: Scalars['ID']['input'];
-  queryTexts: Array<Scalars['String']['input']> | Scalars['String']['input'];
-  nResults?: InputMaybe<Scalars['Int']['input']>;
-  where?: InputMaybe<Scalars['JSON']['input']>;
+  input: QueryInput;
 }>;
 
 
-export type QueryDocumentsQuery = { __typename?: 'Query', documents: Array<{ __typename?: 'Document', id: string, content: string, metadata?: any | null, distance?: number | null, structure?: { __typename?: 'Structure', identifier: string, object: string } | null }> };
+export type QueryDocumentsQuery = { __typename?: 'Query', documents: Array<{ __typename?: 'Document', id: string, content: string, metadata?: any | null, distance?: number | null, structure?: { __typename?: 'Structure', identifier: string, object: number } | null }> };
 
 export type HomePageStatsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -916,7 +1178,7 @@ export type GetLlmModelQueryVariables = Exact<{
 }>;
 
 
-export type GetLlmModelQuery = { __typename?: 'Query', llmModel: { __typename?: 'LLMModel', id: string, modelId: string, llmString: string, features: Array<FeatureType>, inputModalities: Array<InputModality>, outputModalities: Array<InputModality>, provider: { __typename?: 'Provider', id: string, name: string, kind: ProviderKind, models: Array<{ __typename?: 'LLMModel', id: string, modelId: string }> }, embedderFor: Array<{ __typename?: 'ChromaCollection', id: string, name: string }> } };
+export type GetLlmModelQuery = { __typename?: 'Query', llmModel: { __typename?: 'LLMModel', id: string, modelId: string, llmString: string, features: Array<FeatureType>, inputModalities: Array<Modality>, outputModalities: Array<Modality>, provider: { __typename?: 'Provider', id: string, name: string, kind: ProviderKind, models: Array<{ __typename?: 'LLMModel', id: string, modelId: string }> }, embedderFor: Array<{ __typename?: 'ChromaCollection', id: string, name: string }> } };
 
 export type SearchLlmModelsQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -932,14 +1194,14 @@ export type ListLlModelsQueryVariables = Exact<{
 }>;
 
 
-export type ListLlModelsQuery = { __typename?: 'Query', llmModels: Array<{ __typename?: 'LLMModel', id: string, modelId: string, llmString: string, features: Array<FeatureType>, inputModalities: Array<InputModality>, outputModalities: Array<InputModality>, provider: { __typename?: 'Provider', id: string, name: string, kind: ProviderKind }, embedderFor: Array<{ __typename?: 'ChromaCollection', id: string, name: string }> }> };
+export type ListLlModelsQuery = { __typename?: 'Query', llmModels: Array<{ __typename?: 'LLMModel', id: string, modelId: string, llmString: string, features: Array<FeatureType>, inputModalities: Array<Modality>, outputModalities: Array<Modality>, provider: { __typename?: 'Provider', id: string, name: string, kind: ProviderKind }, embedderFor: Array<{ __typename?: 'ChromaCollection', id: string, name: string }> }> };
 
 export type GetMessageRoomQueryVariables = Exact<{
   messageId: Scalars['ID']['input'];
 }>;
 
 
-export type GetMessageRoomQuery = { __typename?: 'Query', rooms: Array<{ __typename?: 'Room', id: string, title: string, messages: Array<{ __typename?: 'Message', id: string, text: string, createdAt: any, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> }> }> };
+export type GetMessageRoomQuery = { __typename?: 'Query', rooms: Array<{ __typename?: 'Room', id: string, title: string, messages: Array<{ __typename?: 'Message', id: string, text: string, createdAt: any, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: number }> }> }> };
 
 export type GetProviderQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -969,7 +1231,7 @@ export type GetRoomQueryVariables = Exact<{
 }>;
 
 
-export type GetRoomQuery = { __typename?: 'Query', room: { __typename?: 'Room', id: string, title: string, description: string, messages: Array<{ __typename?: 'Message', id: string, text: string, createdAt: any, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> }> } };
+export type GetRoomQuery = { __typename?: 'Query', room: { __typename?: 'Room', id: string, title: string, description?: string | null, messages: Array<{ __typename?: 'Message', id: string, text: string, createdAt: any, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: number }> }> } };
 
 export type SearchRoomsQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -977,7 +1239,7 @@ export type SearchRoomsQueryVariables = Exact<{
 }>;
 
 
-export type SearchRoomsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Room', value: string, label: string, description: string }> };
+export type SearchRoomsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Room', value: string, label: string, description?: string | null }> };
 
 export type ListRoomsQueryVariables = Exact<{
   filter?: InputMaybe<RoomFilter>;
@@ -985,12 +1247,12 @@ export type ListRoomsQueryVariables = Exact<{
 }>;
 
 
-export type ListRoomsQuery = { __typename?: 'Query', rooms: Array<{ __typename?: 'Room', id: string, title: string, description: string, messages: Array<{ __typename?: 'Message', id: string, text: string, createdAt: any, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> }> }> };
+export type ListRoomsQuery = { __typename?: 'Query', rooms: Array<{ __typename?: 'Room', id: string, title: string, description?: string | null, messages: Array<{ __typename?: 'Message', id: string, text: string, createdAt: any, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: number }> }> }> };
 
 export type RoomsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type RoomsQuery = { __typename?: 'Query', rooms: Array<{ __typename?: 'Room', id: string, title: string, description: string, messages: Array<{ __typename?: 'Message', id: string, text: string, createdAt: any, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> }> }> };
+export type RoomsQuery = { __typename?: 'Query', rooms: Array<{ __typename?: 'Room', id: string, title: string, description?: string | null, messages: Array<{ __typename?: 'Message', id: string, text: string, createdAt: any, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: number }> }> }> };
 
 export type GlobalSearchQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -999,7 +1261,7 @@ export type GlobalSearchQueryVariables = Exact<{
 }>;
 
 
-export type GlobalSearchQuery = { __typename?: 'Query', rooms?: Array<{ __typename?: 'Room', id: string, title: string, description: string }> };
+export type GlobalSearchQuery = { __typename?: 'Query', rooms?: Array<{ __typename?: 'Room', id: string, title: string, description?: string | null }> };
 
 export type WatchMessagesSubscriptionVariables = Exact<{
   room: Scalars['ID']['input'];
@@ -1007,7 +1269,7 @@ export type WatchMessagesSubscriptionVariables = Exact<{
 }>;
 
 
-export type WatchMessagesSubscription = { __typename?: 'Subscription', room: { __typename?: 'RoomEvent', message?: { __typename?: 'Message', id: string, text: string, createdAt: any, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> } | null } };
+export type WatchMessagesSubscription = { __typename?: 'Subscription', room: { __typename?: 'RoomEvent', message?: { __typename?: 'Message', id: string, text: string, createdAt: any, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: number }> } | null } };
 
 export const ChromaCollectionFragmentDoc = gql`
     fragment ChromaCollection on ChromaCollection {
@@ -1015,6 +1277,12 @@ export const ChromaCollectionFragmentDoc = gql`
   name
   description
   createdAt
+  count
+  embedder {
+    id
+    label
+    llmString
+  }
 }
     `;
 export const ListChromaCollectionFragmentDoc = gql`
@@ -1022,6 +1290,7 @@ export const ListChromaCollectionFragmentDoc = gql`
   id
   name
   description
+  count
 }
     `;
 export const DocumentFragmentDoc = gql`
@@ -1681,13 +1950,8 @@ export type ListChromaCollectionsQueryHookResult = ReturnType<typeof useListChro
 export type ListChromaCollectionsLazyQueryHookResult = ReturnType<typeof useListChromaCollectionsLazyQuery>;
 export type ListChromaCollectionsQueryResult = Apollo.QueryResult<ListChromaCollectionsQuery, ListChromaCollectionsQueryVariables>;
 export const QueryDocumentsDocument = gql`
-    query QueryDocuments($collection: ID!, $queryTexts: [String!]!, $nResults: Int, $where: JSON) {
-  documents(
-    collection: $collection
-    queryTexts: $queryTexts
-    nResults: $nResults
-    where: $where
-  ) {
+    query QueryDocuments($input: QueryInput!) {
+  documents(input: $input) {
     ...Document
   }
 }
@@ -1705,10 +1969,7 @@ export const QueryDocumentsDocument = gql`
  * @example
  * const { data, loading, error } = useQueryDocumentsQuery({
  *   variables: {
- *      collection: // value for 'collection'
- *      queryTexts: // value for 'queryTexts'
- *      nResults: // value for 'nResults'
- *      where: // value for 'where'
+ *      input: // value for 'input'
  *   },
  * });
  */

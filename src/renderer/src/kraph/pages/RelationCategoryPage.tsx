@@ -1,6 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormSheet } from "@/components/dialog/FormDialog";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/image";
 import { DragZone } from "@/components/upload/drag";
@@ -11,7 +11,7 @@ import {
 } from "@/linkers";
 import {
   useGetRelationCategoryQuery,
-  useUpdateEntityCategoryMutation
+  useUpdateRelationCategoryMutation
 } from "../api/graphql";
 import UpdateRelationCategoryForm from "../forms/UpdateRelationCategoryForm";
 
@@ -19,7 +19,7 @@ const Page = asDetailQueryRoute(
   useGetRelationCategoryQuery,
   ({ data, refetch }) => {
     const uploadFile = useKraphMediaUpload();
-    const [update] = useUpdateEntityCategoryMutation();
+    const [update] = useUpdateRelationCategoryMutation();
 
     const resolve = useResolve();
 
@@ -43,15 +43,13 @@ const Page = asDetailQueryRoute(
         object={{ id: data.relationCategory.id }}
         title={data?.relationCategory.label}
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: (
-                <KraphRelationCategory.Komments
-                  object={{ id: data.relationCategory.id }}
-                />
-              ),
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Knowledge">
+              <KraphRelationCategory.Knowledge
+                object={{ id: data.relationCategory.id }}
+              />
+            </Sidebars.Tab>
+          </Sidebars>
         }
         pageActions={
           <div className="flex flex-row gap-2">

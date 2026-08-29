@@ -1,5 +1,21 @@
-mutation CreateStructureRelation($input: CreateStructureRelationInput!) {
-  createStructureRelation(input: $input) {
-    ...StructureRelation
+mutation AssertStructureRelationExists($input: AssertStructureRelationExistsInput!) {
+  assertStructureRelationExists(input: $input) {
+    assertion {
+      ...Assertion
+    }
+    link {
+      ...Link
+    }
+  }
+}
+
+mutation RetractStructureRelation($id: String!) {
+  retractStructureRelation(input: { id: $id }) {
+    assertion {
+      ...Assertion
+    }
+    link {
+      ...Link
+    }
   }
 }

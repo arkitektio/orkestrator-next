@@ -5,7 +5,7 @@ import { useCreateFile } from "@/lib/mikro/hooks";
 
 import { asParamlessRoute } from "@/app/routes/ParamlessRoute";
 import { CommandMenu } from "@/command/Menu";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { HelpSidebar } from "@/components/sidebars/help";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,11 +36,11 @@ import {
 import { HookFunction } from "@/app/routes/ParamlessRoute";
 import { OperationVariables, QueryHookOptions } from "@apollo/client";
 import {
-  DatasetOrder,
+  ArrayDatasetOrder,
+  FolderOrder,
   FileOrder,
   HomePageQuery,
   HomePageQueryVariables,
-  ImageOrder,
   Ordering,
   useHomePageQuery,
 } from "../api/graphql";
@@ -56,9 +56,9 @@ const useHomePageQueryForRoute: HookFunction<HomePageQuery, OperationVariables> 
     options as unknown as QueryHookOptions<HomePageQuery, HomePageQueryVariables>,
   ) as unknown as ReturnType<HookFunction<HomePageQuery, OperationVariables>>;
 import { UploadDialog } from "../components/dialogs/UploadDialog";
-import DatasetList from "../components/lists/DatasetList";
+import FolderList from "../components/lists/FolderList";
 import FileList from "../components/lists/FileList";
-import ImageList from "../components/lists/ImageList";
+import ArrayDatasetList from "../components/lists/ArrayDatasetList";
 import { StatisticsSidebar } from "../components/sidebars/StatisticsSidebar";
 import { useMikroBigFileUpload } from "@/datalayer/hooks/useMikroBigFileUpload";
 import { parseAsIsoDateTime, parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
@@ -103,14 +103,14 @@ const Page = asParamlessRoute(useHomePageQueryForRoute, ({ data }) => {
   const searchFilter = searchTerm ? { search: searchTerm } : {};
 
   const ordering = Ordering[sortDirection === "ASC" ? "Asc" : "Desc"];
-  // Image/File/Dataset orders are @oneOf inputs that share createdAt/name keys.
+  // Dataset/File/Folder orders are @oneOf inputs that share createdAt/name keys.
   const orderByField =
     sortField === "createdAt"
       ? ({ createdAt: ordering } as const)
       : ({ name: ordering } as const);
-  const imageOrdering: ImageOrder[] = [orderByField];
+  const arrayDatasetOrdering: ArrayDatasetOrder[] = [orderByField];
   const fileOrdering: FileOrder[] = [orderByField];
-  const datasetOrdering: DatasetOrder[] = [orderByField];
+  const folderOrdering: FolderOrder[] = [orderByField];
 
   const sortFieldLabels = { createdAt: "Date created", name: "Name" } as const;
   // Defaults the dashboard ships with — a tag is shown when the user diverges.
@@ -151,7 +151,7 @@ const Page = asParamlessRoute(useHomePageQueryForRoute, ({ data }) => {
           <CollapsibleSearch
             value={search}
             onChange={(value) => setSearch(value || null)}
-            placeholder="Search images, datasets and files…"
+            placeholder="Search datasets, folders and files…"
           />
 
           {/* Ordering: field + direction in a dropdown, shared across lists.
@@ -217,10 +217,10 @@ const Page = asParamlessRoute(useHomePageQueryForRoute, ({ data }) => {
         </>
       }
       sidebars={
-        <MultiSidebar map={{
-          Statistics: <StatisticsSidebar />,
-          Help: <HelpSidebar />
-        }} />
+        <Sidebars>
+          <Sidebars.Tab label="Statistics"><StatisticsSidebar /></Sidebars.Tab>
+          <Sidebars.Tab label="Help"><HelpSidebar /></Sidebars.Tab>
+        </Sidebars>
       }
       title="Home"
     >
@@ -232,7 +232,7 @@ const Page = asParamlessRoute(useHomePageQueryForRoute, ({ data }) => {
         uploadFile={performDataLayerUpload}
         createFile={createFile}
       >
-        {data?.images?.length == 0 && data.files.length == 0 ? (
+        {data?.arrayDatasets?.length == 0 && data.files.length == 0 ? (
           <div className="min-h-full w-full  flex items-center justify-center rounded-lg">
             <div className="max-w-4xl mx-auto text-center px-6 py-16">
               {/* Hero Section */}
@@ -290,13 +290,13 @@ const Page = asParamlessRoute(useHomePageQueryForRoute, ({ data }) => {
               </CardDescription>
             </CardHeader>
 
-            <ImageList
+            <ArrayDatasetList
               filters={{ notDerived: true, ...temporalFilter, ...searchFilter }}
-              ordering={imageOrdering}
+              ordering={arrayDatasetOrdering}
             />
-            <DatasetList
+            <FolderList
               filters={{ parentless: true, ...temporalFilter, ...searchFilter }}
-              ordering={datasetOrdering}
+              ordering={folderOrdering}
             />
             <Separator className="my-4" />
             <FileList

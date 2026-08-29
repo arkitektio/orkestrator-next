@@ -22,7 +22,6 @@ export type SmartContextProps = {
   collection?: string;
   onDone?: OnDone;
   onError?: (error: string) => void;
-  ephemeral?: boolean;
   disableShortcuts?: boolean;
   disableKraph?: boolean;
   disableKabinet?: boolean;

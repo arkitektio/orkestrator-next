@@ -1,52 +1,156 @@
 fragment DimSlice on Slice {
-  dim
+  axis
   start
   stop
   step
 }
 
-fragment SceneLens on Lens {
-  id
-    shape
-    dims
-    slices {
-      ...DimSlice
-    }
-    dataset {
-      id
-      name
-      dims
-      dataArrays {
-        id
-        level
-        store {
-          ...ZarrStore
-        }
-        scaleFactors
-      }
-    }
-    activeAnchors {
-      id
-      valueHistogram {
-        bins
-        histogram
-        min
-        max
-        p1
-        p99
-      }
-      channelLabel {
-        label
-      }
-      lightGraph {
-              graph {
-          ...LightpathGraph
-        }
-      }
-    }
+# Everything needed to reduce one axis of a lens to a phasor. Derived
+# server-side from the dataset's calibration, lightpath and phasor spokes — a
+# phasor render node states WHICH axis and harmonic, and reads the instrument
+# facts from here.
+fragment PhasorContext on PhasorContext {
+  axis
+  axisType
+  bins
+  binWidth
+  harmonic
+  laserFrequency
+  window
+  calibration {
+    id
+    harmonic
+    phaseOffset
+    modulationFactor
+    reference
+  }
+  phasorHistogram {
+    id
+    bins
+    counts
+    gMin
+    gMax
+    sMin
+    sMax
+    profile
+    total
+    calibrated
+  }
 }
 
-fragment ListScene on Scene {
+fragment SceneLens on Lens {
   id
-  name
+  shape
+  axisNames
+  renderAxes {
+    x
+    y
+    z
+    t
+    intensity
+    phasor
+  }
+  # The phasor context at the server's default harmonic (1). A node on another
+  # harmonic re-resolves it through the GetLensPhasor query — the calibration
+  # and the persisted distribution are both harmonic-specific.
+  phasor {
+    ...PhasorContext
+  }
+  # Id-only: the lens CS's axes are its axisNames by contract ("a selection
+  # never drops or reorders an axis"), so selecting them would only duplicate
+  # axisNames.
+  coordinateSystem {
+    id
+    name
+  }
+  toParent {
+    ...Transformation
+  }
+  slices {
+    ...DimSlice
+  }
+  dataset {
+    id
+    name
+    axisNames
+    shape
+    multiscale
+    # Id-only: consumed for CS-id matching (mesh anchoring, path prefixes);
+    # its axis order is the dataset's axisNames by definition.
+    intrinsicSystem {
+      id
+      name
+    }
+    dataArrays {
+      id
+      level
+      shape
+      chunkShape
+      coordinateSystem {
+        id
+        name
+      }
+      toParent {
+        ...Transformation
+      }
+      store {
+        ...ZarrStore
+      }
+    }
+  }
+  activeAnchors {
+    id
+    coordinates
+    valueHistogram {
+      bins
+      histogram
+      min
+      max
+      p1
+      p99
+    }
+    channelLabel {
+      label
+    }
+    lightGraph {
+      graph {
+        ...LightpathGraph
+      }
+    }
+  }
+}
+
+# The detail page's selection. Deliberately NOT `SceneLens`: that one carries
+# the whole pyramid (every level's store and chunking), the phasor context and
+# every anchor's histogram, because the renderer needs them to build a brick
+# pool. A page that says what this lens IS needs none of it.
+#
+# A lens has no name of its own — it borrows its dataset's, and `lensLabel`
+# (`mikro-next/lenses.ts`) is what turns the slices into the line that tells one
+# lens of a dataset from another.
+fragment DetailLens on Lens {
+  id
+  shape
+  axisNames
+  slices {
+    ...DimSlice
+  }
+  # The space the SELECTION lives in: its own for a sliced lens, the dataset's
+  # intrinsic grid for a full one.
+  coordinateSystem {
+    id
+    name
+  }
+  # The edge back into the dataset's pixel grid — "a crop is a translation of
+  # the slice starts". Null for a full lens, whose space IS that grid, and the
+  # single most informative fact about a sliced one.
+  toParent {
+    ...Transformation
+  }
+  dataset {
+    id
+    name
+    axisNames
+    shape
+  }
 }

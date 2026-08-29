@@ -3,7 +3,7 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { PropertyList } from "../components/schema-builder/PropertyList";
 import { PropertyInspector } from "../components/schema-builder/PropertyInspector";
 import {
-  DEFAULT_AGGREGATION,
+  buildDerivationRule,
   DEFAULT_DERIVATION,
   PropertyDefinition,
   validateSchema,
@@ -65,9 +65,7 @@ export function SchemaBuilderPage({
       description: "",
       valueKind: ValueKind.String,
       derivation: DEFAULT_DERIVATION,
-      rule: {
-        aggregation: DEFAULT_AGGREGATION,
-      },
+      rule: buildDerivationRule(),
       index: false,
       searchable: false,
     };

@@ -1,5 +1,5 @@
 import { LoadingPage } from "@/app/components/fallbacks/LoadingPage";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import { Separator } from "@/components/ui/separator";
@@ -58,9 +58,11 @@ const Page = () => {
       pageActions={<LokUser.ObjectButton object={data.me} />}
       title={data?.me?.username}
       sidebars={
-        <MultiSidebar map={{
-          "Komments": <LokUser.Komments object={data.me} />,
-        }} />
+        <Sidebars>
+          <Sidebars.Tab label="Knowledge">
+            <LokUser.Knowledge object={data.me} />
+          </Sidebars.Tab>
+        </Sidebars>
       }
     >
       {/* Profile Hero Section */}

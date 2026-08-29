@@ -1,4 +1,4 @@
-import { useUseModelForMutation } from "@/alpaka/api/graphql";
+import { DefaultKind, useUseModelForMutation } from "@/alpaka/api/graphql";
 import { useDialog } from "@/app/dialog";
 import { ChoicesField } from "@/components/fields/ChoicesField";
 import { Button } from "@/components/ui/button";
@@ -8,8 +8,14 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 type UseModelForFormData = {
-  kind: string;
+  kind: DefaultKind;
 };
+
+const USE_CASE_OPTIONS: { label: string; value: DefaultKind }[] = [
+  { label: "Image Generation", value: DefaultKind.ImageGeneration },
+  { label: "Text Generation", value: DefaultKind.TextGeneration },
+  { label: "Embeddings", value: DefaultKind.Embedding },
+];
 
 export const UseModelForDialog = (props: { model: string }) => {
   const [useModelFor, { loading }] = useUseModelForMutation();
@@ -25,7 +31,12 @@ export const UseModelForDialog = (props: { model: string }) => {
           },
         },
       });
-      toast.success(`Model set for ${data.kind}`);
+      toast.success(
+        `Model set for ${
+          USE_CASE_OPTIONS.find((option) => option.value === data.kind)?.label ??
+          data.kind
+        }`,
+      );
       closeDialog();
     } catch (error) {
       toast.error("Failed to set model for use case");
@@ -35,7 +46,7 @@ export const UseModelForDialog = (props: { model: string }) => {
 
   const form = useForm<UseModelForFormData>({
     defaultValues: {
-      kind: "image_generation",
+      kind: DefaultKind.ImageGeneration,
     },
   });
 
@@ -51,11 +62,7 @@ export const UseModelForDialog = (props: { model: string }) => {
             name="kind"
             label="Use Case"
             description="Select the use case for this model"
-            options={[
-              { label: "Image Generation", value: "image_generation" },
-              { label: "Text Generation", value: "text_generation" },
-              { label: "Embeddings", value: "embeddings" },
-            ]}
+            options={USE_CASE_OPTIONS}
           />
         </div>
 

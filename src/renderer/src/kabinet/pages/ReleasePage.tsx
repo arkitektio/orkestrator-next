@@ -1,6 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ListRender } from "@/components/layout/ListRender";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Card } from "@/components/ui/card";
 import { KabinetFlavour, KabinetRelease } from "@/linkers";
 import { useGetReleaseQuery } from "../api/graphql";
@@ -12,11 +12,11 @@ export const ReleasePage = asDetailQueryRoute(useGetReleaseQuery, ({ data, refet
       title={data?.release.description}
       object={data?.release}
       sidebars={
-        <MultiSidebar
-          map={{
-            Comments: <KabinetRelease.Komments object={data?.release} />,
-          }}
-        />
+        <Sidebars>
+          <Sidebars.Tab label="Knowledge">
+            <KabinetRelease.Knowledge object={data?.release} />
+          </Sidebars.Tab>
+        </Sidebars>
       }
     >
       <div className="col-span-4 grid md:grid-cols-2 gap-2 md:gap-8 xl:gap-20 md:items-center p-6">

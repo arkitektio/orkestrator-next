@@ -7,6 +7,9 @@ export const SceneDisplay = (props: DisplayWidgetProps) => {
     variables: {
       id: props.object,
     },
+    // See ScenePage: a layer whose `asAffine` cannot condense must null that
+    // one field, not discard the scene.
+    errorPolicy: "all",
   });
 
   if (!data?.scene) {

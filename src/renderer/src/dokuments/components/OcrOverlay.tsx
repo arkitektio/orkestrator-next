@@ -1,4 +1,4 @@
-/* eslint-disable react/prop-types */
+ 
 import React, { useCallback, useEffect, useState } from "react";
 import { PageFragment } from "../api/graphql";
 

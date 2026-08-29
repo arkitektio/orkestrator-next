@@ -53,7 +53,6 @@ export const ActionAssignForm = (props: {
       args: data,
       reference: reference,
       hooks: [],
-      ephemeral: false
     }));
     dialog.closeDialog();
   };

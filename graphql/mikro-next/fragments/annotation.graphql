@@ -1,0 +1,143 @@
+# A human-drawn shape. It belongs to its COLLECTION, not to a scene or a
+# dataset: the collection owns the coordinate system the vectors are expressed
+# in, and one collection is rendered by one AnnotationLayer per scene.
+fragment Annotation on Annotation {
+  id
+  name
+  description
+  kind
+  vectors
+  createdWithTransforms
+  # Per-shape styling lives here, not on the layer — an AnnotationLayer draws a
+  # whole collection, so a color on the layer could not tell its shapes apart.
+  strokeColor
+  fillColor
+  strokeWidth
+  filled
+  collection {
+    id
+    name
+  }
+  coordinateSystem {
+    ...CoordinateSystem
+  }
+  # The discrete coordinates the shape is pinned to; one it does not pin, it
+  # spans. `pinnedTo` on AnnotationFilter matches on exactly these.
+  coordinates {
+    name
+    value
+  }
+  intrinsicBbox {
+    min
+    max
+  }
+}
+
+# The renderer's selection: geometry + style, no coordinate system. The layer
+# already resolved the collection's space (its `pathToWorld`), so re-selecting
+# the system per shape would ship the same axes once per annotation.
+#
+# Named for its consumer rather than `ListAnnotation`, because it is NOT the
+# card selection: `GetSceneAnnotations` is polled every 5s per annotation layer
+# per mounted scene, so a field added here is paid per shape on every tick.
+# The browse list has its own `ListAnnotation` below.
+fragment SceneAnnotation on Annotation {
+  id
+  name
+  kind
+  vectors
+  strokeColor
+  fillColor
+  strokeWidth
+  filled
+  # The discrete coordinates the shape is pinned to; one it does not pin, it
+  # spans. `pinnedTo` on AnnotationFilter matches on exactly these.
+  coordinates {
+    name
+    value
+  }
+}
+
+# The geometry of ONE painted region, fetched by its own query rather than the
+# 5s poll. A surface is the only kind whose vectors are bulk geometry — thousands
+# of vertices plus a face index, against a polygon's handful — so putting it on
+# `SceneAnnotation` would multiply the poll's payload by orders of magnitude for
+# every stroke on screen. It also barely changes: a surface is re-extracted by an
+# explicit edit, never by anything the poll is watching for.
+fragment SceneSurface on Annotation {
+  id
+  name
+  kind
+  vectors
+  # Index triples into `vectors`. Only a surface has them.
+  faces
+  strokeColor
+  fillColor
+  strokeWidth
+  filled
+  coordinates {
+    name
+    value
+  }
+}
+
+# The browse card's selection. Deliberately NO `vectors`: a card says what kind
+# of shape this is, and the path itself is a point list per annotation — pages
+# of numbers for a grid of cards, and unreadable anyway without the scene that
+# gives it scale. The detail page fetches it.
+fragment ListAnnotation on Annotation {
+  id
+  name
+  kind
+  coordinates {
+    name
+    value
+  }
+  collection {
+    id
+    name
+    # The surface to open it on, for the card's scene badge. Null for a
+    # freestanding or dataset-derived collection.
+    scene {
+      id
+      name
+    }
+  }
+}
+
+# What the detail page needs on top of the shared selection: the scene to open
+# the shape in, and the version to compare `createdWithTransforms` against.
+#
+# NOT folded into `Annotation`: that fragment is also the return selection of
+# CreateAnnotation, which fires once per drawn shape — every stroke would drag
+# a scene and its snapshot back over the wire. The two `collection` /
+# `coordinateSystem` selections field-merge with the spread above.
+fragment DetailAnnotation on Annotation {
+  ...Annotation
+  coordinateSystem {
+    # Compare with `createdWithTransforms`: a lower number means the shape was
+    # drawn before the current registrations, so its placement is stale.
+    transformVersion
+  }
+  collection {
+    description
+    # The scene this collection was minted for. Null for a freestanding or
+    # dataset-derived collection — the detail page then shows the shape on its
+    # own instead of a viewport.
+    scene {
+      ...ListScene
+    }
+  }
+}
+
+# The collection is the unit an AnnotationLayer renders, and it owns the space
+# the shapes are drawn in — `axes` is what composePlacementPath needs to order
+# the layer's `pathToWorld` matrices.
+fragment AnnotationCollection on AnnotationCollection {
+  id
+  name
+  description
+  coordinateSystem {
+    ...CoordinateSystem
+  }
+}

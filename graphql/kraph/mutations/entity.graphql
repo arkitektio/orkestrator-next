@@ -1,39 +1,38 @@
-mutation CreateEntity($input: CreateEntityInput!) {
-  createEntity(input: $input) {
-    ...Entity
+mutation AssertEntityExists($input: AssertEntityExistsInput!) {
+  assertEntityExists(input: $input) {
+    assertion {
+      ...Assertion
+    }
+    instance {
+      ...Instance
+    }
+    drawings {
+      ...NodeDrawing
+    }
   }
 }
 
-mutation UpdateEntity($input: UpdateEntityInput!) {
-  updateEntity(input: $input) {
-    ...Entity
+mutation AttestEntity($id: String!) {
+  attestEntity(input: { id: $id }) {
+    assertion {
+      ...Assertion
+    }
+    instance {
+      ...Instance
+    }
+    drawings {
+      ...NodeDrawing
+    }
   }
 }
 
-mutation CreateEntityInline($category: String!) {
-  result: createEntity(input: {
-    entityCategory: $category
-  }) {
-    value: id
-    label: label
-  }
-}
-
-
-mutation ArchiveEntity($id: GraphID!) {
-  archiveEntity(input: {id: $id}) {
-    ...Entity
-  }
-}
-
-
-mutation DeleteEntity($id: GraphID!) {
-  deleteEntity(input: {id: $id})
-}
-
-
-mutation SetEntityProperty($input: SetEntityPropertyInput!) {
-  setEntityProperty(input: $input){
-    ...Entity
+mutation RetractEntity($id: ID!) {
+  retractEntity(input: { id: $id }) {
+    assertion {
+      ...Assertion
+    }
+    instance {
+      ...Instance
+    }
   }
 }

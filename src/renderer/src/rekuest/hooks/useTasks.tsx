@@ -83,7 +83,6 @@ export const useFilteredTasks = (options?: FilterOptions) => {
         }
 
         if (options.assignedImplementation) {
-          console.log(a.implementation?.id, options.assignedImplementation);
           if (a.implementation?.id != options.assignedImplementation) {
             return false;
           }

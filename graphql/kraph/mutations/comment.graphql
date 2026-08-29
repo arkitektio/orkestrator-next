@@ -1,0 +1,49 @@
+# One mutation covers both a new remark and a reply: a reply names its `parent`
+# and stays on that parent's thread. The structure is minted if this is the
+# first sight of the datum, so the caller never has to ensure one first.
+mutation CommentOnStructure(
+  $identifier: String!
+  $object: String!
+  $descendants: [DescendantInput!]!
+  $parent: ID
+) {
+  commentOnStructure(
+    input: {
+      identifier: $identifier
+      object: $object
+      descendants: $descendants
+      parent: $parent
+    }
+  ) {
+    assertion {
+      ...CommentAssertion
+    }
+    comment {
+      ...ListComment
+    }
+  }
+}
+
+# Retraction and attestation are claims in their own right, not an undo: the row
+# survives and the assertion records whose position it is.
+mutation RetractComment($id: String!) {
+  retractComment(input: { id: $id }) {
+    assertion {
+      ...CommentAssertion
+    }
+    comment {
+      ...ListComment
+    }
+  }
+}
+
+mutation AttestComment($id: String!) {
+  attestComment(input: { id: $id }) {
+    assertion {
+      ...CommentAssertion
+    }
+    comment {
+      ...ListComment
+    }
+  }
+}

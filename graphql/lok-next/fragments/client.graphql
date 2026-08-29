@@ -1,20 +1,19 @@
 fragment DetailClient on Client {
   id
-  token
+  clientId
   name
+  public
+  kind
+  role
   user {
     id
     username
   }
-  kind
   release {
     ...ListRelease
   }
   logo {
     presignedUrl
-  }
-  oauth2Client {
-    clientId
   }
   node {
     id

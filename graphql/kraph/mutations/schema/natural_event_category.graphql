@@ -1,10 +1,10 @@
-mutation CreateNaturalEventCategory($input: CreateNaturalEventDefinitionInput!) {
+mutation CreateNaturalEventCategory($input: CreateNaturalEventCategoryInput!) {
   createNaturalEventCategory(input: $input) {
     ...NaturalEventCategory
   }
 }
 
-mutation UpdateNaturalEventCategory($input: UpdateNaturalEventDefinitionInput!) {
+mutation UpdateNaturalEventCategory($input: UpdateNaturalEventCategoryInput!) {
   updateNaturalEventCategory(input: $input) {
     ...NaturalEventCategory
   }

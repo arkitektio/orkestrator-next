@@ -1,0 +1,39 @@
+# Draws a shape. Exactly one of `collection` (append to an existing drawing
+# surface) or `scene` (draw on the scene: the server finds its annotation
+# collection, or mints it on first use together with its coordinate system, its
+# registration into the world, and its AnnotationLayer).
+mutation CreateAnnotation($input: CreateAnnotationInput!) {
+  createAnnotation(input: $input) {
+    ...Annotation
+  }
+}
+
+mutation UpdateAnnotation($input: UpdateAnnotationInput!) {
+  updateAnnotation(input: $input) {
+    ...Annotation
+  }
+}
+
+mutation DeleteAnnotation($input: DeleteAnnotationInput!) {
+  deleteAnnotation(input: $input)
+}
+
+# The collection outlives the scenes it is drawn in, so deleting it is separate
+# from deleting the layer that renders it.
+mutation CreateAnnotationCollection($input: CreateAnnotationCollectionInput!) {
+  createAnnotationCollection(input: $input) {
+    ...AnnotationCollection
+  }
+}
+
+mutation DeleteAnnotationCollection($input: DeleteAnnotationCollectionInput!) {
+  deleteAnnotationCollection(input: $input)
+}
+
+# Renders an existing collection in a scene. The collection's own coordinate
+# system is the layer's space, so it must already have a path to the world.
+mutation CreateAnnotationLayer($input: CreateAnnotationLayerInput!) {
+  createAnnotationLayer(input: $input) {
+    ...SceneLayer
+  }
+}

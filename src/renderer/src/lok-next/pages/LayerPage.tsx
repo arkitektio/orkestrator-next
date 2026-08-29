@@ -1,5 +1,4 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { ListRender } from "@/components/layout/ListRender";
 import { Card, CardContent } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
@@ -7,7 +6,6 @@ import { LokLayer } from "@/linkers";
 import {
   useDetailLayerQuery
 } from "../api/graphql";
-import ServiceInstanceCard from "../components/cards/ServiceInstanceCard";
 
 export const LayerPage = asDetailQueryRoute(useDetailLayerQuery, ({ data }) => {
   const resolve = useResolve();
@@ -17,7 +15,7 @@ export const LayerPage = asDetailQueryRoute(useDetailLayerQuery, ({ data }) => {
       object={data.layer}
       actions={<LokLayer.Actions object={data?.layer} />}
       title={data?.layer?.name}
-      sidebars={<LokLayer.Komments object={data?.layer} />}
+      sidebars={<LokLayer.Knowledge object={data?.layer} />}
     >
       <div className="grid grid-cols-6">
         <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
@@ -41,13 +39,6 @@ export const LayerPage = asDetailQueryRoute(useDetailLayerQuery, ({ data }) => {
             </Card>
           </div>
         </div>
-      </div>
-
-      <div className="p-6 h-full">
-        <h3>This layer hosts the following service instances</h3>
-        <ListRender array={data?.layer?.instances}>
-          {(item) => <ServiceInstanceCard item={item} />}
-        </ListRender>
       </div>
     </LokLayer.ModelPage>
   );

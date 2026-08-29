@@ -16,12 +16,10 @@ import { usePrimaryActionsQuery } from "@/rekuest/api/graphql";
 import { useLiveTask } from "@/rekuest/hooks/useTasks";
 import { useAssignProgress } from "@/rekuest/hooks/useAssignProgress";
 import { ComponentType, ReactNode } from "react";
-import { Komments } from "@/lok-next/components/komments/Komments";
 import { KnowledgeSidebar } from "@/kraph/components/sidebars/KnowledgeSidebar";
-import { StructureRoomsSidebar } from "@/alpaka/sidebars/StructureRoomsSidebar";
-import ImageHoverCard from "@/mikro-next/components/hovers/ImageHoverCard";
+import ArrayDatasetHoverCard from "@/mikro-next/components/hovers/ArrayDatasetHoverCard";
 import FileHoverCard from "@/mikro-next/components/hovers/FileHoverCard";
-import DatasetHoverCard from "@/mikro-next/components/hovers/DatasetHoverCard";
+import FolderHoverCard from "@/mikro-next/components/hovers/FolderHoverCard";
 import ActionHoverCard from "@/rekuest/components/hovers/ActionHoverCard";
 import AgentHoverCard from "@/rekuest/components/hovers/AgentHoverCard";
 import TaskHoverCard from "@/rekuest/components/hovers/TaskHoverCard";
@@ -47,9 +45,12 @@ const asPageVariant = (variant: unknown): PageVariant | undefined =>
   variant === "black" || variant === "default" ? variant : undefined;
 
 const hoverCards: Record<string, HoverCardEntry> = {
-  "@mikro/image": { Component: ImageHoverCard, Guard: Guard.Mikro },
   "@mikro/file": { Component: FileHoverCard, Guard: Guard.Mikro },
-  "@mikro/dataset": { Component: DatasetHoverCard, Guard: Guard.Mikro },
+  "@mikro/folder": { Component: FolderHoverCard, Guard: Guard.Mikro },
+  "@mikro/arraydataset": {
+    Component: ArrayDatasetHoverCard,
+    Guard: Guard.Mikro,
+  },
   "@rekuest/action": { Component: ActionHoverCard, Guard: Guard.Rekuest },
   "@rekuest/agent": { Component: AgentHoverCard, Guard: Guard.Rekuest },
   "@rekuest/task": {
@@ -75,11 +76,15 @@ const hoverCards: Record<string, HoverCardEntry> = {
 };
 
 configureSmartBuilder({
-  renderKomments: ({ identifier, object }) => {
-    return <Komments identifier={identifier} object={object} />;
-  },
   renderKnowledge: ({ identifier, object }) => {
-    return <KnowledgeSidebar identifier={identifier} object={object} />;
+    // Claims and comments both live in kraph, so this whole surface is
+    // module-specific: the guard has to sit outside, since the queries fire on
+    // mount.
+    return (
+      <Guard.Kraph>
+        <KnowledgeSidebar identifier={identifier} object={object} />
+      </Guard.Kraph>
+    );
   },
   renderHover: ({ identifier, object }) => {
     const entry = hoverCards[identifier];
@@ -94,19 +99,14 @@ configureSmartBuilder({
     );
   },
   renderModelPage: ({ identifier, children, ...props }: SmartModelPage & { identifier: string }) => {
-    const roomsSidebar = (
-      <StructureRoomsSidebar identifier={identifier} object={props.object} />
-    );
-
+    // No Rooms injection here: the tab is gone from ModelPageLayout's defaults
+    // too. Conversations start from the "Talk" button in the page header, which
+    // is where they were actually being started from.
     return (
       <ModelPageLayout
         identifier={identifier}
         {...props}
         variant={asPageVariant(props.variant)}
-        additionalSidebars={{
-          ...props.additionalSidebars,
-          Rooms: <Guard.Alpaka>{roomsSidebar}</Guard.Alpaka>,
-        }}
       >
         {children}
       </ModelPageLayout>

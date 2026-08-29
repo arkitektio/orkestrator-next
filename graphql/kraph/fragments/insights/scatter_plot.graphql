@@ -8,10 +8,10 @@ fragment ScatterPlot on ScatterPlot {
   colorColumn
   sizeColumn
   shapeColumn
+  # A scatter plot is over one graph table query. It used to be over a union of
+  # three, two of which had no execution path anywhere.
   query {
     ...GraphTableQuery
-    ...NodeTableQuery
-    ...EdgeTableQuery
   }
 }
 

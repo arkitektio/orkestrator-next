@@ -1,7 +1,7 @@
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { Guard } from "@/app/Arkitekt";
 import React from "react";
-import { Route, Routes } from "react-router";
+import { Route, Routes } from "react-router-dom";
 import Flow from "./pages/Flow";
 import Home from "./pages/Home";
 import Run from "./pages/Run";
@@ -9,6 +9,7 @@ import Runs from "./pages/Runs";
 import Workspace from "./pages/Workspace";
 import Workspaces from "./pages/Workspaces";
 import SearchPane from "./panes/SearchPane";
+import { NotFound } from "@/app/components/fallbacks/NotFound";
 
 interface Props { }
 
@@ -37,6 +38,8 @@ const Module: React.FC<Props> = () => {
           <Route path="workspaces/:id" element={<Workspace />} />
           <Route path="flows/:id" element={<Flow />} />
           <Route path="runs/:id" element={<Run />} />
+          <Route path="home" element={<Home />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </ModuleLayout>
     </Guard.Fluss>

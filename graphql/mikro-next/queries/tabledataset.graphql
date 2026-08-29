@@ -1,0 +1,77 @@
+query GetTableDataset($id: ID!) {
+  tableDataset(id: $id) {
+    ...TableDataset
+  }
+}
+
+# Where this table came from and how it has been edited since — the lineage half
+# of the Info rail, in one round trip, mirroring GetArrayDatasetDerived.
+#
+# Upwards only, and that is the schema's doing rather than a choice: a table
+# records `derivedFrom` (the edges from its own space back into the data it was
+# measured over — UNMAPPABLE where the lineage is recorded but no geometry is
+# claimed, empty for a freestanding table) and nothing points the other way. There
+# is no `derivedTables`/`derivedResidents` on TableDataset to ask what came out of
+# it, so the panel does not pretend to answer that.
+#
+# The parent is not on the edge: an edge lands in a SPACE, and the parent is
+# whatever lives there — hence `output.residents`, directly for a dataset's
+# intrinsic grid and through `Lens.dataset` when the parent was a crop. Same
+# selection as the array query so both feed one DerivedFromSection.
+query GetTableDatasetDerived($id: ID!) {
+  tableDataset(id: $id) {
+    id
+    provenanceEntries {
+      ...ProvenanceEntry
+    }
+    # Which BYTES, as opposed to which data — read alongside `derivedFrom`, not
+    # instead of it. A file has no coordinate system, so these links claim no
+    # geometry and place nothing; both relations can be non-empty and complete.
+    sourceFiles {
+      ...FileLink
+    }
+    exports {
+      ...FileLink
+    }
+    derivedFrom {
+      id
+      kind
+      valueRelation
+      output {
+        id
+        name
+        residents {
+          __typename
+          ... on ArrayDataset {
+            id
+            name
+          }
+          ... on Lens {
+            id
+            dataset {
+              id
+              name
+            }
+          }
+        }
+      }
+      ... on UnmappableTransformation {
+        reason
+      }
+    }
+  }
+}
+
+query GetTableDatasets(
+  $filters: TableDatasetFilter
+  $pagination: OffsetPaginationInput
+  $ordering: [TableDatasetOrder!]
+) {
+  tableDatasets(
+    filters: $filters
+    pagination: $pagination
+    ordering: $ordering
+  ) {
+    ...ListTableDataset
+  }
+}

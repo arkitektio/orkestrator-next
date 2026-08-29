@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { RekuestStructure } from "@/linkers";
 import {
   useGetStructureQuery
@@ -13,13 +13,11 @@ export const StructurePage = asDetailQueryRoute(useGetStructureQuery, ({ data })
       title={data.structure.key}
       object={data.structure}
       sidebars={
-        <MultiSidebar
-          map={{
-            Comments: (
-              <RekuestStructure.Komments object={data?.structure} />
-            ),
-          }}
-        />
+        <Sidebars>
+          <Sidebars.Tab label="Knowledge">
+            <RekuestStructure.Knowledge object={data?.structure} />
+          </Sidebars.Tab>
+        </Sidebars>
       }
     >
       <div className=" p-6">
@@ -28,7 +26,7 @@ export const StructurePage = asDetailQueryRoute(useGetStructureQuery, ({ data })
             {data?.structure?.key}
           </h1>
           <p className="mt-3 text-xl text-muted-foreground max-w-[80%]">
-            {data.structure.description}
+            {data.structure.identifier}
           </p>
         </div>
       </div>

@@ -12,9 +12,10 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
-  ListMaterializedMeasurementEdgeFragment,
-  useCreateMeasurementMutation,
-  useCreateStructureMutation,
+  ListMeasurementCategoryWithGraphFragment,
+  useAssertMeasurementExistsMutation,
+  useEnsureStructureMutation,
+  useEntityCategoriesMatchingDescriptorQuery,
   useListEntitiesQuery,
 } from "@/kraph/api/graphql";
 import { Structure } from "@/types";
@@ -23,85 +24,88 @@ import { Activity, CircleDot } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+/**
+ * Measuring is a claim: this structure measures that entity, under the word the
+ * measurement category declares. The structure has to exist as a node before it
+ * can be an endpoint, so it is ensured first — `ensureStructure` is idempotent,
+ * so an object already recorded is simply found.
+ */
 export const SetAsMeasurement = (props: {
   left: Structure[];
-  edge: ListMaterializedMeasurementEdgeFragment;
+  category: ListMeasurementCategoryWithGraphFragment;
 }) => {
   const { closeDialog } = useDialog();
   const [searchQuery, setSearchQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const debouncedSearch = useDebounce(searchQuery, 300);
   const source = props.left[0];
+  const [attaching, setAttaching] = useState<string | null>(null);
 
-  const { data, loading } = useListEntitiesQuery({
+  const [ensureStructure] = useEnsureStructureMutation();
+  const [assertMeasurement] = useAssertMeasurementExistsMutation();
+
+  const attach = async (entityId: string) => {
+    if (!source) return;
+    setAttaching(entityId);
+    try {
+      const structure = await ensureStructure({
+        variables: {
+          input: {
+            identifier: source.identifier,
+            object: source.object.id,
+          },
+        },
+      });
+      const sourceId = structure.data?.ensureStructure.structure.id;
+      if (!sourceId) {
+        throw new Error("Could not record the structure being measured");
+      }
+
+      await assertMeasurement({
+        variables: {
+          input: {
+            sourceId,
+            targetId: entityId,
+            term: props.category.term?.key ?? props.category.key,
+          },
+        },
+      });
+      toast.success(`Measured as ${props.category.label}`);
+      closeDialog();
+    } catch (e) {
+      toast.error(
+        `Could not attach measurement: ${
+          e instanceof Error ? e.message : String(e)
+        }`,
+      );
+    } finally {
+      setAttaching(null);
+    }
+  };
+
+  // Which entity categories this measurement may target. `MaterializedEdge`
+  // had one precomputed as `target`; the category declares a *descriptor*, and
+  // the server resolves it — the same predicate the writer applies.
+  const { data: targetCategories } = useEntityCategoriesMatchingDescriptorQuery({
     variables: {
-
-      entityCategoryId: props.edge.target.id,
-      filters: {
-        search: debouncedSearch || undefined,
+      descriptor: {
+        keys: props.category.targetDescriptor.keys,
+        ontologyTerms: props.category.targetDescriptor.ontologyTerms,
+        defaultCategoryKey: props.category.targetDescriptor.defaultCategoryKey,
       },
     },
   });
 
-  const [createStructure] = useCreateStructureMutation({
-    onCompleted: (data) => {
-      console.log("Structure created:", data);
+  const targetCategory = targetCategories?.entityCategories.at(0);
+
+  const { data, loading } = useListEntitiesQuery({
+    variables: {
+      entityCategoryId: targetCategory?.id ?? "",
+      filters: {
+        search: debouncedSearch || undefined,
+      },
     },
-    onError: (error) => {
-      console.error("Error creating structure:", error);
-      toast.error("Failed to create structure");
-    },
+    skip: !targetCategory,
   });
-
-  const [createMeasurement] = useCreateMeasurementMutation({
-    onCompleted: () => {
-      toast.success("Measurement created successfully");
-      closeDialog();
-    },
-    onError: (error) => {
-      console.error("Error creating measurement:", error);
-      toast.error("Failed to create measurement");
-    },
-  });
-
-  const onClickEntity = async (entityId: string) => {
-    setIsLoading(true);
-    try {
-      if (!source?.object?.id) {
-        throw new Error("Missing source structure id");
-      }
-
-      const s = await createStructure({
-        variables: {
-          input: {
-            category: props.edge.source.id,
-            object: source.object.id,
-            graph: props.edge.graph.id,
-          },
-        },
-      });
-
-      if (!s.data) {
-        toast.error("Failed to create structure");
-        return;
-      }
-
-      await createMeasurement({
-        variables: {
-          input: {
-            sourceId: s.data.createStructure.id,
-            targetId: entityId,
-            category: props.edge.edge.id,
-          },
-        },
-      });
-    } catch (error) {
-      console.error("Error setting entity as measurement:", error);
-      toast.error("Failed to set entity as measurement");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -116,17 +120,19 @@ export const SetAsMeasurement = (props: {
               Set As Measurement
             </h2>
             <p className="text-sm text-muted-foreground">
-              Choose an entity from {props.edge.target.label} to attach to this structure.
+              Pick the {targetCategory?.label ?? "entity"} this structure measures. The
+              claim names the word, so every graph that declares it holds the
+              measurement.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Badge variant="secondary" className="gap-1.5 px-2.5 py-1">
               <Activity className="h-3.5 w-3.5" />
-              {props.edge.edge.label}
+              {props.category.label}
             </Badge>
             <Badge variant="outline" className="gap-1.5 px-2.5 py-1">
               <CircleDot className="h-3.5 w-3.5" />
-              {props.edge.graph.name}
+              {props.category.graph.name}
             </Badge>
           </div>
         </div>
@@ -145,7 +151,7 @@ export const SetAsMeasurement = (props: {
         <div className="relative">
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder={`Search ${props.edge.target.label.toLowerCase()} entities...`}
+            placeholder={`Search ${targetCategory?.label ?? "entity".toLowerCase()} entities...`}
             value={searchQuery}
             onChange={handleSearchChange}
             className="h-10 rounded-lg pl-10"
@@ -155,7 +161,7 @@ export const SetAsMeasurement = (props: {
 
       <ScrollArea className="flex-1 px-6 pb-6">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {loading || isLoading ? (
+          {loading ? (
             <div className="col-span-full flex items-center justify-center rounded-lg border border-dashed py-12">
               <div className="text-sm text-muted-foreground">Loading entities...</div>
             </div>
@@ -171,28 +177,37 @@ export const SetAsMeasurement = (props: {
             </div>
           ) : (
             data.entities.map((entity) => (
-              <Card
-                key={entity.id}
-                className="cursor-pointer border-border/70 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:bg-accent/30"
-                onClick={() => onClickEntity(entity.id)}
-              >
+              <Card key={entity.id} className="border-border/70">
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <CardTitle className="truncate text-base">{entity.label}</CardTitle>
-                      {entity.category.label && (
+                      {entity.category?.label && (
                         <CardDescription className="mt-1">
                           {entity.category.label}
                         </CardDescription>
                       )}
                     </div>
-                    <Badge variant="outline" className="shrink-0">Select</Badge>
+                    <Badge variant="outline" className="shrink-0">
+                      {targetCategory?.label ?? "entity"}
+                    </Badge>
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-2">
                   <div className="font-mono text-xs text-muted-foreground break-all">
                     {entity.id}
                   </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full"
+                    disabled={!source || attaching !== null}
+                    onClick={() => attach(entity.id)}
+                  >
+                    {attaching === entity.id
+                      ? "Measuring…"
+                      : props.category.label}
+                  </Button>
                 </CardContent>
               </Card>
             ))

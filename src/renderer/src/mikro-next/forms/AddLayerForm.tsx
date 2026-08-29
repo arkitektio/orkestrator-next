@@ -1,0 +1,792 @@
+import { Guard } from "@/app/Arkitekt";
+import { useGraphQLDialog } from "@/app/hooks/useGraphQLDialog";
+import { ChoicesField } from "@/components/fields/ChoicesField";
+import { FloatField } from "@/components/fields/FloatField";
+import { SwitchField } from "@/components/fields/SwitchField";
+import { Button } from "@/components/ui/button";
+import {
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Form } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { modifierSpecsOf, spatialSpecOf } from "@/mikro-next/specs";
+import {
+  ChevronDown,
+  ChevronRight,
+  Image as ImageIcon,
+  Shapes,
+  Spline,
+  Table2,
+  type LucideIcon,
+} from "lucide-react";
+import { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import {
+  ProjectionMode,
+  ColumnRole,
+  useAddLayerLensCapabilitiesQuery,
+  useAddLayerReachableQuery,
+  useCreateAnnotationLayerMutation,
+  useCreateIntensityLayerMutation,
+  useCreateLabelLayerMutation,
+  useCreateMeshLayerMutation,
+  useCreatePointLayerMutation,
+  useCreateRgbLayerMutation,
+  useCreateTrackLayerMutation,
+  useCreateVolumeLayerMutation,
+} from "../api/graphql";
+import {
+  AnnotationEntry,
+  Capabilities,
+  DatasetEntry,
+  Entry,
+  LAYER_KIND_INFO,
+  LayerKind,
+  MeshEntry,
+  Section,
+  Source,
+  SpaceRef,
+  TABLE_KIND_INFO,
+  TableEntry,
+  TableKind,
+  buildSections,
+} from "./addLayer/candidates";
+
+// The mutation options every layer creation submits with: the scene view
+// reinitializes its stores when the GetScene result changes, so the new layer
+// appears without any store plumbing.
+const REFETCH_SCENE = {
+  refetchQueries: ["GetScene"],
+  awaitRefetchQueries: true,
+};
+
+const DIALOG_OPTIONS = {
+  successMessage: "Layer added",
+  errorPrefix: "Could not add layer",
+};
+
+const kindButton = (active: boolean) =>
+  `rounded border px-3 py-1 text-sm transition-colors ${
+    active
+      ? "border-primary bg-primary text-primary-foreground"
+      : "border-input hover:bg-accent"
+  }`;
+
+/** Where an entry lives — a caption, since the picker no longer groups by it. */
+const SpaceCaption = (props: { space: SpaceRef }) =>
+  props.space.isWorld ? (
+    <span>{"in this scene's world"}</span>
+  ) : (
+    <span>in {props.space.name}</span>
+  );
+
+/**
+ * What a thing becomes, stated rather than asked.
+ *
+ * The inferred kind is the answer; the alternatives exist for the case where the
+ * inference is not what someone wanted, and stay folded away until then. A
+ * source with only one possible kind shows a sentence and no control at all.
+ */
+const InferredKind = <K extends string>(props: {
+  kinds: readonly K[];
+  info: Record<K, { title: string; description: string }>;
+  value: K;
+  onChange: (kind: K) => void;
+}) => {
+  const [open, setOpen] = useState(false);
+  const chosen = props.info[props.value];
+
+  return (
+    <div className="flex flex-col gap-2 rounded border border-input p-3">
+      <div className="flex items-baseline justify-between gap-2">
+        <div className="min-w-0">
+          <div className="text-sm font-medium">{chosen.title}</div>
+          <div className="text-xs text-muted-foreground">
+            {chosen.description}
+          </div>
+        </div>
+        {props.kinds.length > 1 && (
+          <button
+            type="button"
+            onClick={() => setOpen((was) => !was)}
+            className="shrink-0 text-xs text-muted-foreground underline-offset-2 hover:underline"
+          >
+            {open ? "never mind" : "show it differently"}
+          </button>
+        )}
+      </div>
+      {open && (
+        <div className="flex flex-wrap gap-2 border-t border-input pt-2">
+          {props.kinds.map((kind) => (
+            <button
+              key={kind}
+              type="button"
+              className={kindButton(kind === props.value)}
+              title={props.info[kind].description}
+              onClick={() => {
+                props.onChange(kind);
+                setOpen(false);
+              }}
+            >
+              {props.info[kind].title}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/** What this row would become, in one word. */
+const Badge = (props: { children: string }) => (
+  <span className="shrink-0 rounded-full border border-input px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+    {props.children}
+  </span>
+);
+
+const EntryRow = (props: {
+  icon: LucideIcon;
+  title: string;
+  subtitle?: React.ReactNode;
+  badge?: string;
+  onClick: () => void;
+  /** Rendered before the badge — the expander on a multi-lens dataset. */
+  trailing?: React.ReactNode;
+}) => (
+  <div className="flex items-center gap-2 rounded border border-input transition-colors hover:bg-accent">
+    <button
+      type="button"
+      onClick={props.onClick}
+      className="flex min-w-0 flex-1 items-center gap-2 p-2 text-left"
+    >
+      <props.icon className="size-4 shrink-0 text-muted-foreground" />
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-sm font-medium">{props.title}</div>
+        {props.subtitle && (
+          <div className="truncate text-xs text-muted-foreground">
+            {props.subtitle}
+          </div>
+        )}
+      </div>
+      {props.badge && <Badge>{props.badge}</Badge>}
+    </button>
+    {props.trailing}
+  </div>
+);
+
+/**
+ * A dataset, and — only when there is more than one — the lenses onto it.
+ *
+ * The entry itself adds the first lens, which sorting has made the unsliced one:
+ * that is what someone means by "the dataset". A dataset with a single lens
+ * renders no children at all, since a lone child row saying "full" is the
+ * clutter this picker exists to be rid of.
+ */
+const DatasetEntryView = (props: {
+  entry: DatasetEntry;
+  onSelect: (source: Source) => void;
+}) => {
+  const { entry } = props;
+  const [open, setOpen] = useState(false);
+  const primary = entry.lenses[0];
+  const spatial = spatialSpecOf(entry.specs);
+  const modifiers = modifierSpecsOf(entry.specs);
+
+  const subtitle = [
+    ...(spatial ? [spatial.short] : []),
+    ...modifiers.map((modifier) => modifier.short),
+  ].join(" · ");
+
+  return (
+    <div className="flex flex-col gap-1">
+      <EntryRow
+        icon={spatial?.icon ?? ImageIcon}
+        title={entry.name}
+        subtitle={
+          <>
+            {subtitle && <span>{subtitle} · </span>}
+            <SpaceCaption space={primary.space} />
+          </>
+        }
+        badge={LAYER_KIND_INFO[primary.kinds[0]].title.toLowerCase()}
+        onClick={() =>
+          props.onSelect({ kind: "lens", dataset: entry, option: primary })
+        }
+        trailing={
+          entry.lenses.length > 1 && (
+            <button
+              type="button"
+              onClick={() => setOpen((was) => !was)}
+              className="flex shrink-0 items-center gap-1 self-stretch border-l border-input px-2 text-xs text-muted-foreground hover:text-foreground"
+            >
+              {open ? (
+                <ChevronDown className="size-3" />
+              ) : (
+                <ChevronRight className="size-3" />
+              )}
+              {entry.lenses.length} lenses
+            </button>
+          )
+        }
+      />
+      {open && entry.lenses.length > 1 && (
+        <div className="flex flex-col gap-1 border-l border-input pl-3">
+          {entry.lenses.map((option) => (
+            <button
+              key={option.key}
+              type="button"
+              onClick={() =>
+                props.onSelect({ kind: "lens", dataset: entry, option })
+              }
+              className="flex items-center gap-2 rounded border border-input/60 p-2 text-left transition-colors hover:bg-accent"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-xs">{option.label}</div>
+                <div className="truncate text-[11px] text-muted-foreground">
+                  <SpaceCaption space={option.space} />
+                </div>
+              </div>
+              <Badge>{LAYER_KIND_INFO[option.kinds[0]].title.toLowerCase()}</Badge>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const EntryView = (props: {
+  entry: Entry;
+  onSelect: (source: Source) => void;
+}) => {
+  const { entry } = props;
+  switch (entry.kind) {
+    case "dataset":
+      return <DatasetEntryView entry={entry} onSelect={props.onSelect} />;
+    case "mesh":
+      return (
+        <EntryRow
+          icon={Shapes}
+          title={entry.name}
+          subtitle={
+            <>
+              {entry.secondary ? `${entry.secondary} · ` : ""}
+              <SpaceCaption space={entry.space} />
+            </>
+          }
+          badge="mesh"
+          onClick={() => props.onSelect({ kind: "mesh", entry })}
+        />
+      );
+    case "table":
+      return (
+        <EntryRow
+          icon={Table2}
+          title={entry.name}
+          subtitle={
+            <>
+              {entry.secondary ? `${entry.secondary} · ` : ""}
+              <SpaceCaption space={entry.space} />
+            </>
+          }
+          badge={TABLE_KIND_INFO[entry.kinds[0]].title.toLowerCase()}
+          onClick={() => props.onSelect({ kind: "table", entry })}
+        />
+      );
+    case "annotation":
+      return (
+        <EntryRow
+          icon={Spline}
+          title={entry.name}
+          subtitle={
+            <>
+              {entry.secondary ? `${entry.secondary} · ` : ""}
+              <SpaceCaption space={entry.space} />
+            </>
+          }
+          badge="annotations"
+          onClick={() => props.onSelect({ kind: "annotation", entry })}
+        />
+      );
+  }
+};
+
+const SectionView = (props: {
+  section: Section;
+  onSelect: (source: Source) => void;
+}) => (
+  <div className="flex flex-col gap-1">
+    <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      {props.section.title}
+    </div>
+    {props.section.entries.map((entry) => (
+      <EntryView key={entry.key} entry={entry} onSelect={props.onSelect} />
+    ))}
+  </div>
+);
+
+/**
+ * Step 2a: a lens becomes an image layer.
+ *
+ * Which kind is not asked — `inferLensKinds` already answered, from what the
+ * server says the lens qualifies for and from its z extent — so this step states
+ * the answer and asks only what the answer itself needs (a projection mode for a
+ * volume). The other kinds live behind the disclosure.
+ */
+const LensLayerForm = (props: {
+  scene: string;
+  source: Extract<Source, { kind: "lens" }>;
+  onBack: () => void;
+}) => {
+  const { option } = props.source;
+  const [kind, setKind] = useState<LayerKind>(option.kinds[0]);
+
+  const [createIntensity] = useCreateIntensityLayerMutation();
+  const [createRgb] = useCreateRgbLayerMutation();
+  const [createVolume] = useCreateVolumeLayerMutation();
+  const [createLabel] = useCreateLabelLayerMutation();
+
+  const submitIntensity = useGraphQLDialog(createIntensity, DIALOG_OPTIONS);
+  const submitRgb = useGraphQLDialog(createRgb, DIALOG_OPTIONS);
+  const submitVolume = useGraphQLDialog(createVolume, DIALOG_OPTIONS);
+  const submitLabel = useGraphQLDialog(createLabel, DIALOG_OPTIONS);
+
+  const form = useForm({
+    defaultValues: { mode: ProjectionMode.Mip as string },
+  });
+
+  const onSubmit = form.handleSubmit(async (data) => {
+    const base = { lens: option.lens.id, scene: props.scene };
+    switch (kind) {
+      case "INTENSITY":
+        return submitIntensity({ variables: { input: base }, ...REFETCH_SCENE });
+      case "RGB":
+        return submitRgb({ variables: { input: base }, ...REFETCH_SCENE });
+      case "VOLUME":
+        return submitVolume({
+          variables: { input: { ...base, mode: data.mode as ProjectionMode } },
+          ...REFETCH_SCENE,
+        });
+      case "LABEL":
+        return submitLabel({ variables: { input: base }, ...REFETCH_SCENE });
+    }
+  });
+
+  return (
+    <Form {...form}>
+      <form onSubmit={onSubmit} className="flex flex-col gap-3">
+        <InferredKind
+          kinds={option.kinds}
+          info={LAYER_KIND_INFO}
+          value={kind}
+          onChange={setKind}
+        />
+
+        {kind === "VOLUME" && (
+          <ChoicesField
+            name="mode"
+            label="Projection mode"
+            description="How the volume is projected through its z-axis"
+            options={[
+              { value: ProjectionMode.Mip, label: "Maximum intensity (MIP)" },
+              { value: ProjectionMode.AttenuatedMip, label: "Attenuated MIP" },
+              { value: ProjectionMode.Volume, label: "Alpha volume" },
+              { value: ProjectionMode.Isosurface, label: "Isosurface" },
+            ]}
+          />
+        )}
+
+        <DialogFooter className="mt-2">
+          <Button type="button" variant="outline" onClick={props.onBack}>
+            Back
+          </Button>
+          <Button type="submit">Add layer</Button>
+        </DialogFooter>
+      </form>
+    </Form>
+  );
+};
+
+/**
+ * Step 2b: a TableDataset becomes a point or track layer. The coordinate, time
+ * and track-id columns are not chosen here: the server derives them from the
+ * dataset's declared column schema. Only the styling columns — which have no
+ * declared role to derive from — are picked.
+ */
+const TableLayerForm = (props: {
+  scene: string;
+  entry: TableEntry;
+  onBack: () => void;
+}) => {
+  const columns = props.entry.table.columns;
+  const [kind, setKind] = useState<TableKind>(props.entry.kinds[0]);
+
+  const [createPoint] = useCreatePointLayerMutation();
+  const [createTrack] = useCreateTrackLayerMutation();
+  const submitPoint = useGraphQLDialog(createPoint, DIALOG_OPTIONS);
+  const submitTrack = useGraphQLDialog(createTrack, DIALOG_OPTIONS);
+
+  const defaults = useMemo(
+    () => ({
+      colorColumn: columns.find((c) => c.role === ColumnRole.Color)?.name ?? "",
+      sizeColumn: "",
+      pointSize: undefined as number | undefined,
+      lineWidth: undefined as number | undefined,
+    }),
+    [columns],
+  );
+
+  const form = useForm({ defaultValues: defaults });
+
+  const columnOptions = [
+    { value: "", label: "None" },
+    ...columns.map((c) => ({
+      value: c.name,
+      label:
+        c.role === ColumnRole.Attribute
+          ? c.name
+          : `${c.name} (${c.role.toLowerCase()})`,
+    })),
+  ];
+
+  const onSubmit = form.handleSubmit(async (data) => {
+    // "" means an unmapped optional column; the input omits it entirely.
+    const orUndefined = (v: string) => v || undefined;
+    const base = {
+      scene: props.scene,
+      tableDataset: props.entry.table.id,
+    };
+    if (kind === "POINT") {
+      return submitPoint({
+        variables: {
+          input: {
+            ...base,
+            sizeColumn: orUndefined(data.sizeColumn),
+            colorColumn: orUndefined(data.colorColumn),
+            pointSize: data.pointSize ?? undefined,
+          },
+        },
+        ...REFETCH_SCENE,
+      });
+    }
+    return submitTrack({
+      variables: {
+        input: {
+          ...base,
+          colorByColumn: orUndefined(data.colorColumn),
+          lineWidth: data.lineWidth ?? undefined,
+        },
+      },
+      ...REFETCH_SCENE,
+    });
+  });
+
+  return (
+    <Form {...form}>
+      <form onSubmit={onSubmit} className="flex flex-col gap-3">
+        <InferredKind
+          kinds={props.entry.kinds}
+          info={TABLE_KIND_INFO}
+          value={kind}
+          onChange={setKind}
+        />
+
+        <div className="grid grid-cols-2 gap-2">
+          {kind === "POINT" ? (
+            <>
+              <ChoicesField
+                name="colorColumn"
+                label="Color column"
+                options={columnOptions}
+              />
+              <ChoicesField
+                name="sizeColumn"
+                label="Size column"
+                options={columnOptions}
+              />
+              <FloatField
+                name="pointSize"
+                label="Point size"
+                description="Leave empty for the default"
+              />
+            </>
+          ) : (
+            <>
+              <ChoicesField
+                name="colorColumn"
+                label="Color by column"
+                options={columnOptions}
+              />
+              <FloatField
+                name="lineWidth"
+                label="Line width"
+                description="Leave empty for the default"
+              />
+            </>
+          )}
+        </div>
+
+        <DialogFooter className="mt-2">
+          <Button type="button" variant="outline" onClick={props.onBack}>
+            Back
+          </Button>
+          <Button type="submit">Add layer</Button>
+        </DialogFooter>
+      </form>
+    </Form>
+  );
+};
+
+/**
+ * Step 2c: a MeshCollection becomes a mesh layer. Its own coordinate system is
+ * the layer's space — the picker only offered it because that space already has
+ * a path to the world — so there is nothing spatial left to ask.
+ *
+ * Only the two knobs that change what you see on the first frame are here;
+ * material color and color-by stay on the layer card, where the meshes are
+ * visible while they are tuned.
+ */
+const MeshLayerForm = (props: {
+  scene: string;
+  entry: MeshEntry;
+  onBack: () => void;
+}) => {
+  const [createMesh] = useCreateMeshLayerMutation();
+  const submitMesh = useGraphQLDialog(createMesh, DIALOG_OPTIONS);
+
+  const form = useForm({
+    defaultValues: {
+      wireframe: false,
+      opacity: undefined as number | undefined,
+    },
+  });
+
+  const onSubmit = form.handleSubmit(async (data) =>
+    submitMesh({
+      variables: {
+        input: {
+          scene: props.scene,
+          meshCollection: props.entry.mesh.id,
+          wireframe: data.wireframe,
+          opacity: data.opacity ?? undefined,
+        },
+      },
+      ...REFETCH_SCENE,
+    }),
+  );
+
+  return (
+    <Form {...form}>
+      <form onSubmit={onSubmit} className="flex flex-col gap-3">
+        <div className="grid grid-cols-2 gap-2">
+          <SwitchField
+            name="wireframe"
+            label="Wireframe"
+            description="Draw the edges instead of the surfaces"
+          />
+          <FloatField
+            name="opacity"
+            label="Opacity"
+            description="Leave empty for the default"
+          />
+        </div>
+
+        <DialogFooter className="mt-2">
+          <Button type="button" variant="outline" onClick={props.onBack}>
+            Back
+          </Button>
+          <Button type="submit">Add layer</Button>
+        </DialogFooter>
+      </form>
+    </Form>
+  );
+};
+
+/**
+ * Step 2d: an AnnotationCollection becomes an annotation layer.
+ *
+ * This is the path for adopting an EXISTING collection into a scene. Drawing a
+ * new ROI in the viewport does not come through here: `createAnnotation` with a
+ * scene mints the collection, its registration and the layer server-side (see
+ * `interactions/useCreateSceneAnnotation.ts`).
+ */
+const AnnotationLayerForm = (props: {
+  scene: string;
+  entry: AnnotationEntry;
+  onBack: () => void;
+}) => {
+  const [createAnnotationLayer] = useCreateAnnotationLayerMutation();
+  const submit = useGraphQLDialog(createAnnotationLayer, DIALOG_OPTIONS);
+
+  const form = useForm({
+    defaultValues: { opacity: undefined as number | undefined },
+  });
+
+  const onSubmit = form.handleSubmit(async (data) =>
+    submit({
+      variables: {
+        input: {
+          scene: props.scene,
+          annotationCollection: props.entry.collection.id,
+          opacity: data.opacity ?? undefined,
+        },
+      },
+      ...REFETCH_SCENE,
+    }),
+  );
+
+  return (
+    <Form {...form}>
+      <form onSubmit={onSubmit} className="flex flex-col gap-3">
+        <FloatField
+          name="opacity"
+          label="Opacity"
+          description="Leave empty for the default"
+        />
+
+        <DialogFooter className="mt-2">
+          <Button type="button" variant="outline" onClick={props.onBack}>
+            Back
+          </Button>
+          <Button type="submit">Add layer</Button>
+        </DialogFooter>
+      </form>
+    </Form>
+  );
+};
+
+const stepDescription = (source: Source): string => {
+  switch (source.kind) {
+    case "lens":
+      return `How "${source.dataset.name}" will be shown — ${source.option.label}.`;
+    case "table":
+      return `How the rows of "${source.entry.name}" will be drawn.`;
+    case "mesh":
+      return `Add ${source.entry.name} to this scene.`;
+    case "annotation":
+      return `Draw the shapes of "${source.entry.name}" in this scene.`;
+  }
+};
+
+const AddLayerFormInner = (props: { scene: string }) => {
+  const [search, setSearch] = useState("");
+  const [source, setSource] = useState<Source | null>(null);
+
+  // Everything composable in this scene, in one round trip: the world, and every
+  // space with a traversable path into it, each reporting who lives in it. The
+  // set `placedSystems` answers with is the set `placeableIn` answers with, so
+  // the picker and the create mutations cannot disagree about what is offerable.
+  const { data, loading } = useAddLayerReachableQuery({
+    variables: { scene: props.scene },
+  });
+  const world = data?.scene.worldCoordinateSystem;
+
+  // Which of those lenses the server would draw, and which of them are labels.
+  // Asked of the SPACE, not the scene: every scene over one world offers the
+  // same candidates, so a scene-shaped argument would ask for more than the
+  // answer depends on.
+  const { data: capabilityData } = useAddLayerLensCapabilitiesQuery({
+    variables: { space: world?.id ?? "" },
+    skip: !world,
+  });
+
+  const capabilities: Capabilities = useMemo(
+    () =>
+      capabilityData
+        ? {
+            drawable: new Set(capabilityData.drawable.map((lens) => lens.id)),
+            labels: new Set(capabilityData.labels.map((lens) => lens.id)),
+          }
+        : null,
+    [capabilityData],
+  );
+
+  const sections = useMemo(
+    () =>
+      world
+        ? buildSections({
+            world,
+            placedSystems: world.placedSystems,
+            capabilities,
+            search,
+          })
+        : [],
+    [world, capabilities, search],
+  );
+
+  return (
+    <div className="flex flex-col gap-3">
+      <DialogHeader>
+        <DialogTitle>Add layer</DialogTitle>
+        <DialogDescription>
+          {source
+            ? stepDescription(source)
+            : world
+              ? `Everything "${data?.scene.name}" can reach from its world, "${world.name}".`
+              : "Loading what this scene can reach…"}
+        </DialogDescription>
+      </DialogHeader>
+
+      {source === null ? (
+        <>
+          <Input
+            placeholder="Search datasets, meshes, measurements…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <div className="flex max-h-[50vh] flex-col gap-4 overflow-y-auto">
+            {sections.map((section) => (
+              <SectionView
+                key={section.id}
+                section={section}
+                onSelect={setSource}
+              />
+            ))}
+            {!loading && !sections.length && (
+              <div className="text-xs text-muted-foreground">
+                {search
+                  ? "Nothing reachable matches that"
+                  : "Nothing can reach this scene's world yet — register something into it first"}
+              </div>
+            )}
+          </div>
+        </>
+      ) : source.kind === "lens" ? (
+        <LensLayerForm
+          scene={props.scene}
+          source={source}
+          onBack={() => setSource(null)}
+        />
+      ) : source.kind === "table" ? (
+        <TableLayerForm
+          scene={props.scene}
+          entry={source.entry}
+          onBack={() => setSource(null)}
+        />
+      ) : source.kind === "mesh" ? (
+        <MeshLayerForm
+          scene={props.scene}
+          entry={source.entry}
+          onBack={() => setSource(null)}
+        />
+      ) : (
+        <AnnotationLayerForm
+          scene={props.scene}
+          entry={source.entry}
+          onBack={() => setSource(null)}
+        />
+      )}
+    </div>
+  );
+};
+
+// The mikro guard must wrap from the outside: the inner component's queries
+// fire on mount, before any JSX-level guard could stop them (CLAUDE.md §1).
+export const AddLayerForm = (props: { scene: string }) => (
+  <Guard.Mikro>
+    <AddLayerFormInner {...props} />
+  </Guard.Mikro>
+);

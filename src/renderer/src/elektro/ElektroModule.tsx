@@ -1,7 +1,7 @@
 import { Guard } from "@/app/Arkitekt";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import React from "react";
-import { Route, Routes } from "react-router";
+import { Route, Routes } from "react-router-dom";
 import AnalogSignalChannelPage from "./pages/AnalogSignalChannelPage";
 import AnalogSignalPage from "./pages/AnalogSignalPage";
 import BlockPage from "./pages/BlockPage";
@@ -30,6 +30,7 @@ import StandardPane from "./panes/StandardPane";
 import { MechanismPage } from "./pages/MechanismPage";
 import { EnvironmentPage } from "./pages/EnvironmentPage";
 import { ElektroZarrStoreProvider } from "./components/store/ElektroZarrStoreProvider";
+import { NotFound } from "@/app/components/fallbacks/NotFound";
 interface Props { }
 
 export const ElektroModule: React.FC<Props> = () => {
@@ -73,7 +74,8 @@ export const ElektroModule: React.FC<Props> = () => {
           <Route path="mechanisms/:id" element={<MechanismPage />} />
           <Route path="environments/:id" element={<EnvironmentPage />} />
           <Route path="modelcollections" element={<ModelCollectionsPage />} />
-          <Route path="*" element={<HomePage />} />
+          <Route index element={<HomePage />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
         </ModuleLayout>
       </ElektroZarrStoreProvider>

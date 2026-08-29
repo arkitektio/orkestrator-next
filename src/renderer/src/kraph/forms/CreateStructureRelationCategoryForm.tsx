@@ -1,6 +1,5 @@
 import { useGraphQLDialog } from "@/app/hooks/useGraphQLDialog";
 import { GraphQLCreatableSearchField } from "@/components/fields/GraphQLCreateableSearchField";
-import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
@@ -14,7 +13,6 @@ import {
   useCreateInlineGraphMutation,
   useCreateStructureRelationCategoryMutation,
   useSearchGraphsLazyQuery,
-  useSearchTagsLazyQuery
 } from "../api/graphql";
 
 
@@ -41,7 +39,6 @@ export const TForm = (props: { graph?: string; onSuccess?: (data: CreateStructur
     },
   });
 
-  const [searchTags] = useSearchTagsLazyQuery();
 
   const [search] = useSearchGraphsLazyQuery();
 
@@ -90,22 +87,6 @@ export const TForm = (props: { graph?: string; onSuccess?: (data: CreateStructur
                     name="purl"
                     description="What is the PURL of this expression?"
                   />
-                  <div className="col-span-2 flex-col gap-1 flex">
-                    <GraphQLSearchField
-                      name={`source.tags`}
-                      label="Tag Filters"
-                      searchQuery={searchTags}
-                      description="Filters for the source structure's tags."
-                    />
-                  </div>
-                  <div className="col-span-2 flex-col gap-1 flex">
-                    <GraphQLSearchField
-                      name={`target.tags`}
-                      label="Tag Filters"
-                      searchQuery={searchTags}
-                      description="Filters for the target structure's tags."
-                    />
-                  </div>
                 </CollapsibleContent>
               </Collapsible>
             </div>

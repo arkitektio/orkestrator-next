@@ -1,6 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormSheet } from "@/components/dialog/FormDialog";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Badge } from "@/components/ui/badge";
 import {
   KraphEntity,
@@ -13,11 +13,13 @@ export default asDetailQueryRoute(useGetMetricQuery, ({ data }) => {
   return (
     <KraphMetric.ModelPage
       object={{ id: data.metric.id }}
-      title={data?.metric.category.label}
+      title={data?.metric.kind?.label || data?.metric.kind?.key || data?.metric.key || "Metric"}
       sidebars={
-        <MultiSidebar
-          map={{ Comments: <KraphMetric.Komments object={{ id: data.metric.id }} /> }}
-        />
+        <Sidebars>
+          <Sidebars.Tab label="Knowledge">
+            <KraphMetric.Knowledge object={{ id: data.metric.id }} />
+          </Sidebars.Tab>
+        </Sidebars>
       }
       pageActions={
         <div className="flex flex-row gap-2">
@@ -33,11 +35,11 @@ export default asDetailQueryRoute(useGetMetricQuery, ({ data }) => {
       >
         <div>
           <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-            {data.metric.category.label}
+            {data.metric.kind?.label || data.metric.kind?.key || data.metric.key}
           </h1>
           <p className="mt-3 text-xl text-muted-foreground"></p>
           <p className="mt-3 text-xl text-muted-foreground">
-            <Badge>{data.metric.category.label}</Badge>
+            <Badge>{data.metric.kind?.key || data.metric.key}</Badge>
           </p>
         </div>
       </KraphEntity.Drop>

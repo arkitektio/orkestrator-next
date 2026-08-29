@@ -1,0 +1,123 @@
+query GetCoordinateSystem($id: ID!) {
+  coordinateSystem(id: $id) {
+    ...CoordinateSystem
+    # The scenes worlded on this system (inverse of Scene.worldCoordinateSystem).
+    # A space is adopted, never owned: several scenes may share one, and it
+    # outlives each of them.
+    scenes {
+      ...ListScene
+    }
+  }
+}
+
+# The edit history of one space, fetched by the rail rather than selected onto
+# the page's own query: the Provenance tab is unmounted while inactive (Radix
+# `TabsContent`), so it costs nothing until someone opens it — and a space that
+# has been re-registered is exactly the one whose history matters.
+query GetCoordinateSystemProvenance($id: ID!) {
+  coordinateSystem(id: $id) {
+    id
+    provenanceEntries {
+      ...ProvenanceEntry
+    }
+  }
+}
+
+# The connected component around one system: the systems it reaches and the
+# edges between them, each in its true stored direction (nothing is composed).
+query GetCoordinateGraph($coordinateSystem: ID!, $maxDepth: Int) {
+  coordinateGraph(coordinateSystem: $coordinateSystem, maxDepth: $maxDepth) {
+    root {
+      ...ListCoordinateSystem
+    }
+    systems {
+      ...CoordinateSystem
+    }
+    transformations {
+      ...Transformation
+    }
+  }
+}
+
+query GetCoordinateSystems(
+  $filters: CoordinateSystemFilter
+  $pagination: OffsetPaginationInput
+  $ordering: [CoordinateSystemOrder!]
+) {
+  coordinateSystems(
+    filters: $filters
+    pagination: $pagination
+    ordering: $ordering
+  ) {
+    ...ListCoordinateSystem
+  }
+}
+
+# Both endpoints of a registration edge in ONE round trip. The form needs each
+# system's full ordered axes (name, order, type, unit) to build the mapping
+# table; fetching them as two queries would let the prefill heuristic run
+# against half a picture, and prefill must see both systems at once or it
+# cannot tell an unambiguous type match from an ambiguous one.
+query GetRegistrationSystems($input: ID!, $output: ID!) {
+  input: coordinateSystem(id: $input) {
+    ...CoordinateSystem
+  }
+  output: coordinateSystem(id: $output) {
+    ...CoordinateSystem
+  }
+}
+
+# The spaces an ArrayDataset's data lives in: "its own grid, and the grids of its
+# pyramid levels and lenses" (the filter's own words) — the systems it is a
+# resident of.
+#
+# Registering the pixel grid and registering a calibration are DIFFERENT edges
+# with different correct matrices — into a µm world the former's scale is the
+# pixel size, the latter's is 1 — so the form makes the user see the choice
+# whenever a dataset has more than one candidate. Filtered here rather than
+# selected off ArrayDataset to keep dataArrays and their stores off the wire for
+# what is usually a two-row radio group.
+query GetDatasetSystems($dataset: ID!) {
+  coordinateSystems(filters: { dataset: $dataset }) {
+    ...CoordinateSystem
+  }
+}
+
+# The single system a table owns — its coordinate columns as axes.
+query GetTableDatasetSystem($id: ID!) {
+  tableDataset(id: $id) {
+    id
+    name
+    coordinateSystem {
+      ...CoordinateSystem
+    }
+  }
+}
+
+# Source/target picker candidates, in the `options { value, label }` shape
+# GraphQLSearchField requires (cf. StageOptions). `search` is a case-insensitive
+# name substring.
+query CoordinateSystemOptions($search: String, $values: [ID!]) {
+  options: coordinateSystems(
+    filters: { search: $search, ids: $values }
+    pagination: { limit: 10 }
+  ) {
+    value: id
+    label: name
+  }
+}
+
+# Step-1 candidates for the registration source picker.
+#
+# MeshCollections are deliberately absent: MeshCollectionFilter has no `search`
+# and MeshCollection has no `name`, so there is nothing to list or search them
+# by — and there is no @mikro/meshcollection linker either, so nothing can drag
+# one. They are reachable only once both of those exist.
+query RegisterSourceCandidates($search: String) {
+  arrayDatasets(filters: { search: $search }, pagination: { limit: 20 }) {
+    ...ListArrayDataset
+  }
+  tableDatasets(filters: { search: $search }, pagination: { limit: 20 }) {
+    ...ListTableDataset
+  }
+}

@@ -1,8 +1,7 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { MikroDataset } from "@/linkers";
 
 import {
-  ProviderFilter,
+  ChromaCollectionFilter,
   useListChromaCollectionsQuery
 } from "@/alpaka/api/graphql";
 import {
@@ -11,7 +10,7 @@ import {
 import CollectionCard from "../cards/CollectionCard";
 
 export type Props = {
-  filters?: ProviderFilter;
+  filters?: ChromaCollectionFilter;
   pagination?: OffsetPaginationInput;
 };
 
@@ -25,9 +24,9 @@ const List = ({ filters, pagination }: Props) => {
     <ListRender
       array={data?.chromaCollections}
       title={
-        <MikroDataset.ListLink className="flex-0">
+        <div className="flex-0">
           Chroma Collections
-        </MikroDataset.ListLink>
+        </div>
       }
       refetch={refetch}
     >

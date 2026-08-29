@@ -1,0 +1,21 @@
+# A MeshCollection is a DATASET, not a shape: the API node carries version,
+# coordinate system and the fabriks STORE — one prefix holding `fabriks.json`,
+# both catalogs and every octree level. The individual meshes are ROWS in the
+# Parquet files under that prefix, reached client-side by row group. There is
+# deliberately no `meshes(...)` field to paginate.
+#
+# `grid` and `encoding` are mirrored from the store's own manifest rather than
+# declared through the API, so they describe what was actually written.
+fragment MeshCollection on MeshCollection {
+  id
+  version
+  specVersion
+  coordinateSystem {
+    ...CoordinateSystem
+  }
+  store {
+    ...FabriksStore
+  }
+  grid
+  encoding
+}

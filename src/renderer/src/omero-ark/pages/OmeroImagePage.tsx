@@ -1,13 +1,14 @@
+import { Guard } from "@/app/Arkitekt";
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { PageLayout } from "@/components/layout/PageLayout";
 import {
   DetailPane,
   DetailPaneHeader,
   DetailPaneTitle,
 } from "@/components/ui/pane";
-import { MikroDataset } from "@/linkers";
-import { Komments } from "@/lok-next/components/komments/Komments";
+import { OmeroArkImage } from "@/linkers";
+import { KnowledgeSidebar } from "@/kraph/components/sidebars/KnowledgeSidebar";
 import { useGetOmeroImageQuery } from "../api/graphql";
 import AuthorizedImage from "../components/Thumbnail";
 
@@ -15,13 +16,20 @@ const Page = asDetailQueryRoute(useGetOmeroImageQuery, ({ data, id }) => {
   return (
     <PageLayout
       title={data?.image?.name || "Image"}
-      pageActions={<MikroDataset.Actions object={data?.image} />}
+      pageActions={<OmeroArkImage.Actions object={data?.image} />}
       sidebars={
-        <MultiSidebar
-          map={{
-            Comments: data?.image ? <Komments identifier="@omero-ark/image" object={data.image} /> : null,
-          }}
-        />
+        <Sidebars>
+          <Sidebars.Tab label="Knowledge">
+            <Guard.Kraph>
+              {data?.image ? (
+                <KnowledgeSidebar
+                  identifier="@omero-ark/image"
+                  object={data.image}
+                />
+              ) : null}
+            </Guard.Kraph>
+          </Sidebars.Tab>
+        </Sidebars>
       }
     >
       <div className="flex @2xl:flex-row-reverse flex-col rounded-md gap-4 mt-2 w-full">

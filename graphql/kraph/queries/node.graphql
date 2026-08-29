@@ -1,10 +1,10 @@
-query GetNode($id: GraphID!) {
-  node(id: $id) {
+query GetNode($id: ID!, $graph: ID!) {
+  node(id: $id, graph: $graph) {
     ...Node
   }
 }
 
-query SearchNodes($graph: ID!, $search: String, $values: [GraphID!], ) {
+query SearchNodes($graph: ID!, $search: String, $values: [ID!], ) {
   options: nodes(
     graph: $graph,
     filters: { search: $search, ids: $values }

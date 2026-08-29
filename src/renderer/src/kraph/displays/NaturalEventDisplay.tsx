@@ -1,34 +1,46 @@
 import { DisplayWidgetProps } from "@/lib/display/registry";
-import { KraphNaturalEvent } from "@/linkers";
-import { useGetNaturalEventQuery } from "../api/graphql";
+import { KraphInstance } from "@/linkers";
+import { useGetInstanceQuery } from "../api/graphql";
+import Timestamp from "react-timestamp";
 
+/**
+ * Claim-grain, deliberately — see `EntityDisplay`. Displays render from outside
+ * kraph (command palette, rekuest return ports) where there is no graph to name,
+ * and the view-grain read requires one.
+ */
 export const NaturalEventDisplay = (props: DisplayWidgetProps) => {
-  const { data } = useGetNaturalEventQuery({ variables: { id: props.object } });
+  const { data } = useGetInstanceQuery({ variables: { id: props.object } });
 
-  if (!data?.naturalEvent) {
+  if (!data?.instance) {
     return <div className="text-xs text-muted-foreground">Event not found</div>;
   }
 
-  const event = data.naturalEvent;
+  const instance = data.instance;
+  const word = instance.term.label ?? instance.term.key;
 
   if (props.context === "command") {
     return (
-      <KraphNaturalEvent.DetailLink object={event}>
+      <KraphInstance.DetailLink object={instance}>
         <div className="flex items-center gap-2 min-w-0">
-          <span className="font-medium text-sm truncate">{event.label}</span>
+          <span className="font-medium text-sm truncate">{word}</span>
         </div>
-      </KraphNaturalEvent.DetailLink>
+      </KraphInstance.DetailLink>
     );
   }
 
   return (
-    <KraphNaturalEvent.DetailLink object={event}>
+    <KraphInstance.DetailLink object={instance}>
       <div className="w-full rounded-lg border border-border/60 bg-card p-3 space-y-1">
-        <div className="font-semibold text-sm">{event.label}</div>
+        <div className="font-semibold text-sm">{word}</div>
+        {/*
+          `measuredFrom` / `measuredTo` are gone. An event's own window was a
+          derived property of the drawing; when the claim was recorded is a fact
+          about the claim, and it is the one that survives a reproject.
+        */}
         <div className="text-xs text-muted-foreground">
-          {new Date(event.measuredFrom).toLocaleString()} – {new Date(event.measuredTo).toLocaleString()}
+          <Timestamp date={instance.createdAt} relative />
         </div>
       </div>
-    </KraphNaturalEvent.DetailLink>
+    </KraphInstance.DetailLink>
   );
 };

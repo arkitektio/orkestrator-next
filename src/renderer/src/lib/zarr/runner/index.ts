@@ -14,11 +14,8 @@ export {
   getChunkWorker,
   getStoreId,
   getWorker,
-  inferChunkShape,
-  probeActualChunkShape,
   readArrayMetadata,
-  readBloscFrameContentSize,
-  readZstdFrameContentSize,
+  readArrayMetadataCached,
 } from "./get-worker.js"
 // Internals — exported for building custom workers that extend the codec worker
 export { create_codec_pipeline } from "./internals/codec-pipeline.js"
@@ -51,6 +48,4 @@ export type {
 export {
   getMetaId,
   workerFetchDecode,
-  workerFetchExists,
-  workerFetchProbeDecompressedSize,
 } from "./worker-rpc.js"

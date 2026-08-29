@@ -138,7 +138,6 @@ export function disposeWorker(
 
 let nextMetaId = 0
 const metaKeyToId = new Map<string, number>()
-const metaIdToMeta = new Map<number, CodecChunkMeta>()
 
 export function getMetaId(meta: CodecChunkMeta): number {
   const key = JSON.stringify(meta)
@@ -146,28 +145,11 @@ export function getMetaId(meta: CodecChunkMeta): number {
   if (id === undefined) {
     id = nextMetaId++
     metaKeyToId.set(key, id)
-    metaIdToMeta.set(id, meta)
   }
   return id
 }
 
 let nextRequestId = 0
-
-async function ensureMeta(
-  dispatcher: WorkerDispatcher,
-  metaId: number,
-): Promise<number> {
-  if (dispatcher.hasMeta(metaId)) return 0
-  const meta = metaIdToMeta.get(metaId)
-  if (!meta) {
-    throw new Error(`No metadata registered for metaId ${metaId}`)
-  }
-  const id = nextRequestId++
-  const startedAt = performance.now()
-  await dispatcher.send(id, { type: 'init', id, metaId, meta })
-  dispatcher.markMeta(metaId)
-  return performance.now() - startedAt
-}
 
 export async function workerFetchDecode<D extends DataType>(
   worker: Worker,
@@ -259,47 +241,3 @@ export async function workerFetchDecode<D extends DataType>(
   }
 }
 
-export async function workerFetchExists(
-  worker: Worker,
-  store: S3FetchConfig,
-  path: `/${string}`,
-  requestInit?: SerializedRequestInit,
-): Promise<boolean> {
-  const dispatcher = getDispatcher(worker)
-  const id = nextRequestId++
-  const response = await dispatcher.send(id, {
-    type: 'fetch_exists' as const,
-    id,
-    store,
-    path,
-    requestInit,
-  }) as { exists: boolean }
-
-  return response.exists
-}
-
-export async function workerFetchProbeDecompressedSize(
-  worker: Worker,
-  store: S3FetchConfig,
-  path: `/${string}`,
-  metaId: number,
-  _meta: CodecChunkMeta,
-  bytesPerElement: number,
-  requestInit?: SerializedRequestInit,
-): Promise<number | null> {
-  const dispatcher = getDispatcher(worker)
-  await ensureMeta(dispatcher, metaId)
-
-  const id = nextRequestId++
-  const response = await dispatcher.send(id, {
-    type: 'fetch_probe_size' as const,
-    id,
-    store,
-    path,
-    metaId,
-    bytesPerElement,
-    requestInit,
-  }) as { decompressedBytes: number | null }
-
-  return response.decompressedBytes
-}

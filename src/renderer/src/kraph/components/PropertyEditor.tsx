@@ -3,7 +3,8 @@ import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
-import { GetEntityDocument, PropertyDefinitionFragment, useSetEntityPropertyMutation, ValueKind } from "@/kraph/api/graphql";
+import { GetEntityDocument, PropertyDefinitionFragment, useAssertMetricValueMutation, ValueKind } from "@/kraph/api/graphql";
+import { buildItoldyousoMetric, isManuallyAssertable } from "@/kraph/lib/itoldyouso";
 import { Check, Pencil, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -19,26 +20,33 @@ export const PropertyEditor = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentValue, setCurrentValue] = useState(value);
-  const [setEntityProperty, { loading }] = useSetEntityPropertyMutation({
+  const [assertMetricValue, { loading }] = useAssertMetricValueMutation({
     refetchQueries: [{ query: GetEntityDocument, variables: { id: entityId } }],
   });
 
+  const assertable = isManuallyAssertable(definition.valueKind);
+
   const handleSave = async () => {
     try {
-      await setEntityProperty({
+      // Properties are derived, so a manual edit is recorded as the weakest
+      // evidence there is: an "itoldyouso" metric with no measurement behind
+      // it. The derivation rule folds it in like any other observation.
+      await assertMetricValue({
         variables: {
-          input: {
-            entityId: entityId,
+          input: buildItoldyousoMetric({
+            entityId,
             key: definition.key,
-            value: currentValue !== null ? String(currentValue) : null,
-          },
+            valueKind: definition.valueKind,
+            value: currentValue,
+            unit: definition.unit,
+          }),
         },
       });
       setIsOpen(false);
-      toast.success("Property updated");
+      toast.success("Value asserted");
     } catch (e) {
       console.error(e);
-      toast.error("Failed to update property");
+      toast.error("Failed to assert value");
     }
   };
 
@@ -121,8 +129,18 @@ export const PropertyEditor = ({
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-muted">
+      <PopoverTrigger asChild disabled={!assertable}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 w-6 p-0 hover:bg-muted"
+          disabled={!assertable}
+          title={
+            assertable
+              ? undefined
+              : `${definition.valueKind} properties cannot be asserted by hand`
+          }
+        >
           <Pencil className="h-3 w-3 text-muted-foreground" />
         </Button>
       </PopoverTrigger>
@@ -131,7 +149,8 @@ export const PropertyEditor = ({
           <div className="space-y-2">
             <h4 className="font-medium leading-none">{definition.label || definition.key}</h4>
             <p className="text-sm text-muted-foreground">
-              {definition.description || "Update property value"}
+              {definition.description ||
+                "Asserting a value records it as evidence with no measurement behind it. The derivation rule decides what the property becomes."}
             </p>
           </div>
           {renderInput()}

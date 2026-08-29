@@ -1,0 +1,79 @@
+mutation DeleteScene($id: ID!) {
+  deleteScene(input: { id: $id })
+}
+
+# Adopt an already-uploaded media file as a picture of the scene — the tile that
+# represents the composition without loading its layers. `file` is an
+# `ImageFileLike`: the media store's id, as returned by the upload flow in
+# `components/scene/data/mediaUpload.ts`.
+mutation CreateSceneSnapshot($scene: ID!, $file: ImageFileLike!, $name: String) {
+  createSceneSnapshot(input: { scene: $scene, file: $file, name: $name }) {
+    ...SceneSnapshot
+  }
+}
+
+# The scene's viewer preferences: how a client should open it. Both fields are
+# nullable-and-optional server-side, so omitting one leaves it untouched —
+# which is why the client sends only what it means to change.
+#
+# Returns the full Scene so Apollo writes the new preferences straight into the
+# normalized cache; the viewer hydrates its stores at mount, so the refetched
+# fields matter for the NEXT open, not for the live canvas.
+mutation UpdateScene(
+  $id: ID!
+  $preferredView: PreferredView
+  $backgroundColor: [Float!]
+) {
+  updateScene(
+    input: {
+      id: $id
+      preferredView: $preferredView
+      backgroundColor: $backgroundColor
+    }
+  ) {
+    ...Scene
+  }
+}
+
+# Bootstraps a whole renderable scene for an array dataset in one call: a world
+# mirroring the dataset's calibration, a full lens, and one default image layer.
+# The ONE scene bootstrap. `createSceneFromDataset` is gone: a dataset was never
+# the thing a scene is built over — a coordinate system is, and a dataset's own
+# pixel grid is simply one of those. Staging a dataset therefore means passing
+# its `intrinsicSystem`, over which "the container's own data becomes the layer".
+#
+# Over a SHARED space instead, the sources registered into it become the layers,
+# capped by the policy. `policy.kind` is the layer recipe and is optional: the
+# server infers it from the axes (RGB for a 3-channel 2D image, VOLUME when
+# there is a z axis, …) and only LABEL has to be asked for, since nothing
+# structural marks a label map.
+mutation CreateSceneFromCoordinateSystem(
+  $input: CreateSceneFromCoordinateSystemInput!
+) {
+  createSceneFromCoordinateSystem(input: $input) {
+    ...ListScene
+  }
+}
+
+# Nominate the scene a dataset opens on, and takes its thumbnail from. `scene:
+# null` clears it.
+#
+# A nomination, not a derivation: it says nothing about where the data sits, and
+# is NOT the answer to which scenes show the dataset — that stays `scenes`.
+#
+# Selects `latestSnapshot` alongside it because the two move together: the
+# thumbnail IS the newest picture of the nominated scene, so writing both into
+# the normalized cache re-tiles every card showing this dataset without a
+# refetch.
+mutation SetDefaultScene($dataset: ID!, $scene: ID) {
+  setDefaultScene(input: { dataset: $dataset, scene: $scene }) {
+    id
+    defaultScene {
+      id
+      name
+    }
+    latestSnapshot {
+      ...SceneSnapshot
+    }
+  }
+}

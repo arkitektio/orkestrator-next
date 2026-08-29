@@ -1,6 +1,7 @@
 import { useGraphQLDialog } from "@/app/hooks/useGraphQLDialog";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
+import { SwitchField } from "@/components/fields/SwitchField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
@@ -30,6 +31,7 @@ const TForm = (props: { onSuccess?: (data: CreateGraphMutation) => void }) => {
     defaultValues: {
       name: "New Step",
       description: "No Description",
+      backfill: false,
     },
   });
 
@@ -58,6 +60,11 @@ const TForm = (props: { onSuccess?: (data: CreateGraphMutation) => void }) => {
                 label="Description"
                 name="description"
                 description="What describes your ontology the best?"
+              />
+              <SwitchField
+                label="Draw existing evidence"
+                name="backfill"
+                description="A graph is a view over the organization's evidence. With this on, everything already claimed under a word this schema declares is projected as the graph is created — which takes as long as the evidence base is large. Off, it appears at the next reproject."
               />
             </div>
           </div>

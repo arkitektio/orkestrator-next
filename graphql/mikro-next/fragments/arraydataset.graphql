@@ -1,0 +1,72 @@
+# One pyramid level of an array dataset: its own voxel (ARRAY) coordinate
+# system plus the edge that maps it into the dataset's intrinsic pixel grid.
+fragment DataArray on DataArray {
+  id
+  level
+  shape
+  chunkShape
+  coordinateSystem {
+    ...ListCoordinateSystem
+  }
+  toParent {
+    ...Transformation
+  }
+  store {
+    ...ZarrStore
+  }
+}
+
+fragment ListArrayDataset on ArrayDataset {
+  id
+  name
+  description
+  axisNames
+  shape
+  multiscale
+  # What the dataset structurally is — derived server-side from the intrinsic
+  # system's axes. Cheap (no nested selection) and it is what a card leads with,
+  # so it belongs on the list fragment rather than a second round trip.
+  spec
+  # The newest picture of the scene this dataset NOMINATES (`defaultScene`) —
+  # null until something nominates one, so the card must still stand on its own
+  # without a tile. It is a picture of that composition rather than of this
+  # dataset: if the nominated scene stages other data too, the tile shows that
+  # as well. (It used to answer from sole occupancy instead — the newest picture
+  # of a scene whose only anchored dataset was this one.)
+  latestSnapshot {
+    ...SceneSnapshot
+  }
+  # Selected next to the tile because it is what the tile is OF: the card links
+  # to it, and its absence is why a dataset has no picture.
+  defaultScene {
+    id
+    name
+  }
+}
+
+fragment ArrayDataset on ArrayDataset {
+  id
+  name
+  description
+  axisNames
+  shape
+  multiscale
+  # What the dataset structurally is. On the list fragment for the card badges;
+  # here because the detail page's Info panel leads with the same tags.
+  spec
+  # Where a user keeps this dataset. Organisational only — it says nothing about
+  # where the data sits in space, which is `intrinsicSystem` and the edges out
+  # of it. Null for a dataset nobody filed.
+  folder {
+    id
+    name
+  }
+  # The structural pixel grid: the space ROIs resolve against and every level
+  # and lens maps into.
+  intrinsicSystem {
+    ...CoordinateSystem
+  }
+  dataArrays {
+    ...DataArray
+  }
+}

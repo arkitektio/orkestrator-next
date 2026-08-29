@@ -1,4 +1,4 @@
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { HelpSidebar } from "@/components/sidebars/help";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,8 @@ import { useState } from "react";
 import { HomePageStatisticsSidebar } from "../sidebars/HomePageStatisticsSidebar";
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Ordering } from "@/rekuest/api/graphql";
-import { Podcast } from "lucide-react";
+import { OrgTasksUpdater } from "../components/updaters/OrgTasksUpdater";
+import { Loader2, Podcast } from "lucide-react";
 
 
 
@@ -156,7 +157,7 @@ const Page = () => {
 
 
   return (
-    <PageLayout title={"Dashboard"} pageActions={<><AppFilterButton onSelect={setAppIdentifier} /><UserFitlerButton onSelect={setUserSub} /><DeviceFilterButton onSelect={setDeviceId} /></>} sidebars={<MultiSidebar map={{ Statistics: <HomePageStatisticsSidebar />, Help: <HelpSidebar /> }} />}>
+    <PageLayout title={"Dashboard"} pageActions={<><AppFilterButton onSelect={setAppIdentifier} /><UserFitlerButton onSelect={setUserSub} /><DeviceFilterButton onSelect={setDeviceId} /></>} sidebars={<Sidebars><Sidebars.Tab label="Statistics"><HomePageStatisticsSidebar /></Sidebars.Tab><Sidebars.Tab label="Help"><HelpSidebar /></Sidebars.Tab></Sidebars>}>
       <div className="space-y-8 p-3">
       <CardHeader>
 
@@ -170,6 +171,18 @@ const Page = () => {
             </CardHeader>
 
       <ActionList />
+
+      <OrgTasksUpdater />
+      <TaskList
+        title={
+          <span className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Ongoing Tasks
+          </span>
+        }
+        filters={{ isDone: false, rootIsnull: true }}
+        order={{ createdAt: Ordering.Desc }}
+      />
 
       <TaskList />
       <AgentList filters={{ user: userSub, appIdentifier: appIdentifier, deviceId: deviceId }} order={{ lastSeen: Ordering.Desc }} />

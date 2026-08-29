@@ -14,7 +14,7 @@ export const MeasurementDisplay = (props: DisplayWidgetProps) => {
   if (props.context === "command") {
     return (
       <KraphMeasurement.DetailLink object={{ id: props.object }}>
-        <span className="font-medium text-sm">{measurement.category.label}</span>
+        <span className="font-medium text-sm">{measurement.category?.label ?? measurement.label}</span>
       </KraphMeasurement.DetailLink>
     );
   }
@@ -22,7 +22,7 @@ export const MeasurementDisplay = (props: DisplayWidgetProps) => {
   return (
     <KraphMeasurement.DetailLink object={{ id: props.object }}>
       <div className="w-full rounded-lg border border-border/60 bg-card p-3">
-        <div className="font-semibold text-sm">{measurement.category.label}</div>
+        <div className="font-semibold text-sm">{measurement.category?.label ?? measurement.label}</div>
       </div>
     </KraphMeasurement.DetailLink>
   );

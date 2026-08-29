@@ -226,9 +226,6 @@ export const CreateShortcutDialog = (props: {
     <div className="flex flex-col gap-4">
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2">
-          {action.logo && (
-            <img src={action.logo} alt="" className="h-6 w-6 rounded" />
-          )}
           Create Shortcut
         </DialogTitle>
         <DialogDescription>

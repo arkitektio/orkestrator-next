@@ -410,7 +410,12 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
                   Customize the look and feel of the application.
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-6">
+                <SwitchField
+                  name="sceneThemeSync"
+                  label="Scene Theme Sync"
+                  description="Tint the app to the main layer's colormap while a scene or image is open"
+                />
                 <ThemeCustomizer control={form.control} />
               </CardContent>
             </Card>

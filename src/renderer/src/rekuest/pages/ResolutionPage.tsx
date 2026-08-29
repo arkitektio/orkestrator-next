@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { buildAssignInput } from "@/rekuest/assign";
 import { RekuestResolution, RekuestToolbox } from "@/linkers";
 import {
@@ -152,11 +152,11 @@ export const ResolutionPage = asDetailQueryRoute(useGetResolutionQuery, ({ data 
       title={data.resolution.name}
       object={data.resolution}
       sidebars={
-        <MultiSidebar
-          map={{
-            Comments: <RekuestToolbox.Komments object={data?.resolution} />,
-          }}
-        />
+        <Sidebars>
+          <Sidebars.Tab label="Knowledge">
+            <RekuestToolbox.Knowledge object={data?.resolution} />
+          </Sidebars.Tab>
+        </Sidebars>
       }
     >
       <div className="flex flex-col gap-4 h-full">

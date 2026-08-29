@@ -1,50 +1,35 @@
-fragment Structure on Structure {
-  ...BaseNode
-  id
-  object
-  identifier
-  category {
-    ...StructureCategory
-  }
-  metrics {
-    id
-    category {
-      label
-    }
-    value
-  }
-}
+# A structure points at an external datum — an ROI, an image, a file — identified
+# by `(identifier, object)`. It implements no node interface: it is never itself
+# claimed to be an instance, and no view draws it as a vertex.
+#
+# It has no `label` and no `graph`. Its name is its kind's, and it belongs to the
+# organization rather than to any one view.
 
 fragment ListStructure on Structure {
   id
-  label
   object
   identifier
-  category {
-    identifier
+  kindId
+  kind {
     id
+    identifier
     label
-    ageName
   }
 }
 
-
-fragment InformedStructure on Structure {
-  ...BaseNode
-  id
-  category {
-    id
-    identifier
-  }
-  graph {
-    id
-    name
+fragment Structure on Structure {
+  ...ListStructure
+  kind {
+    ...StructureKind
   }
   metrics {
-    id
-    category {
-      label
-    }
-    value
+    ...ListMetric
+  }
+}
+
+fragment InformedStructure on Structure {
+  ...ListStructure
+  metrics {
+    ...ListMetric
   }
 }

@@ -14,6 +14,9 @@ fragment ListGraphQuery on GraphQuery {
   id
   label
   description
+  # A row saved as raw Cypher, before plans were the contract. It still renders,
+  # but takes no filter, order or page — worth saying so where they are listed.
+  legacy
   graph {
     id
     name

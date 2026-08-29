@@ -123,7 +123,8 @@ const Page = asDetailQueryRoute(useGetScatterPlotQuery, ({ data }) => {
       });
 
       // Navigate back to scatter plots list
-      navigate(KraphScatterPlot.listlinkBuilder());
+      // Up to the query the plot was over — there is no list of plots.
+      navigate(KraphGraphQuery.linkBuilder(data.scatterPlot.query.id));
     } catch (error) {
       console.error("Failed to delete scatter plot:", error);
     } finally {

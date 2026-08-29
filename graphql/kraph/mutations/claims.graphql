@@ -1,0 +1,117 @@
+# Claims name the term, not the category row. Asserting does not displace
+# anyone else's claim; retracting withdraws yours and leaves the evidence.
+#
+# Every claim mutation now answers with the *act* — the assertion — alongside
+# what it recorded, plus the drawings: the per-graph views that render the
+# claim. An empty `drawings` is an ordinary answer, not a failure: a view that
+# declares no category for the word simply does not draw it.
+
+mutation AssertParticipation(
+  $event: String!
+  $entity: String!
+  $role: String!
+  $isInput: Boolean!
+) {
+  assertParticipation(
+    input: { event: $event, entity: $entity, role: $role, isInput: $isInput }
+  ) {
+    assertion {
+      ...Assertion
+    }
+    link {
+      ...Link
+    }
+    drawings {
+      ...EdgeDrawing
+    }
+  }
+}
+
+mutation AssertParticipations($event: String!, $participants: [ParticipantInput!]!) {
+  assertParticipations(input: { event: $event, participants: $participants }) {
+    assertion {
+      ...Assertion
+    }
+    links {
+      ...Link
+    }
+    drawings {
+      ...EdgeDrawing
+    }
+  }
+}
+
+mutation RetractParticipation($id: String!) {
+  retractParticipation(input: { id: $id }) {
+    assertion {
+      ...Assertion
+    }
+    link {
+      ...Link
+    }
+  }
+}
+
+mutation ClassifyNodes($classifications: [ClassificationInput!]!) {
+  classifyNodes(input: { classifications: $classifications }) {
+    assertion {
+      ...Assertion
+    }
+    instances {
+      ...Instance
+    }
+    drawings {
+      ...NodeDrawing
+    }
+  }
+}
+
+mutation RetractLinks($ids: [String!]!) {
+  retractLinks(input: { ids: $ids }) {
+    assertion {
+      ...Assertion
+    }
+    links {
+      ...Link
+    }
+  }
+}
+
+# Attesting is a claim in its own right, not an undo: it writes a new `Standing`
+# saying the claim still holds, and the current answer is the fold over all of
+# them. These three cover the claim kinds that had no attestation path — a link,
+# a metric and a structure — alongside the instance-shaped ones on their own
+# mutations.
+mutation AttestLink($id: String!) {
+  attestLink(input: { id: $id }) {
+    assertion {
+      ...Assertion
+    }
+    # `AssertedLinks`, plural: a write reports every link it recorded.
+    links {
+      ...Link
+    }
+  }
+}
+
+mutation AttestMetric($id: String!) {
+  attestMetric(input: { id: $id }) {
+    assertion {
+      ...Assertion
+    }
+    metric {
+      ...ListMetric
+    }
+  }
+}
+
+mutation AttestStructure($id: String!) {
+  attestStructure(input: { id: $id }) {
+    assertion {
+      ...Assertion
+    }
+    structure {
+      ...ListStructure
+    }
+  }
+}

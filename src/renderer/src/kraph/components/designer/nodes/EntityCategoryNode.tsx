@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
@@ -45,13 +44,6 @@ export const EntityCategoryNode = memo(({ data, id, selected }: NodeProps<Generi
             {data.label}
           </KraphEntityCategory.DetailLink>
 
-          <div className="flex flex-row gap-2">
-            {data.tags.map((tag) => (
-              <Badge key={tag.name} variant="outline" className="text-xs">
-                {tag.name}
-              </Badge>
-            ))}
-          </div>
         </div>
         <PathMarker nodeId={id} />
         <NodeQueryControls nodeId={id} nodeType="Entity" />

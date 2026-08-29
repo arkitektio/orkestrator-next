@@ -54,10 +54,14 @@ Header.displayName = "ListLayout.Header";
 /**
  * The grid container for list items.
  * Responsive: 1 col mobile -> 2 cols tablet -> 3 cols laptop -> 4 cols desktop.
+ *
+ * `minItemWidth` opts out of that ladder in favour of `auto-fit`/`minmax`, for
+ * lists whose cards need room (a picture, several rows of metadata) and would be
+ * unreadable in the default ten-column pack.
  */
 const Grid = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
+  React.HTMLAttributes<HTMLDivElement> & { minItemWidth?: number }
 >(({ className, ...props }, _ref) => (
   <ContainerGrid
     className={cn(

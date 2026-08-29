@@ -26,7 +26,7 @@ export const KnowledgeViewCarousel = ({
       <CarouselPrevious />
       <CarouselContent>
         {knowledgeViews.map((view) => (
-          <CarouselItem key={view.structureCategory.id}>
+          <CarouselItem key={view.structureKind.id}>
             <KnowledgeViewCard
               view={view}
               onConnect={onConnect}

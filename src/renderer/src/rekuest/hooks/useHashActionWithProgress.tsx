@@ -5,21 +5,16 @@ import { v4 as uuidv4 } from "uuid";
 import { buildAssignInput } from "@/rekuest/assign";
 import {
   TaskEventFragment,
-  AssignInput,
+  TaskEventKind,
   useActionByHashQuery
 } from "../api/graphql";
-import { trackTask } from "../lib/taskTracker";
+import { isTerminalEvent, trackTask } from "../lib/taskTracker";
 import { useAssign } from "./useAssign";
-
-export type ActionAssignVariables = AssignInput;
-
-
 
 export type useActionOptions = {
   hash?: string;
   onDone?: (event: TaskEventFragment) => void;
   onError?: (error: string) => void;
-  ephemeral?: boolean;
   object?: string;
 };
 
@@ -41,36 +36,33 @@ export const useHashActionWithProgress = (
 
   const doStuff = useCallback(
     (event: TaskEventFragment) => {
-      if (event.kind == "COMPLETED") {
-        setDoing(false);
-        setProgress(null);
-        options.onDone?.(event);
+      if (event.kind == TaskEventKind.Progress) {
+        setProgress(event.progress || 0);
+        return;
       }
-      if (event.kind == "FAILED" || event.kind == "CRITICAL") {
-        setDoing(false);
-        setProgress(null);
+
+      // Gate on `isTerminalEvent` rather than hand-listing kinds: Cancelled and
+      // Interrupted also end the task, and used to leave `doing` stuck true.
+      if (!isTerminalEvent(event.kind)) return;
+
+      setDoing(false);
+      setProgress(null);
+
+      if (
+        event.kind == TaskEventKind.Failed ||
+        event.kind == TaskEventKind.Critical
+      ) {
         setError(event.message || "Unknown error");
         options.onError?.(event.message || "Unknown error");
+        return;
       }
-      if (event.kind == "PROGRESS") {
-        setProgress(event.progress || 0);
-      }
+
+      options.onDone?.(event);
     },
     [setDoing, setProgress, setError, options.onDone, options.onError],
   );
 
-  const assign = async (args: { [key: string]: any }) => {
-
-    let actionArgs = data?.action?.args || [];
-
-    actionArgs = actionArgs.map((arg) => {
-      if (arg.key in args) {
-        return args[arg.key];
-      }
-      return arg;
-    });
-
-
+  const assign = async (args: { [key: string]: unknown }) => {
     const reference = uuidv4();
     const untrack = trackTask(reference, doStuff);
 
@@ -79,7 +71,6 @@ export const useHashActionWithProgress = (
         action: data?.action.id,
         args: args,
         reference: reference,
-        ephemeral: options.ephemeral ?? false,
       }));
 
       setDoing(true);

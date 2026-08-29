@@ -1,6 +1,5 @@
 import { UseModelForDialog } from "@/alpaka/dialogs/UseModelForDialog";
 import { AlpakaReplyerAssignForm } from "@/alpaka/forms/AlpakaReplyerAssignForm";
-import { AddPropertyDefinitionDialog } from "@/dialogs/AddPropertyDefinition";
 import { AddUserToOrganizationDialog } from "@/dialogs/AddUserToOrganization";
 import { ChatDialog } from "@/dialogs/ChatDialog";
 import { CreateEntityWithPropertiesDialog } from "@/dialogs/CreateEntityWithProperties";
@@ -26,10 +25,12 @@ import { CreateOrganizationForm } from "@/lok-next/dialogs/CreateOrganization";
 import { CreateRedeemTokenForm } from "@/lok-next/forms/CreateRedeemTokenForm";
 import { CreateServiceInstanceForm } from "@/lok-next/forms/CreateServiceInstance";
 import { UpdateServiceInstanceForm } from "@/lok-next/forms/UpdateServiceInstanceForm";
-import { CreateDatasetForm as CreateMikroDatasetForm } from "@/mikro-next/forms/CreateDatasetForm";
-import { UpdateDatasetForm } from "@/mikro-next/forms/UpdateDatasetForm";
-import { UpdateImageForm } from "@/mikro-next/forms/UpdateImageForm";
-import { UpdateStageForm } from "@/mikro-next/forms/UpdateStageForm";
+import { AddLayerForm } from "@/mikro-next/forms/AddLayerForm";
+import { CalibrateForm } from "@/mikro-next/forms/CalibrateForm";
+import { RegisterForm } from "@/mikro-next/forms/RegisterForm";
+import { CreateFolderForm as CreateMikroFolderForm } from "@/mikro-next/forms/CreateFolderForm";
+import { MoveToFolderForm } from "@/mikro-next/forms/MoveToFolderForm";
+import { UpdateFolderForm } from "@/mikro-next/forms/UpdateFolderForm";
 import { CreateDatasetForm as CreateOmeroDatasetForm } from "@/omero-ark/forms/CreateDatasetForm";
 import { CreateProjectForm } from "@/omero-ark/forms/CreateProjectForm";
 import { CreateWorkspaceForm } from "@/reaktion/components/forms/CreateWorkspaceForm";
@@ -51,7 +52,6 @@ export const { DialogProvider, useDialog, registry } = createDialogProvider({
   updateagent: UpdateAgentForm,
   notifyusers: NotifyDialog,
   addusertoorganization: AddUserToOrganizationDialog,
-  addpropertydefinition: AddPropertyDefinitionDialog,
   createentitywithproperties: CreateEntityWithPropertiesDialog,
   createentitycategory: CreateEntityCategoryForm,
   createprotocoleventcategory: CreateProtocolEventCategoryForm,
@@ -83,8 +83,10 @@ export const { DialogProvider, useDialog, registry } = createDialogProvider({
   // elektro
   neuroneditorhelp: NeuronEditorHelp,
   // mikro-next
-  createmikrodataset: CreateMikroDatasetForm,
-  updateimage: UpdateImageForm,
-  updatedataset: UpdateDatasetForm,
-  updatestage: UpdateStageForm,
+  addlayer: AddLayerForm,
+  register: RegisterForm,
+  calibrate: CalibrateForm,
+  createmikrofolder: CreateMikroFolderForm,
+  movetofolder: MoveToFolderForm,
+  updatefolder: UpdateFolderForm,
 });

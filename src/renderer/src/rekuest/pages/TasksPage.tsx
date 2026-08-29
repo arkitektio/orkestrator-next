@@ -3,6 +3,7 @@ import { RekuestTask } from "@/linkers";
 import { parseAsIsoDateTime, useQueryState } from "nuqs";
 import { Ordering } from "../api/graphql";
 import TaskList from "../components/lists/TaskList";
+import { OrgTasksUpdater } from "../components/updaters/OrgTasksUpdater";
 const Page = () => {
 
   const [createdAfter, setCreatedAfter] = useQueryState(
@@ -51,6 +52,7 @@ const Page = () => {
           </div>
         </div>
 
+        <OrgTasksUpdater />
         <TaskList order={{ createdAt: Ordering.Desc }} filters={{ ...temporalFilter }} />
       </div>
     </RekuestTask.ListPage>

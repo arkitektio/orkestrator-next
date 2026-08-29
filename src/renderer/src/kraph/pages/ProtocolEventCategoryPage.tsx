@@ -2,7 +2,7 @@ import { EnhanceButton } from "@/alpaka/components/EnhanceButton";
 import { ImageCreator } from "@/alpaka/components/ImageCreator";
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormSheet } from "@/components/dialog/FormDialog";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Button } from "@/components/ui/button";
 import { DragZone } from "@/components/upload/drag";
 import { useKraphMediaUpload } from "@/datalayer/hooks/useKraphMediaUpload";
@@ -16,7 +16,6 @@ import {
   useUpdateProtocolEventCategoryMutation,
 } from "../api/graphql";
 import LoadingCreateProtocolEventForm from "../forms/LoadingCreateProtocolEventForm";
-import { buildUpdateProtocolEventDefinitionInput } from "../protocolEventInput";
 
 const Page =  asDetailQueryRoute(
   useGetProtocolEventCategoryQuery,
@@ -31,10 +30,7 @@ const Page =  asDetailQueryRoute(
       if (response) {
         await update({
           variables: {
-            input: buildUpdateProtocolEventDefinitionInput(
-              data.protocolEventCategory,
-              { image: response },
-            ),
+            input: { id: data.protocolEventCategory.id, image: response },
           },
         });
         await refetch();
@@ -70,15 +66,13 @@ const Page =  asDetailQueryRoute(
           </div>
         }
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: (
-                <KraphProtocolStepTemplate.Komments
-                  object={{ id: data.protocolEventCategory.id }}
-                />
-              ),
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Knowledge">
+              <KraphProtocolStepTemplate.Knowledge
+                object={{ id: data.protocolEventCategory.id }}
+              />
+            </Sidebars.Tab>
+          </Sidebars>
         }
       >
         <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">

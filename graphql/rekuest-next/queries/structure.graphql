@@ -1,14 +1,11 @@
 query GetStructure($id: ID!) {
-  structure(id: $id) {
+  structure(identifier: $id) {
     ...Structure
   }
 }
 
-query ListStructures(
-  $filters: StructureFilter
-  $pagination: OffsetPaginationInput
-) {
-  structures(filters: $filters, pagination: $pagination) {
+query ListStructures($search: String) {
+  structures(search: $search) {
     ...ListStructure
   }
 }

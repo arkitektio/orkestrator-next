@@ -1,0 +1,35 @@
+# A probe is a zero-persistence invocation: redis-held under a TTL, never in
+# task history, no replay/recovery. Relations are scalar ids — a probe has no
+# traversable graph and never normalizes into a cached Task.
+fragment Probe on Probe {
+  id
+  agent
+  action
+  implementation
+  interface
+  reference
+  kind
+  seq
+  isDone
+  returns
+  error
+  createdAt
+}
+
+# NOTE: no `id` field on the type, so this never normalizes into the Apollo
+# cache. Consume it from a direct client.subscribe, not for cache behaviour.
+fragment ProbeEvent on ProbeEvent {
+  probe
+  kind
+  seq
+  message
+  progress
+  returns
+  createdAt
+}
+
+fragment ProbeStats on ProbeStats {
+  totalLive
+  myInflight
+  maxInflight
+}

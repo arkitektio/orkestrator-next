@@ -1,9 +1,9 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { LokClient } from "@/linkers";
-import { TooltipTrigger } from "@radix-ui/react-tooltip";
 import { useClientQuery } from "../api/graphql";
+import { clientAppIdentifier, clientAppVersion } from "../lib/clientLabels";
 
 export const AgentPill = (props: { clientId: string }) => {
   const { data, error } = useClientQuery({
@@ -32,7 +32,7 @@ export const AgentPill = (props: { clientId: string }) => {
                 src={resolve(client.logo?.presignedUrl)}
                 alt={client.name}
               />
-              <AvatarFallback>{client.release.app.identifier.slice(0, 2)}</AvatarFallback>
+              <AvatarFallback>{clientAppIdentifier(client).slice(0, 2)}</AvatarFallback>
             </Avatar>
             {client.user?.username}
             {client.node ? <p className="text-muted-foreground">{client.node?.name || "Unlabeled Node"}</p> : ""}
@@ -75,5 +75,5 @@ export const JustClientName = (props: { clientId: string }) => {
   });
 
 
-  return <>{data?.client.release.app.identifier}:{data?.client.release.version}</>;
+  return <>{data?.client && clientAppVersion(data.client)}</>;
 }

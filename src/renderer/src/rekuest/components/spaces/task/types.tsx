@@ -1,4 +1,4 @@
-import { TaskEventKind, MediaStoreFragment, PostmanTaskFragment } from "@/rekuest/api/graphql";
+import { MediaStoreFragment } from "@/rekuest/api/graphql";
 
 
 
@@ -24,34 +24,12 @@ export type SpaceGroup = {
 
 
 // ── Timeline types ───────────────────────────────────────────────────
+// Canonical definitions live in the shared timeline core; re-exported here
+// so existing spaces importers keep working.
 
-export type TimelineEvent = {
-  kind: TaskEventKind;
-  message?: string | null;
-  createdAt: string;
-  position: number;
-};
-
-export type TimelineItem = {
-  task: PostmanTaskFragment;
-  start: number;
-  end: number;
-  startTime: number;
-  endTime: number;
-  events: TimelineEvent[];
-};
-
-export type TimelineMethodRow = {
-  id: string;
-  method: string;
-  summary?: string;
-  items: TimelineItem[];
-};
-
-export type TimelineDependencyGroup = {
-  id: string;
-  dependency: string;
-  summary?: string;
-  items: TimelineItem[];
-  methods: TimelineMethodRow[];
-};
+export type {
+  TimelineEvent,
+  TimelineItem,
+  TimelineMethodRow,
+  TimelineDependencyGroup,
+} from "@/rekuest/lib/taskTimeline";

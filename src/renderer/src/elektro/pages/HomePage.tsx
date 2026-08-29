@@ -1,7 +1,7 @@
 import { asParamlessRoute, HookFunction } from "@/app/routes/ParamlessRoute";
 import { OperationVariables } from "@apollo/client";
 import { CommandMenu } from "@/command/Menu";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { HelpSidebar } from "@/components/sidebars/help";
 import { Badge } from "@/components/ui/badge";
@@ -177,12 +177,14 @@ const Page = asParamlessRoute(useHomePageQueryAsHookFunction, ({ data }) => {
         </>
       }
       sidebars={
-        <MultiSidebar
-          map={{
-            Statistics: <HomePageStatisticsSidebar />,
-            Help: <HelpSidebar />,
-          }}
-        />
+        <Sidebars>
+          <Sidebars.Tab label="Statistics">
+            <HomePageStatisticsSidebar />
+          </Sidebars.Tab>
+          <Sidebars.Tab label="Help">
+            <HelpSidebar />
+          </Sidebars.Tab>
+        </Sidebars>
       }
     >
       <CommandMenu />

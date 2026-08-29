@@ -1,6 +1,5 @@
 import { useDialog } from "@/app/dialog";
 import { ChoicesField } from "@/components/fields/ChoicesField";
-import { GraphQLCreatableListSearchField } from "@/components/fields/GraphQLCreatableListSearchField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
 import { SwitchField } from "@/components/fields/SwitchField";
@@ -9,14 +8,13 @@ import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { Trash2 } from "lucide-react";
+import { buildDerivationRule } from "../components/schema-builder/utils";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import {
   DerivationType,
   EntityCategoryFragment,
   UpdateEntityCategoryMutationVariables,
-  useCreateGraphTagInlineMutation,
-  useSearchTagsLazyQuery,
   useUpdateEntityCategoryMutation,
   ValueKind,
 } from "../api/graphql";
@@ -40,15 +38,20 @@ const TForm = (props: { entityCategory: EntityCategoryFragment, onSuccess?: () =
       id: props.entityCategory.id,
       label: props.entityCategory.label,
       description: props.entityCategory.description,
-      tags: props.entityCategory.tags.map((tag) => tag.id),
+      // `propertyDefinitions` is a full replace, so every field the form does
+      // not carry is a field this save erases. Seed the whole definition,
+      // including the derivation rule, even where the form has no widget for it.
       propertyDefinitions: props.entityCategory.propertyDefinitions.map(
         (def) => ({
           key: def.key,
           label: def.label || "",
           description: def.description || "",
+          unit: def.unit,
           valueKind: def.valueKind,
-          derivation: DerivationType.Latest,
-          rule: def.rule ? { aggregation: def.rule.aggregation } : undefined,
+          derivation: def.derivation || DerivationType.Latest,
+          index: def.index ?? false,
+          searchable: def.searchable ?? false,
+          rule: buildDerivationRule(def.rule),
         })
       ),
     },
@@ -60,15 +63,6 @@ const TForm = (props: { entityCategory: EntityCategoryFragment, onSuccess?: () =
   });
 
   const watchedPropertyDefinitions = form.watch("propertyDefinitions");
-
-  const [searchTags] = useSearchTagsLazyQuery();
-
-  const [createTag] = useCreateGraphTagInlineMutation({
-    variables: {
-      graph: props.entityCategory.graph.id,
-      input: "",
-    },
-  });
 
   return (
     <>
@@ -101,13 +95,6 @@ const TForm = (props: { entityCategory: EntityCategoryFragment, onSuccess?: () =
                 label="Description"
                 name="description"
                 description="What describes your expression the best? (e.g. 'A person is a human being')"
-              />
-              <GraphQLCreatableListSearchField
-                searchQuery={searchTags}
-                label="Tags"
-                name="tags"
-                description="Search for related entities"
-                createMutation={(v) => createTag({ variables: { input: v.variables.input, graph: props.entityCategory.graph.id } })}
               />
             </div>
 
@@ -196,7 +183,9 @@ const TForm = (props: { entityCategory: EntityCategoryFragment, onSuccess?: () =
                       description: "",
                       valueKind: ValueKind.String,
                       derivation: DerivationType.Latest,
+                      index: false,
                       searchable: false,
+                      rule: buildDerivationRule(null),
                     })
                   }
                   className="w-full"

@@ -1,5 +1,21 @@
-mutation CreateMeasurement($input: CreateMeasurementInput!) {
-  createMeasurement(input: $input) {
-    ...Measurement
+mutation AssertMeasurementExists($input: AssertMeasurementExistsInput!) {
+  assertMeasurementExists(input: $input) {
+    assertion {
+      ...Assertion
+    }
+    link {
+      ...Link
+    }
+  }
+}
+
+mutation RetractMeasurement($id: String!) {
+  retractMeasurement(input: { id: $id }) {
+    assertion {
+      ...Assertion
+    }
+    link {
+      ...Link
+    }
   }
 }

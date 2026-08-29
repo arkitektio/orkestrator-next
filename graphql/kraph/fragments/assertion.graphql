@@ -1,0 +1,44 @@
+# An assertion is the act of claiming, not the thing claimed: who said it, under
+# which action, and where it sits in the organization-spanning log. Every
+# claim-writing mutation returns one alongside the node or edge it recorded.
+fragment Assertion on Assertion {
+  id
+  subject
+  appId
+  actionId
+  actionName
+  assertedAt
+  recordedAt
+  seq
+}
+
+# Where a claim is drawn. A claim names a word the organization owns; each graph
+# that declares a category for that word draws it, so one assertion can surface
+# in many views — or, legitimately, in none.
+fragment NodeDrawing on NodeDrawing {
+  graph {
+    id
+    name
+  }
+  category {
+    id
+    label
+  }
+  node {
+    ...ListNode
+  }
+}
+
+fragment EdgeDrawing on EdgeDrawing {
+  graph {
+    id
+    name
+  }
+  category {
+    id
+    label
+  }
+  edge {
+    ...BaseEdge
+  }
+}

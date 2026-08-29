@@ -1,0 +1,25 @@
+fragment MetricKind on MetricKind {
+  id
+  key
+  label
+  description
+  purl
+  color
+  valueKind
+  structureKind {
+    id
+    identifier
+  }
+  createdAt
+}
+
+fragment ListMetricKind on MetricKind {
+  id
+  key
+  label
+  valueKind
+  structureKind {
+    id
+    identifier
+  }
+}

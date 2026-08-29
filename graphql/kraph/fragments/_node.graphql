@@ -1,72 +1,28 @@
+# `Node` is one graph's drawing of a claim, and it is exactly the three values of
+# `InstanceKind`: Entity, NaturalEvent, ProtocolEvent.
+#
+# `Structure` and `Metric` used to implement it. They no longer do, and should
+# not have: they are rows of different tables, not instances — a structure points
+# at an external datum and a metric is a measured value about one. Neither is ever
+# drawn as a vertex. Read them at claim grain (`structure(id:)`, `metric(id:)`).
+#
+# There is no `graph` field here either. A claim is organization-grain and may be
+# drawn by several views at once, so "the graph this node is in" was never a
+# single answer — `Instance.drawnIn` is, and it returns all of them.
+
 fragment BaseNode on Node {
   id
   label
-  graph {
-    id
-  }
+}
+
+fragment ListNode on Node {
+  id
   label
 }
 
 fragment Node on Node {
   ...BaseNode
   ...Entity
-  ...Structure
-  ...Metric
-}
-
-fragment DetailNode on Node {
-  ...Node
-  graph {
-    id
-    name
-  }
-}
-
-
-fragment PathRelationShadowLink on RelationShadowLink {
-  id
-  label
-}
-
-fragment PathStructureRelationShadowLink on StructureRelationShadowLink {
-  id
-  label
-}
-
-fragment PathMeasurementRelationShadowLink on MeasurementShadowLink {
-  id
-  label
-}
-fragment PathActivity on Activity {
-  id
-  label
-}
-fragment PathStructure on Structure {
-  id
-  label
-  category {
-    id
-    label
-  }
-}
-
-
-fragment PathNode on Node {
-  id
-
-  ...PathActivity
-  ...PathStructure
-  ...PathEntity
-  ...PathNaturalEvent
-  ...PathProtocolEvent
-  ...PathMetric
-  ...PathRelationShadowLink
-  ...PathStructureRelationShadowLink
-  ...PathMeasurementRelationShadowLink
-}
-
-
-fragment ListNode on Node {
-  id
-  label
+  ...NaturalEvent
+  ...ProtocolEvent
 }

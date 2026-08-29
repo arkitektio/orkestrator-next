@@ -1,10 +1,10 @@
-mutation CreateRelationCategory($input: CreateRelationDefinitionInput!) {
+mutation CreateRelationCategory($input: CreateRelationCategoryInput!) {
   createRelationCategory(input: $input) {
     ...RelationCategory
   }
 }
 
-mutation UpdateRelationCategory($input: UpdateRelationDefinitionInput!) {
+mutation UpdateRelationCategory($input: UpdateRelationCategoryInput!) {
   updateRelationCategory(input: $input) {
     ...RelationCategory
   }

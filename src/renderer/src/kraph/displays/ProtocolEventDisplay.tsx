@@ -1,36 +1,41 @@
 import { DisplayWidgetProps } from "@/lib/display/registry";
-import { KraphProtocolEvent } from "@/linkers";
-import { useGetProtocolEventQuery } from "../api/graphql";
+import { KraphInstance } from "@/linkers";
+import { useGetInstanceQuery } from "../api/graphql";
+import Timestamp from "react-timestamp";
 
+/**
+ * Claim-grain, deliberately — see `EntityDisplay`. Displays render from outside
+ * kraph (command palette, rekuest return ports) where there is no graph to name,
+ * and the view-grain read requires one.
+ */
 export const ProtocolEventDisplay = (props: DisplayWidgetProps) => {
-  const { data } = useGetProtocolEventQuery({ variables: { id: props.object } });
+  const { data } = useGetInstanceQuery({ variables: { id: props.object } });
 
-  if (!data?.protocolEvent) {
+  if (!data?.instance) {
     return <div className="text-xs text-muted-foreground">Event not found</div>;
   }
 
-  const event = data.protocolEvent;
+  const instance = data.instance;
+  const word = instance.term.label ?? instance.term.key;
 
   if (props.context === "command") {
     return (
-      <KraphProtocolEvent.DetailLink object={event}>
+      <KraphInstance.DetailLink object={instance}>
         <div className="flex items-center gap-2 min-w-0">
-          <span className="font-medium text-sm truncate">{event.label}</span>
-          <span className="text-xs text-muted-foreground shrink-0">{event.category.label}</span>
+          <span className="font-medium text-sm truncate">{word}</span>
         </div>
-      </KraphProtocolEvent.DetailLink>
+      </KraphInstance.DetailLink>
     );
   }
 
   return (
-    <KraphProtocolEvent.DetailLink object={event}>
+    <KraphInstance.DetailLink object={instance}>
       <div className="w-full rounded-lg border border-border/60 bg-card p-3 space-y-1">
-        <div className="font-semibold text-sm">{event.label}</div>
-        <div className="text-xs text-muted-foreground">{event.category.label}</div>
+        <div className="font-semibold text-sm">{word}</div>
         <div className="text-xs text-muted-foreground">
-          {new Date(event.measuredFrom).toLocaleString()}
+          <Timestamp date={instance.createdAt} relative />
         </div>
       </div>
-    </KraphProtocolEvent.DetailLink>
+    </KraphInstance.DetailLink>
   );
 };

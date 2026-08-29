@@ -1,5 +1,5 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { MikroDataset } from "@/linkers";
+import { OmeroArkDataset } from "@/linkers";
 import { useListDatasetsQuery } from "@/omero-ark/api/graphql";
 import DatasetCard from "../cards/DatasetCard";
 
@@ -14,9 +14,9 @@ const List = () => {
       <ListRender
         array={data?.datasets}
         title={
-          <MikroDataset.ListLink className="flex-0">
+          <OmeroArkDataset.ListLink className="flex-0">
             Latest Datasets
-          </MikroDataset.ListLink>
+          </OmeroArkDataset.ListLink>
         }
         refetch={() => refetch()}
       >

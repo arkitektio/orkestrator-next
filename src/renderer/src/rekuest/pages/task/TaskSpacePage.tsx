@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from '@/app/routes/DetailQueryRoute'
-import { MultiSidebar } from '@/components/layout/MultiSidebar'
+import { Sidebars } from '@/components/layout/Sidebars'
 import { Button } from '@/components/ui/button'
 import { RekuestTask } from '@/linkers'
 import {
@@ -22,7 +22,8 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/componen
 import type {} from '@react-three/fiber'
 import { useEffect, useState } from 'react'
 import Timestamp from 'react-timestamp'
-import { isCancalable, isInterruptable, useReassign } from '../TaskPage'
+import { useReassign } from '@/rekuest/hooks/useReassign'
+import { isCancelable, isInterruptable } from '@/rekuest/lib/taskStatus'
 
 /**
  * Keeps the store in sync when the GraphQL cache updates
@@ -70,7 +71,7 @@ export const TaskSpacePage = asDetailQueryRoute(useDetailTaskQuery, ({ data, id 
             >
               Rerun
             </Button>
-            {isCancalable(data.task) && (
+            {isCancelable(data.task) && (
               <Button
                 onClick={() =>
                   cancel({
@@ -99,11 +100,11 @@ export const TaskSpacePage = asDetailQueryRoute(useDetailTaskQuery, ({ data, id 
           </div>
         }
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: <RekuestTask.Komments object={data?.task} />
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Knowledge">
+              <RekuestTask.Knowledge object={data?.task} />
+            </Sidebars.Tab>
+          </Sidebars>
         }
       >
         <ChildTaskUpdater taskId={id} />

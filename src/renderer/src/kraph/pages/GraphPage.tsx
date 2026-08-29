@@ -1,6 +1,6 @@
-import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { asGraphScopeQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormSheet } from "@/components/dialog/FormDialog";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { KraphGraph } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import {
@@ -10,10 +10,13 @@ import {
 
 import { Button } from "@/components/ui/button";
 import OntologyGraph from "../components/designer/OntologyGraph";
+import { ProjectionBadge } from "../components/ProjectionBadge";
 import ScatterPlotList from "../components/lists/ScatterPlotList";
 import { UpdateGraphForm } from "../forms/UpdateGraphForm";
 
-export const Page = asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
+// The index of `graphs/:graph`: the graph comes from scope, not from a `:id`
+// segment this route does not have.
+export const Page = asGraphScopeQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
   const [update] = useUpdateGraphMutation({
     refetchQueries: ["GetGraph"],
   });
@@ -38,6 +41,7 @@ export const Page = asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => 
       title={data.graph.name}
       pageActions={
         <>
+          <ProjectionBadge projection={data.graph.projection} />
 
           <FormSheet
             trigger={
@@ -66,16 +70,18 @@ export const Page = asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => 
         </>
       }
       sidebars={
-        <MultiSidebar
-          map={{
-            Comments: <KraphGraph.Komments object={data.graph} />,
-            Plots: (
+        <Sidebars>
+          <Sidebars.Tab label="Knowledge">
+            <KraphGraph.Knowledge object={data.graph} />
+          </Sidebars.Tab>
+          <Sidebars.Tab label="Plots">
+            {(
               <>
                 <ScatterPlotList />
               </>
-            ),
-          }}
-        />
+            )}
+          </Sidebars.Tab>
+        </Sidebars>
       }
     >
       <div className="grid md:grid-cols-12 gap-4 md:gap-8 xl:gap-20 md:items-center px-6 py-2">

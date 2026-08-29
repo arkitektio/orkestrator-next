@@ -1,7 +1,7 @@
 import { Guard } from "@/app/Arkitekt";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import React from "react";
-import { Route, Routes } from "react-router";
+import { Route, Routes } from "react-router-dom";
 import CollectionPage from "./pages/CollectionPage";
 import CollectionsPage from "./pages/CollectionsPage";
 import HomePage from "./pages/HomePage";
@@ -12,6 +12,7 @@ import ProvidersPage from "./pages/ProvidersPage";
 import RoomPage from "./pages/RoomPage";
 import RoomsPage from "./pages/RoomsPage";
 import StandardPane from "./panes/StandardPane";
+import { NotFound } from "@/app/components/fallbacks/NotFound";
 interface Props { }
 
 export const AlpakaModule: React.FC<Props> = () => {
@@ -27,7 +28,8 @@ export const AlpakaModule: React.FC<Props> = () => {
           <Route path="collections" element={<CollectionsPage />} />
           <Route path="llmmodels/:id" element={<LLMModelPage />} />
           <Route path="llmmodels" element={<LLMModelsPage />} />
-          <Route path="*" element={<HomePage />} />
+          <Route index element={<HomePage />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </ModuleLayout>
     </Guard.Alpaka>

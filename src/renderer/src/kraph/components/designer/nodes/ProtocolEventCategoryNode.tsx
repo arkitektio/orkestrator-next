@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { KraphProtocolEventCategory } from "@/linkers";
@@ -44,13 +43,6 @@ export const ProtocolEventCategoryNode = memo(({ data, id, selected }: NodeProps
             </KraphProtocolEventCategory.DetailLink>
           </div>
 
-          <div className="flex flex-row gap-2">
-            {data.tags.map((tag) => (
-              <Badge key={tag.name} variant="outline" className="text-xs">
-                {tag.name}
-              </Badge>
-            ))}
-          </div>
         </div>
       </KraphProtocolEventCategory.Smart>
     </>

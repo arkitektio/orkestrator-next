@@ -58,11 +58,6 @@ export const ImplementationHoverCard = ({ object }: { object: Object }) => {
     <HoverShell
       title={action.name}
       subtitle={`${impl.interface} · ${impl.agent.name}`}
-      icon={
-        action.logo ? (
-          <img src={action.logo} alt="" className="h-6 w-6 rounded" />
-        ) : undefined
-      }
     >
       {action.description && (
         <p className="text-xs text-muted-foreground line-clamp-3">

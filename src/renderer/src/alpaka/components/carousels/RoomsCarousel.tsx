@@ -7,7 +7,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { LokComment } from "@/linkers";
+import { AlpakaRoom } from "@/linkers";
 import { Username } from "@/lok-next/components/Me";
 
 export const Test = () => {
@@ -33,16 +33,16 @@ export const RoomsCarousel = () => {
               <CarouselItem key={index} className="grid grid-cols-6">
                 <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
                   <div>
-                    <LokComment.DetailLink
+                    <AlpakaRoom.DetailLink
                       object={item}
                       className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl"
                     >
                       {item.title}
-                    </LokComment.DetailLink>
+                    </AlpakaRoom.DetailLink>
                   </div>
                 </div>
                 <div className="col-span-2">
-                  <LokComment.DetailLink object={item} className="p-1">
+                  <AlpakaRoom.DetailLink object={item} className="p-1">
                     <Card>
                       <CardContent className="flex aspect-[3/2] items-center justify-center p-6">
                         <p className="mt-3 text-xl text-muted-foreground">
@@ -52,7 +52,7 @@ export const RoomsCarousel = () => {
                         </p>
                       </CardContent>
                     </Card>
-                  </LokComment.DetailLink>
+                  </AlpakaRoom.DetailLink>
                 </div>
               </CarouselItem>
             ))}

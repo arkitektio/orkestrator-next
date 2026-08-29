@@ -3,12 +3,10 @@ fragment BaseCategory on Category {
   graph {
     id
   }
-  key
-  tags {
-    id
-    name
-    description
+  term {
+    ...Term
   }
+  key
   purl
   relevantQueries {
     ...ListGraphQuery
@@ -26,9 +24,6 @@ fragment BaseNodeCategory on NodeCategory {
   width
   label
   height
-  relevantNodeQueries {
-    ...ListNodeQuery
-  }
 }
 
 fragment BaseEdgeCategory on EdgeCategory {
@@ -36,9 +31,7 @@ fragment BaseEdgeCategory on EdgeCategory {
 }
 
 fragment NodeCategory on NodeCategory {
-  ...StructureCategory
   ...EntityCategory
   ...ProtocolEventCategory
   ...NaturalEventCategory
-  ...MetricCategory
 }

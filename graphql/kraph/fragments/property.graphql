@@ -1,10 +1,29 @@
+# A property is not a column: it is a standing instruction for folding
+# measurements into a value. `derivation` says how the fold picks a winner and
+# `rule` says which measurements it reads and whose it trusts.
+#
+# Select all of it. `UpdateEntityCategoryInput.propertyDefinitions` is a full
+# replace, so a field this fragment omits is a field every save silently wipes.
+fragment DerivationRule on DerivationRule {
+  sourceNode
+  key
+  sourceValueKind
+  aggregation
+  conflictPolicy
+  subjectPriority
+  toolPriority
+}
+
 fragment PropertyDefinition on PropertyDefinition {
   key
-  valueKind
-  description
-  rule {
-    aggregation
-  }
   label
-
+  valueKind
+  unit
+  description
+  derivation
+  index
+  searchable
+  rule {
+    ...DerivationRule
+  }
 }

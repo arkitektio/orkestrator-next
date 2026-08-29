@@ -1,5 +1,4 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
-import { GraphQLCreatableListSearchField } from "@/components/fields/GraphQLCreatableListSearchField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
@@ -9,8 +8,6 @@ import { useForm } from "react-hook-form";
 import {
   StructureRelationCategoryFragment,
   UpdateStructureRelationCategoryMutationVariables,
-  useCreateGraphTagInlineMutation,
-  useSearchTagsLazyQuery,
   useUpdateStructureRelationCategoryMutation
 } from "../api/graphql";
 
@@ -32,18 +29,8 @@ export const TForm = (props: {
       key: props.structureRelationCategory.key,
       label: props.structureRelationCategory.label,
       description: props.structureRelationCategory.description,
-      tags: props.structureRelationCategory.tags.map((tag) => tag.id),
     },
   });
-
-  const [createTag] = useCreateGraphTagInlineMutation({
-    variables: {
-      graph: props.structureRelationCategory.graph.id,
-      input: "",
-    },
-  });
-
-  const [searchTags] = useSearchTagsLazyQuery();
 
   return (
     <>
@@ -70,13 +57,6 @@ export const TForm = (props: {
                 label="Description"
                 name="description"
                 description="What describes your expression the best? (e.g. 'A person is a human being')"
-              />
-              <GraphQLCreatableListSearchField
-                searchQuery={searchTags}
-                label="Tags"
-                name="tags"
-                description="Search for related entities"
-                createMutation={(v) => createTag({ variables: { input: v.variables.input, graph: props.structureRelationCategory.graph.id } })}
               />
             </div>
           </div>

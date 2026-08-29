@@ -1,6 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormSheet } from "@/components/dialog/FormDialog";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/image";
 import { DragZone } from "@/components/upload/drag";
@@ -11,7 +11,7 @@ import {
 } from "@/linkers";
 import {
   useGetStructureRelationCategoryQuery,
-  useUpdateEntityCategoryMutation
+  useUpdateStructureRelationCategoryMutation
 } from "../api/graphql";
 import UpdateStructureRelationCategoryForm from "../forms/UpdateStructureRelationCategoryForm";
 
@@ -19,7 +19,7 @@ const Page = asDetailQueryRoute(
   useGetStructureRelationCategoryQuery,
   ({ data, refetch }) => {
     const uploadFile = useKraphMediaUpload();
-    const [update] = useUpdateEntityCategoryMutation();
+    const [update] = useUpdateStructureRelationCategoryMutation();
 
     const resolve = useResolve();
 
@@ -43,15 +43,13 @@ const Page = asDetailQueryRoute(
         object={{ id: data.structureRelationCategory.id }}
         title={data?.structureRelationCategory.label}
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: (
-                <KraphStructureRelationCategory.Komments
-                  object={{ id: data.structureRelationCategory.id }}
-                />
-              ),
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Knowledge">
+              <KraphStructureRelationCategory.Knowledge
+                object={{ id: data.structureRelationCategory.id }}
+              />
+            </Sidebars.Tab>
+          </Sidebars>
         }
         pageActions={
           <div className="flex flex-row gap-2">

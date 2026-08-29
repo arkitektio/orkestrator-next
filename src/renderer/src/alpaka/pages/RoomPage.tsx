@@ -1,6 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ChatLayout } from "@/components/chat/chat-layout";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { AlpakaRoom } from "@/linkers";
 import { useEffect } from "react";
 import {
@@ -49,11 +49,11 @@ export const RoomPage =  asDetailQueryRoute(
           </div>
         }
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: <AlpakaRoom.Komments object={data.room} />,
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Knowledge">
+              <AlpakaRoom.Knowledge object={data.room} />
+            </Sidebars.Tab>
+          </Sidebars>
         }
       >
         <div className="h-[calc(100vh)] min-h-0 flex flex-col overflow-hidden">

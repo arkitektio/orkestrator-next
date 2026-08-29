@@ -17,7 +17,7 @@ const TheCard = ({ item }: Props) => {
           }
           object={item}
         >
-          {item?.label}
+          {item?.key}
         </KraphMetric.DetailLink>
       </Card>
     </KraphMetric.Smart>

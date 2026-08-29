@@ -1,5 +1,6 @@
 import { DisplayWidgetProps } from "@/lib/display/registry";
 import { KraphProtocolEventCategory } from "@/linkers";
+import { TermBadge } from "../components/TermBadge";
 import { useGetProtocolEventCategoryQuery } from "../api/graphql";
 
 export const ProtocolEventCategoryDisplay = (props: DisplayWidgetProps) => {
@@ -31,6 +32,7 @@ export const ProtocolEventCategoryDisplay = (props: DisplayWidgetProps) => {
           <img src={cat.image.presignedUrl} alt={cat.label} className="w-full h-20 object-cover rounded" />
         )}
         <div className="font-semibold text-sm">{cat.label}</div>
+        <TermBadge term={cat.term} />
         {cat.description && (
           <div className="text-xs text-muted-foreground line-clamp-2">{cat.description}</div>
         )}

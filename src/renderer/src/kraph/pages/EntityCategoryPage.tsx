@@ -1,7 +1,7 @@
 import { EnhanceButton } from "@/alpaka/components/EnhanceButton";
 import { useDialog } from "@/app/dialog";
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Button } from "@/components/ui/button";
 import { DialogButton } from "@/components/ui/dialogbutton";
 import { DragZone } from "@/components/upload/drag";
@@ -12,7 +12,7 @@ import { Plus, Settings2 } from "lucide-react";
 import { useNavigate as useNavigateRouter } from "react-router-dom";
 import {
   EntityNodesDocument,
-  useCreateEntityMutation,
+  useAssertEntityExistsMutation,
   useGetEntityCategoryQuery,
   useUpdateEntityCategoryMutation,
 } from "../api/graphql";
@@ -26,10 +26,11 @@ export const Page = asDetailQueryRoute(
     const [update] = useUpdateEntityCategoryMutation();
     const navigateRouter = useNavigateRouter();
 
-    const [quickCreate] = useCreateEntityMutation({
+    const [quickCreate] = useAssertEntityExistsMutation({
       variables: {
         input: {
-          entityCategory: data.entityCategory.id,
+          // Claims name the word this category declares, not the category row.
+          term: data.entityCategory.term?.key ?? data.entityCategory.key,
         },
       },
       refetchQueries: [{ query: EntityNodesDocument, variables: { entityCategory: data.entityCategory.id } }],
@@ -71,15 +72,14 @@ export const Page = asDetailQueryRoute(
         object={data.entityCategory}
         title={data?.entityCategory.label}
         sidebars={
-          <MultiSidebar
-            map={{
-              Stats: <EntityCategorySidebar category={data.entityCategory.id} />,
-              Comments: (
-                <KraphEntityCategory.Komments object={data.entityCategory} />
-              ),
-
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Stats">
+              <EntityCategorySidebar category={data.entityCategory.id} />
+            </Sidebars.Tab>
+            <Sidebars.Tab label="Knowledge">
+              <KraphEntityCategory.Knowledge object={data.entityCategory} />
+            </Sidebars.Tab>
+          </Sidebars>
         }
         pageActions={
           <>

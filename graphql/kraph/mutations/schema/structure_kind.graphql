@@ -1,0 +1,9 @@
+mutation UpdateStructureKind($input: UpdateStructureKindInput!) {
+  updateStructureKind(input: $input) {
+    ...StructureKind
+  }
+}
+
+mutation DeleteStructureKind($id: String!) {
+  deleteStructureKind(input: { id: $id })
+}

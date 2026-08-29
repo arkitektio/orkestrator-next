@@ -1,6 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormSheet } from "@/components/dialog/FormDialog";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/image";
 import { DragZone } from "@/components/upload/drag";
@@ -8,11 +8,11 @@ import { useKraphMediaUpload } from "@/datalayer/hooks/useKraphMediaUpload";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import {
   KraphMeasurementCategory,
-  KraphMetricCategory
+  KraphMetricKind
 } from "@/linkers";
 import {
   useGetMeasurmentCategoryQuery,
-  useUpdateEntityCategoryMutation
+  useUpdateMeasurementCategoryMutation
 } from "../api/graphql";
 import UpdateMeasurementCategoryForm from "../forms/UpdateMeasurementCategoryForm";
 
@@ -20,7 +20,7 @@ const Page = asDetailQueryRoute(
   useGetMeasurmentCategoryQuery,
   ({ data, refetch }) => {
     const uploadFile = useKraphMediaUpload();
-    const [update] = useUpdateEntityCategoryMutation();
+    const [update] = useUpdateMeasurementCategoryMutation();
 
     const resolve = useResolve();
 
@@ -44,15 +44,13 @@ const Page = asDetailQueryRoute(
         object={{ id: data.measurementCategory.id }}
         title={data?.measurementCategory.label}
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: (
-                <KraphMetricCategory.Komments
-                  object={{ id: data.measurementCategory.id }}
-                />
-              ),
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Knowledge">
+              <KraphMetricKind.Knowledge
+                object={{ id: data.measurementCategory.id }}
+              />
+            </Sidebars.Tab>
+          </Sidebars>
         }
         pageActions={
           <div className="flex flex-row gap-2">

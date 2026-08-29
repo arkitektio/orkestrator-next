@@ -1,12 +1,12 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Card } from "@/components/ui/card";
 import {
   ElektroExperiment,
   ElektroRecording,
   ElektroStimulus,
 } from "@/linkers";
-import { cn } from "@udecode/cn";
+import { cn } from "@/lib/utils";
 import React from "react";
 import Timestamp from "react-timestamp";
 import { useSearchParams } from "react-router-dom";
@@ -99,13 +99,11 @@ export const ExperimentPage = asDetailQueryRoute(
           </div>
         }
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: (
-                <ElektroExperiment.Komments object={data.experiment} />
-              ),
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Knowledge">
+              <ElektroExperiment.Knowledge object={data.experiment} />
+            </Sidebars.Tab>
+          </Sidebars>
         }
       >
         <div className="flex-initial grid grid-cols-12 gap-2 h-32 w-full">

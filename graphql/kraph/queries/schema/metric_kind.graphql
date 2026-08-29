@@ -1,0 +1,41 @@
+query GetMetricKind($id: ID!) {
+  metricKind(id: $id) {
+    ...MetricKind
+  }
+}
+
+query SearchMetricKinds($search: String, $values: [ID!]) {
+  options: metricKinds(
+    filters: { search: $search, ids: $values }
+    pagination: { limit: 10 }
+  ) {
+    value: id
+    label: key
+  }
+}
+
+query ListMetricKinds(
+  $filters: MetricKindFilter
+  $pagination: VocabularyPaginationInput
+) {
+  metricKinds(filters: $filters, pagination: $pagination) {
+    ...ListMetricKind
+  }
+}
+
+# `DerivationRuleInput.key` is the measurement key, again a string rather than an
+# id. Scoped by the structure kind the rule reads from, so the picker only offers
+# keys that kind actually carries.
+#
+# `MetricKindFilter` has no `keys` filter, so `$values` cannot round-trip a saved
+# key back through this search — the picker renders `rule.key` verbatim when the
+# option lookup misses, which is honest because the value IS the readable key.
+query SearchMetricKeys($search: String, $structureKind: ID) {
+  options: metricKinds(
+    filters: { search: $search, structureKind: $structureKind }
+    pagination: { limit: 20 }
+  ) {
+    value: key
+    label: key
+  }
+}

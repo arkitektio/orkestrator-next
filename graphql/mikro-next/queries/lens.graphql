@@ -1,0 +1,45 @@
+# The phasor context for one (axis, harmonic) of a lens. `SceneLens` already
+# carries the default-harmonic context; a phasor node on another harmonic
+# resolves its own here, because both the instrument calibration and the
+# persisted (g, s) distribution are harmonic-specific.
+query GetLensPhasor($id: ID!, $axis: String, $harmonic: Int!) {
+  lens(id: $id) {
+    id
+    phasor(axis: $axis, harmonic: $harmonic) {
+      ...PhasorContext
+    }
+  }
+}
+
+# Every anchor on a lens with its full metadata payload, for the layer card's
+# Metadata panel. SceneLens already carries a thin projection of these (the
+# histogram the clim comes from, the label the row shows); this is the reference
+# view, fetched only when someone opens the panel.
+query GetLensAnchors($id: ID!) {
+  lens(id: $id) {
+    id
+    activeAnchors {
+      ...FullCoordinateAnchor
+    }
+  }
+}
+
+# Existing lenses over a dataset, so adding a layer can reuse a full lens
+# (slices: []) instead of minting a new one per layer.
+query ListLensesForDataset($dataset: ID!) {
+  lenses(filters: { dataset: $dataset }) {
+    id
+    slices {
+      ...DimSlice
+    }
+  }
+}
+
+# One lens, for its detail page. Registering `@mikro/lens` as a smart model
+# means the generic "Open" / "Open in new window" local actions
+# (`app/localactions.tsx`) can navigate to it, so the route has to resolve.
+query GetLens($id: ID!) {
+  lens(id: $id) {
+    ...DetailLens
+  }
+}

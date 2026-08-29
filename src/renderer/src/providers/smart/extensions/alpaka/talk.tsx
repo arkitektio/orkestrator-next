@@ -3,7 +3,10 @@ import { CommandGroup } from "cmdk";
 import { MessageSquareMore } from "lucide-react";
 import React from "react";
 
-import { storeRoomTalkingAbout } from "../../../../alpaka/roomTalkingAbout";
+import {
+  storeRoomTalkingAbout,
+  toStructureInputs,
+} from "../../../../alpaka/roomTalkingAbout";
 import { CommandActionRow } from "../CommandActionRow";
 import type { PassDownProps } from "../types";
 import { useNavigate } from "react-router-dom";
@@ -35,12 +38,7 @@ export const TalkAboutButton = (props: PassDownProps) => {
   const navigate = useNavigate();
 
   const openRoom = React.useCallback(async () => {
-    const talkingAbout = props.objects
-      .filter((structure) => structure.object?.id)
-      .map((structure) => ({
-        identifier: structure.identifier,
-        object: structure.object.id,
-      }));
+    const talkingAbout = toStructureInputs(props.objects);
 
     if (talkingAbout.length === 0) {
       setError("No structure selected");

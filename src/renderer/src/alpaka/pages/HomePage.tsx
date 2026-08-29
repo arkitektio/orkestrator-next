@@ -1,4 +1,4 @@
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { HelpSidebar } from "@/components/sidebars/help";
 import { AlpakaRoom } from "@/linkers";
@@ -41,10 +41,14 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
     <PageLayout
       title="Alpaka"
       sidebars={
-        <MultiSidebar map={{
-          Statistics: <HomePageStatisticsSidebar />,
-          Help: <HelpSidebar />
-        }} />
+        <Sidebars>
+          <Sidebars.Tab label="Statistics">
+            <HomePageStatisticsSidebar />
+          </Sidebars.Tab>
+          <Sidebars.Tab label="Help">
+            <HelpSidebar />
+          </Sidebars.Tab>
+        </Sidebars>
       }
       pageActions={
         <>

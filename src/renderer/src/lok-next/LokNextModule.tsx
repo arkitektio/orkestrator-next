@@ -1,7 +1,7 @@
 import { Guard } from "@/app/Arkitekt";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import React from "react";
-import { Route, Routes } from "react-router";
+import { Route, Routes } from "react-router-dom";
 import AppPage from "./pages/AppPage";
 import AppsPage from "./pages/AppsPage";
 import ClientPage from "./pages/ClientPage";
@@ -24,6 +24,7 @@ import ServicesPage from "./pages/ServicesPage";
 import UserPage from "./pages/UserPage";
 import UsersPage from "./pages/UsersPage";
 import StandardPane from "./panes/StandardPane";
+import { NotFound } from "@/app/components/fallbacks/NotFound";
 interface Props { }
 
 export const LokNextModule: React.FC<Props> = () => {
@@ -54,7 +55,8 @@ export const LokNextModule: React.FC<Props> = () => {
             path="serviceinstances/:id"
             element={<ServiceInstancePage />}
           />
-          <Route path="*" element={<HomePage />} />
+          <Route index element={<HomePage />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </ModuleLayout>
     </Guard.Lok>

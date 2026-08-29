@@ -1,21 +1,38 @@
-mutation CreateNaturalEvent($input: CreateNaturalEventInput!) {
-  createNaturalEvent(input: $input) {
-    ...NaturalEvent
+mutation AssertNaturalEventExists($input: AssertNaturalEventExistsInput!) {
+  assertNaturalEventExists(input: $input) {
+    assertion {
+      ...Assertion
+    }
+    instance {
+      ...Instance
+    }
+    drawings {
+      ...NodeDrawing
+    }
   }
 }
 
-mutation DeleteNaturalEvent($id: String!) {
-  deleteNaturalEvent(input: { id: $id })
-}
-
-mutation ArchiveNaturalEvent($id: String!) {
-  archiveNaturalEvent(input: { id: $id }) {
-    ...NaturalEvent
+mutation RetractNaturalEvent($id: String!) {
+  retractNaturalEvent(input: { id: $id }) {
+    assertion {
+      ...Assertion
+    }
+    instance {
+      ...Instance
+    }
   }
 }
 
-mutation UpdateNaturalEvent($input: UpdateNaturalEventInput!) {
-  updateNaturalEvent(input: $input) {
-    ...NaturalEvent
+mutation AttestNaturalEvent($id: String!) {
+  attestNaturalEvent(input: { id: $id }) {
+    assertion {
+      ...Assertion
+    }
+    instance {
+      ...Instance
+    }
+    drawings {
+      ...NodeDrawing
+    }
   }
 }

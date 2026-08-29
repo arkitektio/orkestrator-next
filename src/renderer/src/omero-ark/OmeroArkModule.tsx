@@ -1,6 +1,6 @@
 import { Guard } from "@/app/Arkitekt";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
-import { Route, Routes } from "react-router";
+import { Route, Routes } from "react-router-dom";
 import { ConnectedGuard } from "./ConnectedGuard";
 import DatasetPage from "./pages/DatasetPage";
 import DatasetsPage from "./pages/DatasetsPage";
@@ -9,6 +9,7 @@ import OmeroImagePage from "./pages/OmeroImagePage";
 import ProjectPage from "./pages/ProjectPage";
 import ProjectsPage from "./pages/ProjectsPage";
 import StandardPane from "./panes/StandardPane";
+import { NotFound } from "@/app/components/fallbacks/NotFound";
 
 
 export const OmeroArkModule = () => {
@@ -23,7 +24,7 @@ export const OmeroArkModule = () => {
             <Route path="projects" element={<ProjectsPage />} />
             <Route path="datasets" element={<DatasetsPage />} />
             <Route path="images/:id" element={<OmeroImagePage />} />
-            <Route path="*" element={<> NOTHING</>} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </ConnectedGuard>
       </ModuleLayout>

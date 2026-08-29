@@ -42,16 +42,16 @@ import {
 import {
   ListStructuresQuery,
   Ordering,
-  StructureCategoryFragment,
+  StructureKindFragment,
   StructureFilter,
   StructureOrder,
   useListStructuresQuery,
 } from "@/kraph/api/graphql";
 import { KraphStructure } from "@/linkers";
-import { ViewOptions } from "../DelegatingNodeViewRenderer";
+import { ViewOptions } from "../types";
 
 const calculateColumns = (
-  category: StructureCategoryFragment,
+  kind?: StructureKindFragment,
 ): ColumnDef<ListStructuresQuery["structures"][0]>[] => {
   const defaults: ColumnDef<ListStructuresQuery["structures"][0]>[] = [
     {
@@ -96,8 +96,9 @@ const calculateColumns = (
     },
     {
       id: "label",
-      accessorFn: (x) => x.label,
-      header: () => <div className="text-center">Label</div>,
+      // A structure has no label — `(identifier, object)` is how it is named.
+      accessorFn: (x) => x.object,
+      header: () => <div className="text-center">Object</div>,
       cell: ({ row }) => {
         const label = row.getValue("label") as string;
         return <div className="text-center">{label || ""}</div>;
@@ -128,34 +129,23 @@ const calculateColumns = (
       enableGlobalFilter: true,
     },
     {
-      id: "categoryLabel",
-      accessorFn: (x) => x.category.label || category.label,
+      id: "kindLabel",
+      accessorFn: (x) => x.kind?.label || kind?.label || x.kind?.identifier || "",
       header: () => <div className="text-center">Category Label</div>,
       cell: ({ row }) => {
-        const value = row.getValue("categoryLabel") as string;
+        const value = row.getValue("kindLabel") as string;
         return <div className="text-center">{value || ""}</div>;
       },
       enableSorting: true,
       enableGlobalFilter: true,
     },
     {
-      id: "categoryIdentifier",
-      accessorFn: (x) => x.category.identifier || category.identifier,
+      id: "kindIdentifier",
+      accessorFn: (x) => x.kind?.identifier || kind?.identifier || "",
       header: () => <div className="text-center">Category Identifier</div>,
       cell: ({ row }) => {
-        const value = row.getValue("categoryIdentifier") as string;
+        const value = row.getValue("kindIdentifier") as string;
         return <div className="text-center font-mono text-xs">{value || ""}</div>;
-      },
-      enableSorting: true,
-      enableGlobalFilter: true,
-    },
-    {
-      id: "categoryAgeName",
-      accessorFn: (x) => x.category.ageName || category.ageName,
-      header: () => <div className="text-center">Category Age Name</div>,
-      cell: ({ row }) => {
-        const value = row.getValue("categoryAgeName") as string;
-        return <div className="text-center">{value || ""}</div>;
       },
       enableSorting: true,
       enableGlobalFilter: true,
@@ -166,7 +156,7 @@ const calculateColumns = (
 };
 
 export const StructureList = (props: {
-  category: StructureCategoryFragment;
+  kind?: StructureKindFragment;
   options?: ViewOptions;
 }) => {
   const [searchInput, setSearchInput] = React.useState<string>("");
@@ -198,7 +188,7 @@ export const StructureList = (props: {
 
   const { data, loading, refetch, error } = useListStructuresQuery({
     variables: {
-      id: props.category.id,
+      id: props.kind?.id,
       filters,
       ordering,
       pagination: {
@@ -215,7 +205,7 @@ export const StructureList = (props: {
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
 
-  const columns = calculateColumns(props.category);
+  const columns = calculateColumns(props.kind);
 
   const table = useReactTable({
     data: rows,
@@ -245,12 +235,10 @@ export const StructureList = (props: {
 
     const headers = [
       "id",
-      "label",
       "object",
       "identifier",
-      "categoryLabel",
-      "categoryIdentifier",
-      "categoryAgeName",
+      "kindLabel",
+      "kindIdentifier",
     ];
 
     const csvHeaders = headers.join(",");
@@ -258,12 +246,10 @@ export const StructureList = (props: {
     const csvRows = rows.map((row) => {
       const values = [
         row.id,
-        row.label || "",
         row.object || "",
         String(row.identifier || ""),
-        row.category.label || props.category.label || "",
-        row.category.identifier || props.category.identifier || "",
-        row.category.ageName || props.category.ageName || "",
+        row.kind?.label || props.kind?.label || "",
+        row.kind?.identifier || props.kind?.identifier || "",
       ];
 
       return values
@@ -289,7 +275,7 @@ export const StructureList = (props: {
     link.setAttribute("href", url);
     link.setAttribute(
       "download",
-      `${props.category.label || "structures"}_export_${new Date().toISOString().split("T")[0]}.csv`,
+      `${props.kind?.label || props.kind?.identifier || "structures"}_export_${new Date().toISOString().split("T")[0]}.csv`,
     );
     link.style.visibility = "hidden";
 
@@ -318,11 +304,10 @@ export const StructureList = (props: {
             </div>
 
             <div className="flex items-center gap-2">
-              <Badge variant="secondary">{props.category.label}</Badge>
+              <Badge variant="secondary">{props.kind?.label || props.kind?.identifier}</Badge>
               <Badge variant="outline" className="font-mono text-xs">
-                {props.category.identifier}
+                {props.kind?.identifier}
               </Badge>
-              <Badge variant="outline">{props.category.ageName}</Badge>
 
               <Select
                 value={serverOrdering}

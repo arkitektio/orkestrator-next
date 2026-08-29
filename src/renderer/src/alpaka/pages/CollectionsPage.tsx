@@ -8,10 +8,10 @@ import CollectionList from "../components/lists/CollectionList";
 
 export type IRepresentationScreenProps = {};
 
-const ImagesPage: React.FC<IRepresentationScreenProps> = () => {
+const CollectionsPage: React.FC<IRepresentationScreenProps> = () => {
   return (
     <PageLayout
-      title="Images"
+      title="Collections"
       pageActions={
         <>
           <AlpakaCollection.NewButton>
@@ -34,4 +34,4 @@ const ImagesPage: React.FC<IRepresentationScreenProps> = () => {
   );
 };
 
-export default ImagesPage;
+export default CollectionsPage;

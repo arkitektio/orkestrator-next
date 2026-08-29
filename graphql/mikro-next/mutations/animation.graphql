@@ -1,0 +1,44 @@
+# Camera tours through a scene. A tour is authored as a whole: `waypoints` is
+# the complete list in tour order, and the server writes `order` by enumerating
+# it, so the client never sends an index and never patches a single stop.
+mutation CreateAnimation(
+  $scene: ID!
+  $name: String!
+  $description: String
+  $waypoints: [AnimationWaypointInput!]!
+) {
+  createAnimation(
+    input: {
+      scene: $scene
+      name: $name
+      description: $description
+      waypoints: $waypoints
+    }
+  ) {
+    ...Animation
+  }
+}
+
+# Re-authoring, not patching: passing `waypoints` REPLACES the tour's stops
+# entirely. Omit it to rename/redescribe a tour without touching its poses.
+mutation UpdateAnimation(
+  $id: ID!
+  $name: String
+  $description: String
+  $waypoints: [AnimationWaypointInput!]
+) {
+  updateAnimation(
+    input: {
+      id: $id
+      name: $name
+      description: $description
+      waypoints: $waypoints
+    }
+  ) {
+    ...Animation
+  }
+}
+
+mutation DeleteAnimation($id: ID!) {
+  deleteAnimation(input: { id: $id })
+}

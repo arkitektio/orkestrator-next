@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { KraphReagentCategory } from "@/linkers";
@@ -39,13 +38,6 @@ export const ReagentCategoryNode = memo(({ data, id, selected }: NodeProps<Reage
             {data.label}
           </KraphReagentCategory.DetailLink>
 
-          <div className="flex flex-row gap-2">
-            {data.tags.map((tag) => (
-              <Badge key={tag.id} variant="outline" className="text-xs">
-                {tag.name}
-              </Badge>
-            ))}
-          </div>
         </div>
       </KraphReagentCategory.Smart>
     </>

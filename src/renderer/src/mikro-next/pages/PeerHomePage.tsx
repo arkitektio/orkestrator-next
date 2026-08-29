@@ -3,7 +3,7 @@ import { Separator } from "@/components/ui/separator";
 
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { CommandMenu } from "@/command/Menu";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { HelpSidebar } from "@/components/sidebars/help";
 import { Button } from "@/components/ui/button";
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,9 +12,9 @@ import { JustUsername } from "@/lok-next/components/UserAvatar";
 import { Database } from "lucide-react";
 import { parseAsBoolean, parseAsIsoDateTime, useQueryState } from "nuqs";
 import { usePeerHomePageQuery } from "../api/graphql";
-import DatasetList from "../components/lists/DatasetList";
+import FolderList from "../components/lists/FolderList";
 import FileList from "../components/lists/FileList";
-import ImageList from "../components/lists/ImageList";
+import ArrayDatasetList from "../components/lists/ArrayDatasetList";
 import { PeerStatisticsSidebar } from "../components/sidebars/PeerStatisticsSidebar";
 
 
@@ -68,10 +68,10 @@ const Page = asDetailQueryRoute(usePeerHomePageQuery, ({ id }) => {
 
 
       </>}
-      sidebars={<MultiSidebar map={{
-        Statistics: <PeerStatisticsSidebar sub={id} />,
-        Help: <HelpSidebar />,
-      }} />}
+      sidebars={<Sidebars>
+        <Sidebars.Tab label="Statistics"><PeerStatisticsSidebar sub={id} /></Sidebars.Tab>
+        <Sidebars.Tab label="Help"><HelpSidebar /></Sidebars.Tab>
+      </Sidebars>}
       title={
         <>
           <JustUsername sub={id} />
@@ -93,11 +93,11 @@ const Page = asDetailQueryRoute(usePeerHomePageQuery, ({ id }) => {
           </CardDescription>
         </CardHeader>
 
-        <ImageList
+        <ArrayDatasetList
           filters={{ notDerived: parentless ? true : undefined, owner: id, ...temporalFilter }}
         />
         <Separator className="my-4" />
-        <DatasetList
+        <FolderList
           filters={{ parentless: parentless ? true : undefined, owner: id, ...temporalFilter }}
         />
         <Separator className="my-4" />

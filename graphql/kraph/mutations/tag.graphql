@@ -1,6 +1,0 @@
-mutation CreateGraphTagInline($graph: String!, $input: String!) {
-  result: createCategoryTag(input: {graph: $graph, value: $input}) {
-    value: id
-    label: name
-  }
-}

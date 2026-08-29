@@ -1,7 +1,7 @@
 import { Guard } from "@/app/Arkitekt";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import React from "react";
-import { Route, Routes } from "react-router";
+import { Route, Routes } from "react-router-dom";
 import BackendPage from "./pages/BackendPage";
 import DefinitionPage from "./pages/DefinitionPage";
 import FlavourPage from "./pages/FlavourPage";
@@ -13,6 +13,7 @@ import ReposPage from "./pages/ReposPage";
 import ReleasePage from "./pages/ReleasePage";
 import ResourcePage from "./pages/ResourcePage";
 import StandardPane from "./panes/StandardPane";
+import { NotFound } from "@/app/components/fallbacks/NotFound";
 interface Props { }
 
 export const KabinetModule: React.FC<Props> = () => {
@@ -29,7 +30,9 @@ export const KabinetModule: React.FC<Props> = () => {
           <Route path="backends/:id" element={<BackendPage />} />
           <Route path="releases/:id" element={<ReleasePage />} />
           <Route path="flavours/:id" element={<FlavourPage />} />
-          <Route path="*" element={<HomePage />} />
+          <Route index element={<HomePage />} />
+          <Route path="home" element={<HomePage />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </ModuleLayout>
     </Guard.Kabinet>

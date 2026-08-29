@@ -1,0 +1,63 @@
+query GetAnnotation($id: ID!) {
+  annotation(id: $id) {
+    ...DetailAnnotation
+  }
+}
+
+# The renderer's list: one entry per collection, polled by every mounted
+# AnnotationLayer and ridden along by the annotations panel (same variables, so
+# Apollo serves both from one cache entry). Keep its selection lean — see
+# `SceneAnnotation`. Named in `refetchQueries` by string in
+# useCreateSceneAnnotation / useDeleteSelectedRois.
+query GetSceneAnnotations(
+  $filters: AnnotationFilter
+  $pagination: OffsetPaginationInput
+) {
+  annotations(filters: $filters, pagination: $pagination) {
+    ...SceneAnnotation
+  }
+}
+
+# The painted regions of one collection, and the reason `GetSceneAnnotations` can
+# stay lean: the caller passes `NOT: {kind: SURFACE}` there and `kind: SURFACE`
+# here, so the heavy geometry is fetched once instead of every 5s. The two
+# predicates compose as AND — held by
+# `test_a_collection_and_a_negated_kind_compose` in the mikro server's
+# tests/test_annotations.py, because the split is silently wrong if they do not.
+# Named in `refetchQueries` by string in useCreateSceneAnnotation.
+query GetSceneSurfaces(
+  $filters: AnnotationFilter
+  $pagination: OffsetPaginationInput
+) {
+  annotations(filters: $filters, pagination: $pagination) {
+    ...SceneSurface
+  }
+}
+
+# The browse list behind /mikro/annotations. A separate document from
+# `GetSceneAnnotations` because the card needs its collection and the renderer
+# must not pay for it.
+query GetAnnotations(
+  $filters: AnnotationFilter
+  $ordering: [AnnotationOrder!]
+  $pagination: OffsetPaginationInput
+) {
+  annotations(filters: $filters, ordering: $ordering, pagination: $pagination) {
+    ...ListAnnotation
+  }
+}
+
+query GetAnnotationCollection($id: ID!) {
+  annotationCollection(id: $id) {
+    ...AnnotationCollection
+  }
+}
+
+query GetAnnotationCollections(
+  $filters: AnnotationCollectionFilter
+  $pagination: OffsetPaginationInput
+) {
+  annotationCollections(filters: $filters, pagination: $pagination) {
+    ...AnnotationCollection
+  }
+}

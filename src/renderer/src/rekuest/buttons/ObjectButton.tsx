@@ -11,8 +11,6 @@ import {
   BatchAssignButton as SmartBatchAssignButton,
   CreateMeasurementButton as SmartCreateMeasurementButton,
   DirectImplementationAssignment as SmartDirectImplementationAssignment,
-  EntityRelateButton as SmartEntityRelateButton,
-  EntityRelationActions as SmartEntityRelationActions,
   InstallButton as SmartInstallButton,
   LocalActionCommand as SmartLocalActionCommand,
   MeasurementActions as SmartMeasurementActions,
@@ -45,14 +43,12 @@ export const ApplicableBatchActions = SmartApplicableBatchActions;
 export const ApplicableActions = SmartApplicableActions;
 export const ApplicableShortcuts = SmartApplicableShortcuts;
 export const ApplicableDefinitions = SmartApplicableDefinitions;
-export const EntityRelationActions = SmartEntityRelationActions;
 export const StructureRelationActions = SmartStructureRelationActions;
 export const MeasurementActions = SmartMeasurementActions;
 export const ApplicableRelations = SmartApplicableRelations;
 export const ApplicableMeasurements = SmartApplicableMeasurements;
 export const StructureRelateButton = SmartStructureRelateButton;
 export const CreateMeasurementButton = SmartCreateMeasurementButton;
-export const EntityRelateButton = SmartEntityRelateButton;
 export const LocalActionCommand = SmartLocalActionCommand;
 export const Actions = SmartActions;
 export const ApplicableLocalActions = SmartApplicableLocalActions;

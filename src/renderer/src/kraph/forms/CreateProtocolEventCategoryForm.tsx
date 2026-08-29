@@ -2,13 +2,7 @@ import { useDialog } from "@/app/dialog";
 import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { StringField } from "@/components/fields/StringField";
-import { CommentsPopover } from "@/components/plate-ui/comments-popover";
-import { Editor } from "@/components/plate-ui/editor";
-import { FixedToolbar } from "@/components/plate-ui/fixed-toolbar";
-import { FixedToolbarButtons } from "@/components/plate-ui/fixed-toolbar-buttons";
-import { FloatingToolbar } from "@/components/plate-ui/floating-toolbar";
-import { FloatingToolbarButtons } from "@/components/plate-ui/floating-toolbar-buttons";
-import { TooltipProvider } from "@/components/plate-ui/tooltip";
+import { SwitchField } from "@/components/fields/SwitchField";
 import {
   Accordion,
   AccordionContent,
@@ -19,31 +13,19 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import {
-  ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { editor } from "@/plate/plugins";
-import { Plate, usePlateEditor } from "@udecode/plate-common/react";
 import { useMemo } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import {
   CreateProtocolEventCategoryMutationVariables,
   useCreateProtocolEventCategoryMutation,
   useSearchEntityCategoryLazyQuery,
-  useSearchTagsLazyQuery
 } from "../api/graphql";
 import { RoleProvider } from "../providers/RoleProvider";
-
-const initialValue = [
-  {
-    id: "1",
-    type: "p",
-    children: [{ text: "Hello, World!" }],
-  },
-];
 
 export const TForm = (props: { graph: string }) => {
   const [create] = useCreateProtocolEventCategoryMutation({
@@ -52,15 +34,10 @@ export const TForm = (props: { graph: string }) => {
 
   const dialog = useDialog();
 
-  const plateEditor = usePlateEditor({
-    ...editor,
-    value: initialValue,
-  });
-
   const onUpdate = (data) => {
     create({
       variables: {
-        input: { ...data, plateChildren: plateEditor.children },
+        input: data,
       },
     }).then(() => dialog.closeDialog());
   };
@@ -69,6 +46,7 @@ export const TForm = (props: { graph: string }) => {
     {
       defaultValues: {
         graph: props.graph,
+        backfill: false,
         label: "No Label",
         description: "Description",
         inputs: [],
@@ -96,7 +74,6 @@ export const TForm = (props: { graph: string }) => {
     outputs,
   ]);
 
-  const [searchTags] = useSearchTagsLazyQuery();
   const [searchEntityCategory] = useSearchEntityCategoryLazyQuery();
 
   const sourceArray = useFieldArray({
@@ -128,6 +105,11 @@ export const TForm = (props: { graph: string }) => {
               label="Description"
               description="Which description for the protocol"
             />
+            <SwitchField
+              label="Draw existing evidence"
+              name="backfill"
+              description="Project claims already made under this word into the graph now, instead of waiting for the next reproject."
+            />
           </div>
           <Button type="submit" variant={"default"}>
             Save
@@ -136,26 +118,8 @@ export const TForm = (props: { graph: string }) => {
 
         <div className="flex-1 overflow-hidden">
           <RoleProvider roles={roles}>
-            <TooltipProvider>
               <ResizablePanelGroup direction="horizontal">
-                <ResizablePanel defaultSize={60} minSize={30}>
-                  <Plate editor={plateEditor}>
-                    <div className="flex flex-col h-full">
-                      <FixedToolbar>
-                        <FixedToolbarButtons />
-                      </FixedToolbar>
-                      <div className="flex-1 overflow-y-auto p-4" id="scroll-container">
-                        <Editor className="min-h-full" />
-                      </div>
-                      <FloatingToolbar>
-                        <FloatingToolbarButtons />
-                      </FloatingToolbar>
-                      <CommentsPopover />
-                    </div>
-                  </Plate>
-                </ResizablePanel>
-                <ResizableHandle withHandle />
-                <ResizablePanel defaultSize={40} minSize={30}>
+                <ResizablePanel defaultSize={100} minSize={30}>
                   <Tabs defaultValue="entities" className="h-full flex flex-col">
                     <TabsList className="w-full justify-start rounded-none border-b bg-transparent p-0 px-2">
                       <TabsTrigger
@@ -210,11 +174,6 @@ export const TForm = (props: { graph: string }) => {
                                               label="Description"
                                             />
                                             <GraphQLListSearchField
-                                              name={`sourceEntityRoles.${index}.categoryDefinition.tagFilters`}
-                                              label="Tag Filters"
-                                              searchQuery={searchTags}
-                                            />
-                                            <GraphQLListSearchField
                                               name={`sourceEntityRoles.${index}.categoryDefinition.categoryFilters`}
                                               label="Category Filters"
                                               searchQuery={searchEntityCategory}
@@ -246,7 +205,7 @@ export const TForm = (props: { graph: string }) => {
                                       key: "new_target",
                                       role: "new_target",
                                       descriptor: {
-                                        tags: [],
+                                        keys: [],
                                       },
                                     })
                                   }
@@ -284,11 +243,6 @@ export const TForm = (props: { graph: string }) => {
                                               label="Description"
                                             />
                                             <GraphQLListSearchField
-                                              name={`targetEntityRoles.${index}.categoryDefinition.tagFilters`}
-                                              label="Tag Filters"
-                                              searchQuery={searchTags}
-                                            />
-                                            <GraphQLListSearchField
                                               name={`targetEntityRoles.${index}.categoryDefinition.categoryFilters`}
                                               label="Category Filters"
                                               searchQuery={searchEntityCategory}
@@ -320,7 +274,7 @@ export const TForm = (props: { graph: string }) => {
                                       key: "new_target",
                                       role: "new_target",
                                       descriptor: {
-                                        tags: [],
+                                        keys: [],
                                       },
                                     })
                                   }
@@ -340,7 +294,6 @@ export const TForm = (props: { graph: string }) => {
                   </Tabs>
                 </ResizablePanel>
               </ResizablePanelGroup>
-            </TooltipProvider>
           </RoleProvider>
         </div>
       </form>

@@ -11,6 +11,7 @@ import { Form } from "@/components/ui/form";
 import { DetailClientFragment } from "@/lok-next/api/graphql";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { clientAppIdentifier, clientAppVersion } from "@/lok-next/lib/clientLabels";
 
 type ReportClientBugFormData = {
   title: string;
@@ -49,10 +50,10 @@ function buildGitHubIssueUrl({
  */
 function formatClientInfo(client: DetailClientFragment): string {
   let info = `## Client Information\n\n`;
-  info += `- **App**: ${client.release.app.identifier}\n`;
-  info += `- **Version**: ${client.release.version}\n`;
+  info += `- **App**: ${clientAppIdentifier(client)}\n`;
+  info += `- **Version**: ${client.release?.version ?? "N/A"}\n`;
   info += `- **User**: ${client.user?.username || "N/A"}\n`;
-  info += `- **Client ID**: ${client.oauth2Client.clientId}\n`;
+  info += `- **Client ID**: ${client.clientId}\n`;
 
   if (client.node) {
     info += `- **Node**: ${client.node.name}\n`;
@@ -77,7 +78,7 @@ export const ReportClientBugDialog = ({
 
   const form = useForm<ReportClientBugFormData>({
     defaultValues: {
-      title: `Bug in ${client.release.app.identifier} v${client.release.version}`,
+      title: `Bug in ${clientAppVersion(client)}`,
       description: "",
       additionalContext: formatClientInfo(client),
     },
@@ -128,9 +129,7 @@ export const ReportClientBugDialog = ({
         <div className="grid gap-4 py-4">
           <div className="text-sm text-muted-foreground">
             Report a general bug for the client:{" "}
-            <strong>
-              {client.release.app.identifier} v{client.release.version}
-            </strong>
+            <strong>{clientAppVersion(client)}</strong>
           </div>
 
           <StringField

@@ -1,7 +1,9 @@
 import {
   RoomFragment,
+  StructureInput,
   useSendMessageMutation,
 } from "@/alpaka/api/graphql";
+import { toStructureInputs } from "@/alpaka/roomTalkingAbout";
 import { Guard, useRekuest } from "@/app/Arkitekt";
 import { buildAssignInput } from "@/rekuest/assign";
 import { useSmartDrop } from "@/providers/smart/hooks";
@@ -371,7 +373,7 @@ export function Chat({ isMobile, room }: ChatProps) {
   const [selectedActionId, setSelectedActionId] = useState<string>("none");
   const [hasAutoselected, setHasAutoselected] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
-  const [stagedStructures, setStagedStructures] = useState<{ identifier: string; object: string }[]>([]);
+  const [stagedStructures, setStagedStructures] = useState<StructureInput[]>([]);
   const [prefillText, setPrefillText] = useState("");
 
   useEffect(() => {
@@ -386,7 +388,14 @@ export function Chat({ isMobile, room }: ChatProps) {
       try {
         const parsed = JSON.parse(prefill);
         if (Array.isArray(parsed)) {
-          setStagedStructures(parsed);
+          setStagedStructures(
+            toStructureInputs(
+              parsed.map((structure) => ({
+                identifier: structure?.identifier,
+                object: { id: structure?.object },
+              })),
+            ),
+          );
         }
       } catch (e) {
         console.error("Failed to parse prefillStructures", e);
@@ -705,13 +714,19 @@ export function Chat({ isMobile, room }: ChatProps) {
   };
 
   const [{ isOver }, drop] = useSmartDrop((structures) => {
-    setStagedStructures((prev) => [
-      ...prev,
-      ...structures.map((s) => ({
-        identifier: s.identifier,
-        object: s.object.id,
-      })),
-    ]);
+    const attachable = toStructureInputs(structures);
+
+    // Alpaka addresses foreign objects by a numeric id; anything else cannot
+    // be attached, and dropping it silently would look like a broken drag.
+    if (attachable.length < structures.length) {
+      toast.error(
+        attachable.length === 0
+          ? "That cannot be attached to a chat"
+          : "Some of those cannot be attached to a chat",
+      );
+    }
+
+    setStagedStructures((prev) => [...prev, ...attachable]);
   });
 
   return (

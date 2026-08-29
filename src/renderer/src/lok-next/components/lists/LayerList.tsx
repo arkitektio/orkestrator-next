@@ -1,5 +1,4 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { MikroDataset } from "@/linkers";
 
 import {
   LayerFilter,
@@ -22,7 +21,7 @@ const List = ({ filters, pagination }: Props) => {
     <ListRender
       array={data?.layers} // changed from clients to apps  here
       title={
-        <MikroDataset.ListLink className="flex-0">Apps</MikroDataset.ListLink>
+        <div className="flex-0">Apps</div>
       }
       refetch={refetch}
     >

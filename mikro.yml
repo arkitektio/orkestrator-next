@@ -24,6 +24,10 @@ generates:
         Length: "@/mikro-next/api/scalars#Length"
         Frequency: "@/mikro-next/api/scalars#Frequency"
         Power: "@/mikro-next/api/scalars#Power"
+        # Dimension-free: the value carries whatever unit it has (a MICROTIME
+        # bin width is a time, a SPECTRUM one a length). Parse with the
+        # dimension resolved from the phasor's axisType.
+        GenericQuantity: "@/mikro-next/api/scalars#GenericQuantity"
   src/main/schemas/mikro.ts:
     plugins:
       - "typescript"

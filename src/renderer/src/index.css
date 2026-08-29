@@ -12,6 +12,30 @@
 @custom-variant isdropping (&[data-isdropping="true"]);
 @custom-variant can-drop (&[data-can-drop="true"]);
 
+/* The two master controls are REGISTERED so they are typed numbers rather than
+ * opaque token streams. That is what makes them animatable: with `.brand-animating`
+ * on <html>, the browser interpolates the number per frame and every derived
+ * `oklch(... var(--brand-hue))` token below repaints along with it — no rAF loop.
+ * The transition lives on an opt-in class, not on `:root`, so dragging the
+ * ThemeCustomizer sliders in settings stays instant. */
+@property --brand-hue {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 267.256;
+}
+
+@property --brand-chroma {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.20962;
+}
+
+:root.brand-animating {
+  transition:
+    --brand-hue 800ms ease-in-out,
+    --brand-chroma 800ms ease-in-out;
+}
+
 :root {
   /* --- MASTER THEME CONTROLS --- */
   --brand-hue: 267.256;

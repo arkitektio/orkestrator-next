@@ -97,11 +97,13 @@ import { DownloadProvider } from "@/providers/download/DownloadProvider";
 // Additionally, it wraps the DisplayProvider, which allows for the configuration of the display registry.
 import { AgentProvider } from "./agent/AgentProvider";
 import { WardRegistrar } from "@/lib/arkitekt/WardRegistrar";
+import { RefetchOnReactivate } from "@/hooks/use-refetch-on-reactivate";
 import { BuiltinDashboardWidgets } from "@/providers/dashboard/widgets/BuiltinDashboardWidgets";
 import { RekuestDashboardWidgets } from "@/providers/dashboard/widgets/RekuestDashboardWidgets";
 import { MikroDashboardWidgets } from "@/providers/dashboard/widgets/MikroDashboardWidgets";
 import { LatestTasksDashboardWidget } from "@/providers/dashboard/widgets/LatestTasksDashboardWidget";
-import { LatestImagesDashboardWidget } from "@/providers/dashboard/widgets/LatestImagesDashboardWidget";
+import { LatestArrayDatasetsDashboardWidget } from "@/providers/dashboard/widgets/LatestArrayDatasetsDashboardWidget";
+import { OrganizationBrandSync } from "@/lok-next/components/OrganizationBrandSync";
 
 
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
@@ -125,6 +127,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                                 <SelectionProvider>
                                   <AgentProvider disabled={false}>
                                     <WardRegistrar />
+                                    <RefetchOnReactivate />
                                     <BuiltinDashboardWidgets />
                                     <Guard.Rekuest unavailable={<></>} unconfigured={<></>} configuring={<></>} challenging={<></>}>
                                       <TaskUpdater />
@@ -134,10 +137,13 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                                       <LatestTasksDashboardWidget />
                                       <TaskHookRunner />
                                     </Guard.Rekuest>
+                                    <Guard.Lok notConnectedFallback={<></>} connectingFallback={<></>}>
+                                      <OrganizationBrandSync />
+                                    </Guard.Lok>
                                     <Toaster />
                                     <Guard.Mikro unavailable={<></>} unconfigured={<></>} configuring={<></>} challenging={<></>}>
                                       <MikroDashboardWidgets />
-                                      <LatestImagesDashboardWidget />
+                                      <LatestArrayDatasetsDashboardWidget />
                                     </Guard.Mikro>
                                     <BackNavigationErrorCatcher>
                                       {children}

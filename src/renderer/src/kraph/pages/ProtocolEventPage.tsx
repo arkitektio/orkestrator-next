@@ -1,6 +1,6 @@
-import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { asGraphDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormSheet } from "@/components/dialog/FormDialog";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import {
   KraphEntity,
   KraphProtocolEvent,
@@ -14,7 +14,7 @@ import { useGetProtocolEventQuery } from "../api/graphql";
 // (both concepts have been fully removed from the schema), so the rich-text
 // role-value editor that used to render here has been dropped.
 
-const Page = asDetailQueryRoute(
+const Page = asGraphDetailQueryRoute(
   useGetProtocolEventQuery,
   ({ data }) => {
     return (
@@ -22,13 +22,11 @@ const Page = asDetailQueryRoute(
         object={{ id: data.protocolEvent.id }}
         title={data?.protocolEvent.label}
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: (
-                <KraphProtocolEvent.Komments object={{ id: data.protocolEvent.id }} />
-              ),
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Knowledge">
+              <KraphProtocolEvent.Knowledge object={{ id: data.protocolEvent.id }} />
+            </Sidebars.Tab>
+          </Sidebars>
         }
         pageActions={
           <div className="flex flex-row gap-2">
@@ -46,16 +44,18 @@ const Page = asDetailQueryRoute(
         >
           <div>
             <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-              {data.protocolEvent.category.label}
+              {data.protocolEvent.category?.label ?? data.protocolEvent.label}
             </h1>
 
             <p className="mt-3 text-xl text-muted-foreground"></p>
             <p className="mt-3 text-xl text-muted-foreground">
-              <KraphProtocolEventCategory.DetailLink
-                object={{ id: data.protocolEvent.category.id }}
-              >
-                {data.protocolEvent.category.label}
-              </KraphProtocolEventCategory.DetailLink>
+              {data.protocolEvent.category && (
+                <KraphProtocolEventCategory.DetailLink
+                  object={{ id: data.protocolEvent.category.id }}
+                >
+                  {data.protocolEvent.category.label}
+                </KraphProtocolEventCategory.DetailLink>
+              )}
             </p>
           </div>
         </KraphEntity.Drop>

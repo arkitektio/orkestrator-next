@@ -1,0 +1,9 @@
+mutation UpdateMetricKind($input: UpdateMetricKindInput!) {
+  updateMetricKind(input: $input) {
+    ...MetricKind
+  }
+}
+
+mutation DeleteMetricKind($id: String!) {
+  deleteMetricKind(input: { id: $id })
+}

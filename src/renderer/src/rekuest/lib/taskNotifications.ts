@@ -56,5 +56,3 @@ export const dismiss = (id: string) => {
 /** Reactively read the ordered (newest-first) list of active notification ids. */
 export const useTaskNotifications = () =>
   useSyncExternalStore(subscribe, () => active);
-
-export const taskNotifications = { notify, dismiss };

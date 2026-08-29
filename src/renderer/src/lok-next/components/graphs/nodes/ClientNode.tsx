@@ -49,7 +49,7 @@ export const ClientNode = memo(
             style={{ padding: 10, width: 100, height: 100, zIndex: 100 }}
             className="flex flex-col justify-center items-center bg-black p-3"
           >
-            {data.release.app.logo && (
+            {data.release?.app.logo && (
               <Image
                 src={resolve(data.release.app.logo.presignedUrl)}
                 className="m-3  h-20 w-20"

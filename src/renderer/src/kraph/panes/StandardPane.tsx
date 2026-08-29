@@ -6,7 +6,7 @@ import {
   KraphEntityCategory,
   KraphProtocolEventCategory,
   KraphRelationCategory,
-  KraphStructureCategory
+  KraphStructureKind
 } from "@/linkers";
 import {
   CatIcon,
@@ -15,6 +15,7 @@ import {
   Notebook,
   Ruler,
   SparkleIcon,
+  SpellCheck,
 } from "lucide-react";
 import * as React from "react";
 import { BsRecord } from "react-icons/bs";
@@ -42,6 +43,13 @@ export const NavigationPane = () => {
             Dashboard
           </PaneLink>
           <PaneLink
+            to="/kraph/terms"
+            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+          >
+            <SpellCheck className="h-4 w-4" />
+            Terms
+          </PaneLink>
+          <PaneLink
             to="/kraph/graphs"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
@@ -52,7 +60,7 @@ export const NavigationPane = () => {
 
         <SidePaneGroup title="Categories">
           <PaneLink
-            to="/kraph/structurecategories"
+            to="/kraph/structurekinds"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <BsRecord className="h-4 w-4" />
@@ -94,19 +102,13 @@ export const NavigationPane = () => {
             Structure Relations
           </PaneLink>
           <PaneLink
-            to="/kraph/metriccategories"
+            to="/kraph/metrickinds"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <PiNumberCircleEight className="h-4 w-4" />
             Metrics
           </PaneLink>
-          <PaneLink
-            to="/kraph/notes"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <PiNumberCircleEight className="h-4 w-4" />
-            Notes
-          </PaneLink>
+          
           <PaneLink
             to="/kraph/measurementcategories"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
@@ -137,20 +139,20 @@ export const NavigationPane = () => {
             ))}
           </>
         )}
-        {data?.structureCategories && data.structureCategories.length > 0 && (
+        {data?.structureKinds && data.structureKinds.length > 0 && (
           <>
             <div className="text-muted-foreground text-xs font-semibold uppercase mt-6 mb-4">
-              Pinned Structures
+              Recent Structure Kinds
             </div>
-            {data.structureCategories.map((i) => (
+            {data.structureKinds.map((i) => (
               <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground" key={i.id}>
-                <KraphStructureCategory.DetailLink
+                <KraphStructureKind.DetailLink
                   object={i}
                   className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
                 >
                   <SparkleIcon className="h-4 w-4" />
                   {i.identifier}
-                </KraphStructureCategory.DetailLink>
+                </KraphStructureKind.DetailLink>
               </div>
             ))}
           </>

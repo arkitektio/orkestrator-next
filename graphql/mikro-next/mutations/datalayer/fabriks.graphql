@@ -1,0 +1,5 @@
+mutation RequestGeneralFabriksAccess($input: RequestGeneralFabriksAccessInput!) {
+  requestGeneralFabriksAccess(input: $input) {
+    ...GeneralFabriksAccessGrant
+  }
+}

@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Card } from "@/components/ui/card";
 import { FlussFlow, FlussWorkspace } from "@/linkers";
 import {
@@ -27,24 +27,24 @@ export const Page = asDetailQueryRoute(useWorkspaceQuery, ({ data }) => {
       }
       object={data.workspace}
       sidebars={
-        <MultiSidebar
-          map={{
-            Comments: <FlussWorkspace.Komments object={data.workspace} />,
-            Versions: (
-              <div className="p-4 flex flex-col gap-2">
-                {data?.workspace.flows.map((fl) => (
-                  <FlussFlow.Smart object={fl} key={fl.id}>
-                    <Card className="p-4">
-                      <FlussFlow.DetailLink object={fl}>
-                        {fl.title}
-                      </FlussFlow.DetailLink>
-                    </Card>
-                  </FlussFlow.Smart>
-                ))}
-              </div>
-            ),
-          }}
-        />
+        <Sidebars>
+          <Sidebars.Tab label="Knowledge">
+            <FlussWorkspace.Knowledge object={data.workspace} />
+          </Sidebars.Tab>
+          <Sidebars.Tab label="Versions">
+            <div className="p-4 flex flex-col gap-2">
+              {data?.workspace.flows.map((fl) => (
+                <FlussFlow.Smart object={fl} key={fl.id}>
+                  <Card className="p-4">
+                    <FlussFlow.DetailLink object={fl}>
+                      {fl.title}
+                    </FlussFlow.DetailLink>
+                  </Card>
+                </FlussFlow.Smart>
+              ))}
+            </div>
+          </Sidebars.Tab>
+        </Sidebars>
       }
     >
       {data?.workspace.latestFlow && (

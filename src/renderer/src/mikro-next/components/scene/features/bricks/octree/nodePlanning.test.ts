@@ -15,6 +15,8 @@ import {
   planLayerNodes,
   sameNodePlan,
   slabLevelZ,
+  LOD_HYSTERESIS,
+  type LayerNodePlan,
   type NodeCamera,
   type PlannedNode,
 } from "./nodePlanning";
@@ -1637,5 +1639,79 @@ describe("plane-chunked 4-channel pyramid (the reported case)", () => {
     expect(planWith(1024 * MiB).budgetMinLevel).toBe(1);
     expect(planWith(1104 * MiB).budgetMinLevel).toBe(1);
     expect(planWith(1105 * MiB).budgetMinLevel).toBe(0);
+  });
+});
+
+describe("planLayerNodes LOD hysteresis (previousKeepKeys)", () => {
+  // FLAT_LEVELS: the L1 root refines into the 2×2 L0 grid once
+  // scale × L0 factor (1) × lodBias >= 1. Sweep the scale across the band.
+  const planAt = (scale: number, previousKeepKeys?: ReadonlySet<string>) =>
+    planLayerNodes({
+      layer: makeLayer(),
+      geometry: flatGeo,
+      spec: flatSpec,
+      mode: "2D",
+      viewRange: { ...FULL_VIEW, scale },
+      camera: null,
+      lodBias: 1,
+      currentZ: 0,
+      previousKeepKeys,
+    });
+  const keepKeysOf = (plan: LayerNodePlan) =>
+    new Set(plan.nodes.filter((n) => n.role === "keep").map((n) => n.key));
+
+  it("unlocks the finer level only at the full threshold without history", () => {
+    expect(planAt(1.0).targetLevel).toBe(0);
+    expect(planAt(0.95).targetLevel).toBe(1);
+  });
+
+  it("holds a previously refined node within the slack band", () => {
+    const fine = planAt(2);
+    expect(fine.targetLevel).toBe(0);
+    const keep = keepKeysOf(fine);
+    expect(keep.size).toBeGreaterThan(0);
+    // 0.95 >= 1/1.15 — held; the same view without history coarsened above.
+    expect(planAt(0.95, keep).targetLevel).toBe(0);
+  });
+
+  it("is a band, not a ratchet: below the slack it coarsens even with history", () => {
+    const keep = keepKeysOf(planAt(2));
+    expect(planAt(1 / LOD_HYSTERESIS - 0.01, keep).targetLevel).toBe(1);
+  });
+
+  it("does not help a node that was never refined", () => {
+    const keep = keepKeysOf(planAt(0.5)); // coarse view: nothing was refined
+    expect(keep.size).toBe(0);
+    expect(planAt(0.95, keep).targetLevel).toBe(1);
+  });
+});
+
+describe("planLayerNodes motion ceiling (refineCeilingLevel)", () => {
+  const planWith = (overrides: { refineCeilingLevel?: number; layer?: LayerState }) =>
+    planLayerNodes({
+      layer: overrides.layer ?? makeLayer(),
+      geometry: flatGeo,
+      spec: flatSpec,
+      mode: "2D",
+      viewRange: FULL_VIEW, // scale 2 → wants L0 everywhere
+      camera: null,
+      lodBias: 1,
+      currentZ: 0,
+      refineCeilingLevel: overrides.refineCeilingLevel,
+    });
+
+  it("caps refinement at the ceiling while the camera moves", () => {
+    expect(planWith({}).targetLevel).toBe(0);
+    const capped = planWith({ refineCeilingLevel: 1 });
+    expect(capped.targetLevel).toBe(1);
+    expect(capped.nodes.every((n) => n.level >= 1)).toBe(true);
+  });
+
+  it("a ceiling at or below the desired level changes nothing", () => {
+    expect(planWith({ refineCeilingLevel: 0 }).targetLevel).toBe(0);
+  });
+
+  it("a pinned fixedLOD ignores the ceiling", () => {
+    expect(planWith({ refineCeilingLevel: 1, layer: makeLayer({ fixedLOD: 0 }) }).targetLevel).toBe(0);
   });
 });

@@ -243,6 +243,27 @@ export type PlanLayerNodesInput = {
   anisoLod?: boolean;
   /** The previous plan's budgetMinLevel (budget-floor hysteresis input). */
   previousBudgetMinLevel?: number;
+  /**
+   * Keys of the previous plan's "keep" nodes — the nodes that were refined
+   * last time. LOD hysteresis: such a node holds its refinement while its
+   * footprint stays within 1/LOD_HYSTERESIS of the unlock threshold, so a
+   * zoom resting at a level boundary no longer flips the plan every replan
+   * (each flip aborted in-flight bricks, could trim every finer resident and
+   * refetched them on the flip back — the oscillation brickResidency measured
+   * at 13× fetch amplification). Per NODE, so it is exact in 3D perspective
+   * where LOD is per node, and degenerates to the uniform case in 2D.
+   */
+  previousKeepKeys?: ReadonlySet<string>;
+  /**
+   * Motion ceiling: no node may refine to a level finer than this. The tracker
+   * passes the previous plan's targetLevel while the camera is moving, so
+   * coarsening stays immediate but refinement waits for the settle replan —
+   * a quick zoom then fetches nothing at the intermediate levels its mid-
+   * gesture replans would otherwise have queued (decodes are never aborted,
+   * so those competed with the final bricks for worker and upload budget).
+   * Undefined = no ceiling. Ignored under a pinned `fixedLOD`.
+   */
+  refineCeilingLevel?: number;
 };
 
 /**
@@ -295,6 +316,11 @@ export function nonSpatialDecodeFactor(
 /** Slack factor the budget floor tolerates to KEEP an already-unlocked finer
  * level (see budgetMinLevel hysteresis below). */
 const BUDGET_FLOOR_HYSTERESIS = 1.15;
+
+/** Slack factor a node that was refined in the previous plan tolerates before
+ * it coarsens again (see `previousKeepKeys`). A genuine two-sided band, never a
+ * ratchet: unlock needs the full `>= 1` footprint, hold needs `>= 1/1.15`. */
+export const LOD_HYSTERESIS = 1.15;
 
 // Scratch objects (single-threaded, one plan at a time).
 const scratchBox = new THREE.Box3();
@@ -406,6 +432,8 @@ export function planLayerNodes({
   decodeAllowanceBytes,
   anisoLod = false,
   previousBudgetMinLevel,
+  previousKeepKeys,
+  refineCeilingLevel,
 }: PlanLayerNodesInput): LayerNodePlan {
   const sliceSignature = buildSliceSignature(layer, dimSelections);
   const levels = geometry.levels;
@@ -726,13 +754,19 @@ export function planLayerNodes({
     return anisoEffectiveFactor([fx, fy, fz], [dx / len, dy / len, dz / len]);
   };
 
-  const wantFiner = (level: number, baseBox: VoxelBox): boolean => {
+  const wantFiner = (level: number, baseBox: VoxelBox, key: string): boolean => {
     // Desire is purely footprint-driven; the budget floor gates ADMISSION in
     // `visit` (free above the floor, decode-charged below it).
     if (level <= (fixedLOD ?? 0)) return false;
     if (fixedLOD !== null) return true; // refine all the way to the pinned LOD
+    // Motion ceiling (see `refineCeilingLevel`): never finer than the last
+    // plan while the camera moves. Coarsening is unaffected.
+    if (refineCeilingLevel !== undefined && level - 1 < refineCeilingLevel) return false;
     const finerScale = levels[level - 1].scale;
-    return footprintPxOf(baseBox) * finerFactorOf(finerScale, baseBox) * lodBias >= 1;
+    // LOD hysteresis (see `previousKeepKeys`): a node refined last plan holds
+    // within the slack band; a node that was not needs the full threshold.
+    const threshold = previousKeepKeys?.has(key) ? 1 / LOD_HYSTERESIS : 1;
+    return footprintPxOf(baseBox) * finerFactorOf(finerScale, baseBox) * lodBias >= threshold;
   };
 
   const focus: Vec3 = camera?.voxelPosition ??
@@ -890,7 +924,7 @@ export function planLayerNodes({
     if (!nodeVisible(baseBox)) return;
 
     let children: Vec3[] = [];
-    if (wantFiner(level, baseBox)) {
+    if (wantFiner(level, baseBox, nodeKey(level, coords))) {
       const childSlab = slabBrickZ(level - 1);
       // 2D with a real z axis: a child level that doesn't cover the slab
       // (childSlab null) must not be refined into — its bricks would show a

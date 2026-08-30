@@ -312,6 +312,29 @@ describe("startNodePlanTracking", () => {
     stop();
   });
 
+  it("never plans FINER than the last plan while the camera moves; the settle replan does", async () => {
+    const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+    const stores = makeStores();
+    const stop = startNodePlanTracking(stores);
+    await settle(); // initial coarsest plan (targetLevel 1)
+    expect(stores.viewerStore.getState().nodePlans[LAYER_ID].targetLevel).toBe(1);
+
+    // A zoom-in during a gesture: the motion replan (500 ms) runs under the
+    // ceiling — the previous plan's targetLevel — so no intermediate/finer
+    // bricks are planned (and therefore fetched) mid-gesture.
+    stores.viewStore.setState({ cameraMoving: true });
+    stores.viewerStore.setState({ layerViewRanges: { [LAYER_ID]: FULL_VIEW } });
+    await wait(650);
+    expect(stores.viewerStore.getState().nodePlans[LAYER_ID].targetLevel).toBe(1);
+
+    // Settle edge: ceiling lifted, the fine plan lands promptly.
+    stores.viewStore.setState({ cameraMoving: false });
+    await wait(100);
+    expect(stores.viewerStore.getState().nodePlans[LAYER_ID].targetLevel).toBe(0);
+
+    stop();
+  });
+
   it("REMOVES the plan when a layer turns invisible (visibility must reach the renderer)", async () => {
     const stores = makeStores();
     const stop = startNodePlanTracking(stores);

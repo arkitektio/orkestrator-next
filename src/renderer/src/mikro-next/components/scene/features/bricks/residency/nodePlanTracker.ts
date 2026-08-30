@@ -99,6 +99,21 @@ const scratchViewDirection = new THREE.Vector3();
  */
 const MIN_REPLAN_INTERVAL_MS = 200;
 
+/** The previous plan's "keep" keys (nodes that were refined), built once per
+ * plan object — the same representative serves every member of a merge
+ * class on every replan. */
+const keepKeysCache = new WeakMap<LayerNodePlan, ReadonlySet<string>>();
+const keepKeysOf = (plan: LayerNodePlan): ReadonlySet<string> => {
+  let keys = keepKeysCache.get(plan);
+  if (!keys) {
+    const set = new Set<string>();
+    for (const node of plan.nodes) if (node.role === "keep") set.add(node.key);
+    keys = set;
+    keepKeysCache.set(plan, keys);
+  }
+  return keys;
+};
+
 /**
  * Min interval WHILE THE CAMERA IS MOVING. Every mid-gesture replan turns the
  * target set over — aborts, fresh fetches, worker decodes, upload-queue
@@ -395,6 +410,13 @@ export function startNodePlanTracking({
       // the next replan.
       const prevRepresentative =
         members.map((m) => prevPlans[m.layer.id]).find(Boolean) ?? null;
+      // A previous plan only informs this one when it planned the SAME data
+      // in the same mode: a slice-signature change (t/c/z selection) is
+      // different content, and its hysteresis/ceiling would be meaningless.
+      const prevCompatible =
+        prevRepresentative !== null &&
+        prevRepresentative.mode === mode &&
+        prevRepresentative.sliceSignature === buildSliceSignature(layer, viewerState.dimSelections);
       const next = planLayerNodes({
         layer,
         geometry,
@@ -415,9 +437,14 @@ export function startNodePlanTracking({
         // `undefined` lets the planner derive it from the cache share above.
         decodeAllowanceBytes: prevRepresentative ? undefined : 0,
         anisoLod: isAnisoLodEnabled(),
-        previousBudgetMinLevel:
-          prevRepresentative && prevRepresentative.mode === mode
-            ? prevRepresentative.budgetMinLevel
+        previousBudgetMinLevel: prevCompatible ? prevRepresentative.budgetMinLevel : undefined,
+        previousKeepKeys: prevCompatible ? keepKeysOf(prevRepresentative) : undefined,
+        // Motion ceiling: while the camera moves, never plan finer than the
+        // last plan. The settle-edge reschedule below replans immediately
+        // with the ceiling lifted, so sharpening starts ~150 ms after rest.
+        refineCeilingLevel:
+          prevCompatible && viewStore.getState().cameraMoving
+            ? prevRepresentative.targetLevel
             : undefined,
       });
 

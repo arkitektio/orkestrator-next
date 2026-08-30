@@ -238,6 +238,18 @@ export const resolveReusedAutoRange = (
  * drain idle-latch must NOT clear while any of these is set, or the second
  * drain of the promotion protocol never runs under the demand frame loop
  * (exported for the vitest matrix). */
+/**
+ * Margin-only prefetch (fetchBand 2) dispatch gate — see startNextFetchesGlobal.
+ * Pure so the policy is unit-testable without a manager.
+ */
+export function shouldDeferPrefetch(input: {
+  fetchBand: PlannedNode["fetchBand"];
+  inFlightOnScreen: number;
+  interacting: boolean;
+}): boolean {
+  return input.fetchBand === 2 && (input.inFlightOnScreen > 0 || input.interacting);
+}
+
 export const hasPendingEncodeWork = (pool: {
   occReencodePending: boolean;
   autoRangeEncodeDirty: boolean;
@@ -673,6 +685,10 @@ export class BrickResidencyManager {
    * then stayed unloaded until the next replan. Owner identity must be the
    * INVOCATION, not the brick. */
   private fetchOwnerSeq = 0;
+  /** In-flight bricks of fetchBand 0/1 (backdrop + on-screen) across all
+   * pools. Margin prefetch (band 2) dispatches only when this is 0 and the
+   * camera is at rest — see startNextFetchesGlobal. */
+  private inFlightOnScreen = 0;
   /** Chunk fetches outlive individual brick aborts (shared!); this cancels
    * them all on dispose. */
   private readonly fetchAbort = new AbortController();
@@ -1947,6 +1963,23 @@ export class BrickResidencyManager {
         }
       }
       if (!bestPool || !bestNode) return;
+      // Margin-only prefetch (band 2) waits for BOTH a resting camera and an
+      // empty on-screen pipeline. It used to be merely ordered last, so every
+      // gesture still paid its fetches, decodes (never aborted) and uploads
+      // for bricks that were never on screen — and a quick zoom's settle plan
+      // found the workers busy with them. compareFetchOrder sorts band first,
+      // so a band-2 winner here means no pool has band-0/1 work pending; the
+      // settle replan and every on-screen fetch's `finally` re-run this
+      // dispatch, which is when the deferred entries get their turn.
+      if (
+        shouldDeferPrefetch({
+          fetchBand: bestNode.fetchBand,
+          inFlightOnScreen: this.inFlightOnScreen,
+          interacting: this.deps.isInteracting?.() ?? false,
+        })
+      ) {
+        return;
+      }
       bestPool.pendingFetch.pop();
       globalInFlight += 1;
       coldOpenTimeline.stamp("firstBrickRequested");
@@ -2488,6 +2521,8 @@ export class BrickResidencyManager {
   private async fetchBrick(pool: LayerBrickPool, node: PlannedNode): Promise<void> {
     const controller = new AbortController();
     pool.inFlight.set(node.key, controller);
+    const onScreen = node.fetchBand <= 1;
+    if (onScreen) this.inFlightOnScreen += 1;
     const fetchStartedAt = performance.now();
     // Generation priority: this plan's decodes outrank stranded queued tasks
     // of earlier plans in the worker pool (see fetchGeneration).
@@ -2699,6 +2734,7 @@ export class BrickResidencyManager {
       ) {
         pool.pendingFetch.push(node); // tail = dispatched next
       }
+      if (onScreen) this.inFlightOnScreen -= 1;
       // ALL pools, not just this one: the freed global in-flight slot may be
       // what another pool's queue is blocked on (see startNextFetchesGlobal).
       if (!this.disposed) this.startNextFetchesGlobal();

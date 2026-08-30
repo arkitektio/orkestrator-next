@@ -333,6 +333,17 @@ the NDC center — `cameraPose` carries no orientation), so the screen CENTER
 sharpens before equidistant screen-edge bricks. Strictly ordering-only — it
 never admits or rejects a node; orthographic/2D fall back to plain distance.
 
+**Refinement has hysteresis and a motion ceiling** (P30). A node that was
+refined in the previous plan (`previousKeepKeys`) holds its refinement while
+its footprint stays within `1/LOD_HYSTERESIS` (1.15) of the unlock threshold —
+a two-sided band, never a ratchet — so a zoom resting at a level boundary no
+longer flips the whole plan every replan. While the camera moves the tracker
+passes `refineCeilingLevel` = the previous plan's `targetLevel`: coarsening is
+immediate, refinement waits for the settle replan, so a quick zoom never queues
+the intermediate-level sets its mid-gesture replans used to. Both are inputs
+the driver derives from the previous plan (only when its mode and
+`sliceSignature` match); the planner itself stays pure.
+
 ### 2.7 The plan driver (`features/bricks/residency/nodePlanTracker.ts`)
 
 Subscribes to `layerViewRanges`, `lodBias`, `currentZ`, the flag, scene layers,
@@ -1162,6 +1173,31 @@ pipeline is quiet* and bumps `poolsVersion` unthrottled — that is correct and
 converging (post-promotion `observedSpan === encodeSpan`), and it is this
 debounce that keeps its brief burst from tripping the ladders.
 
+**P30 — A quick zoom must fetch only the FINAL, ON-SCREEN set.** Three
+mechanisms compounded to make a one-second zoom cost several times the bricks
+it ended up showing. (1) `wantFiner` was a bare `>= 1` footprint threshold, so
+a zoom resting at a level boundary flipped the whole plan every replan; each
+flip aborted unprotected in-flight bricks, could trim every resident finer than
+the new `minTargetLevel`, and refetched them on the flip back — the oscillation
+the residency comments measured at 13× fetch amplification. (2) Mid-gesture
+replans (every 500 ms in motion) launched wide intermediate-level fetch sets:
+at 500 ms into a zoom the frustum is still wide, and since chunk decodes are
+deliberately never aborted, the settle plan only freed their concurrency slots
+while the decodes kept competing with the final bricks for worker time and
+upload budget. (3) Margin-only band-2 prefetch was ordered last but always
+fetched, decoded and uploaded, during the gesture too. Fixes, all pure and
+unit-tested: LOD hysteresis via `previousKeepKeys` + `LOD_HYSTERESIS`
+(per node, so exact under per-node perspective LOD, uniform in 2D); the motion
+ceiling `refineCeilingLevel` (previous `targetLevel` while `cameraMoving` —
+the settle-edge reschedule lifts it ~150 ms after rest); and
+`shouldDeferPrefetch` in the global dispatcher — band 2 dispatches only with a
+resting camera and zero on-screen bricks in flight (the k-way merge sorts by
+band, so a band-2 winner already means nothing on-screen is pending). A
+wheel-driven zoom also relies on `cameraInteraction`'s wheel hold
+(`platform/camera/cameraMotion.ts`): before it, `cameraMoving` flickered on
+every trackpad tick and each flicker was a settle edge, i.e. 3–5 extra plans
+per zoom.
+
 **P20 — Handler ATTACHMENT is the raycast gate, not the handler body.** R3F
 puts an object in `internal.interaction` as soon as it carries any event
 handler, and the raycast runs BEFORE the handler does — so a handler that
@@ -1703,7 +1739,8 @@ continuous load-proportional control fed by a real cost model —
 **R6 — Small.** (a) Cross-pool fetch prioritization: order is foveated within
 a pool but arrival-order across pools; Neuroglancer has one global priority
 queue. (b) Prefetch is 2D-adjacent-z only — no 3D margin or temporal (t±1)
-prefetch. (c) The settle restore lands DPR + tricubic + adaptive depth in one
+prefetch; band-2 margin prefetch is gated to a resting camera with an empty
+on-screen pipeline (P30). (c) The settle restore lands DPR + tricubic + adaptive depth in one
 frame — a visible quality pop; staggering them would soften it.
 
 **Non-gaps** (deliberate design differences — do not "fix"): slice-first

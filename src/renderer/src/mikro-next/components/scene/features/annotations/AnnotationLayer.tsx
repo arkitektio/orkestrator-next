@@ -555,12 +555,24 @@ const AnnotationSurface = ({
   }, [vectors, faces]);
   useEffect(() => () => geometry.dispose(), [geometry]);
 
+  const opacity = style.fillOpacity > 0 ? style.fillOpacity : 0.35;
+  // Draw order matters against an intensity volume. The volume composites
+  // ADDITIVELY at renderOrder 1 (directly, or via the compositor's quad), and
+  // a translucent mesh at the default renderOrder 0 is drawn BEFORE it — the
+  // volume is then summed over the surface and drowns it, so the surface only
+  // showed once the intensity layer was hidden. renderOrder 2 puts it above
+  // the composited volume, the slot labels already use. A fully opaque surface
+  // is additionally left non-`transparent` so the compositor's depth prepass
+  // treats it as an occluder (`passVisibility.isOpaqueDepthWriter`), exactly
+  // like an opaque fabriks mesh: the volume behind it is hidden rather than
+  // added on top.
+  const transparent = opacity < 1;
   return (
-    <mesh geometry={geometry} frustumCulled={false} onClick={onSelect}>
+    <mesh geometry={geometry} frustumCulled={false} onClick={onSelect} renderOrder={2}>
       <meshStandardMaterial
         color={style.fill ?? style.stroke}
-        transparent
-        opacity={style.fillOpacity > 0 ? style.fillOpacity : 0.35}
+        transparent={transparent}
+        opacity={opacity}
         side={THREE.DoubleSide}
       />
     </mesh>

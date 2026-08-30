@@ -64,8 +64,16 @@ export const KeyboardSceneNavigation = () => {
      * off the controls' "start" event, which only a pointer gesture fires — so
      * without this, the next canvas resize would re-fit and throw away
      * everything that was navigated to by keyboard.
+     *
+     * Paired with a matching "end": drei forwards both to `onStart`/`onEnd`,
+     * which latch `cameraInteraction` — a lone "start" pinned it true for the
+     * rest of the session (half-res volume, no settle ladder). The keystroke's
+     * own matrix change is what registers it as motion.
      */
-    const claimCamera = () => ctrl.dispatchEvent?.({ type: "start" });
+    const claimCamera = () => {
+      ctrl.dispatchEvent?.({ type: "start" });
+      ctrl.dispatchEvent?.({ type: "end" });
+    };
 
     const pan = (dx: number, dy: number) => {
       const distance = panDistance(

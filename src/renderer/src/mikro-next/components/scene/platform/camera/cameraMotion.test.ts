@@ -2,6 +2,7 @@ import { describe, expect, it, beforeEach } from "vitest";
 import * as THREE from "three";
 import {
   MOTION_RELATIVE_THRESHOLD,
+  WHEEL_INTERACTION_HOLD_MS,
   cameraInteraction,
   isCameraMoving,
   matrixRelativeDelta,
@@ -79,11 +80,11 @@ describe("cameraInteraction", () => {
   beforeEach(() => cameraInteraction.reset());
 
   it("tracks gesture begin/end", () => {
-    expect(cameraInteraction.isInteracting()).toBe(false);
+    expect(cameraInteraction.isInteracting(0)).toBe(false);
     cameraInteraction.begin();
-    expect(cameraInteraction.isInteracting()).toBe(true);
+    expect(cameraInteraction.isInteracting(0)).toBe(true);
     cameraInteraction.end();
-    expect(cameraInteraction.isInteracting()).toBe(false);
+    expect(cameraInteraction.isInteracting(0)).toBe(false);
   });
 
   it("reset clears a gesture that never ended", () => {
@@ -91,6 +92,37 @@ describe("cameraInteraction", () => {
     // stuck true would pin the scene at half resolution forever.
     cameraInteraction.begin();
     cameraInteraction.reset();
-    expect(cameraInteraction.isInteracting()).toBe(false);
+    expect(cameraInteraction.isInteracting(0)).toBe(false);
+  });
+
+  it("a wheel event holds interaction for WHEEL_INTERACTION_HOLD_MS", () => {
+    cameraInteraction.wheel(1000);
+    expect(cameraInteraction.isInteracting(1000)).toBe(true);
+    expect(cameraInteraction.isInteracting(1000 + WHEEL_INTERACTION_HOLD_MS - 1)).toBe(true);
+    expect(cameraInteraction.isInteracting(1000 + WHEEL_INTERACTION_HOLD_MS)).toBe(false);
+    expect(cameraInteraction.holdRemainingMs(1100)).toBe(WHEEL_INTERACTION_HOLD_MS - 100);
+    expect(cameraInteraction.holdRemainingMs(5000)).toBe(0);
+  });
+
+  it("the controls' synchronous wheel start/end pair does not clear a wheel hold", () => {
+    // three-stdlib dispatches start → dolly → end inside one wheel event.
+    cameraInteraction.wheel(1000);
+    cameraInteraction.begin();
+    cameraInteraction.end();
+    expect(cameraInteraction.isInteracting(1050)).toBe(true);
+  });
+
+  it("repeated wheel events extend the hold from the LAST one", () => {
+    cameraInteraction.wheel(1000);
+    cameraInteraction.wheel(1200);
+    expect(cameraInteraction.isInteracting(1200 + WHEEL_INTERACTION_HOLD_MS - 1)).toBe(true);
+    expect(cameraInteraction.isInteracting(1200 + WHEEL_INTERACTION_HOLD_MS)).toBe(false);
+  });
+
+  it("reset clears a wheel hold too", () => {
+    cameraInteraction.wheel(1000);
+    cameraInteraction.reset();
+    expect(cameraInteraction.isInteracting(1000)).toBe(false);
+    expect(cameraInteraction.holdRemainingMs(1000)).toBe(0);
   });
 });

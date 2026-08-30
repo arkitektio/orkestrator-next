@@ -298,8 +298,25 @@ export const CameraController = () => {
   // `onEnd` never fires for controls that unmount mid-drag — a 2D↔3D switch
   // remounts them (the key carries the display mode), and a stuck `interacting`
   // would pin `cameraMoving` true, holding the scene at half resolution with
-  // nothing moving. Keyed on displayMode so the remount clears it too.
+  // nothing moving. Keyed on displayMode so the remount clears it too (the
+  // wheel hold along with it).
   useEffect(() => cameraInteraction.reset, [displayMode]);
+
+  // The wheel is the one gesture the controls cannot report as a gesture:
+  // three-stdlib's `onMouseWheel` dispatches `start` → dolly → `end`
+  // synchronously per event, so `onStart`/`onEnd` below latch nothing for a
+  // zoom and `cameraMoving` was left to the per-frame matrix delta, which a
+  // trackpad tick straddles (flicker → target reallocs, settle-refine resets,
+  // retargets and replans per tick). A DOM listener, not the controls' `start`
+  // event, because only the DOM can tell a wheel from a drag. Passive: it
+  // never prevents default; the controls own the event. Both display modes.
+  const gl = useThree((s) => s.gl);
+  useEffect(() => {
+    const element = gl.domElement;
+    const onWheel = () => cameraInteraction.wheel(performance.now());
+    element.addEventListener("wheel", onWheel, { passive: true });
+    return () => element.removeEventListener("wheel", onWheel);
+  }, [gl]);
   const frustumNear = useViewerStore((s) => s.frustumNear);
   const frustumFar = useViewerStore((s) => s.frustumFar);
   const sceneApi = useSceneStoreApi();

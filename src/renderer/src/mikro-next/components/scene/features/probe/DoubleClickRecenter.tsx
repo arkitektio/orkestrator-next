@@ -82,7 +82,10 @@ export const DoubleClickRecenter = () => {
 
       // The user took the wheel: arm InitialCameraFit's latch (claimCamera
       // pattern — its listener only hears real pointer gestures otherwise).
+      // Paired with "end" so `cameraInteraction` (latched via onStart/onEnd)
+      // does not stick true for the session.
       ctrl.dispatchEvent?.({ type: "start" });
+      ctrl.dispatchEvent?.({ type: "end" });
       invalidate(); // frameloop="demand"
     };
 

@@ -23,7 +23,8 @@
  *    cannot answer this: 1e-5 against a translation of 50000 is nine orders of
  *    magnitude below the value it is compared to.
  *
- * `interacting` is OR-ed in so a drag that pauses (mouse held still mid-gesture)
+ * `interacting` (a pointer drag, or a wheel hold — see `cameraInteraction`) is
+ * OR-ed in so a drag that pauses (mouse held still mid-gesture)
  * still counts as motion — the user is driving, and snapping to full quality
  * mid-drag only to drop again is worse than staying cheap. Deriving motion from
  * the matrix rather than from pointer state alone is deliberate: keyboard
@@ -78,27 +79,60 @@ export function isCameraMoving(
 }
 
 /**
- * Whether a pointer gesture is currently driving the controls.
+ * Whether a user gesture is currently driving the controls.
+ *
+ * Two sources, because the controls cannot report the second one:
+ *
+ *  - **Pointer drags** latch `begin`/`end` from the controls' own `start`/`end`
+ *    events, which bracket the whole gesture.
+ *  - **The wheel** is a time-based hold. three-stdlib's `onMouseWheel`
+ *    dispatches `start` → dolly → `end` SYNCHRONOUSLY per wheel event, so the
+ *    latch above is a no-op for it and `interacting` read false all through a
+ *    zoom. That left `cameraMoving` to the relative matrix delta alone, which a
+ *    trackpad tick (~5e-4…2e-3 per frame) straddles — so it flickered at the
+ *    emit cadence, and every flip paid a volume-target realloc, a settle-refine
+ *    reset/advance, a `retarget()` and an idle replan. A zoom sequence is one
+ *    gesture, exactly like a drag: each wheel event extends the hold, and it
+ *    lapses `WHEEL_INTERACTION_HOLD_MS` after the last one. `end` never touches
+ *    it — it fires right after `start` on every wheel event.
  *
  * A module singleton rather than store state on purpose: it flips on every
- * pointer down/up, is read once per frame from `CameraMatrixSync`, and has no
- * React consumers — routing it through a store would publish a render-hot write
- * for something nothing renders from (P17).
+ * pointer down/up and wheel event, is read once per frame from
+ * `CameraMatrixSync`, and has no React consumers — routing it through a store
+ * would publish a render-hot write for something nothing renders from (P17).
  */
-let interacting = false;
+let pointerInteracting = false;
+let wheelHoldUntil = Number.NEGATIVE_INFINITY;
+
+/**
+ * How long after the last wheel event the camera still counts as being
+ * driven. Longer than `CameraMatrixSync`'s 150 ms settle debounce and than the
+ * gap between mouse-wheel notches; short enough that a single notch settles
+ * in about a quarter second.
+ */
+export const WHEEL_INTERACTION_HOLD_MS = 250;
 
 export const cameraInteraction = {
   begin(): void {
-    interacting = true;
+    pointerInteracting = true;
   },
   end(): void {
-    interacting = false;
+    pointerInteracting = false;
   },
-  isInteracting(): boolean {
-    return interacting;
+  /** A wheel event landed at `nowMs`: (re)arm the hold. */
+  wheel(nowMs: number): void {
+    wheelHoldUntil = nowMs + WHEEL_INTERACTION_HOLD_MS;
+  },
+  isInteracting(nowMs: number): boolean {
+    return pointerInteracting || nowMs < wheelHoldUntil;
+  },
+  /** Time left on the wheel hold (0 when none) — lets the settle timer wait it out. */
+  holdRemainingMs(nowMs: number): number {
+    return Math.max(0, wheelHoldUntil - nowMs);
   },
   /** Tests and teardown: controls that unmount mid-drag never fire `onEnd`. */
   reset(): void {
-    interacting = false;
+    pointerInteracting = false;
+    wheelHoldUntil = Number.NEGATIVE_INFINITY;
   },
 };

@@ -32,16 +32,8 @@ const annotation = (
   }) as unknown as SceneAnnotationFragment;
 
 describe("outlinePoints", () => {
-  it("points, painted surfaces and 3D-extruded boxes/spheres draw no fat line", () => {
+  it("points and 3D-extruded boxes/spheres draw no fat line", () => {
     expect(outlinePoints(annotation(AnnotationKind.Point, [[1, 2, 3]]), false, null)).toBeNull();
-    // A SURFACE's vectors are mesh vertices — a polyline through them is noise.
-    expect(
-      outlinePoints(
-        annotation(AnnotationKind.Surface, [[0, 0, 0], [1, 0, 0], [0, 1, 0]]),
-        false,
-        null,
-      ),
-    ).toBeNull();
     // Corners spanning depth in 3D → wireframe box branch, not a Line.
     expect(
       outlinePoints(annotation(AnnotationKind.Rectangle, [[0, 0, 0], [4, 4, 4]]), false, null),

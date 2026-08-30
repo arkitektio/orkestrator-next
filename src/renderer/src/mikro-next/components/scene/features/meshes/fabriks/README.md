@@ -323,3 +323,48 @@ Regenerate with `python __fixtures__/generate.py <out>` in an environment with
   in-flight drain but deliberately retains the byte cache, geometry LRU, open
   footers and batch — that is what makes a re-show a cache replay instead of a
   re-download. Unmounting the layer (scene close) still disposes everything.
+
+## The writer (`writer/`) — designed collections
+
+The mesh designer (`features/meshDesign`) bakes its meshes into a fabriks
+prefix IN THE BROWSER and uploads it (`requestFabriksUpload` → PUT every
+file → `fabriks.json` last → `finishFabriksUpload` → `createMeshCollection`).
+`writer/fabriksBake.ts` inverts the reader's byte contract; `parquetWrite.ts`
+emits the exact Parquet schema the Python producer does (asserted element by
+element against `__fixtures__/raw` in `fabriksBake.test.ts`, alongside a
+round-trip through this reader).
+
+What a browser-written collection is, and is not:
+
+- **Single level.** `grid.levels = 1`, every cell a level-0 leaf, no LOD
+  pyramid. `decimation: "CUSTOM"` in the manifest and
+  `provenanceMetadata.needsConsolidation` on the collection flag it for the
+  server-side job that builds a real pyramid into a new version later.
+- **Always drawn whole.** `planFabriksCells` accepts a level-0 cell before
+  consulting any budget — `maxCells`/`maxIndices` only gate REFINEMENT — so a
+  single-level collection can never coarsen or drop; frustum culling is the
+  only lever. The bake therefore splits into many small cells
+  (`maxIndicesPerCell`, default 60k) so culling has something to cull, and the
+  design session caps its own triangle count. Nothing in the planner changes;
+  `fabriksBake.test.ts` pins the behaviour ("every level-0 root is planned
+  even with `maxIndices: 1`").
+- **Clipped, not clamped.** A vertex outside its cell's grid box cannot be
+  quantized, so triangles straddling a cell boundary are clipped against each
+  box they overlap (Sutherland–Hodgman) and re-welded per cell on quantized
+  coordinates. The boundary plane quantizes to `65535` on one side and `0` on
+  the other, and `65535/65535 · extent + min` is exactly the neighbour's
+  `min`, so seams close bit-for-bit.
+- **Non-negative frame.** Morton codes need non-negative cell coordinates, so
+  the bake translates by `-floor(bboxMin)` and the commit records that as a
+  TRANSLATION edge into the scene's world (`meshDesign/commitDesign.ts`).
+- **One cell when it can be.** The designer bakes `cells: "single"` whenever
+  the uint16 step stays under 0.05 voxel: objects then never straddle a cell
+  border, so the reader's per-cell smooth normals (`computeSmoothNormals`,
+  which seam at borders on multi-cell collections) are exact, and the layer
+  is registered `shading: SMOOTH`, which seeds the session's `flatNormals`
+  (`meshLayerDefaults.ts`). Larger designs fall back to the auto grid and
+  seam like any other collection in smooth mode.
+- **Never edited in place.** Fabriks is append-hostile (row groups, manifest
+  byte lengths, ordinals, LOD ancestors). Editing = `meshDesign/loadCollection.ts`
+  extracts objects at the finest level, welds the LOCKED-border duplicates
+  back together, and a commit writes a NEW collection `derivedFrom` the old.

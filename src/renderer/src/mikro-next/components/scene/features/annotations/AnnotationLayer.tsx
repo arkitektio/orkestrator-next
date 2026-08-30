@@ -4,14 +4,8 @@ import { useFrame, type ThreeEvent } from "@react-three/fiber";
 
 import {
   useGetSceneAnnotationsQuery,
-  useGetSceneSurfacesQuery,
   type SceneAnnotationFragment,
-  type SceneSurfaceFragment,
   AnnotationKind,
-  // The filter's own enum: `AnnotationFilter.kind` is generated from the model's
-  // TextChoices twin, so it is a separate type from the one on the annotation
-  // even though the two carry the same members.
-  AnnotationKindChoices,
 } from "@/mikro-next/api/graphql";
 
 import { Line } from "../../platform/draw/Line";
@@ -115,29 +109,11 @@ const AnnotationCollectionGroup = ({
 
   const viewApi = useViewStoreApi();
   const { data } = useGetSceneAnnotationsQuery({
-    // Everything BUT painted regions. A surface's geometry is thousands of
-    // vertices plus a face index, and this query runs every 5s for every
-    // annotation layer in every mounted scene — so surfaces come from the
-    // separate query below instead, which fetches them once.
-    variables: { filters: { collection: collection.id, NOT: { kind: AnnotationKindChoices.Surface } } },
+    variables: { filters: { collection: collection.id } },
     pollInterval: 5000,
     // A poll landing mid-gesture re-renders and re-diffs the whole annotation
     // subtree while the user is dragging; skip those attempts (the next poll
     // after settle catches up).
-    skipPollAttempt: () => viewApi.getState().cameraMoving,
-  });
-
-  // The painted regions. `useCreateSceneAnnotation` refetches this by name the
-  // moment one is drawn, which is what makes a new stroke appear immediately —
-  // but a refetch by name only reaches a query something is already observing,
-  // and on a scene's FIRST stroke this component is still being mounted by the
-  // GetScene refetch that minted the layer. The slow poll is the backstop for
-  // exactly that gap, and for a surface drawn in another client. It is 12x the
-  // annotation poll's interval because the payload is orders of magnitude
-  // heavier and a surface only changes by an explicit edit.
-  const { data: surfaceData } = useGetSceneSurfacesQuery({
-    variables: { filters: { collection: collection.id, kind: AnnotationKindChoices.Surface } },
-    pollInterval: 60000,
     skipPollAttempt: () => viewApi.getState().cameraMoving,
   });
 
@@ -146,14 +122,10 @@ const AnnotationCollectionGroup = ({
     [collection, layer, transformContext],
   );
 
-  // One list again from here on: the split is a fetching concern, and every
-  // reader below (visibility, selection, placement) treats a surface like any
-  // other shape. `SceneSurfaceFragment` is `SceneAnnotationFragment` plus
-  // `faces`, so the union is just the wider of the two.
-  const annotations = useMemo((): SceneSurfaceFragment[] | undefined => {
-    if (!data?.annotations && !surfaceData?.annotations) return undefined;
-    return [...(data?.annotations ?? []), ...(surfaceData?.annotations ?? [])];
-  }, [data?.annotations, surfaceData?.annotations]);
+  // Painted surfaces are no longer annotations: the mesh designer commits them
+  // as fabriks mesh collections (`features/meshDesign`). Legacy SURFACE rows
+  // stay excluded by the query's filter above and are simply not drawn.
+  const annotations = data?.annotations;
 
   // Hand over from the local preview: a drawn shape stays on screen from the
   // gesture until its persisted copy is in hand HERE, so it never blinks out
@@ -512,74 +484,6 @@ const PolygonInterior = ({
 };
 
 /**
- * A painted region's surface.
- *
- * The geometry arrives indexed — unique vertices plus triangles that index them,
- * which is how it is stored and roughly a quarter the payload of the triangle
- * soup the extractor produces. It is expanded straight back to non-indexed here,
- * because `computeVertexNormals` on an indexed mesh averages normals across the
- * faces meeting at each vertex and reads SMOOTH, while the live preview in
- * `enhancers/paths/brushSkeleton/BrushStrokeSession.tsx` computes them on the raw
- * soup and reads FLAT. Both show a tet-marched isosurface, and it is the flat
- * shading that shows the surface the extraction actually found rather than an
- * interpolation of it — so the saved copy matches the preview the operator
- * approved instead of subtly smoothing when the scene reloads.
- */
-const AnnotationSurface = ({
-  vectors,
-  faces,
-  style,
-  onSelect,
-}: {
-  vectors: number[][];
-  faces: number[][];
-  style: ShapeStyle;
-  /** Undefined in PROBE mode — see `AnnotationShape`'s `handleSelect`. */
-  onSelect?: (event: ThreeEvent<MouseEvent>) => void;
-}) => {
-  const geometry = useMemo(() => {
-    const positions = new Float32Array(vectors.length * 3);
-    for (let i = 0; i < vectors.length; i++) {
-      const vector = vectors[i];
-      positions[i * 3] = vector[0] ?? 0;
-      positions[i * 3 + 1] = vector[1] ?? 0;
-      positions[i * 3 + 2] = vector[2] ?? 0;
-    }
-    const indexed = new THREE.BufferGeometry();
-    indexed.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    indexed.setIndex(faces.flat());
-    const soup = indexed.toNonIndexed();
-    indexed.dispose();
-    soup.computeVertexNormals();
-    return soup;
-  }, [vectors, faces]);
-  useEffect(() => () => geometry.dispose(), [geometry]);
-
-  const opacity = style.fillOpacity > 0 ? style.fillOpacity : 0.35;
-  // Draw order matters against an intensity volume. The volume composites
-  // ADDITIVELY at renderOrder 1 (directly, or via the compositor's quad), and
-  // a translucent mesh at the default renderOrder 0 is drawn BEFORE it — the
-  // volume is then summed over the surface and drowns it, so the surface only
-  // showed once the intensity layer was hidden. renderOrder 2 puts it above
-  // the composited volume, the slot labels already use. A fully opaque surface
-  // is additionally left non-`transparent` so the compositor's depth prepass
-  // treats it as an occluder (`passVisibility.isOpaqueDepthWriter`), exactly
-  // like an opaque fabriks mesh: the volume behind it is hidden rather than
-  // added on top.
-  const transparent = opacity < 1;
-  return (
-    <mesh geometry={geometry} frustumCulled={false} onClick={onSelect} renderOrder={2}>
-      <meshStandardMaterial
-        color={style.fill ?? style.stroke}
-        transparent={transparent}
-        opacity={opacity}
-        side={THREE.DoubleSide}
-      />
-    </mesh>
-  );
-};
-
-/**
  * Point annotations, held at a constant size on screen.
  *
  * A point used to be a disc of 1.5 COLLECTION units, which on a 512 µm field
@@ -685,7 +589,7 @@ const AnnotationPoints = ({
 };
 
 type AnnotationShapeProps = {
-  annotation: SceneAnnotationFragment | SceneSurfaceFragment;
+  annotation: SceneAnnotationFragment;
   roi: SelectedRoi;
   flattenToPlane: boolean;
   /**
@@ -928,24 +832,6 @@ const AnnotationShape = memo(function AnnotationShape({
           <Line points={points} color={style.stroke} lineWidth={style.strokeWidth} />
         )}
       </group>
-    );
-  }
-
-  // A painted region: the only kind whose geometry is indexed, so it is the only
-  // one that reads `faces` rather than the vector list alone. Flattening it to a
-  // plane is not attempted — a section through a surface is a set of contours,
-  // not a shape this component draws — so it renders in 3D and sits out the flat
-  // view, which is also the only mode the brush and blob tools are offered in.
-  if (annotation.kind === AnnotationKind.Surface) {
-    const faces = "faces" in annotation ? annotation.faces : null;
-    if (flattenToPlane || !faces || faces.length === 0) return null;
-    return (
-      <AnnotationSurface
-        vectors={vectors}
-        faces={faces}
-        style={style}
-        onSelect={handleSelect}
-      />
     );
   }
 

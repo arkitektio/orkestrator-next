@@ -17,9 +17,18 @@ export type GeneralZarrAccessGrant = {
   sessionToken: string;
 };
 
+/** A byte range inside one object: absolute, or the object's last `suffixLength` bytes. */
+export type ByteRange = { offset: number; length: number } | { suffixLength: number };
+
 export type ZarrStore = {
   url: string | URL;
   get: (key: AbsolutePath, options?: RequestInit ) => Promise<Uint8Array | undefined>;
+  /**
+   * Ranged read of one object (zarr v3 shard indexes / inner chunks). Optional:
+   * a store without it cannot serve sharded arrays — `getChunkWorker` throws a
+   * clear error rather than silently reading whole shards.
+   */
+  getRange?: (key: AbsolutePath, range: ByteRange, options?: RequestInit) => Promise<Uint8Array | undefined>;
   getWorkerFetchConfig?: () => S3FetchConfig;
   /**
    * The config to hand a worker, rotated first if it is close enough to expiry
@@ -34,6 +43,14 @@ export type WorkerFetchCapableStore = {
   getWorkerFetchConfig: () => S3FetchConfig;
   ensureFreshWorkerFetchConfig?: () => S3FetchConfig | Promise<S3FetchConfig>;
 };
+
+export type RangeReadableStore = {
+  getRange: NonNullable<ZarrStore["getRange"]>;
+};
+
+export function isRangeReadableStore(store: unknown): store is RangeReadableStore {
+  return typeof store === "object" && store !== null && typeof (store as { getRange?: unknown }).getRange === "function";
+}
 
 export function isWorkerFetchCapableStore(
   store: unknown,

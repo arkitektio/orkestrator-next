@@ -475,6 +475,9 @@ fragment SceneLayer on Layer {
     }
     materialColor
     wireframe
+    # The stored shading seeds the session's `flatNormals` (SMOOTH → smooth
+    # normals on); the card's toggle overrides it for the session.
+    shading
     # The layer publishes PICKERS, not a single choice: `colorBys`/`filterBys`
     # are what it offers (server-checked to be reachable and to exist), and the
     # active indices are the choice. The deprecated singular `colorBy` is

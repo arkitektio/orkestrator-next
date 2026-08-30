@@ -32,9 +32,6 @@ export const useCreateSceneAnnotation = () => {
     async (
       kind: AnnotationKind,
       worldVectors: [number, number, number][],
-      // Only a SURFACE carries topology; the server refuses it on every other
-      // kind, so leave it undefined rather than sending an empty list.
-      faces?: [number, number, number][],
     ): Promise<CreatedSceneAnnotation | null> => {
       try {
         const { id: sceneId, sceneLayers } = sceneStoreApi.getState();
@@ -47,14 +44,9 @@ export const useCreateSceneAnnotation = () => {
         const hasAnnotationLayer = sceneLayers.some(
           (layer) => layer.__typename === "AnnotationLayer",
         );
-        // A surface is not in the polled list — it has its own query, because its
-        // geometry is far too heavy to re-fetch every few seconds. So refetch the
-        // one that will actually show it.
-        const annotationQuery =
-          kind === AnnotationKind.Surface ? "GetSceneSurfaces" : "GetSceneAnnotations";
         const result = await createAnnotation({
-          variables: { input: { scene: sceneId, kind, vectors: worldVectors, faces } },
-          refetchQueries: hasAnnotationLayer ? [annotationQuery] : ["GetScene"],
+          variables: { input: { scene: sceneId, kind, vectors: worldVectors } },
+          refetchQueries: hasAnnotationLayer ? ["GetSceneAnnotations"] : ["GetScene"],
           awaitRefetchQueries: false,
         });
         const created = result.data?.createAnnotation ?? null;

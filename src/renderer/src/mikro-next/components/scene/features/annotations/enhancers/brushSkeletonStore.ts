@@ -5,6 +5,7 @@ import {
   type SkeletonWeights,
 } from "./shared/corridorCost";
 import { appendSample, type BrushSample, type Vec3 } from "./shared/strokeModel";
+import { DEFAULT_MARCHER, type MarcherId } from "./meshes/marcher";
 
 /**
  * The skeleton brush's session state: the stroke being painted, the extracted
@@ -66,6 +67,19 @@ export interface BrushSkeletonState {
   /** Normalized-intensity threshold τ: the tube wraps voxels brighter than
    * this (`voxelCost(τ)` is the cost-space iso value). */
   tubeThreshold: number;
+  /**
+   * Surface detail in VOXELS of the extraction level: the mesh is simplified
+   * to stay within this many voxels of the marched isosurface, and from 2 up
+   * the corridor is marched at a correspondingly coarser pyramid level. 1 =
+   * the data's own resolution — the default; finer is only noise from the
+   * tet march.
+   */
+  detailVoxels: number;
+  /** Which isosurface algorithm extracts the surface (`meshes/marcher.ts`). */
+  marcher: MarcherId;
+  /** Taubin smoothing passes applied to a DESIGN surface before it is
+   * simplified — removes marching artefacts without shrinking. 0 = off. */
+  polishIterations: number;
   /** STABLE identity, mutated in place; `strokeVersion` is the signal. */
   stroke: BrushSample[];
   strokeVersion: number;
@@ -76,6 +90,11 @@ export interface BrushSkeletonState {
    * surface). Set by `beginStroke` and read by the extraction.
    */
   strokeMode: "stroke" | "blob";
+  /**
+   * DESIGN only: whether the stroke ADDS its surface to the active design
+   * mesh or ERASES within its brush. Always "add" in ANNOTATE.
+   */
+  strokeIntent: "add" | "erase";
   /** Smooth-blob only: box-blur radius (level voxels) applied to the field
    * before the surface is marched — the "Smooth" slider. */
   blobSmoothness: number;
@@ -97,9 +116,12 @@ export interface BrushSkeletonState {
   setWeights: (weights: Partial<SkeletonWeights>) => void;
   setTubeEnabled: (on: boolean) => void;
   setTubeThreshold: (threshold: number) => void;
+  setDetailVoxels: (voxels: number) => void;
+  setMarcher: (marcher: MarcherId) => void;
+  setPolishIterations: (iterations: number) => void;
   setBlobSmoothness: (radius: number) => void;
   setBlobGap: (voxels: number) => void;
-  beginStroke: (layerId: string, mode?: "stroke" | "blob") => void;
+  beginStroke: (layerId: string, mode?: "stroke" | "blob", intent?: "add" | "erase") => void;
   /** Returns whether the sample was kept (`strokeModel.appendSample`). */
   addSample: (sample: BrushSample) => boolean;
   /** The pointer lifted: hand over to extraction. No-op unless painting. */
@@ -124,12 +146,16 @@ export const createBrushSkeletonStore = () =>
     weights: DEFAULT_SKELETON_WEIGHTS,
     tubeEnabled: false,
     tubeThreshold: 0.5,
+    detailVoxels: 1,
+    marcher: DEFAULT_MARCHER,
+    polishIterations: 8,
     blobSmoothness: 1,
     blobGap: 0,
     stroke: [],
     strokeVersion: 0,
     strokeLayerId: null,
     strokeMode: "stroke" as const,
+    strokeIntent: "add" as const,
     candidate: null,
     liveTube: null,
 
@@ -148,16 +174,21 @@ export const createBrushSkeletonStore = () =>
       set((state) => ({ weights: { ...state.weights, ...weights } })),
     setTubeEnabled: (tubeEnabled) => set({ tubeEnabled }),
     setTubeThreshold: (tubeThreshold) => set({ tubeThreshold }),
+    setDetailVoxels: (detailVoxels) => set({ detailVoxels: Math.min(2, Math.max(0.1, detailVoxels)) }),
+    setMarcher: (marcher) => set({ marcher }),
+    setPolishIterations: (polishIterations) =>
+      set({ polishIterations: Math.max(0, Math.min(20, Math.round(polishIterations))) }),
     setBlobSmoothness: (blobSmoothness) => set({ blobSmoothness }),
     setBlobGap: (blobGap) => set({ blobGap }),
 
-    beginStroke: (layerId, mode = "stroke") => {
+    beginStroke: (layerId, mode = "stroke", intent = "add") => {
       const stroke = get().stroke;
       stroke.length = 0;
       set({
         status: "painting",
         strokeLayerId: layerId,
         strokeMode: mode,
+        strokeIntent: intent,
         strokeVersion: 0,
         candidate: null,
         liveTube: null,

@@ -137,3 +137,20 @@ fragment GeneralFabriksAccessGrant on GeneralFabriksAccessGrant {
   region
   bucket
 }
+
+# A scoped PREFIX grant: `key` is the prefix every file of the collection is
+# written under, not a single object (see fabriksUpload.ts).
+fragment FabriksUploadGrant on FabriksUploadGrant {
+  accessKey
+  secretKey
+  sessionToken
+  path
+  key
+  bucket
+  region
+  expiresIn
+  maxBytes
+  # The fabriks store's id — what `finishFabriksUpload` takes as `storeId`,
+  # and the `FabriksLike` value `createMeshCollection` wants.
+  store
+}

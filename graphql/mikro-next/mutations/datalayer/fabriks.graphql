@@ -3,3 +3,19 @@ mutation RequestGeneralFabriksAccess($input: RequestGeneralFabriksAccessInput!) 
     ...GeneralFabriksAccessGrant
   }
 }
+
+# The upload half of a fabriks prefix (features/meshes/fabriks/writer/
+# fabriksUpload.ts): mint a scoped prefix grant, PUT every file, land
+# `fabriks.json` LAST, then finish — the server reads the manifest and
+# refuses a prefix without one.
+mutation RequestFabriksUpload($input: RequestFabriksUploadInput!) {
+  requestFabriksUpload(input: $input) {
+    ...FabriksUploadGrant
+  }
+}
+
+mutation FinishFabriksUpload($input: FinishFabriksUploadInput!) {
+  finishFabriksUpload(input: $input) {
+    ...FabriksStore
+  }
+}

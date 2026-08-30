@@ -17,7 +17,22 @@ import {
  * of PROBE. Camera behaviour that used to be an exclusive mode is now composable
  * booleans below.
  */
-export type InteractionMode = "NAVIGATE" | "ANNOTATE" | "PROBE";
+/**
+ * DESIGN is the mesh designer: brush/blob extractions become meshes in a
+ * session (`features/meshDesign`), committed together as one fabriks mesh
+ * collection rather than as annotations. 3D-only, like the tools it hosts.
+ */
+export type InteractionMode = "NAVIGATE" | "ANNOTATE" | "PROBE" | "DESIGN";
+
+/**
+ * What a DESIGN-mode pointer gesture does. DESIGN navigates like NAVIGATE —
+ * the camera never fights the brush — and only a HELD key turns a drag into
+ * a stroke: C brushes onto the active mesh, V grows a blob onto it, X removes
+ * from it. Tracked here (from
+ * the keyboard controller) so the volume layer arms its probe handlers, and
+ * the camera releases the left button, only while a key is down.
+ */
+export type DesignModifier = "add" | "erase";
 export type DisplayMode = "2D" | "3D";
 
 export type DisplayModeOption = {
@@ -51,6 +66,12 @@ export const interactionModeOptions: InteractionModeOption[] = [
     label: "Probe",
     value: "PROBE",
     description: "Click a layer to read its voxel values (hold P)",
+  },
+  {
+    label: "Design",
+    value: "DESIGN",
+    description:
+      "Navigate as usual; hold C and drag to brush a mesh, V to grow a blob, X to remove (hold M)",
   },
 ];
 
@@ -95,6 +116,8 @@ export interface ModeState {
    * re-renders.
    */
   probeFollowsCursor: boolean;
+  /** The DESIGN modifier currently held, or null (see `DesignModifier`). */
+  designModifier: DesignModifier | null;
   /**
    * The presentation/faithful switch. OFF is the SCIENTIFIC look and is the
    * renderer as it has always been, plus `NoToneMapping`; ON adds volume
@@ -142,6 +165,7 @@ export interface ModeState {
   setPivotOnProbe: (on: boolean) => void;
   setSmoothOrbit: (on: boolean) => void;
   setProbeFollowsCursor: (on: boolean) => void;
+  setDesignModifier: (modifier: DesignModifier | null) => void;
   setCinematic: (on: boolean) => void;
   setIsoThreshold: (value: number) => void;
   setLightRig: (patch: Partial<LightRig>) => void;
@@ -167,6 +191,7 @@ export const createModeStore = ({
     pivotOnProbe: false,
     smoothOrbit: false,
     probeFollowsCursor: true,
+    designModifier: null,
     cinematic: false,
     isoThreshold: 0.5,
     lightRig: { ...CINEMATIC_DEFAULTS },
@@ -196,6 +221,10 @@ export const createModeStore = ({
     setProbeFollowsCursor: (on) =>
       set((state) => {
         state.probeFollowsCursor = on;
+      }),
+    setDesignModifier: (modifier) =>
+      set((state) => {
+        state.designModifier = modifier;
       }),
     setCinematic: (on) =>
       set((state) => {

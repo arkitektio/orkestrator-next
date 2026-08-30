@@ -47,11 +47,6 @@ export function outlinePoints(
 
   if (annotation.kind === AnnotationKind.Point) return null;
 
-  // A painted region (SURFACE) draws a mesh from its `faces`, never a fat
-  // line — its vector list is triangle vertices, and a polyline through them
-  // would be noise. (Mirrors AnnotationShape's Surface branch.)
-  if (annotation.kind === AnnotationKind.Surface) return null;
-
   if (annotation.kind === AnnotationKind.Line && vectors.length >= 2) {
     return vectors.map((vector) => getVectorPoint(vector, flattenToPlane));
   }

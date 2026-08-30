@@ -26,6 +26,7 @@ import { CreateRedeemTokenForm } from "@/lok-next/forms/CreateRedeemTokenForm";
 import { CreateServiceInstanceForm } from "@/lok-next/forms/CreateServiceInstance";
 import { UpdateServiceInstanceForm } from "@/lok-next/forms/UpdateServiceInstanceForm";
 import { AddLayerForm } from "@/mikro-next/forms/AddLayerForm";
+import { CommitMeshDesignDialog } from "@/mikro-next/components/scene/features/meshDesign/CommitMeshDesignDialog";
 import { CalibrateForm } from "@/mikro-next/forms/CalibrateForm";
 import { RegisterForm } from "@/mikro-next/forms/RegisterForm";
 import { CreateFolderForm as CreateMikroFolderForm } from "@/mikro-next/forms/CreateFolderForm";
@@ -62,6 +63,8 @@ export const { DialogProvider, useDialog, registry } = createDialogProvider({
   editentitycategory: UpdateEntityCategoryForm,
   usemodelfor: UseModelForDialog,
   createorganization: CreateOrganizationForm,
+  // mikro scene: the mesh designer's commit (features/meshDesign)
+  commitmeshdesign: CommitMeshDesignDialog,
   // elektro
   exportelektromodel: ExportModelForm,
   // kraph

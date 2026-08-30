@@ -27,6 +27,10 @@ import {
 } from "../features/annotations/enhancers/brushSkeletonStore";
 import { ModeStoreContext, createModeStore } from "../platform/stores/modeStore";
 import {
+  MeshDesignStoreContext,
+  createMeshDesignStore,
+} from "../features/meshDesign/store/meshDesignStore";
+import {
   RoiDrawSessionStoreContext,
   createRoiDrawSessionStore,
 } from "../features/annotations/roiDrawSessionStore";
@@ -79,6 +83,7 @@ export type SceneScope = {
   roiDrawSessionStore: ReturnType<typeof createRoiDrawSessionStore>;
   roiSelectionStore: ReturnType<typeof createRoiSelectionStore>;
   brushSkeletonStore: ReturnType<typeof createBrushSkeletonStore>;
+  meshDesignStore: ReturnType<typeof createMeshDesignStore>;
 };
 
 /**
@@ -224,6 +229,7 @@ export const SceneProvider = (props: {
           roiDrawSessionStore: createRoiDrawSessionStore(),
           roiSelectionStore: createRoiSelectionStore(),
           brushSkeletonStore: createBrushSkeletonStore(),
+          meshDesignStore: createMeshDesignStore(),
         };
 
         if (!cancelled) {
@@ -382,6 +388,7 @@ export const SceneProvider = (props: {
                     <RoiDrawSessionStoreContext.Provider value={scope?.roiDrawSessionStore ?? null}>
                       <RoiSelectionStoreContext.Provider value={scope?.roiSelectionStore ?? null}>
                        <BrushSkeletonStoreContext.Provider value={scope?.brushSkeletonStore ?? null}>
+                       <MeshDesignStoreContext.Provider value={scope?.meshDesignStore ?? null}>
                         {/* Reads the scene stores, so it can only mount once
                             the scope exists — and unmounting it when the scope
                             goes is exactly what eases the app back to the
@@ -394,6 +401,7 @@ export const SceneProvider = (props: {
                         <AttributeServiceProvider>
                           {props.children}
                         </AttributeServiceProvider>
+                       </MeshDesignStoreContext.Provider>
                        </BrushSkeletonStoreContext.Provider>
                       </RoiSelectionStoreContext.Provider>
                     </RoiDrawSessionStoreContext.Provider>

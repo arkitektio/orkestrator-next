@@ -46,7 +46,18 @@ export const SCENE_SHORTCUTS: SceneShortcutGroup[] = [
     shortcuts: [
       { keys: ["A"], description: "Hold to annotate" },
       { keys: ["P"], description: "Hold to probe" },
+      { keys: ["M"], description: "Hold to design meshes" },
       { keys: ["D"], description: "Draw a path from the probe" },
+    ],
+  },
+  {
+    title: "Mesh design",
+    shortcuts: [
+      { keys: ["C", "drag"], description: "Brush a structure onto the mesh" },
+      { keys: ["V", "click"], description: "Grow a blob onto the mesh" },
+      { keys: ["X", "drag"], description: "Carve the brush out of the mesh" },
+      { keys: ["⌘", "Z"], description: "Undo the last sculpt (⇧ redoes)" },
+      { keys: ["Esc"], description: "Cancel the stroke in progress" },
     ],
   },
   {

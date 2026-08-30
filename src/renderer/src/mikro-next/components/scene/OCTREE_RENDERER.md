@@ -599,6 +599,94 @@ to coarser levels (bounded by `MAX_BRICK_LEVELS = 10`).
   compositor with its texture tap replaced by `sampleBrick(vec3(uv, slabZ),
   uDesiredLevel, ch)`.
 
+### 2.11a Sharded arrays (`lib/zarr/runner/sharding.ts`, `shardIndexCache.ts`)
+
+Zarr v3 `sharding_indexed` is handled **dynamically per array** — no flag. At
+`openZarrArray` the array's `zarr.json` is read through `readArrayMetadataCached`
+(`lib/zarr/runner/get-worker.ts`); a `sharding_indexed` top-level codec is
+unwrapped (`resolveShardingLayout`) so that:
+
+- the worker codec pipeline is built from the INNER chunk shape + inner codecs
+  (our pipeline uses zarrita's codec registry, which has no `sharding_indexed`
+  entry — a sharded chain handed to a worker would fail to load);
+- `effectiveChunkShapeOf(arr)` answers the INNER chunk shape synchronously, and
+  `buildLevelSources` uses it instead of `arr.chunks`. **Invariant: everything
+  downstream — `spatialChunks`, `chunksTouchingBrick`, `enumerateBrickChunkCoords`,
+  decode-allowance accounting, prefetch, chunk cache keys — works in inner
+  chunks.** Shard coordinates appear only inside `resolveChunkLocation` when
+  the storage key is built.
+
+Fetch path for a sharded chunk: `resolveChunkLocation` → main-thread
+`ShardIndexCache` (one suffix-`Range` read of the 16 B/inner-chunk index per
+shard per scene, single-flight, LRU 1024) → `lookupInnerChunk` → the worker
+receives an ordinary `fetch_decode` with a `Range` header. A `(2^64-1, 2^64-1)`
+index pair means "never written": fill on the main thread, no worker task, no
+"object missing" warning. The worker verifies a ranged response (206 with the
+expected length; a 200 without `Content-Range` is sliced locally — gateways that
+ignore `Range`). Signed `Range` requests are forced to `cache: 'no-store'`
+(`s3-request.ts`, Chromium rewrites signed range headers) — expected.
+
+Unsharded arrays take exactly the old path: `sharding` undefined, whole-object
+GET, same cache key.
+
+**Range coalescing** (`lib/zarr/runner/rangeCoalesce.ts`, `getChunkGroupWorker`
+in get-worker.ts): a brick's chunk set goes through ONE grouped call
+(`fetchChunksShared` in brickResidency.ts — same per-chunk in-flight sharing
+and per-chunk abort as `fetchChunkShared`). Inner chunks of the same shard
+whose byte ranges sit within `maxGap` (64 KiB) of each other, up to `maxBytes`
+(8 MiB) per run, become a single ranged GET; the worker's `fetch_decode_multi`
+slices the body and decodes each part. A run's worker task is cancelled only
+when EVERY chunk in it aborted (`whenAllAborted`). `stats.rangeRequests`
+counts tasks; `chunkRequests / rangeRequests` = chunks per request. Unsharded
+arrays, cache hits, absent inner chunks and singleton runs take the single
+path bit-for-bit. Backend contract that maximises this: write a shard's inner
+chunks in **Morton order** so a brick's 2×2×2 / 3×3×3 neighbourhood is
+contiguous (C-order writers still get pairs along x).
+
+**Shard index prefetch**: `warmShardIndexes` (reconcile, after `pendingFetch`
+is built) fires `prefetchShardIndex` for the head of the queue (≤256 chunks)
+so the index round trip overlaps the queue wait instead of preceding the
+first inner-chunk read of every shard.
+
+Backend contract that makes this pay off: brick-aligned inner chunks (64³ 3D,
+or 256×256×1 for 2D-only levels), shards written whole at ingest (zarr-python
+≥ 3.3 / zarrs / zarr-java all read partial shards; only zarrs writes them
+partially). Follow-ups: coalesce a brick's adjacent inner-chunk ranges within a
+shard into one GET (zarr-python 3.3's 1 MiB-gap / 16 MiB-cap rule); per-shard
+occupancy sidecar.
+
+### 2.11b Two-phase bricks (`features/bricks/residency/twoPhase.ts`)
+
+`orkestrator.twoPhaseBricks` (default ON, read once per manager). A 3D brick's
+fetch box is payload ± 1 border, so with brick-aligned 64³ chunks an INTERIOR
+brick touches 3 chunks per axis = **27 chunks** (8 at the origin corner) — all
+awaited before repack, for a 1-voxel rind; bytes amortise through the shared
+decode cache, latency and cache footprint (~14 MB decoded per 1.1 MB brick)
+do not. Two-phase splits the fetch (`FetchPhase` in `octree/nodeAddress.ts`):
+
+- **core** — `chunksTouchingBrick(…, "core")` = the payload box only (1 chunk
+  when aligned). Repack with `fetchBox = brickFetchBox(…, "core")`: the CPU
+  `replicateEdges` and the kernel's clamp fill the rind from the payload edge,
+  exactly as level-edge bricks always have. Upload → RESIDENT and listed in
+  `pool.provisionalKeys`; a halo entry is pushed to `pool.pendingHalo`.
+- **halo** — `fetchBrick(pool, node, "full", halo = true)`: the legacy 27-chunk
+  gather, re-repacked into the SAME slot (`BrickPoolState.acquire` on a
+  resident key returns its slot). Dispatched by `dispatchHalos` only when every
+  pool's planned queue is empty AND the band-2 gate holds (resting camera, no
+  on-screen fetch in flight); chunk tasks at priority −1; never counts as
+  on-screen; never retried; dropped by `haloStillWanted` if the brick was
+  evicted, refined, unplanned or re-queued in between.
+- EMPTY (uniform payload) bricks get no halo: nothing to refine.
+- 2D bricks (border 0) and the flag OFF ⇒ `initialFetchPhase` = `"full"`, the
+  legacy single pass bit-for-bit.
+
+Bookkeeping: `provisionalKeys` cleared on halo upload, eviction (all four
+release sites), flush; `pendingHalo` pruned to `protectedKeys` per reconcile
+and counted by `anyPipelineWork` (so `timeToSharpMs` and the streaming flag
+include the rind). Stats `coreBricks` / `haloRefines`; per-pool report
+`provisional` / `pendingHalo`; DebugPanel badge `◐N`; cold-open phase
+`firstBrickFull` (equals `firstBrickUploaded` with the flag off).
+
 ### 2.11 Probes (`features/bricks/octree/brickSampling.ts`)
 
 `marchResidentBricks` is a CPU march in **lockstep with the GLSL
@@ -654,6 +742,23 @@ cache only dedups *completed* fetches.
 ~1.1 MB on the GPU but ~14 MB of decode when the chunk is `[2, 2048, 2048]`.
 Plans that looked cheap in slot bytes downloaded entire levels. The refinement
 floor must count *chunk-aligned decoded bytes* of the visible region.
+(The structural fix is upstream: brick-aligned inner chunks in a sharded
+pyramid — §2.11a.)
+
+**P5b — zarrita's `arr.chunks` is the SHARD shape on a sharded array.** Feed it
+to the planner and every brick expands to whole 512³ shards — far worse than
+the plane-chunk case. `buildLevelSources` must use `effectiveChunkShapeOf(arr)`
+(inner chunks); anything that reads `arr.chunks` directly for planning is a
+bug. Also: a suffix-range index read can land at a non-8-aligned byte offset —
+`decodeShardIndex` realigns before the `BigUint64Array` view.
+
+**P5c — The border, not the chunk shape, is the request multiplier.** Even
+with perfectly brick-aligned chunks, payload ± 1 makes an interior brick touch
+27 chunks. Re-chunking alone therefore cut BYTES, not latency; the two-phase
+brick (§2.11b) is what brought first-pixel back to one request. A halo refine
+must never ride `pendingFetch`: `peekLiveFetch` drops any key that is already
+resident, which is exactly what a halo target is — hence the separate
+`pendingHalo` queue.
 
 **P4 — Sizing atlases by budget share, ignoring dataset size.** A 4-brick toy
 layer got a 296-slot / ~140 MB float32 atlas — ×4 layers ≈ 1.1 GB of zeroed

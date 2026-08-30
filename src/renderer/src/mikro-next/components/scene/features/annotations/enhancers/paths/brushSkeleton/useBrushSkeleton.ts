@@ -9,11 +9,7 @@ import { voxelCost, type SkeletonWeights } from "../../shared/corridorCost";
 import { corridorVoxelCount } from "../../shared/corridorPlan";
 import { backtrackPath } from "../../shared/geodesicReference";
 import { tubeClampValue } from "../../meshes/tubeMarch";
-import {
-  MAX_TUBE_SAVE_TRIANGLES,
-  SURFACE_KIND,
-  surfaceGeometry,
-} from "../../meshes/tubePersist";
+import type { MarcherId } from "../../meshes/marcher";
 import { resampleStroke, type BrushSample, type Vec3 } from "../../shared/strokeModel";
 import type {
   CenterlineResult,
@@ -42,6 +38,12 @@ import { useSceneStoreApi } from "../../../../../platform/stores/sceneStore";
 
 import { useCreateSceneAnnotation } from "../../../useCreateSceneAnnotation";
 import { useBrickStoreApi } from "../../../../bricks/store/brickSlice";
+import { useModeStoreApi } from "../../../../../platform/stores/modeStore";
+import { useMeshDesignStoreApi } from "../../../../meshDesign/store/meshDesignStore";
+import { weldSoup } from "../../../../meshDesign/weld";
+import { simplifyToError } from "../../../../meshDesign/simplify";
+import { taubinSmooth } from "../../../../meshDesign/smoothMesh";
+import { marchField, meshToField, subtractCapsule, unionMesh } from "../../../../meshDesign/sculptField";
 
 /**
  * The GESTURE orchestration of the skeleton brush and the smooth blob:
@@ -100,6 +102,8 @@ type ExtractionContext = {
     strokeWorld: readonly Vec3[];
     radiusWorld: number;
     maxVoxels: number;
+    /** Detail floor in world units; see `brushSkeletonStore.detailVoxels`. */
+    minSpacingWorld?: number;
   }) => PickedCorridor | null;
 };
 
@@ -107,6 +111,8 @@ export const useBrushSkeleton = () => {
   const sceneStoreApi = useSceneStoreApi();
   const viewerStoreApi = useBrickStoreApi();
   const brushApi = useBrushSkeletonStoreApi();
+  const modeApi = useModeStoreApi();
+  const designApi = useMeshDesignStoreApi();
   const { createSceneAnnotation } = useCreateSceneAnnotation();
 
   const resolveContext = useCallback(
@@ -151,7 +157,7 @@ export const useBrushSkeleton = () => {
         startLevel,
         engineContext,
         engines,
-        plan: ({ strokeWorld, radiusWorld, maxVoxels }) =>
+        plan: ({ strokeWorld, radiusWorld, maxVoxels, minSpacingWorld }) =>
           pickCorridor({
             strokeWorld,
             radiusWorld,
@@ -161,6 +167,7 @@ export const useBrushSkeleton = () => {
             shape,
             startLevel,
             maxVoxels,
+            minSpacingWorld,
           }),
       };
     },
@@ -187,10 +194,109 @@ export const useBrushSkeleton = () => {
     [sceneStoreApi, brushApi],
   );
 
+  /**
+   * DESIGN's brush is ADDITIVE: an extracted surface goes straight onto the
+   * selected design mesh (or starts one) and the gesture clears — there is
+   * no verdict step, brushing IS the verdict. Returns whether it was taken.
+   */
+  const appendToDesign = useCallback(
+    async (
+      tube: TubeSurface,
+      layerId: string,
+      level: number,
+      spacing: Vec3,
+      mode: "stroke" | "blob",
+    ): Promise<boolean> => {
+      if (tube.triangles === 0) return false;
+      const piece = weldSoup(tube.positions);
+      if (piece.indices.length === 0) return false;
+      const { detailVoxels, polishIterations, marcher } = brushApi.getState();
+      const design = designApi.getState();
+      const target = design.selectedId ? design.meshes.find((m) => m.id === design.selectedId) : undefined;
+
+      // TRUE union through the sculpting field: the piece and whatever the
+      // mesh already holds become one signed-distance grid and ONE re-marched
+      // surface — no interior faces where strokes overlap. Field resolution
+      // follows the extraction level (finer under sub-voxel Detail).
+      const fieldSpacing = Math.max(...spacing) * Math.min(1, Math.max(0.25, detailVoxels));
+      let field = target
+        ? (target.field ?? meshToField(target.original, fieldSpacing))
+        : null;
+      field = field ? unionMesh(field, piece) : meshToField(piece, fieldSpacing);
+      let geometry = marchField(field, marcher);
+      const detailWorld = detailVoxels * Math.max(...spacing);
+      try {
+        // Polish first: shrink-free smoothing takes the marching artefacts
+        // out, so the simplifier fits the shape rather than the grain.
+        const original = taubinSmooth(geometry, { iterations: polishIterations });
+        const current = await simplifyToError(original, detailWorld);
+        designApi.getState().applySculpt(target?.id ?? null, {
+          field,
+          original,
+          current,
+          source: { kind: mode === "blob" ? "blob" : "tube", layerId, level },
+        });
+      } catch (error) {
+        console.warn("[design] post-processing failed; keeping the marched surface", error);
+        designApi.getState().applySculpt(target?.id ?? null, {
+          field,
+          original: geometry,
+          current: geometry,
+          source: { kind: mode === "blob" ? "blob" : "tube", layerId, level },
+        });
+      }
+      return true;
+    },
+    [brushApi, designApi],
+  );
+
   const extract = useCallback(async () => {
     const brush = brushApi.getState();
     const { stroke, strokeLayerId } = brush;
     if (!strokeLayerId || stroke.length < 1) return;
+    const designing = modeApi.getState().interactionMode === "DESIGN";
+
+    // DESIGN erase: no extraction — the stroke's capsule is carved out of
+    // the selected mesh's field and the surface re-marched, so the cut is a
+    // smooth, CLOSED boolean, not a hole torn into the triangle list.
+    if (designing && brush.strokeIntent === "erase") {
+      const design = designApi.getState();
+      const target =
+        (design.selectedId ? design.meshes.find((m) => m.id === design.selectedId) : undefined) ??
+        design.meshes.at(-1);
+      const radius = brush.radiusWorld ?? 0;
+      if (!target || radius <= 0) {
+        brush.fail("Nothing to remove from — brush a mesh first (hold C and drag)");
+        return;
+      }
+      const ctx = resolveContext(strokeLayerId);
+      const fieldSpacing =
+        target.field?.spacing ??
+        Math.max(...(ctx?.voxelSize ?? [radius / 4, radius / 4, radius / 4])) *
+          Math.min(1, Math.max(0.25, brush.detailVoxels));
+      const field = target.field ?? meshToField(target.original, fieldSpacing);
+      const carved = subtractCapsule(
+        field,
+        stroke.map((sample) => sample.world as [number, number, number]),
+        radius,
+      );
+      if (carved === field && target.field) {
+        brush.fail("Nothing within the brush — the stroke missed the mesh");
+        return;
+      }
+      const geometry = marchField(carved, brush.marcher);
+      const original = taubinSmooth(geometry, { iterations: brush.polishIterations });
+      const detailWorld = brush.detailVoxels * fieldSpacing;
+      const current = await simplifyToError(original, detailWorld).catch(() => original);
+      design.applySculpt(target.id, {
+        field: carved,
+        original,
+        current,
+        source: target.source,
+      });
+      brush.clear();
+      return;
+    }
     brush.setExtracting();
 
     const ctx = resolveContext(strokeLayerId);
@@ -201,6 +307,11 @@ export const useBrushSkeleton = () => {
     const radiusWorld =
       brush.radiusWorld ?? DEFAULT_RADIUS_VOXELS * Math.min(...ctx.voxelSize);
     const weights = brush.weights;
+    // From 2 voxels of detail up, march a correspondingly coarser level: the
+    // field itself is then at the requested resolution rather than a fine
+    // one that is simplified away afterwards.
+    const minSpacingWorld =
+      brush.detailVoxels >= 2 ? brush.detailVoxels * Math.max(...ctx.voxelSize) : undefined;
     // A threshold τ on windowed intensity IS a cost-space iso value: cost is
     // monotone in brightness, so the tube surface and the geodesic run on
     // the SAME field.
@@ -222,6 +333,8 @@ export const useBrushSkeleton = () => {
         smoothVoxels: Math.max(0, Math.floor(brush.blobSmoothness)),
         gapVoxels: Math.max(0, Math.floor(brush.blobGap)),
         tau: brush.tubeThreshold,
+        minSpacingWorld,
+        marcher: brush.marcher,
         stale,
         publishLive: (tube) => brushApi.getState().setLiveTube(tube),
       });
@@ -231,6 +344,13 @@ export const useBrushSkeleton = () => {
         after.fail(
           "Nothing brighter than the Wrap threshold near the probe point — lower Wrap and try again",
         );
+        return;
+      }
+      if (designing) {
+        const taken = await appendToDesign(outcome.tube, strokeLayerId, outcome.level, outcome.spacing, "blob");
+        if (stale()) return;
+        if (taken) brushApi.getState().clear();
+        else brushApi.getState().fail("The grown surface collapsed to nothing");
         return;
       }
       after.setCandidate(
@@ -251,10 +371,12 @@ export const useBrushSkeleton = () => {
     // --- The stroke gesture: centerline (+ optional tube) over the painted
     // corridor. Engines in order, each at its own budget. -------------------
     const strokeWorld = resampleStroke(stroke, MAX_STROKE_POINTS);
-    const tubeOptions: TubeOptions | null = brush.tubeEnabled
+    // In DESIGN the surface IS the product, so the tube is always extracted.
+    const tubeOptions: TubeOptions | null = brush.tubeEnabled || designing
       ? {
           iso: tubeIso,
           clampValue: tubeClampValue(tubeIso),
+          marcher: brush.marcher,
           smoothVoxels: 0,
           connectivity: null,
         }
@@ -267,6 +389,7 @@ export const useBrushSkeleton = () => {
         strokeWorld,
         radiusWorld,
         maxVoxels: engine.maxCorridorVoxels,
+        minSpacingWorld,
       });
       if (!enginePick) continue;
       result = await engine.centerline({
@@ -340,6 +463,13 @@ export const useBrushSkeleton = () => {
 
     const after = brushApi.getState();
     if (after.status !== "extracting") return; // a new stroke took over
+    if (designing) {
+      const taken = tube ? await appendToDesign(tube, strokeLayerId, picked.level, picked.spacing, "stroke") : false;
+      if (stale()) return;
+      if (taken) brushApi.getState().clear();
+      else brushApi.getState().fail(notes.length > 0 ? notes.join("; ") : "The stroke found no surface to add");
+      return;
+    }
     after.setCandidate(
       {
         points,
@@ -350,7 +480,7 @@ export const useBrushSkeleton = () => {
       },
       notes.length > 0 ? notes.join("; ") : null,
     );
-  }, [brushApi, resolveContext]);
+  }, [brushApi, resolveContext, modeApi, designApi, appendToDesign]);
 
   /**
    * The live drag preview: re-mesh the tube around the stroke AS PAINTED —
@@ -361,7 +491,9 @@ export const useBrushSkeleton = () => {
    */
   const previewLiveTube = useCallback(async () => {
     const brush = brushApi.getState();
-    if (brush.status !== "painting" || !brush.tubeEnabled) return;
+    const designing = modeApi.getState().interactionMode === "DESIGN";
+    if (brush.status !== "painting" || !(brush.tubeEnabled || designing)) return;
+    if (designing && brush.strokeIntent === "erase") return; // erase has no surface to preview
     const { stroke, strokeLayerId } = brush;
     if (!strokeLayerId || stroke.length < 2) return;
 
@@ -390,6 +522,7 @@ export const useBrushSkeleton = () => {
       tube: {
         iso: tubeIso,
         clampValue: tubeClampValue(tubeIso),
+          marcher: brush.marcher,
         smoothVoxels: 0,
         connectivity: null,
         maxVertices: LIVE_MAX_TUBE_VERTICES,
@@ -403,16 +536,57 @@ export const useBrushSkeleton = () => {
       triangles: result.triangles,
       truncated: result.truncated,
     });
-  }, [brushApi, resolveContext]);
+  }, [brushApi, resolveContext, modeApi]);
+
+  /**
+   * DESIGN mode's verdict: the candidate's surface becomes a mesh in the
+   * design session (`features/meshDesign`) — welded, indexed, world
+   * coordinates — and the gesture is cleared. Nothing is persisted here; the
+   * session commits every mesh at once as a fabriks collection. The
+   * centerline is not kept: a designed mesh is a surface, and the path can
+   * always be re-extracted in ANNOTATE mode if wanted as an annotation.
+   */
+  const addToDesign = useCallback((): boolean => {
+    const brush = brushApi.getState();
+    const candidate = brush.candidate;
+    const tube = candidate?.tube;
+    if (!candidate || !tube || tube.triangles === 0) {
+      brush.fail("Nothing to add — turn on Tube so the extraction produces a surface");
+      return false;
+    }
+    const geometry = weldSoup(tube.positions);
+    if (geometry.indices.length === 0) {
+      brush.fail("The surface collapsed to nothing after welding");
+      return false;
+    }
+    designApi.getState().addMesh({
+      geometry,
+      source: {
+        kind: brush.strokeMode === "blob" ? "blob" : "tube",
+        layerId: candidate.layerId,
+        level: candidate.level,
+      },
+    });
+    brush.clear();
+    return true;
+  }, [brushApi, designApi]);
 
   const save = useCallback(async () => {
     const brush = brushApi.getState();
     const candidate = brush.candidate;
     if (!candidate || brush.status !== "preview") return;
+    if (modeApi.getState().interactionMode === "DESIGN") {
+      addToDesign();
+      return;
+    }
     // A GROW candidate has no centerline — its whole payload is the tube.
     const hasPath = candidate.points.length >= 2;
     const tube = candidate.tube;
     if (!hasPath && !tube) return;
+    if (!hasPath) {
+      brush.fail("Surfaces are kept in Design mode — switch there to add this one");
+      return;
+    }
     brush.setSaving();
     let persistedAny = false;
 
@@ -431,32 +605,14 @@ export const useBrushSkeleton = () => {
       persistedAny = true;
     }
 
-    // The tube rides along as a SURFACE annotation, into the same collection as
-    // the centerline above — which is the point of it being an annotation at all:
-    // the two halves of one stroke share a coordinate system and a registration,
-    // so they cannot drift apart in space.
-    //
-    // A refusal still must not fail the whole save: whatever DID persist stays
-    // persisted, and the tube falls back to a local preview that says why. The
-    // ceiling is the one case that is not an error — a surface past it is a
-    // legitimate extraction that is simply too big to send.
-    let savedNote = "Saved";
-    if (tube) {
-      const prefix = hasPath ? "Centerline saved — tube" : "Tube";
-      if (tube.triangles > MAX_TUBE_SAVE_TRIANGLES) {
-        savedNote = `${prefix} too detailed to save (${tube.triangles} triangles), preview only`;
-      } else {
-        const { vectors, faces } = surfaceGeometry(tube.positions);
-        const surface = await createSceneAnnotation(SURFACE_KIND, vectors, faces);
-        after = brushApi.getState();
-        if (after.candidate !== candidate) return;
-        if (surface) {
-          persistedAny = true;
-        } else {
-          savedNote = `${prefix} not saved — the server refused it`;
-        }
-      }
-    }
+    // The tube is NOT persisted as an annotation any more: a painted surface
+    // is a mesh, committed through the DESIGN mode as a fabriks collection.
+    // In ANNOTATE the tube stays a local preview of what the stroke found.
+    const savedNote = tube
+      ? hasPath
+        ? "Centerline saved — switch to Design mode to keep the tube as a mesh"
+        : "Surfaces are kept in Design mode — switch there to add this one"
+      : "Saved";
     after.setCandidate(candidate, savedNote);
     // The persisted copy arrives with the annotation layer's next poll; keep
     // the local preview meanwhile so the shape never blinks off screen. When
@@ -469,9 +625,9 @@ export const useBrushSkeleton = () => {
         }
       }, SAVED_PREVIEW_CLEAR_MS);
     }
-  }, [brushApi, createSceneAnnotation]);
+  }, [brushApi, createSceneAnnotation, modeApi, addToDesign]);
 
-  return { initRadiusForLayer, extract, previewLiveTube, save };
+  return { initRadiusForLayer, extract, previewLiveTube, save, addToDesign };
 };
 
 /**
@@ -489,13 +645,15 @@ async function runGrowLoop(opts: {
   smoothVoxels: number;
   gapVoxels: number;
   tau: number;
+  minSpacingWorld?: number;
+  marcher: MarcherId;
   stale: () => boolean;
   publishLive: (tube: TubeSurface) => void;
-}): Promise<{ tube: TubeSurface; level: number; closed: boolean } | null> {
+}): Promise<{ tube: TubeSurface; level: number; spacing: Vec3; closed: boolean } | null> {
   const { ctx, seed, weights, tubeIso, stale } = opts;
   const seedWorld = seed.world;
   let radius = opts.startRadius;
-  let grown: { tube: TubeSurface; level: number } | null = null;
+  let grown: { tube: TubeSurface; level: number; spacing: Vec3 } | null = null;
 
   for (let step = 0; step < MAX_GROW_STEPS; step += 1) {
     if (stale()) return null;
@@ -507,6 +665,7 @@ async function runGrowLoop(opts: {
         strokeWorld: [seedWorld],
         radiusWorld: radius,
         maxVoxels: engine.maxCorridorVoxels,
+        minSpacingWorld: opts.minSpacingWorld,
       });
       if (!picked) continue;
       // Gap N bridges dark gaps up to ~N voxels: crossing a one-voxel gap
@@ -522,6 +681,7 @@ async function runGrowLoop(opts: {
         tube: {
           iso: tubeIso,
           clampValue: tubeClampValue(tubeIso),
+          marcher: opts.marcher,
           smoothVoxels: opts.smoothVoxels,
           connectivity: {
             tau: opts.tau,
@@ -543,7 +703,7 @@ async function runGrowLoop(opts: {
       triangles: stepTube.triangles,
       truncated: stepTube.truncated,
     };
-    grown = { tube: worldTube, level: stepPick.level };
+    grown = { tube: worldTube, level: stepPick.level, spacing: stepPick.spacing };
     const margin = 2 * Math.max(...stepPick.spacing);
     if (
       worldTube.triangles > 0 &&

@@ -64,6 +64,7 @@ export function createGpuSkeletonEngine(
     maxVertices: tube.maxVertices ?? GPU_MAX_TUBE_VERTICES,
     smoothVoxels: tube.smoothVoxels,
     connectivity: tube.connectivity ?? undefined,
+    marcher: tube.marcher,
   });
 
   const levelMapped = (picked: PickedCorridor): boolean =>
@@ -90,7 +91,7 @@ export function createGpuSkeletonEngine(
     },
 
     async tube(request: TubeRequest): Promise<LevelTube | null> {
-      if (!skeletonizer.tubeReady() || !levelMapped(request.picked)) return null;
+      if (!skeletonizer.tubeReady(request.tube.marcher) || !levelMapped(request.picked)) return null;
       return skeletonizer.extractTube({
         ...jobBase(request.picked, request),
         tube: tubeJobOptions(request.tube),

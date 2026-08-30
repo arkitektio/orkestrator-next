@@ -1,0 +1,10 @@
+# Register an uploaded fabriks prefix as a mesh collection. `store` is the
+# finished FabriksStore id; grid and encoding are read from the manifest
+# server-side and never declared here. `derivedFrom` places the collection:
+# the browser-side designer records a TRANSLATION into the scene's world
+# coordinate system (features/meshDesign/commitDesign.ts).
+mutation CreateMeshCollection($input: CreateMeshCollectionInput!) {
+  createMeshCollection(input: $input) {
+    ...MeshCollection
+  }
+}

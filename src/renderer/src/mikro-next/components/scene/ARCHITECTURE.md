@@ -107,6 +107,21 @@ invert it, or to demote the shared symbol to `platform/` — not to widen rule 2
 Adding an entry needs a justification line here. The absence of any such check
 is precisely what turned the old `core/` into a 153-file grab-bag.
 
+**Known sideways edges, with their reasons** (the `KNOWN_SIDEWAYS` ceiling in
+`architecture.test.ts`):
+
+- `meshDesign -> annotations`, `meshDesign -> meshes`: the mesh designer
+  (`features/meshDesign`) is a COMPOSITION of the annotation brush (its
+  gesture, panels and tool store) and the fabriks reader/writer. These are the
+  composition itself; they go away only if the brush and the fabriks writer
+  move down to `platform/`, which they should not — both are features.
+- `annotations -> meshDesign` (the brush verdict routes an accepted surface
+  into the design session, simplified to the extraction level's voxel size on
+  the way) and `meshes -> meshDesign` (the Meshes panel's
+  "edit in design" entry): the two hand-over seams. Removed by giving the
+  enhancer registry a per-mode verdict sink and moving the entry onto a
+  design-owned panel.
+
 `architecture.test.ts` asserts these rules in `pnpm test`. Three are hard
 zeroes; "features do not reach sideways" is a RATCHET against a known list, in
 the same spirit as `typecheck-baseline.json` — the count may fall, never rise,

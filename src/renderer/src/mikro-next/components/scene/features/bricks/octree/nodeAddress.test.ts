@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { BrickSpec } from "./brickSpec";
 import { buildLayerLevelGeometry } from "../../../platform/coords/levelGeometry";
 import {
+  brickFetchBox,
   brickGridForLevel,
   childrenOf,
   chunksTouchingBrick,
@@ -107,6 +108,29 @@ describe("chunksTouchingBrick", () => {
     expect(coords).toHaveLength(2 * 2 * 3);
     expect(coords[0]).toEqual([0, 0, 0]);
     expect(coords.at(-1)).toEqual([1, 1, 2]);
+  });
+
+  it("core phase covers the payload only: 1 chunk on brick-aligned grids vs 27 with the halo", () => {
+    // 64³ chunks, 64³ payload, border 1: an interior brick's halo box is
+    // [63, 129) per axis → chunks 0..2 → 27; the core box [64, 128) → chunk 1.
+    const geo = buildLayerLevelGeometry(DIMS, LAYER, [
+      { shape: [1, 256, 256, 256], chunks: [1, 64, 64, 64], dtype: "uint8", storeId: "a0" },
+    ])!;
+    const spec: BrickSpec = {
+      payload: [64, 64, 64],
+      border: 1,
+      stored: [66, 66, 66],
+      channelCount: 1,
+    };
+    expect(chunksTouchingBrick(geo, spec, 0, [1, 1, 1], "full")).toHaveLength(27);
+    expect(chunksTouchingBrick(geo, spec, 0, [1, 1, 1])).toHaveLength(27); // default = full
+    expect(chunksTouchingBrick(geo, spec, 0, [1, 1, 1], "core")).toEqual([[1, 1, 1]]);
+    // Origin corner: halo clamps at 0 → 2 per axis = 8; core still 1.
+    expect(chunksTouchingBrick(geo, spec, 0, [0, 0, 0], "full")).toHaveLength(8);
+    expect(chunksTouchingBrick(geo, spec, 0, [0, 0, 0], "core")).toEqual([[0, 0, 0]]);
+    // brickFetchBox mirrors the two boxes.
+    expect(brickFetchBox(geo, spec, 0, [1, 1, 1], "core")).toEqual(nodeVoxelBox(geo, spec, 0, [1, 1, 1]));
+    expect(brickFetchBox(geo, spec, 0, [1, 1, 1], "full")).toEqual(fetchVoxelBox(geo, spec, 0, [1, 1, 1]));
   });
 
   it("needs a single chunk column when the brick sits inside one chunk", () => {

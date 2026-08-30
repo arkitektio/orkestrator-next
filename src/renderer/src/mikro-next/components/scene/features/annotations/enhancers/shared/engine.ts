@@ -1,3 +1,4 @@
+import type { MarcherId } from "../meshes/marcher";
 import type { BrickAtlas } from "../../../bricks/gpu/brickAtlas";
 import type { PageTableTexture } from "../../../bricks/gpu/pageTableTexture";
 import type { SkeletonWeights } from "./corridorCost";
@@ -37,6 +38,8 @@ export type TubeOptions = {
   /** Vertex cap override (the live preview shrinks it); engines fall back
    * to their own `maxTubeVertices`. */
   maxVertices?: number;
+  /** Which isosurface algorithm (`meshes/marcher.ts`); default `cubes`. */
+  marcher?: MarcherId;
 };
 
 /** Inputs shared by every extraction over one picked corridor. */

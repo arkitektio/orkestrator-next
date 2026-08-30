@@ -291,6 +291,7 @@ const PanScaleSync = () => {
 
 export const CameraController = () => {
   const interactionMode = useModeStore((s) => s.interactionMode);
+  const designModifier = useModeStore((s) => s.designModifier);
   const displayMode = useModeStore((s) => s.displayMode);
   const zoomToCursor = useModeStore((s) => s.zoomToCursor);
   const smoothOrbit = useModeStore((s) => s.smoothOrbit);
@@ -344,7 +345,10 @@ export const CameraController = () => {
   // Pan and rotate stay *enabled* in every mode; the button map alone decides
   // what a drag does. Disabling them was only ever a blunt way of neutering the
   // left button, and it left tool modes with no way to move the view at all.
-  const isNavigate = interactionMode === "NAVIGATE";
+  // DESIGN navigates like NAVIGATE — the left button is the camera's — until
+  // a brush key (C/V/X) is held, when it hands the left button to the stroke.
+  const isNavigate =
+    interactionMode === "NAVIGATE" || (interactionMode === "DESIGN" && designModifier === null);
 
   return (
     <>

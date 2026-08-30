@@ -284,16 +284,20 @@ function getPipeline(metaId: number): ReturnType<typeof create_codec_pipeline> {
   return pipeline
 }
 
+/** `bytes=start-end` (inclusive) → `[start, end)`; `null` for any other form. */
+function parseAbsoluteRange(header: string | null | undefined): { start: number; end: number } | null {
+  const match = header?.match(/^bytes=(\d+)-(\d+)$/)
+  if (!match) return null
+  return { start: Number(match[1]), end: Number(match[2]) + 1 }
+}
+
 async function fetchChunkBytes(
   store: S3FetchConfig,
   path: `/${string}`,
   requestInit?: SerializedRequestInit,
 ): Promise<Uint8Array | undefined> {
-  const response = await fetchS3Path(
-    store,
-    path,
-    deserializeRequestInit(requestInit) ?? {},
-  )
+  const init = deserializeRequestInit(requestInit) ?? {}
+  const response = await fetchS3Path(store, path, init)
 
   if (response.status === 404) {
     return undefined
@@ -303,25 +307,136 @@ async function fetchChunkBytes(
     throw new Error(`Unexpected response status ${response.status} ${response.statusText}`)
   }
 
-  return new Uint8Array(await response.arrayBuffer())
+  const body = new Uint8Array(await response.arrayBuffer())
+
+  // Sharded inner chunk: the main thread asked for `bytes=a-b` inside a shard.
+  // A gateway that ignores Range answers 200 with the WHOLE shard — slice
+  // locally rather than decode the shard's first bytes as this chunk.
+  const range = parseAbsoluteRange(new Headers(init.headers).get('range'))
+  if (range) {
+    if (response.status === 200 && !response.headers.get('Content-Range')) {
+      return body.subarray(range.start, range.end)
+    }
+    const expected = range.end - range.start
+    if (body.byteLength !== expected) {
+      throw new Error(
+        `Ranged chunk read returned ${body.byteLength} bytes, expected ${expected} (${path})`,
+      )
+    }
+  }
+
+  return body
+}
+
+interface FetchDecodeCommon {
+  id: number
+  store: S3FetchConfig
+  path: `/${string}`
+  metaId: number
+  /** Piggybacked codec meta on this worker's FIRST request for a metaId —
+   * replaces the separate serial `init` round-trip (cold-start cost). */
+  meta?: CodecChunkMeta
+  requestInit?: SerializedRequestInit
+  textureFidelity?: TextureFidelity
+  useSharedArrayBuffer?: boolean
+}
+
+/** One inner chunk inside a coalesced shard range (absolute byte offsets). */
+export interface FetchDecodePart {
+  offset: number
+  length: number
+  actualChunkShape?: number[]
 }
 
 type WorkerMessage =
   | { type: 'init'; id: number; metaId: number; meta: CodecChunkMeta }
-  | {
-      type: 'fetch_decode'
-      id: number
-      store: S3FetchConfig
-      path: `/${string}`
-      metaId: number
-      /** Piggybacked codec meta on this worker's FIRST request for a metaId —
-       * replaces the separate serial `init` round-trip (cold-start cost). */
-      meta?: CodecChunkMeta
-      requestInit?: SerializedRequestInit
-      actualChunkShape?: number[]
-      textureFidelity?: TextureFidelity
-      useSharedArrayBuffer?: boolean
-    }
+  | (FetchDecodeCommon & { type: 'fetch_decode'; actualChunkShape?: number[] })
+  | (FetchDecodeCommon & {
+      /** Coalesced read: ONE ranged GET covering `range`, sliced into
+       * `parts` (each an inner chunk), decoded and promoted individually. */
+      type: 'fetch_decode_multi'
+      range: { offset: number; length: number }
+      parts: FetchDecodePart[]
+    })
+
+interface DecodedPartMessage {
+  promotedType: TextureCompatibleDataType
+  textureBounds?: TextureChunkBounds
+  data: ArrayBufferLike
+  byteOffset: number
+  byteLength: number
+  shape: number[]
+  stride: number[]
+  timings: { decodeMs: number; reshapeMs: number; promoteMs: number }
+}
+
+function ensurePipeline(metaId: number, meta: CodecChunkMeta | undefined): void {
+  if (meta && !pipelineByMetaId.has(metaId)) {
+    metaByMetaId.set(metaId, meta)
+    pipelineByMetaId.set(
+      metaId,
+      create_codec_pipeline({
+        data_type: meta.data_type,
+        shape: meta.chunk_shape,
+        codecs: meta.codecs,
+      }),
+    )
+  }
+}
+
+/** Decode + edge-fix + texture-promote one chunk's raw bytes. */
+async function decodeOne(
+  rawBytes: Uint8Array,
+  metaId: number,
+  actualChunkShape: number[] | undefined,
+  textureFidelity: TextureFidelity,
+  useSharedArrayBuffer: boolean,
+): Promise<DecodedPartMessage> {
+  const pipeline = getPipeline(metaId)
+  const decodeStartedAt = now()
+  let chunk = (await pipeline.decode(rawBytes)) as Chunk<DataType>
+  const decodeMs = now() - decodeStartedAt
+
+  const reshapeStartedAt = now()
+  chunk = fixEdgeChunkShapeStride(chunk, actualChunkShape)
+  const reshapeMs = now() - reshapeStartedAt
+
+  const promoteStartedAt = now()
+  const meta = metaByMetaId.get(metaId)
+  if (!meta) {
+    throw new Error(`No metadata registered for metaId ${metaId}`)
+  }
+  const promoted = promoteChunkForTexture(chunk, meta.data_type, textureFidelity, useSharedArrayBuffer)
+  const promoteMs = now() - promoteStartedAt
+
+  const dataView = promoted.chunk.data as unknown as {
+    buffer: ArrayBuffer
+    byteOffset: number
+    byteLength: number
+  }
+  return {
+    promotedType: promoted.promotedType,
+    textureBounds: promoted.textureBounds,
+    data: dataView.buffer,
+    byteOffset: dataView.byteOffset,
+    byteLength: dataView.byteLength,
+    shape: promoted.chunk.shape,
+    stride: promoted.chunk.stride,
+    timings: { decodeMs, reshapeMs, promoteMs },
+  }
+}
+
+/** Buffers that must be TRANSFERRED (non-shared) — deduped by identity. */
+function transferListOf(parts: (DecodedPartMessage | null)[]): ArrayBufferLike[] {
+  const out: ArrayBufferLike[] = []
+  for (const part of parts) {
+    if (!part) continue
+    const buffer = part.data
+    if (typeof SharedArrayBuffer !== 'undefined' && buffer instanceof SharedArrayBuffer) continue
+    if (!out.includes(buffer)) out.push(buffer)
+  }
+  return out
+}
 
 ctx.onmessage = async (event: MessageEvent<WorkerMessage>) => {
   const msg = event.data
@@ -344,18 +459,8 @@ ctx.onmessage = async (event: MessageEvent<WorkerMessage>) => {
     if (msg.type === 'fetch_decode') {
       const workerStartedAt = now()
       // Register a piggybacked meta (same effect as an `init` message).
-      if (msg.meta && !pipelineByMetaId.has(msg.metaId)) {
-        metaByMetaId.set(msg.metaId, msg.meta)
-        pipelineByMetaId.set(
-          msg.metaId,
-          create_codec_pipeline({
-            data_type: msg.meta.data_type,
-            shape: msg.meta.chunk_shape,
-            codecs: msg.meta.codecs,
-          }),
-        )
-      }
-      const pipeline = getPipeline(msg.metaId)
+      ensurePipeline(msg.metaId, msg.meta)
+      getPipeline(msg.metaId)
       const fetchStartedAt = now()
       const rawBytes = await fetchChunkBytes(msg.store, msg.path, msg.requestInit)
       const fetchMs = now() - fetchStartedAt
@@ -375,61 +480,86 @@ ctx.onmessage = async (event: MessageEvent<WorkerMessage>) => {
         return
       }
 
-      const decodeStartedAt = now()
-      let chunk = (await pipeline.decode(rawBytes)) as Chunk<DataType>
-      const decodeMs = now() - decodeStartedAt
-
-      const reshapeStartedAt = now()
-      chunk = fixEdgeChunkShapeStride(chunk, msg.actualChunkShape)
-      const reshapeMs = now() - reshapeStartedAt
-
-      const promoteStartedAt = now()
-      const meta = metaByMetaId.get(msg.metaId)
-      if (!meta) {
-        throw new Error(`No metadata registered for metaId ${msg.metaId}`)
-      }
-
-      const promoted = promoteChunkForTexture(
-        chunk,
-        meta.data_type,
+      const part = await decodeOne(
+        rawBytes,
+        msg.metaId,
+        msg.actualChunkShape,
         msg.textureFidelity ?? 'default',
         msg.useSharedArrayBuffer === true,
       )
-      const promoteMs = now() - promoteStartedAt
-
-      const dataView = promoted.chunk.data as unknown as {
-        buffer: ArrayBuffer
-        byteOffset: number
-        byteLength: number
-      }
-      const buffer = dataView.buffer
-      const byteOffset = dataView.byteOffset
-      const byteLength = dataView.byteLength
-
       const message = {
         type: 'fetch_decoded' as const,
         id: msg.id,
-        promotedType: promoted.promotedType,
-        textureBounds: promoted.textureBounds,
-        data: buffer,
-        byteOffset,
-        byteLength,
-        shape: promoted.chunk.shape,
-        stride: promoted.chunk.stride,
+        promotedType: part.promotedType,
+        textureBounds: part.textureBounds,
+        data: part.data,
+        byteOffset: part.byteOffset,
+        byteLength: part.byteLength,
+        shape: part.shape,
+        stride: part.stride,
         timings: {
           fetchMs,
-          decodeMs,
-          reshapeMs,
-          promoteMs,
+          ...part.timings,
           totalMs: now() - workerStartedAt,
         },
       }
+      ctx.postMessage(message, transferListOf([part]))
+      return
+    }
 
-      if (typeof SharedArrayBuffer !== 'undefined' && buffer instanceof SharedArrayBuffer) {
-        ctx.postMessage(message)
-      } else {
-        ctx.postMessage(message, [buffer])
+    if (msg.type === 'fetch_decode_multi') {
+      const workerStartedAt = now()
+      ensurePipeline(msg.metaId, msg.meta)
+      getPipeline(msg.metaId)
+      const init = deserializeRequestInit(msg.requestInit) ?? {}
+      const headers = new Headers(init.headers)
+      headers.set('Range', `bytes=${msg.range.offset}-${msg.range.offset + msg.range.length - 1}`)
+      const fetchStartedAt = now()
+      const body = await fetchChunkBytes(msg.store, msg.path, {
+        ...msg.requestInit,
+        headers: Array.from(headers.entries()),
+      })
+      const fetchMs = now() - fetchStartedAt
+      if (!body) {
+        // The shard vanished between index read and chunk read: every part
+        // is missing (fill) — the caller treats it like a 404 per chunk.
+        ctx.postMessage({
+          type: 'fetch_decoded_multi',
+          id: msg.id,
+          parts: msg.parts.map(() => null),
+          timings: { fetchMs, totalMs: now() - workerStartedAt },
+        })
+        return
       }
+      const parts: (DecodedPartMessage | null)[] = []
+      for (const part of msg.parts) {
+        const start = part.offset - msg.range.offset
+        const slice = body.subarray(start, start + part.length)
+        if (slice.byteLength !== part.length) {
+          throw new Error(
+            `Coalesced read short: part at ${part.offset} wanted ${part.length} bytes, got ${slice.byteLength} (${msg.path})`,
+          )
+        }
+        parts.push(
+          await decodeOne(
+            slice,
+            msg.metaId,
+            part.actualChunkShape,
+            msg.textureFidelity ?? 'default',
+            msg.useSharedArrayBuffer === true,
+          ),
+        )
+      }
+      ctx.postMessage(
+        {
+          type: 'fetch_decoded_multi',
+          id: msg.id,
+          parts,
+          timings: { fetchMs, totalMs: now() - workerStartedAt },
+        },
+        transferListOf(parts),
+      )
+      return
     }
   } catch (error) {
     ctx.postMessage({

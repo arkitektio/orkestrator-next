@@ -6,6 +6,7 @@ import {
   boxRelative,
   centerlineToWorld,
   climWindow,
+  levelForSpacing,
   pickCorridor,
   soupToWorld,
   touchesBoundary,
@@ -43,6 +44,18 @@ describe("pickCorridor", () => {
     const picked = pickCorridor({ ...opts, maxVoxels: 800 });
     expect(picked?.level).toBeGreaterThan(0);
     expect(picked?.spacing[0]).toBeGreaterThan(1);
+  });
+
+  it("floors the level at the requested detail, never above the pyramid", () => {
+    expect(levelForSpacing(1, opts.voxelSize, opts.levelSteps)).toBe(0);
+    expect(levelForSpacing(2, opts.voxelSize, opts.levelSteps)).toBe(1);
+    expect(levelForSpacing(3, opts.voxelSize, opts.levelSteps)).toBe(2);
+    expect(levelForSpacing(64, opts.voxelSize, opts.levelSteps)).toBe(2);
+    // Anisotropy: the LARGEST axis decides, so a 4 µm z step already counts as 4.
+    expect(levelForSpacing(4, [1, 1, 4], opts.levelSteps)).toBe(0);
+    expect(pickCorridor({ ...opts, maxVoxels: 1_000_000, minSpacingWorld: 2 })?.level).toBe(1);
+    // The floor never goes finer than the on-screen level.
+    expect(pickCorridor({ ...opts, startLevel: 2, maxVoxels: 1_000_000, minSpacingWorld: 2 })?.level).toBe(2);
   });
 
   it("answers null when even the coarsest level overflows", () => {

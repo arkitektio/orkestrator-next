@@ -9,6 +9,21 @@ const sample = (x: number): BrushSample => ({
 });
 
 describe("brushSkeletonStore", () => {
+  it("clamps the surface-quality knobs to their ranges", () => {
+    const store = createBrushSkeletonStore();
+    expect(store.getState().marcher).toBe("cubes");
+    store.getState().setMarcher("tets");
+    expect(store.getState().marcher).toBe("tets");
+    store.getState().setDetailVoxels(9);
+    expect(store.getState().detailVoxels).toBe(2);
+    store.getState().setDetailVoxels(0.01);
+    expect(store.getState().detailVoxels).toBe(0.1);
+    store.getState().setPolishIterations(99);
+    expect(store.getState().polishIterations).toBe(20);
+    store.getState().setPolishIterations(-3);
+    expect(store.getState().polishIterations).toBe(0);
+  });
+
   it("initRadius only fills the blank, never overrides a chosen radius", () => {
     const store = createBrushSkeletonStore();
     store.getState().initRadius(4, [1, 40]);

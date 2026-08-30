@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
-import { InteractionMode, useModeStore, useModeStoreApi } from "../../platform/stores/modeStore";
+import { InteractionMode, useModeStore, useModeStoreApi, type DesignModifier } from "../../platform/stores/modeStore";
 import { isTypingTarget } from "../../platform/input/keyboardTarget";
 import { beginPathFromProbe } from "../../features/annotations/pathFromProbe";
 import { useRoiDrawingStoreApi } from "../../features/annotations/roiDrawingStore";
@@ -12,6 +12,7 @@ import { sceneZExtent } from "../../platform/coords/worldTransform";
 const HOLD_MODES: Record<string, InteractionMode> = {
   a: "ANNOTATE",
   p: "PROBE",
+  m: "DESIGN",
 };
 
 /**
@@ -37,6 +38,19 @@ export const KeyboardModeController = () => {
   );
 
   useEffect(() => {
+    // DESIGN's brush keys, hold-to-act. The key also picks the tool, so the
+    // toolbar never needs a click: C brushes (tube), V grows (blob), X removes.
+    // (A stays the hold-ANNOTATE key.)
+    const DESIGN_KEYS: Record<string, { modifier: DesignModifier; tool: "BRUSH" | "BLOB" | null }> = {
+      c: { modifier: "add", tool: "BRUSH" },
+      v: { modifier: "add", tool: "BLOB" },
+      x: { modifier: "erase", tool: null },
+    };
+    const setDesignModifier = (next: DesignModifier | null) => {
+      const mode = modeApi.getState();
+      if (mode.designModifier !== next) mode.setDesignModifier(next);
+    };
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.repeat) return; // Ignore auto-repeat when key is held
       // Without these, Cmd+A flips the scene into a tool mode and so does typing
@@ -47,6 +61,15 @@ export const KeyboardModeController = () => {
       }
 
       const key = e.key.toLowerCase();
+
+      const designKey = DESIGN_KEYS[key];
+      if (designKey && modeApi.getState().interactionMode === "DESIGN") {
+        if (designKey.tool && roiDrawingApi.getState().activeTool !== designKey.tool) {
+          roiDrawingApi.getState().setActiveTool(designKey.tool);
+        }
+        setDesignModifier(designKey.modifier);
+        return;
+      }
 
       // "Draw path from probe" — same action as the probe panel button.
       if (key === "d") {
@@ -86,13 +109,20 @@ export const KeyboardModeController = () => {
     // Keyed off the armed hold rather than the event target, because focus can
     // move mid-hold.
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (heldKeyRef.current !== e.key.toLowerCase()) return;
+      const key = e.key.toLowerCase();
+      if (DESIGN_KEYS[key] && modeApi.getState().designModifier === DESIGN_KEYS[key].modifier) {
+        setDesignModifier(null);
+      }
+      if (heldKeyRef.current !== key) return;
       releaseHold();
     };
 
     // Alt-tabbing mid-hold never fires keyup, which used to strand the scene in
     // the held mode.
-    const handleBlur = () => releaseHold();
+    const handleBlur = () => {
+      releaseHold();
+      setDesignModifier(null);
+    };
 
     const handleWheel = (e: WheelEvent) => {
       if (!e.shiftKey || !zNavigation) return;

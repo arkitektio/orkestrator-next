@@ -130,3 +130,57 @@ describe("ConfiguredS3Store credential rotation", () => {
     expect(store.ensureFreshWorkerFetchConfig()).toBe(fresh);
   });
 });
+
+describe("ConfiguredS3Store.getRange", () => {
+  beforeEach(() => {
+    fetchS3Path.mockReset();
+  });
+
+  it("signs a suffix Range header and caches by range, not by key", async () => {
+    fetchS3Path.mockImplementation(
+      async () =>
+        new Response(new Uint8Array([9, 8]), {
+          status: 206,
+          headers: { "Content-Range": "bytes 98-99/100" },
+        }),
+    );
+    const store = new ConfiguredS3Store(configFor(Date.now() + HOUR), {
+      preloadMetadata: false,
+    });
+
+    const suffix = await store.getRange("/c/0/0", { suffixLength: 2 });
+    expect(suffix).toEqual(new Uint8Array([9, 8]));
+    expect(new Headers(fetchS3Path.mock.calls[0][2].headers).get("Range")).toBe("bytes=-2");
+
+    await store.getRange("/c/0/0", { offset: 10, length: 5 });
+    expect(new Headers(fetchS3Path.mock.calls[1][2].headers).get("Range")).toBe("bytes=10-14");
+    expect(fetchS3Path).toHaveBeenCalledTimes(2);
+
+    // Same range again: byte cache answers.
+    await store.getRange("/c/0/0", { suffixLength: 2 });
+    expect(fetchS3Path).toHaveBeenCalledTimes(2);
+  });
+
+  it("slices locally when a gateway ignores Range and answers 200 with the whole object", async () => {
+    const whole = new Uint8Array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    fetchS3Path.mockImplementation(async () => new Response(whole, { status: 200 }));
+    const store = new ConfiguredS3Store(configFor(Date.now() + HOUR), {
+      preloadMetadata: false,
+    });
+
+    expect(await store.getRange("/c/0/0", { offset: 3, length: 4 })).toEqual(
+      new Uint8Array([3, 4, 5, 6]),
+    );
+    expect(await store.getRange("/c/0/0", { suffixLength: 3 })).toEqual(
+      new Uint8Array([7, 8, 9]),
+    );
+  });
+
+  it("returns undefined for a missing shard object", async () => {
+    fetchS3Path.mockImplementation(async () => new Response(null, { status: 404 }));
+    const store = new ConfiguredS3Store(configFor(Date.now() + HOUR), {
+      preloadMetadata: false,
+    });
+    expect(await store.getRange("/c/9/9", { suffixLength: 20 })).toBeUndefined();
+  });
+});

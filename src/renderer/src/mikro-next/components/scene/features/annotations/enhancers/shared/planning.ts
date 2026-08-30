@@ -28,9 +28,27 @@ export type PickedCorridor = {
 const pickScratch = new THREE.Vector3();
 
 /**
- * Choose the corridor: start at the on-screen level and coarsen until the
- * stroke's dilated tube fits `maxVoxels` (`traceBox.chooseTraceLevel`
- * restated over a stroke tube).
+ * The finest level whose voxels are at least `minSpacingWorld` along their
+ * largest axis — the "detail" floor: a stroke asked for 4-voxel detail has no
+ * business marching a level-0 field. Capped at the pyramid's coarsest level.
+ */
+export function levelForSpacing(
+  minSpacingWorld: number,
+  voxelSize: readonly [number, number, number],
+  levelSteps: readonly (readonly [number, number, number])[],
+): number {
+  for (let level = 0; level < levelSteps.length; level += 1) {
+    const step = levelSteps[level];
+    const spacing = Math.max(voxelSize[0] * step[0], voxelSize[1] * step[1], voxelSize[2] * step[2]);
+    if (spacing >= minSpacingWorld) return level;
+  }
+  return Math.max(0, levelSteps.length - 1);
+}
+
+/**
+ * Choose the corridor: start at the on-screen level (or the detail floor,
+ * whichever is coarser) and coarsen until the stroke's dilated tube fits
+ * `maxVoxels` (`traceBox.chooseTraceLevel` restated over a stroke tube).
  */
 export function pickCorridor(opts: {
   strokeWorld: readonly Vec3[];
@@ -41,9 +59,15 @@ export function pickCorridor(opts: {
   shape: readonly [number, number, number];
   startLevel: number;
   maxVoxels: number;
+  /** Detail floor: never march voxels finer than this (world units). */
+  minSpacingWorld?: number;
 }): PickedCorridor | null {
   const { strokeWorld, radiusWorld, inverse, voxelSize, levelSteps, shape } = opts;
-  for (let level = opts.startLevel; level < levelSteps.length; level += 1) {
+  const floor =
+    opts.minSpacingWorld !== undefined && opts.minSpacingWorld > 0
+      ? levelForSpacing(opts.minSpacingWorld, voxelSize, levelSteps)
+      : 0;
+  for (let level = Math.max(opts.startLevel, floor); level < levelSteps.length; level += 1) {
     const step = levelSteps[level];
     const spacing: Vec3 = [
       voxelSize[0] * step[0],

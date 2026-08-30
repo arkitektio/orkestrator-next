@@ -1,3 +1,4 @@
+import { effectiveFlatNormals } from "./meshLayerDefaults";
 import { useThree, type ThreeEvent } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
@@ -332,10 +333,11 @@ const FabriksCollectionGroup = ({
     manager?.setVisible(visible);
   }, [manager, visible]);
 
+  const flatNormals = effectiveFlatNormals(layer);
   useEffect(() => {
-    manager?.setFlatNormals(layer.flatNormals ?? true);
+    manager?.setFlatNormals(flatNormals);
     invalidate();
-  }, [manager, layer.flatNormals, invalidate]);
+  }, [manager, flatNormals, invalidate]);
 
   // The scene-wide picked instance, pushed into this layer's shader uniforms
   // (highlight/isolate) — uniform writes only, never a recompile. A VANILLA

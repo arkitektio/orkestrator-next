@@ -53,6 +53,17 @@ const KNOWN_SIDEWAYS: Record<string, number> = {
   // the point; removing it means giving the probe a narrower way to ask
   // "which object is this?".
   "features/probe->features/meshes": 1,
+  // The mesh designer composes the annotation brush (its gesture, panels and
+  // tool store) with the fabriks reader/writer: the downward edges are the
+  // composition itself. The two upward edges are the seams where those
+  // features hand over to it — the brush verdict routing an accepted surface
+  // into the design session, and the Meshes panel's "edit in design" entry.
+  // Removed by giving the enhancer registry a per-mode verdict sink and
+  // moving the entry onto a design-owned panel. See ARCHITECTURE.md.
+  "features/meshDesign->features/annotations": 6,
+  "features/meshDesign->features/meshes": 7,
+  "features/annotations->features/meshDesign": 5,
+  "features/meshes->features/meshDesign": 2,
 };
 
 type Edge = { from: string; to: string; fromBucket: string; toBucket: string; typeOnly: boolean };

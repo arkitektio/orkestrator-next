@@ -140,14 +140,37 @@ export function childrenOf(
   return children;
 }
 
-/** Spatial zarr chunk coords ([x, y, z] chunk indices) covering the fetch box. */
+/**
+ * Which voxels a brick fetch covers. `"full"` = payload + border guard band
+ * (`fetchVoxelBox`); `"core"` = the payload only (`nodeVoxelBox`) — the
+ * two-phase brick's first pass, whose border is edge-replicated from the
+ * payload and refined later by a `"full"` pass. With `spec.border === 0` the
+ * two are identical.
+ */
+export type FetchPhase = "core" | "full";
+
+/** The voxel box a fetch of the given phase needs from the source level. */
+export function brickFetchBox(
+  geo: LayerLevelGeometry,
+  spec: BrickSpec,
+  levelIndex: number,
+  coords: Vec3,
+  phase: FetchPhase = "full",
+): VoxelBox {
+  return phase === "core"
+    ? nodeVoxelBox(geo, spec, levelIndex, coords)
+    : fetchVoxelBox(geo, spec, levelIndex, coords);
+}
+
+/** Spatial zarr chunk coords ([x, y, z] chunk indices) covering the phase's fetch box. */
 export function chunksTouchingBrick(
   geo: LayerLevelGeometry,
   spec: BrickSpec,
   levelIndex: number,
   coords: Vec3,
+  phase: FetchPhase = "full",
 ): Vec3[] {
-  const box = fetchVoxelBox(geo, spec, levelIndex, coords);
+  const box = brickFetchBox(geo, spec, levelIndex, coords, phase);
   const chunkShape = geo.levels[levelIndex].spatialChunks;
 
   const lo: number[] = [];

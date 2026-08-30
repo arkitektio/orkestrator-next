@@ -578,6 +578,17 @@ export class FabriksCollectionManager {
    * manager, which turned any placement-adjacent store change into a full
    * refetch.) A value-equal matrix is a no-op.
    */
+  /** The open collection — for readers that extract geometry outside the
+   * render plan (the mesh designer's edit-existing path). */
+  getCollection(): FabriksCollection {
+    return this.opts.collection;
+  }
+
+  /** A copy of the current voxel → world placement. */
+  getVoxelToWorld(): THREE.Matrix4 {
+    return this.voxelToWorld.clone();
+  }
+
   setVoxelToWorld(matrix: THREE.Matrix4): void {
     if (this.disposed || this.voxelToWorld.equals(matrix)) return;
     this.voxelToWorld.copy(matrix);

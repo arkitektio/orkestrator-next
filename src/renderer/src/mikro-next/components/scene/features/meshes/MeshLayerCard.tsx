@@ -1,3 +1,4 @@
+import { effectiveFlatNormals } from "./meshLayerDefaults";
 import { Button } from "@/components/ui/button";
 import {
   Box,
@@ -555,7 +556,7 @@ export const MeshLayerCard = memo(
         <MeshRenderSection
           layerId={layerId}
           detail={layer.detail}
-          flatNormals={layer.flatNormals}
+          flatNormals={effectiveFlatNormals(layer)}
           doubleSided={layer.doubleSided}
           slabScale={layer.slabScale}
         />

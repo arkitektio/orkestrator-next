@@ -17,7 +17,7 @@ export type ModeContext = {
 };
 
 /** Canonical order — the pickers render exactly this, filtered. */
-const ALL_MODES: InteractionMode[] = ["NAVIGATE", "ANNOTATE", "PROBE"];
+const ALL_MODES: InteractionMode[] = ["NAVIGATE", "ANNOTATE", "PROBE", "DESIGN"];
 
 const ALL_TOOLS: AnnotateTool[] = [
   "SELECT",
@@ -30,7 +30,9 @@ const ALL_TOOLS: AnnotateTool[] = [
   "LINE",
   "PATH",
   "BRUSH",
-  "BLOB",
+  // BLOB is a DESIGN-mode tool (a grown surface is a mesh, not an annotation);
+  // it stays an `AnnotateTool` so the shared capture keys on it, but ANNOTATE
+  // never offers it.
 ];
 
 /**
@@ -94,7 +96,16 @@ export function isInteractionModeAvailable(
   mode: InteractionMode,
   ctx: ModeContext,
 ): boolean {
-  return mode === "PROBE" ? ctx.hasProbeableLayer : true;
+  switch (mode) {
+    case "PROBE":
+      return ctx.hasProbeableLayer;
+    // The designer's tools are the probe-driven brush and blob: they need a
+    // volume to march through, which only the 3D view offers.
+    case "DESIGN":
+      return ctx.displayMode === "3D" && ctx.hasProbeableLayer;
+    default:
+      return true;
+  }
 }
 
 export function availableInteractionModes(ctx: ModeContext): InteractionMode[] {

@@ -6,7 +6,7 @@ import {
 } from "./corridorCost";
 import { smoothCostField } from "./fieldSmooth";
 import { geodesicField } from "./geodesicReference";
-import { marchTube } from "../meshes/tubeMarch";
+import { marcherFor } from "../meshes/marcher";
 import type { Vec3 } from "./strokeModel";
 import type {
   CenterlineRequest,
@@ -101,7 +101,7 @@ export function createCpuSkeletonEngine(ctx: SkeletonEngineContext): SkeletonEng
         tube.clampValue,
       );
     }
-    return marchTube({
+    return marcherFor(tube.marcher).march({
       cost: field,
       box: picked.box,
       iso: tube.iso,

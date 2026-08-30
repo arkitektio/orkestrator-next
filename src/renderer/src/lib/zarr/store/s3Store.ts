@@ -2,7 +2,7 @@ import { type AbsolutePath } from "@zarrita/storage";
 import { ByteBudgetByteCache } from "../caches/byteBudgetByteCache";
 import { fetchS3Path, type S3FetchConfig } from "@/lib/zarr/runner/s3-request";
 import { CredentialRotation, type S3FetchConfigRefresher } from "./credentialRotation";
-import type { ZarrStore } from "./types";
+import type { ByteRange, ZarrStore } from "./types";
 
 
 class AsyncLockManager {
@@ -53,6 +53,24 @@ async function handle_response(
   throw new Error(
     `Unexpected response status ${response.status} ${response.statusText}`,
   );
+}
+
+export function rangeHeaderValue(range: ByteRange): string {
+  return "suffixLength" in range
+    ? `bytes=-${range.suffixLength}`
+    : `bytes=${range.offset}-${range.offset + range.length - 1}`;
+}
+
+function rangeCacheSuffix(range: ByteRange): string {
+  return "suffixLength" in range
+    ? `suffix-${range.suffixLength}`
+    : `${range.offset}-${range.offset + range.length}`;
+}
+
+function sliceRange(body: Uint8Array, range: ByteRange): Uint8Array {
+  return "suffixLength" in range
+    ? body.subarray(Math.max(0, body.byteLength - range.suffixLength))
+    : body.subarray(range.offset, range.offset + range.length);
 }
 
 // Byte-bounded, not count-bounded: on the streaming path this mostly holds
@@ -137,18 +155,34 @@ export class ConfiguredS3Store implements ZarrStore {
     return this.getInternal(key, options);
   }
 
+  /**
+   * Ranged read — zarr v3 shard indexes (suffix) and inner chunks (absolute).
+   * Same credential/403 handling and byte cache as `get`, keyed by range so a
+   * suffix read and an inner-chunk read of the same shard never alias.
+   */
+  async getRange(key: AbsolutePath, range: ByteRange, options: RequestInit = {}): Promise<Uint8Array | undefined> {
+    await this.metadataPromise;
+    const headers = new Headers(options.headers);
+    headers.set("Range", rangeHeaderValue(range));
+    return this.getInternal(key, { ...options, headers }, range);
+  }
+
   clearCache(): void {
     this.cache.clear();
   }
 
-  private async getInternal(key: AbsolutePath, options: RequestInit = {}): Promise<Uint8Array | undefined> {
+  private async getInternal(
+    key: AbsolutePath,
+    options: RequestInit = {},
+    range?: ByteRange,
+  ): Promise<Uint8Array | undefined> {
     // Hot path: one Date.now() compare. Everything below only runs when the
     // credentials are actually within the rotation window.
     await this.rotation.beforeRequest();
 
     // Content-addressed by store and key: credentials are not part of the
     // identity, so a rotation never invalidates a byte of it.
-    const cacheKey = `${this.rotation.current().storeId}:${key}`;
+    const cacheKey = `${this.rotation.current().storeId}:${key}${range ? `:${rangeCacheSuffix(range)}` : ""}`;
     const cached = this.cache.get(cacheKey);
     if (cached) {
       return new Uint8Array(cached);
@@ -171,7 +205,14 @@ export class ConfiguredS3Store implements ZarrStore {
         response = await fetchS3Path(this.rotation.current(), key, options);
       }
 
-      const result = await handle_response(response);
+      let result = await handle_response(response);
+
+      // A gateway that ignores Range answers 200 with the WHOLE object. Slice
+      // locally rather than hand the caller bytes from the wrong offset (same
+      // defence as the fabriks store).
+      if (result && range && response.status === 200 && !response.headers.get("Content-Range")) {
+        result = sliceRange(result, range);
+      }
 
       if (result) {
         const bufferToCache = result.buffer.slice(

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
-import { Box, Eye, Focus, X } from "lucide-react";
+import { Box, Eye, Focus, PencilRuler, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import {
@@ -17,6 +17,13 @@ import { useSceneStore } from "../../platform/stores/sceneStore";
 import { useViewerStore, type MeshSelectionState } from "../../platform/stores/viewerStore";
 import { formatCount, hueStyle, objectLabel } from "../../platform/model/selectionFormat";
 import { useMeshStore } from "./store/meshSlice";
+import { useModeStore } from "../../platform/stores/modeStore";
+import { useMeshDesignStoreApi } from "../meshDesign/store/meshDesignStore";
+import { loadObjectsFromCollection } from "../meshDesign/loadCollection";
+import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
+
+/** Above this many indices the designer declines an edit — a segmentation is not a design. */
+const DESIGN_EDIT_MAX_INDICES = 6_000_000;
 
 /**
  * The meshes panel: every object of every mesh layer in the scene, grouped per
@@ -214,6 +221,10 @@ const MeshLayerSection = ({
   const transformContext = useSceneStore((s) => s.transformContext);
   const patchSceneLayer = useSceneStore((s) => s.patchSceneLayer);
   const navigateToBox = useNavigateToMeshBox();
+  const setInteractionMode = useModeStore((s) => s.setInteractionMode);
+  const displayMode = useModeStore((s) => s.displayMode);
+  const designApi = useMeshDesignStoreApi();
+  const [loadingDesign, setLoadingDesign] = useState(false);
 
   const [objects, setObjects] = useState<readonly FabriksObjectEntry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -299,6 +310,41 @@ const MeshLayerSection = ({
   const hidden = layer.visible === false;
   const total = objects?.length ?? null;
 
+  /**
+   * Load this collection's objects into the mesh DESIGN session: decode at
+   * the finest level, weld, place in world, and switch to DESIGN. Committing
+   * the session then writes a NEW collection derived from this one — the
+   * prefix itself is never edited (features/meshDesign/loadCollection.ts).
+   */
+  const editInDesign = async () => {
+    if (!manager) return;
+    setLoadingDesign(true);
+    try {
+      await MeshoptDecoder.ready;
+      const loaded = await loadObjectsFromCollection(manager.getCollection(), matrix, {
+        decoder: MeshoptDecoder,
+        maxIndices: DESIGN_EDIT_MAX_INDICES,
+      });
+      const design = designApi.getState();
+      design.reset();
+      for (const item of loaded) {
+        design.addMesh({
+          name: `Object ${item.objectId}`,
+          geometry: item.geometry,
+          objectId: item.objectId,
+          source: { kind: "imported", collectionId: collection.id, objectId: item.objectId },
+        });
+      }
+      design.setOrigin({ collectionId: collection.id, version: collection.version, layerId: layer.id });
+      setInteractionMode("DESIGN");
+    } catch (reason) {
+      console.warn(`[fabriks] cannot load ${collection.id} into the designer:`, reason);
+      designApi.getState().setStatus("error", reason instanceof Error ? reason.message : String(reason));
+    } finally {
+      setLoadingDesign(false);
+    }
+  };
+
   return (
     <section className="flex flex-col gap-1.5">
       <div className="flex items-baseline justify-between gap-2 px-0.5">
@@ -314,6 +360,18 @@ const MeshLayerSection = ({
             onClick={fitLayer}
           >
             <Focus className="h-3 w-3" />
+          </Button>
+        )}
+        {total !== null && !hidden && displayMode === "3D" && (
+          <Button
+            variant="ghost"
+            size="xs"
+            className="h-5 w-5 shrink-0 p-0 text-muted-foreground hover:text-foreground"
+            title="Edit in the mesh designer — commits as a new collection derived from this one"
+            disabled={loadingDesign}
+            onClick={() => void editInDesign()}
+          >
+            <PencilRuler className="h-3 w-3" />
           </Button>
         )}
         <span className="shrink-0 text-xs text-muted-foreground/60">

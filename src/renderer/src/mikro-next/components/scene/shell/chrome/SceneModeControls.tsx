@@ -6,6 +6,7 @@ import {
   ScanEye,
   SquarePen,
   Target,
+  Boxes,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -23,6 +24,7 @@ const INTERACTION_ICONS: Record<InteractionMode, LucideIcon> = {
   NAVIGATE: Hand,
   ANNOTATE: SquarePen,
   PROBE: Target,
+  DESIGN: Boxes,
 };
 
 /**

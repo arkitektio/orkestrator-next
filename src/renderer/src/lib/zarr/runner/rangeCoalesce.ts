@@ -28,9 +28,15 @@ export interface CoalesceOptions {
   maxBytes: number
 }
 
-/** Defaults tuned for 64³ uint16 inner chunks (~0.5 MB compressed each). */
+/**
+ * Defaults tuned for 64³ uint16 inner chunks (~0.5 MB compressed each) against
+ * the typical deployment: MinIO on the local network, where the scarce
+ * resource is REQUESTS (HTTP/1.1 caps the browser at 6 connections per
+ * origin), not bytes — 256 KB of discarded gap costs far less than another
+ * queued round trip. Still caller-overridable per fetch.
+ */
 export const DEFAULT_COALESCE: CoalesceOptions = {
-  maxGap: 64 * 1024,
+  maxGap: 256 * 1024,
   maxBytes: 8 * 1024 * 1024,
 }
 

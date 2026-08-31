@@ -5,7 +5,7 @@ import type {
   AttributeRow,
   ParquetStoreLike,
 } from "@/mikro-next/lib/attributes/attributeTypes";
-import { isMeshSample } from "@/mikro-next/lib/attributes/attributeTypes";
+import { isMeshSample, isNetworkSample } from "@/mikro-next/lib/attributes/attributeTypes";
 import type { AttributeLookupEngine } from "@/mikro-next/lib/attributes/lookupEngine";
 import { escapeSqlIdentifier, escapeSqlLiteral } from "@/mikro-next/lib/attributes/sqlBind";
 import { sampleColorMapRgb } from "../gpu/colormaps";
@@ -121,7 +121,10 @@ export type TableAccess = { store: ParquetStoreLike; keyColumn: string };
  * masks keyed into one table, and picking another mask's plan would resolve this
  * mask's ids against the wrong column.
  */
-export type PlanWant = { kind: "mesh" } | { kind: "array"; storeId: string };
+export type PlanWant =
+  | { kind: "mesh" }
+  | { kind: "network" }
+  | { kind: "array"; storeId: string };
 
 /** An entry reaches its column directly when it takes no `references` hop. */
 export const isDirectEntry = (entry: {
@@ -143,9 +146,10 @@ export const accessForTable = (
   const plan = plans.find((candidate) => {
     if (candidate.table.id !== tableId) return false;
     if (want.kind === "mesh") return isMeshSample(candidate.sample);
+    if (want.kind === "network") return isNetworkSample(candidate.sample);
     // An array-sampled plan over THIS array. `sample.store` is the zarr store
     // the values are sampled from, which is what identifies the mask.
-    if (isMeshSample(candidate.sample)) return false;
+    if (isMeshSample(candidate.sample) || isNetworkSample(candidate.sample)) return false;
     return candidate.sample.store?.id === want.storeId;
   });
   const keyColumn = plan?.lookup.keyColumns[0]?.column.name;

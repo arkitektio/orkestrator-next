@@ -722,6 +722,15 @@ export function getChunkGroupWorker<D extends DataType, Store extends Readable>(
                 cache.set(locations.get(index)!.cacheKey, settled)
                 deferreds[index].resolve(settled)
               })
+              logChunkTiming("[zarr run timing]", {
+                shardPath,
+                parts: run.items.length,
+                rangeBytes: run.length,
+                workerFetchMs: roundTiming(result.timings.fetchMs),
+                workerTotalMs: roundTiming(result.timings.totalWorkerMs),
+                fromHttpCache: result.timings.fromHttpCache,
+                protocol: result.timings.protocol,
+              })
             },
             opts.priority ?? 0,
           )
@@ -940,6 +949,8 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
         fillChunkMs: roundTiming(fillChunkMs),
         mainThreadWriteMs: 0,
         totalMs: roundTiming(performance.now() - startedAt),
+        fromHttpCache: workerTimings.fromHttpCache,
+        protocol: workerTimings.protocol,
       })
 
       return chunkToReturn
@@ -1243,6 +1254,8 @@ export async function getWorker<
             fillChunkMs: roundTiming(fillChunkMs),
             mainThreadWriteMs: roundTiming(mainThreadWriteMs),
             totalMs: roundTiming(performance.now() - chunkStartedAt),
+            fromHttpCache: workerTimings.fromHttpCache,
+            protocol: workerTimings.protocol,
           })
         },
         taskPriority,

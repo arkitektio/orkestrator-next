@@ -90,6 +90,10 @@ export type KonnektionGeometryRow = {
   objectNodeOffsets: number[];
   objectGhostOffsets: number[];
   objectEdgeOffsets: number[];
+  /** Owned/ghost value blobs per declared attribute, keyed by attribute name.
+   *  Optional so a hand-built fixture row predating attributes still compiles;
+   *  `parseGeometryRow` always supplies it (`{}` for a bare collection). */
+  attributes?: Record<string, { owned: Uint8Array; ghosts: Uint8Array | null }>;
 };
 
 /** One cell's graph, decoded into the collection's own voxel space. */
@@ -107,6 +111,13 @@ export type DecodedNetworkCell = {
   nodeIds: Float64Array;
   /** One radius per entry of `positions`, or null when `encoding.radii` is NONE. */
   radii: Float32Array | null;
+  /**
+   * One value per entry of `positions` per declared attribute — owned nodes
+   * then ghosts, exactly the `radii` layout. `NaN` is "no answer" (a rootless
+   * object's strahler/depth), never a sentinel a filter should treat as 0.
+   * Empty for a pre-attribute collection.
+   */
+  attributes: Record<string, Float32Array>;
   /** Per-node object ordinal, for colouring and picking. */
   nodeOrdinals: Float32Array;
   nodeCount: number;
@@ -266,6 +277,8 @@ export function decodeGeometryRow(
     edges[i] = index;
   }
 
+  const attributes = decodeAttributes(row, encoding, nodeCount, ghostCount);
+
   return {
     level: row.level,
     cell: row.cell,
@@ -273,12 +286,52 @@ export function decodeGeometryRow(
     edges,
     nodeIds: decodeNodeIds(row, encoding, nodeCount, ghostCount),
     radii: decodeRadii(row, grid, encoding, nodeCount, ghostCount),
+    attributes,
     nodeOrdinals: nodeOrdinalsOf(row, total),
     nodeCount,
     ghostCount,
     edgeCount,
-    bytes: positions.byteLength + edges.byteLength + total * 12,
+    bytes:
+      positions.byteLength +
+      edges.byteLength +
+      total * 12 +
+      Object.keys(attributes).length * total * 4,
   };
+}
+
+/**
+ * Per-node attribute values, owned then ghosts — the radii layout without the
+ * quantization branch: an attribute is FLOAT32 only, because its "no answer"
+ * is NaN and a quantized integer has no way to say that.
+ */
+function decodeAttributes(
+  row: KonnektionGeometryRow,
+  encoding: KonnektionEncoding,
+  nodeCount: number,
+  ghostCount: number,
+): Record<string, Float32Array> {
+  const decoded: Record<string, Float32Array> = {};
+  for (const [name, blobs] of Object.entries(row.attributes ?? {})) {
+    const out = new Float32Array(nodeCount + ghostCount);
+    const read = (blob: Uint8Array, count: number, offset: number, what: string): void => {
+      if (count === 0) return;
+      const bytes = raw(blob, encoding.compression, count * 4, what);
+      if (bytes.byteLength !== count * 4) {
+        throw new KonnektionDecodeError(
+          `${what} holds ${bytes.byteLength / 4} values and its row declares ${count}. The row ` +
+            `and the geometry belong to different writes.`,
+        );
+      }
+      const view = viewOf(bytes);
+      for (let i = 0; i < count; i++) out[offset + i] = view.getFloat32(i * 4, littleEndian);
+    };
+    read(blobs.owned, nodeCount, 0, `attr_${name}`);
+    if (ghostCount > 0 && blobs.ghosts) {
+      read(blobs.ghosts, ghostCount, nodeCount, `ghost_attr_${name}`);
+    }
+    decoded[name] = out;
+  }
+  return decoded;
 }
 
 /** Node ids, owned then ghosted. `uint64` widened to a double — ids are not

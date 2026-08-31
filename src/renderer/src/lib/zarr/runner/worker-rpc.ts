@@ -18,6 +18,11 @@ export interface WorkerDecodeTimings {
   reshapeMs: number
   promoteMs: number
   totalWorkerMs: number
+  /** Served without network transfer; `null` = Resource Timing was opaque
+   * (cross-origin without `Timing-Allow-Origin`), i.e. "cannot tell". */
+  fromHttpCache: boolean | null
+  /** Negotiated protocol (`http/1.1`, `h2`); `null` when opaque. */
+  protocol: string | null
 }
 
 export interface WorkerFetchDecodeResult<D extends DataType> {
@@ -161,7 +166,13 @@ export interface WorkerFetchPart {
 export interface WorkerFetchDecodeMultiResult<D extends DataType> {
   /** Per part, in request order; `undefined` = the shard object was missing. */
   chunks: (TexturedChunk<D> | undefined)[]
-  timings: { roundTripMs: number; fetchMs: number; totalWorkerMs: number }
+  timings: {
+    roundTripMs: number
+    fetchMs: number
+    totalWorkerMs: number
+    fromHttpCache: boolean | null
+    protocol: string | null
+  }
 }
 
 /**
@@ -210,7 +221,7 @@ export async function workerFetchDecodeMulti<D extends DataType>(
       shape?: number[]
       stride?: number[]
     } | null)[]
-    timings?: { fetchMs?: number; totalMs?: number }
+    timings?: { fetchMs?: number; totalMs?: number; fromHttpCache?: boolean | null; protocol?: string | null }
   }
   return {
     chunks: response.parts.map((part) => {
@@ -233,6 +244,8 @@ export async function workerFetchDecodeMulti<D extends DataType>(
       roundTripMs: performance.now() - roundTripStartedAt,
       fetchMs: response.timings?.fetchMs ?? 0,
       totalWorkerMs: response.timings?.totalMs ?? 0,
+      fromHttpCache: response.timings?.fromHttpCache ?? null,
+      protocol: response.timings?.protocol ?? null,
     },
   }
 }
@@ -289,6 +302,8 @@ export async function workerFetchDecode<D extends DataType>(
       reshapeMs?: number
       promoteMs?: number
       totalMs?: number
+      fromHttpCache?: boolean | null
+      protocol?: string | null
     }
   }
 
@@ -300,6 +315,8 @@ export async function workerFetchDecode<D extends DataType>(
     reshapeMs: response.timings?.reshapeMs ?? 0,
     promoteMs: response.timings?.promoteMs ?? 0,
     totalWorkerMs: response.timings?.totalMs ?? 0,
+    fromHttpCache: response.timings?.fromHttpCache ?? null,
+    protocol: response.timings?.protocol ?? null,
   }
 
   if (response.missing) {

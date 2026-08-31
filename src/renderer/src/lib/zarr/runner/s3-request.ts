@@ -316,9 +316,138 @@ async function signRequest(
 /**
  * Whether this request carries a `Range` — i.e. whether the browser cache is
  * allowed to rewrite a header we signed. See the `cache` note in `signRequest`.
+ * Only the legacy header-signed path (non-GET) still needs this: presigned GETs
+ * sign no headers, so a rewritten `Range` breaks nothing.
  */
 function hasRangeHeader(headers: Headers): boolean {
   return headers.has('range')
+}
+
+// ---------------------------------------------------------------------------
+// Presigned (query-auth) GETs — see SIGV4_SIGNING.md "Presigned GETs and the
+// HTTP cache". The signature lives in the URL and NO headers are signed, so
+// the browser cache may narrow a `Range` freely — which turns Chromium's
+// sparse-206 machinery from the trap it was (Trap 1) into the byte cache the
+// ranged shard reads never had.
+// ---------------------------------------------------------------------------
+
+/** Presign validity ceiling (the SigV4 maximum, 7 days). */
+const PRESIGN_MAX_EXPIRES_SECONDS = 604_800
+
+/**
+ * The presigned URL IS the HTTP cache key, so the same object must presign to
+ * the same URL across every worker and across time — a fresh `X-Amz-Date` per
+ * request would give every fetch its own cache entry and cache nothing. The
+ * date is pinned to the UTC hour floor: deterministic everywhere, and at worst
+ * an hour boundary rotates the cache key.
+ */
+function presignPinnedTime(now: number): number {
+  return now - (now % 3_600_000)
+}
+
+function amzDateOf(timeMs: number): string {
+  return new Date(timeMs).toISOString().replace(/[:-]|\.\d{3}/g, '')
+}
+
+/**
+ * Memoized presigned URLs. One signing round per object per credential window
+ * instead of 2–3 `crypto.subtle` round trips per request. Everything that
+ * identifies the credential is in the key (SIGV4_SIGNING.md rule 3), secrets
+ * fingerprinted rather than stored. LRU-capped: thousands of shard objects at
+ * ~0.5 KB of URL each.
+ */
+const presignedUrlMemo = new Map<string, Promise<string>>()
+const PRESIGN_MEMO_MAX = 4096
+
+async function presignS3Url(
+  config: S3FetchConfig,
+  url: URL,
+  pinnedTime: number,
+): Promise<string> {
+  const amzDate = amzDateOf(pinnedTime)
+  const dateStamp = amzDate.slice(0, 8)
+  const credentialScope = `${dateStamp}/${config.region}/s3/aws4_request`
+  // Validity runs from the (past) pinned date; cover the credential's whole
+  // remaining lifetime — the session token bounds real validity server-side.
+  const expiresSeconds = Math.min(
+    PRESIGN_MAX_EXPIRES_SECONDS,
+    Math.max(60, Math.ceil((config.expiresAt - pinnedTime) / 1000)),
+  )
+
+  const params: Array<[string, string]> = [
+    // Pre-existing query params survive (none in practice — grants mint bare
+    // base URLs — but dropping one silently would be a wrong-object read).
+    ...Array.from(url.searchParams.entries()),
+    ['X-Amz-Algorithm', 'AWS4-HMAC-SHA256'],
+    ['X-Amz-Credential', `${config.accessKey}/${credentialScope}`],
+    ['X-Amz-Date', amzDate],
+    ['X-Amz-Expires', String(expiresSeconds)],
+    ['X-Amz-SignedHeaders', 'host'],
+  ]
+  // OMITTED when empty, unlike the header path (which signed and sent an
+  // empty token, accepted): MinIO rejects a presigned URL carrying an empty
+  // X-Amz-Security-Token with a 403 — verified against the live deployment.
+  // An empty token means the datalayer fell back to static credentials.
+  if (config.sessionToken) {
+    params.push(['X-Amz-Security-Token', config.sessionToken])
+  }
+  // Canonical query: RFC-3986-encoded pairs in BYTE order of the encoded key
+  // (the spec's order — deliberately not `localeCompare`).
+  const canonicalQuery = params
+    .map(([key, value]) => [encodeRfc3986(key), encodeRfc3986(value)] as const)
+    .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
+    .map(([key, value]) => `${key}=${value}`)
+    .join('&')
+
+  const canonicalRequest = [
+    'GET',
+    canonicalUri(url),
+    canonicalQuery,
+    `host:${url.host}\n`,
+    'host',
+    'UNSIGNED-PAYLOAD',
+  ].join('\n')
+
+  const stringToSign = [
+    'AWS4-HMAC-SHA256',
+    amzDate,
+    credentialScope,
+    await sha256Hex(canonicalRequest),
+  ].join('\n')
+
+  const signingKey = await deriveSigningKeyCached(config, dateStamp)
+  const signature = toHex(await hmacSha256(signingKey, stringToSign))
+
+  // Wire bytes == signed bytes (the one contract): the query is the exact
+  // canonical string plus the signature — never re-serialized through
+  // URLSearchParams, whose encoding differs from RFC 3986.
+  return `${url.origin}${url.pathname}?${canonicalQuery}&X-Amz-Signature=${signature}`
+}
+
+/** The memoized presigned URL for one (credential window, object) pair. */
+function presignedS3UrlCached(config: S3FetchConfig, url: URL): Promise<string> {
+  assertCredentialsValid(config)
+  const pinnedTime = presignPinnedTime(Date.now())
+  const memoKey = [
+    config.accessKey,
+    fingerprint(config.secretKey),
+    fingerprint(config.sessionToken),
+    config.region,
+    config.expiresAt,
+    pinnedTime,
+    `${url.origin}${url.pathname}${url.search}`,
+  ].join('|')
+
+  const cached = presignedUrlMemo.get(memoKey)
+  if (cached) return cached
+  const presigned = presignS3Url(config, url, pinnedTime)
+  if (presignedUrlMemo.size >= PRESIGN_MEMO_MAX) {
+    const oldest = presignedUrlMemo.keys().next().value
+    if (oldest !== undefined) presignedUrlMemo.delete(oldest)
+  }
+  presignedUrlMemo.set(memoKey, presigned)
+  presigned.catch(() => presignedUrlMemo.delete(memoKey))
+  return presigned
 }
 
 export function resolveStoreUrl(root: string | URL, path: AbsolutePath): URL {
@@ -340,7 +469,17 @@ export async function fetchS3Path(
   const url = resolveStoreUrl(config.baseUrl, path)
   // Wire bytes == signed bytes, or the server's recomputed signature differs.
   normalizeWirePath(url)
-  return fetch(url, await signRequest(url, config, init))
+  const method = (init.method ?? 'GET').toUpperCase()
+  if (method !== 'GET') {
+    // Header-signed path, retained for any future non-GET caller.
+    return fetch(url, await signRequest(url, config, init))
+  }
+  // GETs carry the signature in the URL and sign no headers, so `Range` rides
+  // unsigned and the HTTP cache applies — including to ranged (206) responses,
+  // where Chromium's sparse entries serve cached bytes and fetch only gaps.
+  // The caller's init passes through whole (headers, cache, signal).
+  const presigned = await presignedS3UrlCached(config, url)
+  return fetch(presigned, { ...init, method })
 }
 
 export function serializeRequestInit(

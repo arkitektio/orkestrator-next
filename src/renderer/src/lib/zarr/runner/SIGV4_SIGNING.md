@@ -15,16 +15,72 @@ headers. The server rebuilds that same string from what it **receives** and
 re-computes the signature. Any byte that differs between what we hashed and what
 arrived is a `SignatureDoesNotMatch`, and the error names none of them.
 
-Our canonical request signs five headers:
+**GETs are PRESIGNED (query auth)** — see "Presigned GETs and the HTTP cache"
+below. Their canonical request signs exactly one header, `host`; the entire
+credential story rides in `X-Amz-*` query parameters, and `Range` is an
+ordinary unsigned header.
+
+The legacy header-signed path (kept for any future non-GET) signs five headers:
 
 ```
 host;range;x-amz-content-sha256;x-amz-date;x-amz-security-token
 ```
 
-`range` being in that list is the whole reason for the trap below. Anything the
-browser adds afterwards (`Origin`, `Sec-*`, `If-None-Match`, `Accept-Encoding`)
-is *not* signed and is correctly ignored by the server — verified directly, see
-"Ruled out" below.
+`range` being in that list is the whole reason for Trap 1 below — and the
+reason GETs moved to presigning. Anything the browser adds afterwards
+(`Origin`, `Sec-*`, `If-None-Match`, `Accept-Encoding`) is *not* signed and is
+correctly ignored by the server — verified directly, see "Ruled out" below.
+
+---
+
+## Presigned GETs and the HTTP cache
+
+Every GET is presigned: the SigV4 signature is computed over the method, the
+canonical URI, the `X-Amz-*` query parameters, and the single header `host`,
+then appended to the URL as `X-Amz-Signature`. Nothing else about the request
+is signed.
+
+Two things fall out of that, and they are the point:
+
+1. **Trap 1 is retired for GETs — and inverted into a feature.** With `Range`
+   unsigned, Chromium narrowing a ranged request against its sparse 206 cache
+   entry no longer breaks a signature; it serves the cached bytes and fetches
+   only the gap. Ranged shard reads (inner chunks, coalesced runs, shard
+   indexes) therefore participate in the HTTP cache — memory and disk — which
+   the `no-store` opt-out had denied them entirely. Header-signed whole-object
+   GETs were, despite appearances, not cached either: they carried an
+   `Authorization` header, which RFC 9111 makes uncacheable unless the response
+   explicitly allows it, and MinIO sends no `Cache-Control`.
+
+2. **The presigned URL IS the cache key**, so the same object must presign to
+   the same URL everywhere. `X-Amz-Date` is therefore pinned to the UTC hour
+   floor — deterministic across the main thread and every worker — with
+   `X-Amz-Expires` covering the credential's remaining lifetime from that
+   pinned date (the session token bounds real validity server-side). A fresh
+   date per request would give every fetch a private cache entry and cache
+   nothing. Worst case, an hour boundary rotates the key.
+
+The one contract extends to the query: **the wire query string is the exact
+canonical query string** (RFC-3986-encoded pairs, byte-order-sorted by encoded
+key) with `X-Amz-Signature` appended — built by hand, never re-serialized
+through `URLSearchParams`, whose encoding differs. This is Trap 2's rule
+applied to a second URL component.
+
+Presigned URLs are memoized per (credential fingerprint, hour, object) — one
+signing round per object per credential window instead of two or three
+`crypto.subtle` round trips per request. Trap 3's rule applies: the memo key
+carries the access key, the secret's fingerprint, the session token's
+fingerprint, region, and the grant's expiry.
+
+**An empty session token must be OMITTED from the query.** The header path
+signed and sent an empty `x-amz-security-token` and MinIO accepted it (see
+"Ruled out"); a presigned URL carrying an empty `X-Amz-Security-Token`
+parameter is rejected with a 403 — verified against the live deployment. An
+empty token is what the datalayer's static-credentials fallback issues, so
+this is exactly the degraded mode that must keep working.
+
+Covered by `s3-request.test.ts` → `describe("presigned query auth")`,
+`describe("ranged reads")`, and `describe("HTTP cache participation")`.
 
 ---
 
@@ -56,18 +112,20 @@ MinIO canonicalizes `bytes=10009781-10528209`, we signed
 deterministic once the footer is cached, and the cache is **on disk**, so it
 survives an app restart, a Vite cache clear, and a full rebuild.
 
-### The fix
+### The fix, then and now
 
-`signRequest` sets `cache: 'no-store'` on any request that carries a `Range`,
-which opts it out of the cache doing the rewriting.
+**Now:** GETs are presigned (see "Presigned GETs and the HTTP cache" above), so
+`Range` is not signed and the narrowing is harmless — desirable, even. The trap
+as described can only bite the header-signed path again if a non-GET ever
+carries a header the browser may rewrite.
 
-- Only ranged requests pay for it. A whole-object GET — every zarr chunk — is
-  never rewritten and keeps normal HTTP caching.
-- A caller that chose its own `cache` mode is respected.
-- fabriks has its own `lruByteCache`, so the bytes are still cached; just not by
-  a layer that is allowed to edit a signed header.
+**Historically:** `signRequest` set `cache: 'no-store'` on any request carrying
+a `Range`, opting it out of the cache doing the rewriting — at the price of no
+HTTP caching for any ranged read. That guard still exists on the header-signed
+(non-GET) path, and a caller that chose its own `cache` mode is respected
+throughout.
 
-Covered by `s3-request.test.ts` → `describe("browser cache interference")`.
+Covered by `s3-request.test.ts` → `describe("HTTP cache participation")`.
 
 ### Why it hid for so long
 

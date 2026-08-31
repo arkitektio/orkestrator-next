@@ -14,9 +14,19 @@ import {
   type NetworkCollectionRef,
   type NetworkLayerVariant,
 } from "../../platform/model/collectionPlacement";
+import { useAttributeServiceOrNull } from "@/mikro-next/lib/attributes/AttributeServiceProvider";
+import { loadSparseSource } from "@/mikro-next/lib/sparse/sparseSource";
+
 import type { KonnektionCollection } from "./konnektion/konnektionCollection";
+import { attributeVocabulary } from "./konnektion/konnektionManifest";
 import { openNetworkCollection } from "./konnektion/konnektionSource";
 import { KonnektionCollectionManager } from "./konnektionManager";
+import {
+  buildNetworkStyling,
+  identityNetworkStyling,
+  type NetworkPickerColorBy,
+  type NetworkPickerFilterBy,
+} from "./networkStyling";
 import { useNetworkStoreApi } from "./store/networkSlice";
 
 /**
@@ -196,6 +206,88 @@ const NetworkCollectionGroup = ({
   useEffect(() => {
     manager?.setVisible(layer.visible !== false);
   }, [manager, layer.visible]);
+
+  /**
+   * The layer's STORED pickers, resolved to per-node state.
+   *
+   * The GRAPH entries resolve locally — their values ride the decoded cells —
+   * so a layer that only colours by strahler never touches the network. The
+   * COLUMN/SPARSE entries are the mesh path: DuckDB over the attribute plans,
+   * a sparse slice off the store, then a per-ordinal scatter so the shader
+   * keeps one value path (`networkStyling.ts`).
+   */
+  const attributeService = useAttributeServiceOrNull();
+  const activeColorBy =
+    layer.activeColorBy != null ? ((layer.colorBys?.[layer.activeColorBy] as NetworkPickerColorBy | undefined) ?? null) : null;
+  const activeRules = useMemo(
+    () =>
+      (layer.activeFilterBys ?? [])
+        .map((index) => layer.filterBys?.[index] as NetworkPickerFilterBy | undefined)
+        .filter((rule): rule is NetworkPickerFilterBy => Boolean(rule)),
+    [layer.activeFilterBys, layer.filterBys],
+  );
+  const systemId = collection.coordinateSystem?.id ?? null;
+  // A CONTENT key, for the reason the mesh layer's `lutKey` gives: the fold
+  // after a picker mutation writes arrays back into an immer draft, and
+  // identity is structural sharing's call, not ours.
+  const stylingKey = useMemo(
+    () => JSON.stringify([activeColorBy, activeRules]),
+    [activeColorBy, activeRules],
+  );
+
+  useEffect(() => {
+    if (!manager || !opened) return;
+    if (!activeColorBy && activeRules.length === 0) {
+      const identity = identityNetworkStyling();
+      manager.setStyling(identity.styling);
+      manager.setValueAppearance(identity.appearance);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const needsObjects =
+        (activeColorBy && activeColorBy.kind !== "GRAPH") ||
+        activeRules.some((rule) => rule.kind !== "GRAPH");
+      const [objects, plans] = await Promise.all([
+        needsObjects ? manager.listObjects() : Promise.resolve(null),
+        needsObjects && attributeService && systemId
+          ? attributeService.plansFor(systemId)
+          : Promise.resolve(null),
+      ]);
+      if (cancelled) return;
+      const readSparse = datalayer
+        ? async (datasetId: string, at: readonly { axis: string; value: number }[]) => {
+            const source = await loadSparseSource(client, datalayer, datasetId);
+            return source.read(source.source, at) as Promise<{ values: Map<number, unknown> }>;
+          }
+        : null;
+      const resolved = await buildNetworkStyling({
+        colorBy: activeColorBy,
+        rules: activeRules,
+        vocabulary: attributeVocabulary(opened.manifest),
+        objects,
+        plans,
+        engine: attributeService?.engine ?? null,
+        readSparse,
+      });
+      if (cancelled) return;
+      if (resolved.skipped.length > 0) {
+        console.warn("[konnektion] picker entries that do not render yet:", resolved.skipped);
+      }
+      manager.setStyling(resolved.styling);
+      manager.setValueAppearance(resolved.appearance);
+      invalidate();
+    })().catch((error: unknown) => {
+      if (cancelled) return;
+      console.warn("[konnektion] could not resolve the picker:", error);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // `activeColorBy`/`activeRules` are read inside; `stylingKey` decides
+    // whether it re-runs — see the note on the key itself.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [manager, opened, stylingKey, attributeService, systemId, datalayer, client, invalidate]);
 
   // Planning cadence: once the cell index is in, plan on mount and on every
   // camera SETTLE — never per camera tick.

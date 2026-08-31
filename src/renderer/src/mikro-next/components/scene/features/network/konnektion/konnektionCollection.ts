@@ -60,7 +60,9 @@ export type KonnektionTransport = ParquetTransport;
 
 /** The geometry columns this reader needs. `radii`/`ghost_radii` are appended
  *  only when the encoding declares them — the columns are absent otherwise, and
- *  asking for a column a file lacks is an error, not an empty result. */
+ *  asking for a column a file lacks is an error, not an empty result. The
+ *  attribute pairs follow the same rule with the manifest's `attributes` as
+ *  the declaration: one `attr_<name>`/`ghost_attr_<name>` pair per entry. */
 export const geometryColumns = (manifest: KonnektionManifest): string[] => [
   "level", "cell", "positions", "node_ids", "edges",
   "ghost_positions", "ghost_cells", "ghost_ids",
@@ -68,6 +70,10 @@ export const geometryColumns = (manifest: KonnektionManifest): string[] => [
   "object_ids", "object_ordinals",
   "object_node_offsets", "object_ghost_offsets", "object_edge_offsets",
   ...(hasRadii(manifest.encoding) ? ["radii", "ghost_radii"] : []),
+  ...manifest.attributes.flatMap((attribute) => [
+    `attr_${attribute.name}`,
+    `ghost_attr_${attribute.name}`,
+  ]),
 ];
 
 /** One raw geometry row → the typed byte shape the decoder consumes. */
@@ -97,6 +103,23 @@ export function parseGeometryRow(
     objectNodeOffsets: toNumberArray(row.object_node_offsets, "object_node_offsets"),
     objectGhostOffsets: toNumberArray(row.object_ghost_offsets, "object_ghost_offsets"),
     objectEdgeOffsets: toNumberArray(row.object_edge_offsets, "object_edge_offsets"),
+    // Owned/ghost value blobs per declared attribute. Strict like `radii`: a
+    // declared attribute with no column would otherwise read as all-hidden or
+    // all-default downstream, which is a lie about data that merely went
+    // missing. The ghost blob is nullable for the ghost-radii reason — a cell
+    // with no ghosts has no ghost values to carry.
+    attributes: Object.fromEntries(
+      manifest.attributes.map((attribute) => [
+        attribute.name,
+        {
+          owned: toBytes(row[`attr_${attribute.name}`], `attr_${attribute.name}`),
+          ghosts:
+            row[`ghost_attr_${attribute.name}`] != null
+              ? toBytes(row[`ghost_attr_${attribute.name}`], `ghost_attr_${attribute.name}`)
+              : null,
+        },
+      ]),
+    ),
   };
 }
 

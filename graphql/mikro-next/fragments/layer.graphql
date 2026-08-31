@@ -143,6 +143,62 @@ fragment MeshFilterBy on MeshFilterBy {
   }
 }
 
+# One entry of a network layer's colour picker. The mesh shape plus a third
+# arm: a GRAPH entry names a per-node value the collection itself carries
+# (`attribute` — strahler, degree, depth, component, a writer's own column, or
+# `radius` off the encoding) and aims it with `target`. Per NODE, not per
+# object — the one entry kind whose value varies inside an object.
+fragment NetworkColorBy on NetworkColorBy {
+  kind
+  table
+  column
+  # Same whole-array-replace hazard as `MeshColorBy.joinPath` — see there.
+  joinPath {
+    table
+    column
+  }
+  colormap
+  min
+  max
+  label
+  dataset
+  at {
+    axis
+    value
+  }
+  # The GRAPH arm. `target` says whether node glyphs are painted too (NODE) or
+  # segments only (EDGE); a segment takes its START node's value either way,
+  # since an edge owns no durable value of its own.
+  attribute
+  target
+}
+
+# One entry of a network layer's filter picker. A COLUMN or SPARSE rule keeps
+# or drops whole objects; a GRAPH rule — always bounds, a graph attribute is
+# measured — hides individual nodes and their segments ("trunk only" is
+# strahler >= 3).
+fragment NetworkFilterBy on NetworkFilterBy {
+  kind
+  table
+  column
+  joinPath {
+    table
+    column
+  }
+  label
+  min
+  max
+  values
+  exclude
+  dataset
+  at {
+    axis
+    value
+  }
+  attribute
+  target
+}
+
 # Not a TransferFunction: a label map has one source, no compositing tree, and
 # none of an intensity image's vocabulary. `background` is the id painted fully
 # transparent; `seed` seeds the id->color hash.
@@ -496,11 +552,11 @@ fragment SceneLayer on Layer {
   # tree, a connectome. Distinct from TrackLayer, which draws trajectories from
   # a table and can only express a PATH — a network has branch points.
   #
-  # Note what is NOT here: unlike MeshLayer this type publishes no
-  # `colorBys`/`filterBys`, so there is no picker to select and no LUT to build.
-  # (The schema's own docs on `NetworkCollection.colorByOptions` claim
-  # `createNetworkLayer(colorBys:)` accepts them; the input type has no such
-  # field. Do not add an arm here until it does.)
+  # Publishes the two pickers now, with a third entry kind the other layer
+  # types do not have: a GRAPH entry colours or filters per NODE, by a value
+  # the collection itself carries (strahler, degree, depth, component, a
+  # writer's own column, `radius` off the encoding) — resolved from the decoded
+  # attribute blobs, never from a parquet lookup.
   ... on NetworkLayer {
     collection {
       ...NetworkCollection
@@ -526,6 +582,14 @@ fragment SceneLayer on Layer {
     # fetched still follows from the zoom. Commonly moot: konnektion picks its
     # depth from the data and a traced arbor is usually single-level.
     maxLevel
+    colorBys {
+      ...NetworkColorBy
+    }
+    activeColorBy
+    filterBys {
+      ...NetworkFilterBy
+    }
+    activeFilterBys
     placementInvariance
   }
 }

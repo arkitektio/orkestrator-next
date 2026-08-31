@@ -1559,6 +1559,11 @@ type ColorByOption {
   control: ColumnControl!
 
   """
+  (GRAPH, network collections only) A per-node value the collection itself carries: a name its manifest declares -- strahler, degree, depth, component, a writer's own column -- or `radius` when the encoding carries one. Present exactly when `table`, `column` and `sparseDataset` are all null. Pass it back as `colorBys[].attribute` with `kind: GRAPH`; always MEASURE, and the one option kind whose values are per node rather than per object
+  """
+  graphAttribute: String
+
+  """
   The `references` hops from the table the source's ids land in to `table`. Empty is the direct case. Pass it back verbatim as `colorBys[].joinPath` to select this option
   """
   joinPath: [ColumnOptionJoinStep!]!
@@ -1672,13 +1677,18 @@ enum ColorMap {
 }
 
 """
-Which sort of source a colouring reads its value from: the discriminator of `LabelColorByInput` and `MeshColorByInput`. Two members, because there are two ways a set of ids reaches a number -- a column of a table they key into, or one slice of a sparse matrix they index. Flat with a discriminator rather than an input union, which GraphQL has no such thing as; the fields the other member reads are refused rather than ignored
+Which sort of source a colouring reads its value from: the discriminator of `LabelColorByInput`, `MeshColorByInput` and `NetworkColorByInput`. Three members, because there are three ways a set of ids reaches a number -- a column of a table they key into, one slice of a sparse matrix they index, or (for a network alone) a per-node value the collection itself carries. Flat with a discriminator rather than an input union, which GraphQL has no such thing as; the fields the other members read are refused rather than ignored. GRAPH is valid only where the source has per-node values to read, which today means a network layer
 """
 enum ColorSourceKind {
   """
   A column of a table the source's ids key into, reached by `table`, `column` and any `joinPath`. Every colouring written before sparse datasets existed is one of these, which is why it is the default.
   """
   COLUMN
+
+  """
+  A per-node value the network collection itself carries, reached by `attribute` -- a name its manifest declares (Strahler order, degree, depth, component, a writer's own column), or `radius` when the encoding carries one. Computed once on the full level-0 graph and only ever subset, so the value is the same at every level a node survives to. Always measured, per node rather than per object; `target` says whether it paints nodes or edges.
+  """
+  GRAPH
 
   """
   One slice of a sparse matrix the source's ids index, reached by `dataset` and the position `at`. Always measured: a slice is a value per object, so it takes a colormap and never a class map.
@@ -1712,7 +1722,7 @@ type Column {
 }
 
 """
-The fields a COLUMN member of a colour picker entry reads. Published for codegen; the wire type is the flat LabelColorByInput / MeshColorByInput
+The fields a COLUMN member of a colour picker entry reads. Published for codegen; the wire type is the flat LabelColorByInput / MeshColorByInput / NetworkColorByInput
 """
 input ColumnColorByInput {
   colormap: ColorMap = null
@@ -2250,9 +2260,13 @@ input CreateNetworkCollectionInput {
 Input for drawing a network collection -- a traced arbor, a vessel tree, a connectome -- in a scene. Its segments are drawn as camera-facing quads rather than GL lines, which is what makes a width in scene units meaningful at all
 """
 input CreateNetworkLayerInput {
+  activeColorBy: Int = null
+  activeFilterBys: [Int!] = null
   blending: Blending = null
+  colorBys: [NetworkColorByInput!] = null
   directed: Boolean = null
   edgeWidthColumn: String = null
+  filterBys: [NetworkFilterByInput!] = null
   lineWidth: Float = null
   materialColor: [Int!] = null
   maxLevel: Int = null
@@ -3441,6 +3455,11 @@ type FilterByOption {
   control: ColumnControl!
 
   """
+  (GRAPH, network collections only) A per-node value the collection itself carries, exactly as on `ColorByOption`. Present exactly when `table`, `column` and `sparseDataset` are all null. Pass it back as `filterBys[].attribute` with `kind: GRAPH`; always MEASURE, so the rule is `min`/`max` bounds, and it hides individual nodes and segments rather than whole objects
+  """
+  graphAttribute: String
+
+  """
   The `references` hops from the table the ids land in to `table`. Empty is the direct case. Pass it back verbatim as `filterBys[].joinPath` to write a rule against this column
   """
   joinPath: [ColumnOptionJoinStep!]!
@@ -3762,6 +3781,34 @@ enum Granularity {
   YEAR
 }
 
+"""
+The fields a GRAPH member of a colour picker entry reads: a per-node value the network collection itself carries. Published for codegen; the wire type is the flat NetworkColorByInput -- and only that one, because a mask and a mesh have no per-node values to read
+"""
+input GraphColorByInput {
+  attribute: String!
+  colormap: ColorMap = null
+  kind: ColorSourceKind! = GRAPH
+  label: String = null
+  max: Float = null
+  min: Float = null
+  target: GraphTarget! = NODE
+}
+
+"""
+Which of a network's two row sets a GRAPH colouring or rule addresses. A network is the one layer kind with two -- every other source has exactly one set of objects -- and an edge has no durable identity of its own (simplification re-links edges between levels), so an edge's value is *derived*: it takes its start node's value, the same convention the renderer already uses for an edge's object ordinal
+"""
+enum GraphTarget {
+  """
+  Segments only, each taking its start node's value; node glyphs keep the layer's base colour. The honest per-edge statement, since an edge owns no value of its own.
+  """
+  EDGE
+
+  """
+  Every node, and the segments and glyphs that touch it: a segment takes its start node's value, so colouring nodes colours the wireframe too.
+  """
+  NODE
+}
+
 """The type of change that was made."""
 enum HistoryKind {
   CREATE
@@ -3770,7 +3817,7 @@ enum HistoryKind {
 }
 
 """
-What one axis of a sparse dataset **is**, as a discriminated union: `kind` selects which sort of thing is being named, and only that member's id field is read -- any other is rejected. Every axis carries exactly one of these, which is what makes 'identified exactly once' a property of the input rather than a check on it. `DATASET` and `MESH_COLLECTION` author a FIELD edge from the source into this matrix, which is also what makes the matrix reachable from a layer over that source; `TABLE` authors no edge and states a foreign key instead
+What one axis of a sparse dataset **is**, as a discriminated union: `kind` selects which sort of thing is being named, and only that member's id field is read -- any other is rejected. Every axis carries exactly one of these, which is what makes 'identified exactly once' a property of the input rather than a check on it. `DATASET`, `MESH_COLLECTION` and `NETWORK_COLLECTION` author a FIELD edge from the source into this matrix, which is also what makes the matrix reachable from a layer over that source; `TABLE` authors no edge and states a foreign key instead
 """
 input IdentificationInput {
   """
@@ -3794,6 +3841,11 @@ input IdentificationInput {
   name: String = null
 
   """
+  (NETWORK_COLLECTION) The network collection whose **object** ids are the positions along this axis -- one per traced object, never per node. Its coordinate system is both the edge's input and its field, exactly as a mesh collection's is
+  """
+  networkCollection: ID = null
+
+  """
   (TABLE) The table whose rows this axis' positions are. Must be keyed by exactly one INDEX coordinate column, which is where a position is looked up -- the same contract `Column.references` carries. A matrix with 19 059 features costs one picker entry because of this, not 19 059
   """
   table: ID = null
@@ -3805,7 +3857,7 @@ input IdentificationInput {
 }
 
 """
-How one axis is identified -- the discriminator of `IdentificationInput`, and the same question whether the axis belongs to a sparse matrix or to a table. An axis of positions means nothing until something says what those positions *are*, and there are exactly these three ways to answer. Two of them author a FIELD edge, which is also what makes the data reachable from a layer over that source; `TABLE` authors none and states a foreign key instead, because a table is already in record-land
+How one axis is identified -- the discriminator of `IdentificationInput`, and the same question whether the axis belongs to a sparse matrix or to a table. An axis of positions means nothing until something says what those positions *are*, and there are exactly these four ways to answer. Three of them author a FIELD edge, which is also what makes the data reachable from a layer over that source; `TABLE` authors none and states a foreign key instead, because a table is already in record-land
 """
 enum IdentificationKind {
   """
@@ -3817,6 +3869,11 @@ enum IdentificationKind {
   A mesh collection, through its vertex coordinate system: the ids ride on the geometry rows, so a client that picked a surface is already holding one. Authors a FIELD edge, exactly as DATASET does.
   """
   MESH_COLLECTION
+
+  """
+  A network collection, through its coordinate system, identified by its **object** ids -- one row per traced object (a filament, an arbor, a vessel tree), never per node. The object ids ride on the geometry rows and the object catalog, so a client that picked a wireframe is already holding one. Authors a FIELD edge, exactly as MESH_COLLECTION does. A per-node identification would be a different member: a node id is unique only within its object, so it cannot key a row on its own.
+  """
+  NETWORK_COLLECTION
 
   """
   A table whose rows this axis' positions are -- the relation `Column.references` carries, said of the axis. Authors no edge and touches no coordinate system: a table is already in record-land, where the relation is a foreign key rather than a map between spaces. It is what lets a FIELD edge land beside it, because an axis identified this way is one the edge is not expected to supply. Valid on an INDEX axis only: a SPACE or TIME coordinate's values are positions, and a position in nanometres and a row id are different things.
@@ -5949,7 +6006,7 @@ An immutable, versioned collection of networks, stored as one konnektion prefix.
 """
 type NetworkCollection {
   """
-  Every column this collection's objects can be coloured or filtered by, with the control each one's role admits -- the same set `createNetworkLayer(colorBys:)` and `filterBys` accept. The nested form of the `colorByOptions` root query, which is where the search, narrowing and paging live; this one hands back the whole list. It walks the coordinate graph once per collection, so read it on a collection, not across a page of them
+  Everything a layer over this collection can be coloured or filtered by -- the same set `createNetworkLayer(colorBys:)` and `filterBys` accept. The graph attributes the collection itself carries come first (Strahler order, degree, depth, component, a stored radius, a writer's own column -- per node), then every reachable table column and sparse slice (per object). The nested form of the `networkColorByOptions` root query, which is where the search, narrowing and paging live; this one hands back the whole list. It walks the coordinate graph once per collection, so read it on a collection, not across a page of them
   """
   colorByOptions(maxJoinDepth: Int! = 1): [ColorByOption!]!
 
@@ -6035,9 +6092,103 @@ input NetworkCollectionFilter {
 }
 
 """
+The fields a NETWORK_COLLECTION identification reads. Published for codegen; the wire type is the flat IdentificationInput
+"""
+input NetworkCollectionIdentifiesInput {
+  kind: IdentificationKind! = NETWORK_COLLECTION
+  name: String = null
+  networkCollection: ID!
+  validity: PlacementValidity = null
+}
+
+"""
+One entry of a network layer's colour picker. Three kinds where the other pickers have two: COLUMN and SPARSE colour whole objects exactly as a mesh's do, and GRAPH -- this layer kind's own -- colours per node, by a value the collection itself carries (Strahler order, degree, depth, component, a stored radius, a writer's own column). Computed once on the full level-0 graph and only ever subset, so the value is the same at every level a node survives to
+"""
+type NetworkColorBy {
+  at: [AxisPosition!]!
+  attribute: String
+  colormap: ColorMap
+  column: String
+  dataset: ID
+  joinPath: [JoinStep!]!
+  kind: ColorSourceKind!
+  label: String
+  max: Float
+  min: Float
+  table: ID
+  target: GraphTarget
+}
+
+"""
+Color a network collection's objects or nodes: by a column of the table its FIELD edge keys into, by a slice of a sparse matrix, or (GRAPH) by a per-node value the collection itself carries -- Strahler order, degree, depth, component, a stored radius, or a writer's own column
+"""
+input NetworkColorByInput {
+  at: [AxisPositionInput!]! = []
+  attribute: String = null
+  colormap: ColorMap = null
+  column: String = null
+  dataset: ID = null
+  joinPath: [JoinStepInput!]! = []
+  kind: ColorSourceKind! = COLUMN
+  label: String = null
+  max: Float = null
+  min: Float = null
+  table: ID = null
+  target: GraphTarget = null
+}
+
+"""
+One entry of a network layer's filter picker. A COLUMN or SPARSE rule keeps or drops whole objects, exactly as a mesh's does; a GRAPH rule -- always `min`/`max` bounds over a per-node value the collection carries -- hides individual nodes and segments, which is what 'trunk only' means on an arbor
+"""
+type NetworkFilterBy {
+  at: [AxisPosition!]!
+  attribute: String
+  column: String
+  dataset: ID
+  exclude: Boolean!
+  joinPath: [JoinStep!]!
+  kind: ColorSourceKind!
+  label: String
+  max: Float
+  min: Float
+  table: ID
+  target: GraphTarget
+  values: [String!]
+}
+
+"""
+Draw only the objects -- or, for a GRAPH rule, the nodes and segments -- whose value satisfies this rule. Which half applies follows from the source: bounds for a measure column, a sparse slice or a graph attribute; an explicit value set for a categorical column
+"""
+input NetworkFilterByInput {
+  at: [AxisPositionInput!]! = []
+  attribute: String = null
+  column: String = null
+  dataset: ID = null
+  exclude: Boolean! = false
+  joinPath: [JoinStepInput!]! = []
+  kind: ColorSourceKind! = COLUMN
+  label: String = null
+  max: Float = null
+  min: Float = null
+  table: ID = null
+  target: GraphTarget = null
+  values: [String!] = null
+}
+
+"""
 A layer that renders a node/edge network -- a traced arbor, a vessel tree, a connectome -- placed and styled in a scene. Its segments are drawn as camera-facing quads rather than GL lines, which is what makes a width in scene units meaningful.
 """
 type NetworkLayer implements Layer {
+  """
+  Which entry of `colorBys` is drawn, as an index into it. Null means the flat `materialColor` is what is drawn
+  """
+  activeColorBy: Int
+
+  """
+  Which entries of `filterBys` are applied, as indices into it. They combine with AND: something is drawn when every active rule keeps it. Empty applies none of them, so everything draws
+  """
+  activeFilterBys: [Int!]!
+
   """
   This layer's whole `pathToWorld` composed into one affine map -- the same path, same edges, same order, with the flagged steps inverted. Derived on read and stored nowhere, exactly as the path itself is, so refining one registration moves it. **Null when `pathToWorld` is null** and for the same two reasons; `placement` is what tells them apart. It errors rather than returning null when a path exists but does not condense: a FIELD step gives its map as the values of an array and has no closed form, and a singular step cannot be walked backwards -- the error names the transformation that stopped it. Note that `placementInvariance` being AFFINE or stronger is necessary but not sufficient for this to succeed. `outputAxes` names only the destination axes the path constrains, so pass `strict: true` to be refused a partial map instead of handed one
   """
@@ -6050,6 +6201,11 @@ type NetworkLayer implements Layer {
   collection: NetworkCollection
 
   """
+  The colourings this layer offers, in the order a picker should show them. A COLUMN or SPARSE entry colours whole objects, already checked reachable; a GRAPH entry colours per node, by a value the collection itself carries, already checked against its manifest. Empty means there is nothing to pick and the material color is the rendering
+  """
+  colorBys: [NetworkColorBy!]!
+
+  """
   Whether the edge direction is drawn, e.g. as arrowheads. A render setting, never a fact about the graph: an edge is always stored source-to-target
   """
   directed: Boolean!
@@ -6058,6 +6214,11 @@ type NetworkLayer implements Layer {
   The per-edge column giving each segment one uniform width. Ignored when `nodeSizeColumn` is set
   """
   edgeWidthColumn: String
+
+  """
+  The filters this layer offers, in the order a picker should show them. A COLUMN or SPARSE rule keeps or drops whole objects; a GRAPH rule hides individual nodes and segments by a per-node value the collection carries. Empty means nothing is offered and everything draws
+  """
+  filterBys: [NetworkFilterBy!]!
   id: ID!
   kind: LayerKind!
 
@@ -7349,6 +7510,16 @@ type Query {
   """
   networkCollections(filters: NetworkCollectionFilter, pagination: OffsetPaginationInput): [NetworkCollection!]!
 
+  """
+  Everything a network layer over one collection can be coloured or filtered by. **The set this returns is exactly the set `createNetworkLayer(colorBys:)` and `filterBys` accept.** Two halves in one list: the GRAPH options first -- the per-node values the collection itself carries (Strahler order, degree, depth, component, a stored radius, a writer's own column), named by `graphAttribute` and always MEASURE -- then the COLUMN and SPARSE options from the shared reachability walk, rooted at depth zero so only tables keyed by this collection's **object** ids (via `createTableDataset(keyedBy: {kind: NETWORK_COLLECTION})`) are offered; the wider fact walk would offer the source image's mask-keyed tables, joins an object id cannot execute. Same arguments, same `joinPath` to pass back, same no-values rule as every other options query
+  """
+  networkColorByOptions(filters: ColumnOptionFilter = null, maxJoinDepth: Int! = 1, networkCollection: ID!, pagination: OffsetPaginationInput = null): [ColorByOption!]!
+
+  """
+  Everything a network layer over one collection can be filtered by -- **the same set `networkColorByOptions` returns**, under the name that reads right where a rule is being authored. A GRAPH option is the one whose rule is per node: `min`/`max` bounds over Strahler order, degree or a radius hide individual nodes and segments, where a COLUMN or SPARSE rule keeps or drops whole objects. Everything returned is something `createNetworkLayer(filterBys:)` accepts
+  """
+  networkFilterByOptions(filters: ColumnOptionFilter = null, maxJoinDepth: Int! = 1, networkCollection: ID!, pagination: OffsetPaginationInput = null): [FilterByOption!]!
+
   """Get permissions for a specific object"""
   permissions(identifier: String!, object: ID!): [UserObjectPermission!]!
 
@@ -8315,7 +8486,7 @@ type SparseAxisReference {
 }
 
 """
-The fields a SPARSE member of a colour picker entry reads. Published for codegen; the wire type is the flat LabelColorByInput / MeshColorByInput
+The fields a SPARSE member of a colour picker entry reads. Published for codegen; the wire type is the flat LabelColorByInput / MeshColorByInput / NetworkColorByInput
 """
 input SparseColorByInput {
   at: [AxisPositionInput!]!
@@ -9503,8 +9674,23 @@ input UpdateMeshLayerInput {
 Retune how a network layer is drawn. A patch: an OMITTED field keeps its current value. The collection and the scene are not editable -- a layer renders what it was created to render
 """
 input UpdateNetworkLayerInput {
+  """
+  Which entry of `colorBys` is drawn, as an index into it. Null draws the flat `materialColor` -- what having no colouring has always meant. Pass `null` to publish the picker and draw none of it; omit to leave the choice alone. Re-checked against the picker being written, never the stored one. If a new `colorBys` no longer holds the entry that was active, the layer falls back to `materialColor` -- name `activeColorBy` in the same call to point at another entry instead
+  """
+  activeColorBy: Int
+
+  """
+  Which entries of `filterBys` are applied, as indices into it. Several at once is the normal case -- they combine with AND, and something is drawn when every active rule keeps it. Empty applies none of them, so everything draws. Re-checked against the filters being written: a new `filterBys` that no longer holds an applied rule drops it from this set rather than leaving it dangling
+  """
+  activeFilterBys: [Int!] = null
+
   """Layer-level blend mode"""
   blending: Blending = null
+
+  """
+  The colourings this layer offers, in the order a picker should show them, instead of the flat `materialColor`. Three entry kinds: a COLUMN entry colours whole objects by a table reachable from this collection by a FIELD edge (author it with `createTableDataset(keyedBy: {kind: NETWORK_COLLECTION})` -- the table's rows are keyed by **object** ids, one per filament or arbor); a SPARSE entry colours objects by one slice of a matrix those ids index; and a GRAPH entry -- this kind's own -- colours per **node**, by a value the collection itself carries: Strahler order, degree, depth, component, a stored radius, or a writer's own column, exactly the set the collection's manifest declares and `networkColorByOptions` offers. Which entry is drawn is `activeColorBy`; publishing a picker is not the same as choosing within it. Replaces the published picker wholesale: its order is the display order, so there is nothing to merge on. Pass `[]` to remove every colouring and fall back to `materialColor`
+  """
+  colorBys: [NetworkColorByInput!] = null
 
   """
   Whether to draw each edge's direction, e.g. as arrowheads. **A render setting, never a fact about the graph**: an edge is always stored source-to-target, so the direction is in the data whether or not it is drawn. A traced arbor is directed away from the soma and usually drawn without arrows; a connectome usually with them
@@ -9515,6 +9701,11 @@ input UpdateNetworkLayerInput {
   The per-edge column giving each segment one uniform width -- a connectome's weight, a vessel segment's calibre where the tracer recorded one per segment rather than per node. Ignored when `nodeSizeColumn` is set. An explicit `null` clears it
   """
   edgeWidthColumn: String
+
+  """
+  The filters this layer offers, in the order a picker should show them. A COLUMN or SPARSE rule keeps or drops whole objects; a GRAPH rule -- always `min`/`max` bounds over a per-node value the collection carries -- hides individual nodes and segments, which is what 'trunk only' (Strahler order at least 3) means on an arbor. Which of them are actually applied is `activeFilterBys`. Replaces the published filters wholesale, as `colorBys` does. Pass `[]` to remove every rule and draw everything
+  """
+  filterBys: [NetworkFilterByInput!] = null
 
   """The ID of the network layer to update"""
   id: ID!

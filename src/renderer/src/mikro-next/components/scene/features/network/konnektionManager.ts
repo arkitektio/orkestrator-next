@@ -8,7 +8,12 @@ import {
   type KonnektionObjectEntry,
 } from "./konnektion/konnektionCatalogs";
 import type { DecodedNetworkCell } from "./konnektion/konnektionDecode";
-import { networkCapacityFor, packNetworkCells } from "./konnektion/konnektionPack";
+import {
+  IDENTITY_STYLING,
+  networkCapacityFor,
+  packNetworkCells,
+  type NetworkStyling,
+} from "./konnektion/konnektionPack";
 import {
   groupByRowGroup,
   planKonnektionCells,
@@ -73,6 +78,13 @@ export type NetworkManagerStats = {
   fetchMs: number;
   decodeMs: number;
   errors: number;
+  /**
+   * Vocabulary names the active styling asked for that the resident cells
+   * could not resolve. A rule over one was SKIPPED, never applied — the card
+   * surfaces these the way `columnLut` surfaces a skipped entry. Replaced (not
+   * mutated) per pack, since it is a list rather than a counter.
+   */
+  attributesMissing: string[];
 };
 
 export type NetworkMaterialConfig = {
@@ -94,6 +106,24 @@ export type NetworkPlanConfig = {
 };
 
 export type SlabClip = { z: number; thickness: number } | null;
+
+/** How the packed values become colour. Null clim ends stretch over the packed
+ *  range, the "over what you read" convention every other picker keeps. */
+export type NetworkValueAppearance = {
+  palette: THREE.DataTexture | null;
+  climMin: number | null;
+  climMax: number | null;
+  colorize: boolean;
+  applyToGlyphs: boolean;
+};
+
+const IDENTITY_APPEARANCE: NetworkValueAppearance = {
+  palette: null,
+  climMin: null,
+  climMax: null,
+  colorize: false,
+  applyToGlyphs: true,
+};
 
 const DEFAULT_PIXEL_BUDGET = 4;
 const DEFAULT_MAX_CELLS = 4096;
@@ -133,6 +163,7 @@ export class KonnektionCollectionManager {
     fetchMs: 0,
     decodeMs: 0,
     errors: 0,
+    attributesMissing: [],
   };
 
   private readonly collection: KonnektionCollection;
@@ -164,6 +195,21 @@ export class KonnektionCollectionManager {
   private lastPlan: KonnektionPlan | null = null;
   private visible = true;
   private warnedTruncated = false;
+
+  /** What the pack styles nodes with: the active GRAPH colouring's attribute
+   *  and the reduced filter rules. Changed by `setStyling`, spent per pack. */
+  private styling: NetworkStyling = IDENTITY_STYLING;
+  private appearance: NetworkValueAppearance = IDENTITY_APPEARANCE;
+  private lastValueRange: { min: number | null; max: number | null } = { min: null, max: null };
+  /**
+   * The decoded cells of the mounted plan, retained so a styling change is a
+   * re-pack rather than a re-fetch. This deliberately reverses the old
+   * "decoded cells are NOT retained" rule: pickers made the pack a function of
+   * per-node state the card can edit, and a graph is small enough (the whole
+   * argument for this manager's shape) that the CPU copy is cheap where a
+   * refetch is a network round trip per rule toggle.
+   */
+  private residentCells: readonly DecodedNetworkCell[] = [];
 
   /** Bumped on every plan; a fetch that finishes against a stale generation is
    *  dropped rather than mounted, which is the whole of the race handling a
@@ -269,6 +315,43 @@ export class KonnektionCollectionManager {
   setSelection(ordinal: number | null, isolate = false): void {
     this.uniforms.selectedOrdinal.value = ordinal ?? -1;
     this.uniforms.isolate.value = isolate ? 1 : 0;
+    this.onInvalidate();
+  }
+
+  /**
+   * The active colouring's SOURCE and the active rules — the per-node half of
+   * the picker, spent as a re-pack of the resident cells. Everything about how
+   * the values LOOK (palette, window, targets) is `setValueAppearance`, which
+   * costs uniforms only; this is the half that genuinely rewrites buffers, and
+   * it fires only when the card switches entries or edits rules.
+   */
+  setStyling(styling: NetworkStyling): void {
+    this.styling = styling;
+    if (this.bundle && this.residentCells.length > 0) {
+      this.uploadResident(this.residentCells);
+    }
+  }
+
+  /**
+   * How the packed values become colour. Uniform and texture-swap writes only
+   * — a colormap or window nudge re-packs nothing, the `pointsMaterial` rule.
+   *
+   * A null clim end is "stretch over what you read": the server publishes no
+   * statistics, so the open end is filled from the packed values' own range —
+   * re-filled after every pack, since a plan swap changes what was read.
+   */
+  setValueAppearance(appearance: NetworkValueAppearance): void {
+    this.appearance = appearance;
+    this.applyAppearance();
+  }
+
+  private applyAppearance(): void {
+    const range = this.lastValueRange;
+    this.uniforms.uColorize.value = this.appearance.colorize ? 1 : 0;
+    this.uniforms.uClimMin.value = this.appearance.climMin ?? range.min ?? 0;
+    this.uniforms.uClimMax.value = this.appearance.climMax ?? range.max ?? 1;
+    this.uniforms.uApplyToGlyphs.value = this.appearance.applyToGlyphs ? 1 : 0;
+    this.bundle?.setPalette(this.appearance.palette);
     this.onInvalidate();
   }
 
@@ -384,9 +467,9 @@ export class KonnektionCollectionManager {
     this.stats.fetchMs += performance.now() - started;
 
     if (generation !== this.generation) return;
-    // Decoded cells are NOT retained past the upload: nothing rebuilds from
-    // them any more (width and glyph toggles are uniforms), so holding a CPU
-    // copy of the level would be memory spent on nothing.
+    // Retained past the upload, because the pickers made the pack a function
+    // of editable state — see the field's own comment.
+    this.residentCells = decoded;
     this.uploadResident(decoded);
   }
 
@@ -439,13 +522,28 @@ export class KonnektionCollectionManager {
 
     const bundle = this.ensureBundle();
     if (bundle) {
-      const packed = packNetworkCells(cells, {
-        positions: bundle.positions.array as Float32Array,
-        aux: bundle.aux.array as Float32Array,
-        edges: bundle.edges.array as Uint32Array,
-      });
+      const packed = packNetworkCells(
+        cells,
+        {
+          positions: bundle.positions.array as Float32Array,
+          aux: bundle.aux.array as Float32Array,
+          values: bundle.values.array as Float32Array,
+          edges: bundle.edges.array as Uint32Array,
+        },
+        this.styling,
+      );
       bundle.markUploaded();
       bundle.setCounts(packed.nodes, packed.edges);
+      this.lastValueRange = { min: packed.valueMin, max: packed.valueMax };
+      this.applyAppearance();
+      this.stats.attributesMissing = packed.attributesMissing;
+      if (packed.attributesMissing.length > 0) {
+        console.warn(
+          `[konnektion] the picker names attribute(s) the resident cells do not carry: ` +
+            `${packed.attributesMissing.join(", ")}. A rule over one was skipped rather than ` +
+            `applied; the collection and the layer disagree about the vocabulary.`,
+        );
+      }
       if (packed.clamped) {
         // The capacity formula makes this unreachable; if it ever fires, the
         // draw is merely partial rather than out of bounds — say so loudly.
@@ -475,6 +573,7 @@ export class KonnektionCollectionManager {
     this.collection.release();
     this.index = null;
     this.catalogRows = null;
+    this.residentCells = [];
   }
 
   /** What the debug panel shows for this layer. */

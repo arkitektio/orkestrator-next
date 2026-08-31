@@ -13,16 +13,26 @@ import type { DecodedNetworkCell } from "./konnektionDecode";
  *    ghosts, cells concatenated in plan order. Stored ONCE — edges reference
  *    nodes by index, which is the whole point: the attribute path duplicated
  *    every shared endpoint into per-edge attributes.
- *  - `aux`: one vec4 per node slot — (radius, ordinal, glyphScale, 0).
+ *  - `aux`: one vec4 per node slot — (radius, ordinal, glyphScale, visible).
  *    Radius 0 means "the collection carries none here": the shader falls back
  *    to the lineWidth uniform, which is what makes a width change a uniform
  *    write rather than a re-pack. `glyphScale` is 0 for a ghost, so its
  *    sphere degenerates to a point instead of double-drawing the node its
- *    owner already glyphs.
+ *    owner already glyphs. `visible` (the `.w` that used to be a spare 0) is
+ *    the AND of the active GRAPH filter rules — 1 keeps, 0 discards — packed
+ *    here rather than tested in the shader so a rule edit is one re-pack and
+ *    the per-fragment cost stays a single compare.
+ *  - `values`: one float per node slot — the ACTIVE graph colouring's value,
+ *    NaN where the node has no answer or no colouring is active. The
+ *    `pointsMaterial` pattern: the palette row and the clims are uniforms, so
+ *    a colormap or window nudge re-packs nothing.
  *  - `edges`: uint32 pairs indexing into the packed node array. A cell's own
  *    edge indices are LOCAL to its concatenated (owned + ghost) span, and its
  *    ghosts sit at the tail of that same span, so one uniform `+ nodeOffset`
- *    rebase is correct for owned and ghost endpoints alike.
+ *    rebase is correct for owned and ghost endpoints alike. A segment reads
+ *    its START node's value and visibility — an edge owns no durable identity
+ *    of its own (simplification re-links between levels), so the start node is
+ *    the format's own convention for everything per-edge, ordinals included.
  */
 
 export type NetworkCapacity = { nodes: number; edges: number };
@@ -70,10 +80,79 @@ export function networkCapacityFor(
 export type PackTarget = {
   /** `capacity.nodes * 3` floats. */
   positions: Float32Array;
-  /** `capacity.nodes * 4` floats — (radius, ordinal, glyphScale, 0) per slot. */
+  /** `capacity.nodes * 4` floats — (radius, ordinal, glyphScale, visible) per slot. */
   aux: Float32Array;
+  /** `capacity.nodes` floats — the active graph colouring's value per slot. */
+  values: Float32Array;
   /** `capacity.edges * 2` uint32 indices into the packed node slots. */
   edges: Uint32Array;
+};
+
+/** One active GRAPH filter rule, already reduced to what a node test needs.
+ *  `target` decides which visibility bit the rule clears: NODE hides the node
+ *  and everything touching it, EDGE hides its outgoing segments only. */
+export type NetworkNodeRule = {
+  attribute: string;
+  min: number | null;
+  max: number | null;
+  exclude: boolean;
+  target: "NODE" | "EDGE";
+};
+
+/**
+ * What the pack styles each node with. The per-NODE half is the GRAPH picker:
+ * `valueAttribute` feeds `values` and `rules` fold into `aux.w`, both naming
+ * the manifest's vocabulary (`radius` included). The per-OBJECT half is the
+ * COLUMN/SPARSE picker, already resolved by `columnLut`'s machinery into a
+ * value per ordinal (`ordinalValues`, NaN = no row = base colour) and a set of
+ * hidden ordinals — scattered here so the shader has exactly one value path.
+ * `attributesMissing` reports every name the cells could not resolve, so the
+ * caller surfaces a skipped rule instead of applying it — the columnLut
+ * invariant, restated per node.
+ */
+export type NetworkStyling = {
+  valueAttribute: string | null;
+  /** Value per object ORDINAL for an object-level colouring; used only when
+   *  `valueAttribute` is null. */
+  ordinalValues: Float32Array | null;
+  rules: readonly NetworkNodeRule[];
+  /** Ordinals the active object-level rules hide — both bits, glyphs and
+   *  segments alike: hiding an object is the mesh semantics. */
+  hiddenOrdinals: ReadonlySet<number> | null;
+};
+
+export const IDENTITY_STYLING: NetworkStyling = {
+  valueAttribute: null,
+  ordinalValues: null,
+  rules: [],
+  hiddenOrdinals: null,
+};
+
+/** A cell's per-node values for one vocabulary name. `radius` reads the radii
+ *  the format already decodes; everything else is a declared attribute. */
+export const nodeAttributeOf = (
+  cell: DecodedNetworkCell,
+  name: string,
+): Float32Array | null => (name === "radius" ? cell.radii : (cell.attributes[name] ?? null));
+
+/**
+ * One node's fate under the active rules, with the semantics
+ * `platform/attributes/columnLut.ts` states for every picker and which must
+ * not drift per layer kind: rules combine with AND; `exclude` inverts the
+ * TEST, not the answer; a rule with no bounds keeps everything; and a value
+ * that is NaN — the format's "this node has no answer" — KEEPS the node, in
+ * both polarities, because a filter must never hide something it never saw.
+ * A rule whose attribute the cell cannot resolve is the caller's to skip and
+ * surface; handed a null source here it applies to nothing.
+ */
+const keeps = (
+  value: number | null,
+  rule: NetworkNodeRule,
+): boolean => {
+  if (value === null || Number.isNaN(value)) return true;
+  const test =
+    (rule.min === null || value >= rule.min) && (rule.max === null || value <= rule.max);
+  return rule.exclude ? !test : test;
 };
 
 export type PackResult = {
@@ -86,6 +165,16 @@ export type PackResult = {
   /** True when a cell did not fit — unreachable when the target was sized by
    *  `networkCapacityFor` against the budgets the plan ran under. */
   clamped: boolean;
+  /** Vocabulary names the styling asked for that some cell could not resolve —
+   *  a rule over one was SKIPPED for those nodes rather than applied, and the
+   *  caller surfaces it, never silently. Empty on an honest collection. */
+  attributesMissing: string[];
+  /** The finite range of the packed values, for the omitted-window case: the
+   *  server publishes no statistics, so "stretch over what you read" is
+   *  answered here, from exactly the values that will draw. Null when nothing
+   *  finite was packed. */
+  valueMin: number | null;
+  valueMax: number | null;
 };
 
 /**
@@ -96,6 +185,7 @@ export type PackResult = {
 export function packNetworkCells(
   cells: readonly DecodedNetworkCell[],
   target: PackTarget,
+  styling: NetworkStyling = IDENTITY_STYLING,
 ): PackResult {
   const capNodes = Math.floor(target.positions.length / 3);
   const capEdges = Math.floor(target.edges.length / 2);
@@ -104,6 +194,9 @@ export function packNetworkCells(
   let edgeOffset = 0;
   let packed = 0;
   let clamped = false;
+  const missing = new Set<string>();
+  let valueMin = Number.POSITIVE_INFINITY;
+  let valueMax = Number.NEGATIVE_INFINITY;
 
   for (const cell of cells) {
     const total = cell.nodeCount + cell.ghostCount;
@@ -114,12 +207,50 @@ export function packNetworkCells(
 
     target.positions.set(cell.positions, nodeOffset * 3);
 
+    const valueSource = styling.valueAttribute
+      ? nodeAttributeOf(cell, styling.valueAttribute)
+      : null;
+    if (styling.valueAttribute && !valueSource) missing.add(styling.valueAttribute);
+    // Resolved per cell, skipped-and-surfaced per name: a rule whose attribute
+    // the cell cannot answer applies to nothing rather than hiding everything.
+    const ruleSources = styling.rules.map((rule) => {
+      const source = nodeAttributeOf(cell, rule.attribute);
+      if (!source) missing.add(rule.attribute);
+      return source;
+    });
+
     for (let i = 0; i < total; i++) {
       const slot = (nodeOffset + i) * 4;
+      const ordinal = cell.nodeOrdinals[i];
       target.aux[slot] = cell.radii ? cell.radii[i] : 0;
-      target.aux[slot + 1] = cell.nodeOrdinals[i];
+      target.aux[slot + 1] = ordinal;
       target.aux[slot + 2] = i < cell.nodeCount ? 1 : 0;
-      target.aux[slot + 3] = 0;
+
+      // Two visibility bits — +1 the node's own (glyphs), +2 the edge's
+      // (this node's outgoing segments). A NODE rule clears both (a hidden
+      // node takes its segments with it); an EDGE rule clears only the edge
+      // bit; a hidden OBJECT clears both, the mesh semantics.
+      let nodeVisible = !styling.hiddenOrdinals?.has(ordinal);
+      let edgeVisible = nodeVisible;
+      // Stops early only once the node bit is gone (both are then cleared);
+      // a failed EDGE rule must not stop a later NODE rule from evaluating.
+      for (let r = 0; r < styling.rules.length && nodeVisible; r++) {
+        const rule = styling.rules[r];
+        const source = ruleSources[r];
+        if (keeps(source ? source[i] : null, rule)) continue;
+        edgeVisible = false;
+        if (rule.target === "NODE") nodeVisible = false;
+      }
+      target.aux[slot + 3] = (nodeVisible ? 1 : 0) + (edgeVisible ? 2 : 0);
+
+      const value = valueSource
+        ? valueSource[i]
+        : (styling.ordinalValues?.[ordinal] ?? Number.NaN);
+      target.values[nodeOffset + i] = value;
+      if (Number.isFinite(value)) {
+        if (value < valueMin) valueMin = value;
+        if (value > valueMax) valueMax = value;
+      }
     }
 
     const edgeBase = edgeOffset * 2;
@@ -132,5 +263,13 @@ export function packNetworkCells(
     packed++;
   }
 
-  return { nodes: nodeOffset, edges: edgeOffset, cells: packed, clamped };
+  return {
+    nodes: nodeOffset,
+    edges: edgeOffset,
+    cells: packed,
+    clamped,
+    attributesMissing: [...missing].sort(),
+    valueMin: Number.isFinite(valueMin) ? valueMin : null,
+    valueMax: Number.isFinite(valueMax) ? valueMax : null,
+  };
 }

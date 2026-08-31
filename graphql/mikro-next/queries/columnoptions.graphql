@@ -47,6 +47,11 @@ fragment ColorByOption on ColorByOption {
   # references — which is why the gene list is a second interaction rather than
   # part of this list.
   axes
+  # The GRAPH arm, network collections only: a per-node value the collection
+  # itself carries, present exactly when `table`, `column` and `sparseDataset`
+  # are all null. Always MEASURE, and resolved from the decoded attribute blobs
+  # rather than any parquet lookup — the one option kind with no store behind it.
+  graphAttribute
   sparseDataset {
     ...SparseColouringSource
   }
@@ -78,6 +83,9 @@ fragment FilterByOption on FilterByOption {
   # position picker authors a rule as authors a colouring, and it reads the
   # matrix's axes off this.
   axes
+  # The GRAPH arm — see `ColorByOption`. A GRAPH rule is bounds over a per-node
+  # value, and hides individual nodes and segments rather than whole objects.
+  graphAttribute
   sparseDataset {
     ...SparseColouringSource
   }
@@ -160,6 +168,44 @@ query LabelFilterByOptions(
 ) {
   options: labelFilterByOptions(
     lens: $lens
+    filters: $filters
+    maxJoinDepth: $maxJoinDepth
+  ) {
+    ...FilterByOption
+  }
+}
+
+# The same two questions for a NETWORK layer, rooted on its collection. The one
+# options list with a third arm: `graphAttribute` names a per-node value the
+# collection itself carries — the intrinsic metrics every konnektion build
+# stores (strahler, degree, depth, component), a writer's own columns, and
+# `radius` when the encoding carries one. Those come FIRST, in declaration
+# order; the COLUMN/SPARSE half follows, rooted at depth zero server-side so
+# only tables keyed by this collection's OBJECT ids are offered (the wider fact
+# walk would offer the source image's mask-keyed tables — joins an object id
+# cannot execute). The set is exactly what `createNetworkLayer(colorBys:)` /
+# `filterBys` accept. Aliased to `options:` like every other pair.
+query NetworkColorByOptions(
+  $networkCollection: ID!
+  $filters: ColumnOptionFilter
+  $maxJoinDepth: Int
+) {
+  options: networkColorByOptions(
+    networkCollection: $networkCollection
+    filters: $filters
+    maxJoinDepth: $maxJoinDepth
+  ) {
+    ...ColorByOption
+  }
+}
+
+query NetworkFilterByOptions(
+  $networkCollection: ID!
+  $filters: ColumnOptionFilter
+  $maxJoinDepth: Int
+) {
+  options: networkFilterByOptions(
+    networkCollection: $networkCollection
     filters: $filters
     maxJoinDepth: $maxJoinDepth
   ) {

@@ -87,10 +87,34 @@ export type KonnektionFileEntry = {
   rowGroups: number | null;
 };
 
+/**
+ * One per-node value column the collection carries beside its geometry, as
+ * `attr_<name>` / `ghost_attr_<name>` blob columns on every geometry row.
+ *
+ * Declared in a TOP-LEVEL manifest key beside `encoding`, deliberately: the
+ * encoding's keys are required-never-defaulted, so a tenth key would have made
+ * every pre-attribute collection unreadable for a backwards-compatible
+ * addition. An absent key means none, which is every manifest written before
+ * attributes existed.
+ *
+ * Values are computed ONCE on the full level-0 graph and only ever subset per
+ * level — a node's strahler order is the same number at every level it
+ * survives to, which is what makes colouring by one safe across LOD switches.
+ * `NaN` is "this node has no answer" (a rootless object's strahler/depth).
+ */
+export type KonnektionAttribute = {
+  name: string;
+  encoding: "FLOAT32";
+  /** What a computed column means; null is a writer's own column. */
+  semantics: "STRAHLER" | "DEGREE" | "DEPTH" | "COMPONENT" | null;
+};
+
 export type KonnektionManifest = {
   specVersion: string;
   grid: KonnektionGrid;
   encoding: KonnektionEncoding;
+  /** The declared per-node attributes, in declaration order; `[]` for none. */
+  attributes: readonly KonnektionAttribute[];
   counts: Record<string, unknown>;
   cells: KonnektionFileEntry;
   objects: KonnektionFileEntry;
@@ -215,6 +239,55 @@ export const parseEncoding = (raw: unknown): KonnektionEncoding => {
   ) as unknown as KonnektionEncoding;
 };
 
+const ATTRIBUTE_SEMANTICS = ["STRAHLER", "DEGREE", "DEPTH", "COMPONENT"] as const;
+
+/**
+ * Absent is legitimate — every manifest written before the key existed —
+ * so it parses to `[]`. Present but malformed is refused, strictly per entry
+ * like `parseEncoding`: these names are what the picker's GRAPH entries are
+ * resolved against, and a declaration nobody could act on is worse than none.
+ */
+export const parseAttributes = (raw: unknown): KonnektionAttribute[] => {
+  if (raw === undefined || raw === null) return [];
+  if (!Array.isArray(raw)) {
+    throw new KonnektionFormatError(
+      `A manifest's \`attributes\` is a list of declarations; got ${JSON.stringify(raw)}.`,
+    );
+  }
+  const seen = new Set<string>();
+  return raw.map((entry, index) => {
+    if (!isRecord(entry) || typeof entry.name !== "string") {
+      throw new KonnektionFormatError(
+        `\`attributes[${index}]\` is an object naming an attribute; got ${JSON.stringify(entry)}.`,
+      );
+    }
+    const encoding = entry.encoding ?? "FLOAT32";
+    if (encoding !== "FLOAT32") {
+      throw new KonnektionFormatError(
+        `Attribute ${JSON.stringify(entry.name)} declares encoding ${JSON.stringify(encoding)}; the format defines FLOAT32.`,
+      );
+    }
+    const semantics = entry.semantics ?? null;
+    if (semantics !== null && !ATTRIBUTE_SEMANTICS.includes(semantics as never)) {
+      throw new KonnektionFormatError(
+        `Attribute ${JSON.stringify(entry.name)} declares semantics ${JSON.stringify(semantics)}; ` +
+          `the format defines ${ATTRIBUTE_SEMANTICS.join(", ")}, or null for a writer's own column.`,
+      );
+    }
+    if (seen.has(entry.name)) {
+      throw new KonnektionFormatError(
+        `A manifest declares each attribute once; ${JSON.stringify(entry.name)} appears twice.`,
+      );
+    }
+    seen.add(entry.name);
+    return {
+      name: entry.name,
+      encoding: "FLOAT32",
+      semantics: (semantics as KonnektionAttribute["semantics"]) ?? null,
+    };
+  });
+};
+
 const parseLevels = (raw: unknown): Map<number, KonnektionFileEntry[]> => {
   if (!isRecord(raw)) {
     throw new KonnektionFormatError(
@@ -262,12 +335,27 @@ export function parseKonnektionManifest(raw: unknown): KonnektionManifest {
     specVersion,
     grid: parseGrid(raw.grid),
     encoding: parseEncoding(raw.encoding),
+    attributes: parseAttributes(raw.attributes),
     counts: isRecord(raw.counts) ? raw.counts : {},
     cells: parseFileEntry(files.cells, "files.cells"),
     objects: parseFileEntry(files.objects, "files.objects"),
     levels: parseLevels(files.levels),
   };
 }
+
+/**
+ * The per-node value names a GRAPH picker entry may resolve, `radius` included
+ * exactly when the encoding carries one — the client-side mirror of the
+ * server's `KonnektionStore.attribute_vocabulary()`, and the same one-list
+ * argument: the entries a layer publishes were validated against this set, so
+ * a name outside it is a collection/layer mismatch worth surfacing, not a
+ * silent skip.
+ */
+export const attributeVocabulary = (manifest: KonnektionManifest): string[] => {
+  const names = manifest.attributes.map((attribute) => attribute.name);
+  if (hasRadii(manifest.encoding)) names.push("radius");
+  return names;
+};
 
 /** Whether this collection stores a per-node radius at all. */
 export const hasRadii = (encoding: KonnektionEncoding): boolean => encoding.radii !== "NONE";

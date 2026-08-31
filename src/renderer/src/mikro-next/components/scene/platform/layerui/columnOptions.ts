@@ -3,6 +3,7 @@ import {
   ColorSourceKind,
   ColumnControl,
   ColumnRole,
+  GraphTarget,
   type ColorByOptionFragment,
   type FilterByOptionFragment,
   type LabelColorByFragment,
@@ -13,6 +14,10 @@ import {
   type MeshColorByInput,
   type MeshFilterByFragment,
   type MeshFilterByInput,
+  type NetworkColorByFragment,
+  type NetworkColorByInput,
+  type NetworkFilterByFragment,
+  type NetworkFilterByInput,
 } from "@/mikro-next/api/graphql";
 import { qualitativePalette } from "./colormap-utils";
 
@@ -81,6 +86,21 @@ export type SparseOption = OfferedOption & {
 
 export const isSparseOption = (option: OfferedOption): option is SparseOption =>
   option.sparseDataset != null && option.axes.length > 0;
+
+/**
+ * The third arm, network collections only: a per-node value the collection
+ * ITSELF carries — strahler, degree, depth, component, a writer's own column,
+ * or `radius` off the encoding. Present exactly when the other two arms are
+ * null. Always MEASURE, and the one option kind with no parquet behind it:
+ * its values ride the decoded geometry, so authoring one costs no store read
+ * and rendering one costs no DuckDB.
+ */
+export type GraphOption = OfferedOption & {
+  graphAttribute: NonNullable<OfferedOption["graphAttribute"]>;
+};
+
+export const isGraphOption = (option: OfferedOption): option is GraphOption =>
+  option.graphAttribute != null;
 
 /**
  * A stored colouring, either layer kind. `MeshColorByFragment` and
@@ -181,10 +201,12 @@ const columnKey = (
  * are two entries and one option. That is what makes "already added" mean
  * "this matrix is in the picker", which is the useful reading here.
  */
-export const optionKey = (option: ColumnOption | SparseOption): string =>
-  isColumnOption(option)
-    ? columnKey(optionJoinPath(option), option.table.id, option.column.name)
-    : `sparse|${option.sparseDataset.id}`;
+export const optionKey = (option: ColumnOption | SparseOption | GraphOption): string => {
+  if (isColumnOption(option))
+    return columnKey(optionJoinPath(option), option.table.id, option.column.name);
+  if (isGraphOption(option)) return `graph|${option.graphAttribute}`;
+  return `sparse|${(option as SparseOption).sparseDataset.id}`;
+};
 
 /**
  * A stored entry's identity. A sparse entry names no column, so it keys on
@@ -196,13 +218,19 @@ export const entryKey = (entry: {
   column?: string | null;
   dataset?: string | null;
   at?: readonly { axis: string; value: number }[] | null;
+  attribute?: string | null;
   joinPath?: readonly JoinStepLike[] | null;
-}): string =>
-  entry.table != null && entry.column != null
-    ? columnKey(entryJoinPath(entry), entry.table, entry.column)
-    : `sparse|${entry.dataset ?? "?"}|${(entry.at ?? [])
-        .map((position) => `${position.axis}=${position.value}`)
-        .join(",")}`;
+}): string => {
+  if (entry.table != null && entry.column != null)
+    return columnKey(entryJoinPath(entry), entry.table, entry.column);
+  // A graph entry keys on its attribute alone — like a sparse option and its
+  // matrix, "already added" means "this attribute is in the picker", and the
+  // target is a variation within it rather than a different candidate.
+  if (entry.attribute != null) return `graph|${entry.attribute}`;
+  return `sparse|${entry.dataset ?? "?"}|${(entry.at ?? [])
+    .map((position) => `${position.axis}=${position.value}`)
+    .join(",")}`;
+};
 
 /** Whether a stored entry is this option — same table, column and join. */
 export const entryMatchesOption = (
@@ -313,6 +341,15 @@ export const JOINED_NOTE = " — reached through a join, not rendered yet";
 export const SPARSE_NOTE = " — one slice of a sparse matrix";
 
 /**
+ * And for the GRAPH arm. It draws, and it is the one entry kind whose value
+ * varies WITHIN an object — per node, off the collection's own geometry.
+ */
+export const GRAPH_NOTE = " — a per-node value the collection carries";
+
+/** What a picker captions a graph candidate with: the attribute's own name. */
+export const graphOptionLabel = (option: GraphOption): string => option.graphAttribute;
+
+/**
  * The control a column admits, from its declared role — the same rule the
  * server derives `ColumnControl` by, restated here because a STORED entry
  * carries only its table id and column name and has to be re-classified from
@@ -388,6 +425,43 @@ export const toSparseColorByInput = (
     ...patch,
   };
 };
+
+/**
+ * The GRAPH arm of the option → input mapping, network layers only.
+ *
+ * Fully determined by its option plus the aim: unlike a sparse entry there is
+ * no position to pick — the attribute IS the value source. `target` defaults
+ * to NODE (paint glyphs and segments); EDGE leaves glyphs at the base colour.
+ * Always measured, so the default colormap is a ramp, never a palette.
+ */
+export const toGraphColorByInput = (
+  option: GraphOption,
+  patch?: Partial<Omit<NetworkColorByInput, "kind" | "attribute">>,
+): NetworkColorByInput => ({
+  kind: ColorSourceKind.Graph,
+  attribute: option.graphAttribute,
+  target: GraphTarget.Node,
+  colormap: ColorMap.Viridis,
+  label: graphOptionLabel(option),
+  ...patch,
+});
+
+/**
+ * A rule over a graph attribute: always `min`/`max` bounds (a per-node metric
+ * is measured), and the one rule kind that hides individual nodes and their
+ * segments rather than whole objects — "trunk only" is strahler with min 3.
+ */
+export const toGraphFilterByInput = (
+  option: GraphOption,
+  patch?: Partial<Omit<NetworkFilterByInput, "kind" | "attribute">>,
+): NetworkFilterByInput => ({
+  kind: ColorSourceKind.Graph,
+  attribute: option.graphAttribute,
+  target: GraphTarget.Node,
+  label: graphOptionLabel(option),
+  exclude: false,
+  ...patch,
+});
 
 export const toFilterByInput = (
   option: ColumnOption,
@@ -465,6 +539,56 @@ export const filterByEntryToInput = (entry: FilterByEntry): FilterByInputLike =>
     axis: position.axis,
     value: position.value,
   })),
+  joinPath: entryJoinPath(entry),
+  min: entry.min ?? null,
+  max: entry.max ?? null,
+  values: entry.values ?? null,
+  exclude: entry.exclude,
+  label: entry.label ?? null,
+});
+
+/**
+ * The NETWORK entry mappers. Separate from the shared pair above, not folded
+ * in, because the extra keys cut the other way on the wire: `attribute` and
+ * `target` are fields only `NetworkColorByInput` declares, and a mesh or label
+ * mutation handed a variables object carrying them is refused by GraphQL
+ * validation — so the shared mappers must never emit them, and these must
+ * always emit them (the whole-array-replace hazard, one arm further out: a
+ * GRAPH entry read back and re-sent without its `attribute` comes back a
+ * COLUMN entry naming nothing).
+ */
+export type NetworkColorByEntry = NetworkColorByFragment;
+export type NetworkFilterByEntry = NetworkFilterByFragment;
+
+export const networkColorByEntryToInput = (entry: NetworkColorByEntry): NetworkColorByInput => ({
+  kind: entry.kind,
+  table: entry.table ?? null,
+  column: entry.column ?? null,
+  dataset: entry.dataset ?? null,
+  at: (entry.at ?? []).map((position) => ({
+    axis: position.axis,
+    value: position.value,
+  })),
+  attribute: entry.attribute ?? null,
+  target: entry.target ?? null,
+  joinPath: entryJoinPath(entry),
+  colormap: entry.colormap ?? null,
+  label: entry.label ?? null,
+  min: entry.min ?? null,
+  max: entry.max ?? null,
+});
+
+export const networkFilterByEntryToInput = (entry: NetworkFilterByEntry): NetworkFilterByInput => ({
+  kind: entry.kind,
+  table: entry.table ?? null,
+  column: entry.column ?? null,
+  dataset: entry.dataset ?? null,
+  at: (entry.at ?? []).map((position) => ({
+    axis: position.axis,
+    value: position.value,
+  })),
+  attribute: entry.attribute ?? null,
+  target: entry.target ?? null,
   joinPath: entryJoinPath(entry),
   min: entry.min ?? null,
   max: entry.max ?? null,

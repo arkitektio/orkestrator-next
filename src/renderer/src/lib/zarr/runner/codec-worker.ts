@@ -291,16 +291,48 @@ function parseAbsoluteRange(header: string | null | undefined): { start: number;
   return { start: Number(match[1]), end: Number(match[2]) + 1 }
 }
 
+/**
+ * How the bytes arrived, off the Resource Timing entry: `fromHttpCache` when
+ * the response was served without network transfer, and the negotiated
+ * protocol (`http/1.1` / `h2`). Both `null` when the entry is opaque —
+ * cross-origin resources report zero sizes unless the server sends
+ * `Timing-Allow-Origin` — so null means "cannot tell", not "not cached".
+ */
+interface TransportInfo {
+  fromHttpCache: boolean | null
+  protocol: string | null
+}
+
+function transportInfoFor(responseUrl: string): TransportInfo {
+  try {
+    const entries = performance.getEntriesByName(responseUrl) as PerformanceResourceTiming[]
+    const entry = entries[entries.length - 1]
+    // Bound the buffer instead of clearing per read: a clear here would race
+    // this worker's own concurrent fetches out of their entries.
+    if (performance.getEntriesByType('resource').length > 200) {
+      performance.clearResourceTimings()
+    }
+    if (!entry) return { fromHttpCache: null, protocol: null }
+    const opaque = entry.transferSize === 0 && entry.decodedBodySize === 0
+    return {
+      fromHttpCache: opaque ? null : entry.transferSize === 0,
+      protocol: entry.nextHopProtocol || null,
+    }
+  } catch {
+    return { fromHttpCache: null, protocol: null }
+  }
+}
+
 async function fetchChunkBytes(
   store: S3FetchConfig,
   path: `/${string}`,
   requestInit?: SerializedRequestInit,
-): Promise<Uint8Array | undefined> {
+): Promise<{ bytes: Uint8Array | undefined; transport: TransportInfo }> {
   const init = deserializeRequestInit(requestInit) ?? {}
   const response = await fetchS3Path(store, path, init)
 
   if (response.status === 404) {
-    return undefined
+    return { bytes: undefined, transport: transportInfoFor(response.url) }
   }
 
   if (response.status !== 200 && response.status !== 206) {
@@ -308,6 +340,7 @@ async function fetchChunkBytes(
   }
 
   const body = new Uint8Array(await response.arrayBuffer())
+  const transport = transportInfoFor(response.url)
 
   // Sharded inner chunk: the main thread asked for `bytes=a-b` inside a shard.
   // A gateway that ignores Range answers 200 with the WHOLE shard — slice
@@ -315,7 +348,7 @@ async function fetchChunkBytes(
   const range = parseAbsoluteRange(new Headers(init.headers).get('range'))
   if (range) {
     if (response.status === 200 && !response.headers.get('Content-Range')) {
-      return body.subarray(range.start, range.end)
+      return { bytes: body.subarray(range.start, range.end), transport }
     }
     const expected = range.end - range.start
     if (body.byteLength !== expected) {
@@ -325,7 +358,7 @@ async function fetchChunkBytes(
     }
   }
 
-  return body
+  return { bytes: body, transport }
 }
 
 interface FetchDecodeCommon {
@@ -462,7 +495,7 @@ ctx.onmessage = async (event: MessageEvent<WorkerMessage>) => {
       ensurePipeline(msg.metaId, msg.meta)
       getPipeline(msg.metaId)
       const fetchStartedAt = now()
-      const rawBytes = await fetchChunkBytes(msg.store, msg.path, msg.requestInit)
+      const { bytes: rawBytes, transport } = await fetchChunkBytes(msg.store, msg.path, msg.requestInit)
       const fetchMs = now() - fetchStartedAt
       if (!rawBytes) {
         ctx.postMessage({
@@ -475,6 +508,7 @@ ctx.onmessage = async (event: MessageEvent<WorkerMessage>) => {
             reshapeMs: 0,
             promoteMs: 0,
             totalMs: now() - workerStartedAt,
+            ...transport,
           },
         })
         return
@@ -501,6 +535,7 @@ ctx.onmessage = async (event: MessageEvent<WorkerMessage>) => {
           fetchMs,
           ...part.timings,
           totalMs: now() - workerStartedAt,
+          ...transport,
         },
       }
       ctx.postMessage(message, transferListOf([part]))
@@ -515,7 +550,7 @@ ctx.onmessage = async (event: MessageEvent<WorkerMessage>) => {
       const headers = new Headers(init.headers)
       headers.set('Range', `bytes=${msg.range.offset}-${msg.range.offset + msg.range.length - 1}`)
       const fetchStartedAt = now()
-      const body = await fetchChunkBytes(msg.store, msg.path, {
+      const { bytes: body, transport } = await fetchChunkBytes(msg.store, msg.path, {
         ...msg.requestInit,
         headers: Array.from(headers.entries()),
       })
@@ -527,7 +562,7 @@ ctx.onmessage = async (event: MessageEvent<WorkerMessage>) => {
           type: 'fetch_decoded_multi',
           id: msg.id,
           parts: msg.parts.map(() => null),
-          timings: { fetchMs, totalMs: now() - workerStartedAt },
+          timings: { fetchMs, totalMs: now() - workerStartedAt, ...transport },
         })
         return
       }
@@ -555,7 +590,7 @@ ctx.onmessage = async (event: MessageEvent<WorkerMessage>) => {
           type: 'fetch_decoded_multi',
           id: msg.id,
           parts,
-          timings: { fetchMs, totalMs: now() - workerStartedAt },
+          timings: { fetchMs, totalMs: now() - workerStartedAt, ...transport },
         },
         transferListOf(parts),
       )

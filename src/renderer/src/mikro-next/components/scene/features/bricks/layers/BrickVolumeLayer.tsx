@@ -25,7 +25,7 @@ import { buildAffineMatrix } from "../../../platform/coords/worldTransform";
 import { VOLUME_PASS_OBJECT } from "../../../platform/visibility/passVisibility";
 import { DRAG_THRESHOLD_PX } from "../../annotations/drawGesture";
 import { useCreateSceneAnnotation } from "../../annotations/useCreateSceneAnnotation";
-import { useModeStore } from "../../../platform/stores/modeStore";
+import { DESIGN_TOOL_GESTURES, useModeStore } from "../../../platform/stores/modeStore";
 import {
   isDrawingTool,
   isProbeDerivedTool,
@@ -225,7 +225,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   );
   const layer = useMemo(() => layers.find((l) => l.id === layerId), [layers, layerId]);
   const interactionMode = useModeStore((s) => s.interactionMode);
-  const designModifier = useModeStore((s) => s.designModifier);
+  const designTool = useModeStore((s) => s.designTool);
   // Rare-cadence scalars: a deliberate slider drag and a deliberate toggle.
   const isoThreshold = useModeStore((s) => s.isoThreshold);
   const lightRig = useModeStore((s) => s.lightRig);
@@ -242,7 +242,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     // The skeleton brush and the smooth blob both work THROUGH this volume's
     // probe march, so the volume is the one layer that arms for them.
     brushToolActive: activeTool === "BRUSH" || activeTool === "BLOB",
-    designArmed: designModifier !== null,
+    designArmed: designTool !== null,
     // The volume answers ANNOTATE hover: inside a volume there is no draw
     // plane, so the probe IS the placement for every shape tool.
     annotateProbes: true,
@@ -800,12 +800,14 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
           updateProbe(probeFromRay(e.ray, "click"), e.shiftKey);
           return;
         }
-        // DESIGN paints only while a brush key is held (C/V add, X removes —
-        // `modeStore.designModifier`). A bare drag is the camera's, as in NAVIGATE.
-        const designIntent = interactionMode !== "DESIGN" ? "add" : designModifier;
+        // DESIGN captures only while a tool key is held; the tool's GESTURE
+        // class says which branch owns the pointer (`DESIGN_TOOL_GESTURES`).
+        // A bare drag is the camera's, as in NAVIGATE.
+        const designGesture =
+          interactionMode === "DESIGN" && designTool ? DESIGN_TOOL_GESTURES[designTool] : null;
         if (
-          (interactionMode === "ANNOTATE" || (interactionMode === "DESIGN" && designIntent)) &&
-          roiDrawingApi.getState().activeTool === "BLOB"
+          (interactionMode === "ANNOTATE" && roiDrawingApi.getState().activeTool === "BLOB") ||
+          designGesture === "volume-click"
         ) {
           // The smooth blob: one probed point IS the whole gesture — the
           // grow loop takes it from here. Same single-layer decline rule.
@@ -814,14 +816,14 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
           if (!probe?.worldPos) return;
           e.stopPropagation();
           const brush = brushApi.getState();
-          brush.beginStroke(layerId, "blob", designIntent ?? "add");
+          brush.beginStroke(layerId, "blob", designTool ?? "blob");
           brush.addSample({ world: probe.worldPos, voxel: probe.voxelIndex });
           brush.endStroke();
           return;
         }
         if (
-          (interactionMode === "ANNOTATE" || (interactionMode === "DESIGN" && designIntent)) &&
-          roiDrawingApi.getState().activeTool === "BRUSH"
+          (interactionMode === "ANNOTATE" && roiDrawingApi.getState().activeTool === "BRUSH") ||
+          designGesture === "volume-stroke"
         ) {
           // The brush stroke: capture the pointer so the paint keeps landing
           // here even when the ray leaves the volume box mid-stroke, and so
@@ -837,7 +839,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
           (e.target as { setPointerCapture?: (id: number) => void })
             .setPointerCapture?.(e.pointerId);
           const brush = brushApi.getState();
-          brush.beginStroke(layerId, "stroke", designIntent ?? "add");
+          brush.beginStroke(layerId, "stroke", designTool ?? "brush");
           brush.addSample({ world: probe.worldPos, voxel: probe.voxelIndex });
           return;
         }

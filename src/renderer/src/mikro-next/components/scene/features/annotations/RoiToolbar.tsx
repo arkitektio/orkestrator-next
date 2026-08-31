@@ -46,7 +46,7 @@ const TOOLS: {
   // the extracted centerline becomes a PATH annotation.
   { tool: "BRUSH", label: "Brush", icon: Brush },
   // The smooth blob lives in DESIGN mode: a grown surface is a mesh, not an
-  // annotation (`features/meshDesign/MeshDesignToolbar`).
+  // annotation (`features/meshDesign/ui/MeshDesignToolbar`).
 ];
 
 export const RoiToolbar = () => {

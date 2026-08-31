@@ -1,4 +1,4 @@
-import type { DesignGeometry } from "./store/meshDesignStore";
+import type { DesignGeometry } from "../store/meshDesignStore";
 
 /**
  * Triangle soup → indexed geometry, by welding corners that agree to within

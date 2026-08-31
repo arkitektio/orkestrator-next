@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { SceneVolume } from "./SceneVolume";
 import { BrushStrokeSession } from "../features/annotations/enhancers/paths/brushSkeleton/BrushStrokeSession";
-import { MeshDesignSession } from "../features/meshDesign/MeshDesignSession";
+import { MeshDesignSession } from "../features/meshDesign/ui/MeshDesignSession";
 import { DoubleClickRecenter } from "../features/probe/DoubleClickRecenter";
 import { ProbeAxisGuides } from "../features/probe/ProbeAxisGuides";
 import { RoiDrawer } from "../features/annotations/RoiDrawer";

@@ -16,8 +16,9 @@ import {
   hoverProbeEnabled,
   type ProbeGateInput,
 } from "../../../platform/probe/probeGating";
+import { useBrushSkeletonStoreApi } from "../../annotations/enhancers/brushSkeletonStore";
 import { useCreateSceneAnnotation } from "../../annotations/useCreateSceneAnnotation";
-import { useModeStore } from "../../../platform/stores/modeStore";
+import { DESIGN_TOOL_GESTURES, useModeStore } from "../../../platform/stores/modeStore";
 import { useSceneStore, useSceneStoreApi, type LayerState } from "../../../platform/stores/sceneStore";
 import { useViewerStore, useViewerStoreApi } from "../../../platform/stores/viewerStore";
 import { perfMonitor } from "../../../platform/perf/perfMonitor";
@@ -91,6 +92,7 @@ export const useBrickPlaneProbe = ({
 
   const interactionMode = useModeStore((s) => s.interactionMode);
   const probeFollowsCursor = useModeStore((s) => s.probeFollowsCursor);
+  const designTool = useModeStore((s) => s.designTool);
   // The handler PROPS below are the raycast gate (P20), so the consuming
   // component must re-render when the gate's inputs change — which it does,
   // because these are store subscriptions read here.
@@ -107,8 +109,13 @@ export const useBrickPlaneProbe = ({
     annotateProbes: false,
   };
   const hoverEnabled = hoverProbeEnabled(gate);
-  const clickEnabled = clickProbeEnabled(gate);
+  // DESIGN's click tools reach the 2D plane too — the label LIFT clicks here,
+  // because the 3D label raymarcher answers no probe at all.
+  const designClick =
+    interactionMode === "DESIGN" && designTool != null && DESIGN_TOOL_GESTURES[designTool] === "volume-click";
+  const clickEnabled = clickProbeEnabled(gate) || designClick;
   const { createPointAnnotation } = useCreateSceneAnnotation();
+  const brushApi = useBrushSkeletonStoreApi();
 
   // Event-time resolution — fresh pin AND fresh layer list, no render
   // subscription: exactly one layer (the effective probe target) answers.
@@ -177,6 +184,36 @@ export const useBrickPlaneProbe = ({
       volumeSize: [width, height, depth],
     };
   }, [planTargetLevel, currentZ, layer, pool]);
+
+  /** Group-local plane point → BASE (level-0) voxel, updateProbe's own math. */
+  const baseVoxelAt = useCallback(
+    (local: THREE.Vector3): [number, number, number] | null => {
+      if (!layer || !pool) return null;
+      const probeContext = resolveProbeGeometryContext();
+      if (!probeContext) return null;
+      const base = pool.geometry.levels[0];
+      const totalX = base.spatialShape[0] * base.scale[0];
+      const totalY = base.spatialShape[1] * base.scale[1];
+      const u = local.x / totalX;
+      const v = local.y / totalY;
+      if (u < 0 || u > 1 || v < 0 || v > 1) return null;
+      const clampedU = THREE.MathUtils.clamp(u, 0, 0.999999);
+      const clampedV = THREE.MathUtils.clamp(v, 0, 0.999999);
+      const levelIndex = Math.min(
+        planTargetLevel ?? pool.geometry.levels.length - 1,
+        pool.geometry.levels.length - 1,
+      );
+      const level = pool.geometry.levels[levelIndex];
+      const baseShape = base.spatialShape;
+      const baseZ = Math.round(resolveVoxelIndex(0.5, probeContext.zSelection) * level.scale[2]);
+      return [
+        Math.min(baseShape[0] - 1, Math.floor(clampedU * baseShape[0])),
+        Math.min(baseShape[1] - 1, Math.floor(clampedV * baseShape[1])),
+        Math.max(0, Math.min(baseShape[2] - 1, baseZ)),
+      ];
+    },
+    [layer, pool, planTargetLevel, resolveProbeGeometryContext],
+  );
 
   const updateProbe = useCallback(
     (
@@ -326,10 +363,20 @@ export const useBrickPlaneProbe = ({
           if (!group) return;
           event.stopPropagation();
           const world = event.point.clone();
-          updateProbe(
-            { local: group.worldToLocal(world.clone()), world },
-            { save: event.shiftKey, origin: "click" },
-          );
+          const local = group.worldToLocal(world.clone());
+          if (designClick && designTool) {
+            // One probed click IS the whole design gesture on the plane
+            // (lift/wand/blob/bridge): hand it to the brush store, whose
+            // release runs the tool (`useBrushSkeleton.extract`).
+            const voxel = baseVoxelAt(local);
+            if (!voxel) return;
+            const brush = brushApi.getState();
+            brush.beginStroke(layerId, "blob", designTool);
+            brush.addSample({ world: [world.x, world.y, world.z], voxel });
+            brush.endStroke();
+            return;
+          }
+          updateProbe({ local, world }, { save: event.shiftKey, origin: "click" });
         },
   };
 

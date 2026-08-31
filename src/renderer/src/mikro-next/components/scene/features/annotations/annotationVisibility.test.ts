@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import { describe, expect, it } from "vitest";
 import {
   intersectsPlane,
@@ -7,7 +8,7 @@ import {
   zSpanOf,
   type CoverageLayer,
 } from "./annotationVisibility";
-import { sceneZExtent } from "../../platform/coords/worldTransform";
+import { finestLayerZStep, physicalToVoxelZStrict, sceneZExtent } from "../../platform/coords/worldTransform";
 import type { LayerState } from "../../platform/model/layerModel";
 
 /**
@@ -251,5 +252,55 @@ describe("sceneZExtent", () => {
   it("is null when nothing has a z axis to scrub", () => {
     expect(sceneZExtent([])).toBeNull();
     expect(sceneZExtent([zLayer(1, 2)])).toBeNull();
+  });
+});
+
+describe("finestLayerZStep (the visibility slab's thickness)", () => {
+  const zLayer = (zSize: number, spacing: number): LayerState =>
+    ({
+      zAxis: "z",
+      affineMatrix: [
+        [1, 0, 0, 0],
+        [0, 1, 0, 0],
+        [0, 0, spacing, 0],
+        [0, 0, 0, 1],
+      ],
+      lens: { axisNames: ["z", "y", "x"], shape: [zSize, 512, 512] },
+    }) as unknown as LayerState;
+
+  it("is the finest layer's OWN step, immune to a sparse stack's range", () => {
+    // 101 slices at 0.1 next to 2 slices 1000 apart: the pooled average
+    // (sceneZExtent.step) is 10 — a hundred times too thick a slab.
+    expect(finestLayerZStep([zLayer(101, 0.1), zLayer(2, 1000)])).toBeCloseTo(0.1);
+    expect(finestLayerZStep([zLayer(8, 2)])).toBe(2);
+    expect(finestLayerZStep([zLayer(1, 2)])).toBeNull();
+  });
+});
+
+describe("physicalToVoxelZStrict", () => {
+  const identity = new THREE.Matrix4();
+  it("rounds in range, refuses out of range instead of clamping", () => {
+    expect(physicalToVoxelZStrict(identity, 3.4, 7)).toBe(3);
+    expect(physicalToVoxelZStrict(identity, 7.4, 7)).toBe(7);
+    expect(physicalToVoxelZStrict(identity, 9, 7)).toBeNull();
+    expect(physicalToVoxelZStrict(identity, -1, 7)).toBeNull();
+  });
+});
+
+describe("z pins against a plane OUTSIDE the layer's stack", () => {
+  it("reads UNMET instead of 'met at the clamped end slice'", () => {
+    // Stack shifted to world z 100..107; a plane at 500 is far past it.
+    const shifted = layerWith({
+      affineMatrix: [
+        [1, 0, 0, 0],
+        [0, 1, 0, 0],
+        [0, 0, 1, 100],
+        [0, 0, 0, 1],
+      ],
+    });
+    const far = sceneCoverages([shifted], { t: 5 }, 500);
+    expect(pinsSatisfied([{ name: "z", value: 7 }], far)).toBe(false);
+    const on = sceneCoverages([shifted], { t: 5 }, 107);
+    expect(pinsSatisfied([{ name: "z", value: 7 }], on)).toBe(true);
   });
 });

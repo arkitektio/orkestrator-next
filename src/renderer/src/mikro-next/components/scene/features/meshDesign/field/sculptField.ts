@@ -1,8 +1,8 @@
-import { MARCHERS, type MarcherId } from "../annotations/enhancers/meshes/marcher";
-import type { CorridorBox } from "../annotations/enhancers/shared/corridorPlan";
-import { corridorIndex } from "../annotations/enhancers/shared/corridorPlan";
-import type { DesignGeometry } from "./store/meshDesignStore";
-import { weldSoup } from "./weld";
+import { MARCHERS, type MarcherId } from "../../annotations/enhancers/meshes/marcher";
+import type { CorridorBox } from "../../annotations/enhancers/shared/corridorPlan";
+import { corridorIndex } from "../../annotations/enhancers/shared/corridorPlan";
+import type { DesignGeometry } from "../store/meshDesignStore";
+import { weldSoup } from "../ops/weld";
 
 /**
  * The sculpting FIELD: a clamped signed-distance grid each design mesh

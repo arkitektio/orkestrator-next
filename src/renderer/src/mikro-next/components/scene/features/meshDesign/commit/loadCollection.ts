@@ -1,11 +1,11 @@
 import * as THREE from "three";
 
-import { buildFabriksCellIndex, cellsForObject, fabriksCellKey, type FabriksObjectEntry } from "../meshes/fabriks/fabriksCatalogs";
-import type { FabriksCollection } from "../meshes/fabriks/fabriksCollection";
-import type { DecodedCell, MeshoptDecoderLike } from "../meshes/fabriks/fabriksDecode";
-import { groupByRowGroup } from "../meshes/fabriks/fabriksPlanner";
-import type { DesignGeometry } from "./store/meshDesignStore";
-import { weldIndexed } from "./weld";
+import { buildFabriksCellIndex, cellsForObject, fabriksCellKey, type FabriksObjectEntry } from "../../meshes/fabriks/fabriksCatalogs";
+import type { FabriksCollection } from "../../meshes/fabriks/fabriksCollection";
+import type { DecodedCell, MeshoptDecoderLike } from "../../meshes/fabriks/fabriksDecode";
+import { groupByRowGroup } from "../../meshes/fabriks/fabriksPlanner";
+import type { DesignGeometry } from "../store/meshDesignStore";
+import { weldIndexed } from "../ops/weld";
 
 /**
  * Pull objects OUT of a fabriks collection as editable geometry — the

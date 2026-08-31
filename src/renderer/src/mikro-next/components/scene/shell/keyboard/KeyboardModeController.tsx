@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
-import { InteractionMode, useModeStore, useModeStoreApi, type DesignModifier } from "../../platform/stores/modeStore";
+import { InteractionMode, useModeStore, useModeStoreApi, type DesignToolId } from "../../platform/stores/modeStore";
+import { designToolByKey } from "../../features/meshDesign/tools/registry";
 import { isTypingTarget } from "../../platform/input/keyboardTarget";
 import { beginPathFromProbe } from "../../features/annotations/pathFromProbe";
 import { useRoiDrawingStoreApi } from "../../features/annotations/roiDrawingStore";
@@ -38,17 +39,12 @@ export const KeyboardModeController = () => {
   );
 
   useEffect(() => {
-    // DESIGN's brush keys, hold-to-act. The key also picks the tool, so the
-    // toolbar never needs a click: C brushes (tube), V grows (blob), X removes.
-    // (A stays the hold-ANNOTATE key.)
-    const DESIGN_KEYS: Record<string, { modifier: DesignModifier; tool: "BRUSH" | "BLOB" | null }> = {
-      c: { modifier: "add", tool: "BRUSH" },
-      v: { modifier: "add", tool: "BLOB" },
-      x: { modifier: "erase", tool: null },
-    };
-    const setDesignModifier = (next: DesignModifier | null) => {
+    // DESIGN's tool keys, hold-to-act, straight from the registry — the key
+    // also picks the tool, so the toolbar never needs a click. (A stays the
+    // hold-ANNOTATE key; the registry's test guards against collisions.)
+    const setDesignTool = (next: DesignToolId | null) => {
       const mode = modeApi.getState();
-      if (mode.designModifier !== next) mode.setDesignModifier(next);
+      if (mode.designTool !== next) mode.setDesignTool(next);
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -62,12 +58,12 @@ export const KeyboardModeController = () => {
 
       const key = e.key.toLowerCase();
 
-      const designKey = DESIGN_KEYS[key];
+      const designKey = designToolByKey(key);
       if (designKey && modeApi.getState().interactionMode === "DESIGN") {
-        if (designKey.tool && roiDrawingApi.getState().activeTool !== designKey.tool) {
-          roiDrawingApi.getState().setActiveTool(designKey.tool);
+        if (designKey.roiTool && roiDrawingApi.getState().activeTool !== designKey.roiTool) {
+          roiDrawingApi.getState().setActiveTool(designKey.roiTool);
         }
-        setDesignModifier(designKey.modifier);
+        setDesignTool(designKey.id);
         return;
       }
 
@@ -110,8 +106,8 @@ export const KeyboardModeController = () => {
     // move mid-hold.
     const handleKeyUp = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
-      if (DESIGN_KEYS[key] && modeApi.getState().designModifier === DESIGN_KEYS[key].modifier) {
-        setDesignModifier(null);
+      if (designToolByKey(key) && modeApi.getState().designTool === designToolByKey(key)?.id) {
+        setDesignTool(null);
       }
       if (heldKeyRef.current !== key) return;
       releaseHold();
@@ -121,7 +117,7 @@ export const KeyboardModeController = () => {
     // the held mode.
     const handleBlur = () => {
       releaseHold();
-      setDesignModifier(null);
+      setDesignTool(null);
     };
 
     const handleWheel = (e: WheelEvent) => {

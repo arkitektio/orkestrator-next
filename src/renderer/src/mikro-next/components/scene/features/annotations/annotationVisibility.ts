@@ -4,7 +4,7 @@ import {
   type AnchorLayer,
   type LayerCoverage,
 } from "./anchorVisibility";
-import { affineToMatrix4, physicalToVoxelZ } from "../../platform/coords/worldTransform";
+import { affineToMatrix4, physicalToVoxelZStrict } from "../../platform/coords/worldTransform";
 
 /**
  * Which of a collection's shapes the scene is showing RIGHT NOW.
@@ -77,12 +77,17 @@ function pinCoverageToPlane(
   const whole = new Set(coverage.whole);
   whole.delete(axis);
 
+  // Strict: a plane OUTSIDE this layer's stack pins the axis to NaN — never
+  // equal to any pin value, so the pin reads UNMET for this layer instead of
+  // "met at the clamped end slice" (a plane a millimetre past a stack must
+  // not keep its top slice's annotations visible forever).
+  const voxelZ = physicalToVoxelZStrict(affineToMatrix4(layer.affineMatrix), planeZ, extent - 1);
   return {
     ...coverage,
     whole,
     fixed: {
       ...coverage.fixed,
-      [axis]: physicalToVoxelZ(affineToMatrix4(layer.affineMatrix), planeZ, extent - 1),
+      [axis]: voxelZ ?? Number.NaN,
     },
   };
 }

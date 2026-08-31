@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { AnnotationKind, type SceneAnnotationFragment } from "@/mikro-next/api/graphql";
 import {
   ELLIPSE_SEGMENTS,
+  batchColors,
   buildOutlineBatches,
   outlinePoints,
   roiForSegment,
@@ -33,13 +34,13 @@ const annotation = (
 
 describe("outlinePoints", () => {
   it("points and 3D-extruded boxes/spheres draw no fat line", () => {
-    expect(outlinePoints(annotation(AnnotationKind.Point, [[1, 2, 3]]), false, null)).toBeNull();
+    expect(outlinePoints(annotation(AnnotationKind.Point, [[1, 2, 3]]), false)).toBeNull();
     // Corners spanning depth in 3D → wireframe box branch, not a Line.
     expect(
-      outlinePoints(annotation(AnnotationKind.Rectangle, [[0, 0, 0], [4, 4, 4]]), false, null),
+      outlinePoints(annotation(AnnotationKind.Rectangle, [[0, 0, 0], [4, 4, 4]]), false),
     ).toBeNull();
     expect(
-      outlinePoints(annotation(AnnotationKind.Ellipse, [[0, 0, 0], [4, 4, 4]]), false, null),
+      outlinePoints(annotation(AnnotationKind.Ellipse, [[0, 0, 0], [4, 4, 4]]), false),
     ).toBeNull();
   });
 
@@ -47,7 +48,6 @@ describe("outlinePoints", () => {
     const points = outlinePoints(
       annotation(AnnotationKind.Rectangle, [[0, 0, 5], [4, 2, 5]]),
       true,
-      null,
     )!;
     const z = getVectorPoint([0, 0, 5], true)[2]; // the flat view's render z
     expect(points).toEqual([
@@ -65,8 +65,8 @@ describe("outlinePoints", () => {
       [1, 0, 0],
       [1, 1, 0],
     ];
-    const polygon = outlinePoints(annotation(AnnotationKind.Polygon, vectors), false, null)!;
-    const path = outlinePoints(annotation(AnnotationKind.Path, vectors), false, null)!;
+    const polygon = outlinePoints(annotation(AnnotationKind.Polygon, vectors), false)!;
+    const path = outlinePoints(annotation(AnnotationKind.Path, vectors), false)!;
     expect(polygon).toHaveLength(4);
     expect(polygon[3]).toEqual(polygon[0]);
     expect(path).toHaveLength(3);
@@ -76,7 +76,6 @@ describe("outlinePoints", () => {
     const points = outlinePoints(
       annotation(AnnotationKind.Ellipse, [[0, 0, 0], [4, 2, 0]]),
       true,
-      null,
     )!;
     expect(points).toHaveLength(ELLIPSE_SEGMENTS + 1);
     expect(points[ELLIPSE_SEGMENTS]).toEqual(points[0]);
@@ -106,7 +105,7 @@ describe("buildOutlineBatches", () => {
         roi: roiOf("selected"),
       },
     ];
-    const batches = buildOutlineBatches(entries, false, null, (id) => id === "selected");
+    const batches = buildOutlineBatches(entries, false);
     expect(batches).toHaveLength(2);
 
     const thin = batches.find((batch) => batch.lineWidth === 1.5)!;
@@ -114,19 +113,40 @@ describe("buildOutlineBatches", () => {
     // 2 segments from "thin" + 1 from "selected"; positions are 6 floats/segment.
     expect(thin.segmentCount).toBe(3);
     expect(thin.positions).toHaveLength(18);
-    expect(thin.colors).toHaveLength(18);
     expect(thin.ranges).toEqual([
       { start: 0, end: 2, roi: entries[0].roi },
       { start: 2, end: 3, roi: entries[2].roi },
     ]);
     expect(thick.segmentCount).toBe(1);
 
-    // Selection paints the highlight color; unselected keep the default.
+    // GEOMETRY is selection-independent; the highlight is a color-only pass.
     const active = new THREE.Color(ACTIVE_STROKE);
     const idle = new THREE.Color(DEFAULT_STROKE);
-    expect(thin.colors[0]).toBeCloseTo(idle.r);
-    expect(thin.colors[2 * 6]).toBeCloseTo(active.r);
-    expect(thin.colors[2 * 6 + 1]).toBeCloseTo(active.g);
+    const colors = batchColors(thin, (id) => id === "selected");
+    expect(colors).toHaveLength(18);
+    expect(colors[0]).toBeCloseTo(idle.r);
+    expect(colors[2 * 6]).toBeCloseTo(active.r);
+    expect(colors[2 * 6 + 1]).toBeCloseTo(active.g);
+    // A selection change re-tints without touching the positions.
+    const none = batchColors(thin, () => false);
+    expect(none[2 * 6]).toBeCloseTo(idle.r);
+  });
+
+  it("legacy SURFACE rows draw nothing — belt over the query's filter", () => {
+    expect(
+      outlinePoints(annotation(AnnotationKind.Surface, [[0, 0, 0], [1, 1, 0], [0, 1, 0]]), true),
+    ).toBeNull();
+  });
+
+  it("sectioned ellipsoids stay OUT of the batch — their ring moves with the plane", () => {
+    // Depth-bearing ellipse in the flat view: per-shape Line, not batched.
+    expect(
+      outlinePoints(annotation(AnnotationKind.Ellipse, [[0, 0, 0], [4, 2, 6]]), true),
+    ).toBeNull();
+    // Flat ellipse (no depth): batched as before.
+    expect(
+      outlinePoints(annotation(AnnotationKind.Ellipse, [[0, 0, 0], [4, 2, 0]]), true),
+    ).not.toBeNull();
   });
 
   it("skips shapes without a fat line (points, 3D boxes)", () => {
@@ -139,8 +159,6 @@ describe("buildOutlineBatches", () => {
         },
       ],
       false,
-      null,
-      () => false,
     );
     expect(batches).toHaveLength(0);
   });

@@ -82,11 +82,10 @@ export const fallbackToolFor = (
  * (`platform/probe/probeTargeting.ts`): some layer can answer the probe exactly
  * when some layer is visible.
  *
- * KNOWN GAP: the 3D label raymarcher does not answer the probe (only the label
- * PLANE does — see `BrickLabelVolumeLayer`), so a 3D scene whose only visible
- * layer is a mask reports probeable while nothing responds. Narrow and
- * deliberate: a first-hit surface makes "which voxel" a second question, and the
- * 3D probe closure is entangled with ROI drawing and annotation placement.
+ * The 3D label raymarcher answers the probe too (first non-background hit —
+ * `BrickLabelVolumeLayer`), so a mask-only 3D scene probes exactly what it
+ * shows; the old "mask reports probeable while nothing responds" gap is
+ * closed.
  */
 export const hasProbeableLayer = (
   layers: readonly { visible?: boolean }[],
@@ -99,10 +98,11 @@ export function isInteractionModeAvailable(
   switch (mode) {
     case "PROBE":
       return ctx.hasProbeableLayer;
-    // The designer's tools are the probe-driven brush and blob: they need a
-    // volume to march through, which only the 3D view offers.
+    // The designer works in both views: the volume tools (C/V/X/W/G) need
+    // 3D, but lifting a label instance clicks the 2D plane and lofting
+    // traces 2D slices — the mode itself only needs something probeable.
     case "DESIGN":
-      return ctx.displayMode === "3D" && ctx.hasProbeableLayer;
+      return ctx.hasProbeableLayer;
     default:
       return true;
   }

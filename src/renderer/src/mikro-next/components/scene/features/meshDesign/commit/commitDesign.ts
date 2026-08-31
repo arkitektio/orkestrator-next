@@ -10,10 +10,10 @@ import {
   type CreateMeshLayerMutation,
 } from "@/mikro-next/api/graphql";
 import type { MikroClient } from "@/lib/zarr/store/types";
-import { buildFabriksPrefix } from "../meshes/fabriks/writer/fabriksPrefix";
-import type { BakeMesh } from "../meshes/fabriks/writer/fabriksBake";
-import { uploadFabriksPrefix, type FabriksUploadProgress } from "../meshes/fabriks/writer/fabriksUpload";
-import type { DesignMesh, DesignOrigin, DesignStatus } from "./store/meshDesignStore";
+import { buildFabriksPrefix } from "../../meshes/fabriks/writer/fabriksPrefix";
+import type { BakeMesh } from "../../meshes/fabriks/writer/fabriksBake";
+import { uploadFabriksPrefix, type FabriksUploadProgress } from "../../meshes/fabriks/writer/fabriksUpload";
+import type { DesignMesh, DesignOrigin, DesignStatus } from "../store/meshDesignStore";
 
 /**
  * Commit a design session: bake → upload → register → add a layer.

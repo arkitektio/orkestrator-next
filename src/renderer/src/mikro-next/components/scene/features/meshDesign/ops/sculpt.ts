@@ -1,4 +1,4 @@
-import type { DesignGeometry } from "./store/meshDesignStore";
+import type { DesignGeometry } from "../store/meshDesignStore";
 
 /**
  * The additive/subtractive brush on a design mesh.

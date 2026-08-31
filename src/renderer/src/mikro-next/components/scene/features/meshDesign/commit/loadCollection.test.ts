@@ -4,11 +4,11 @@ import { dirname, join } from "node:path";
 import * as THREE from "three";
 import { describe, expect, it } from "vitest";
 
-import { FabriksCollection, type FabriksTransport } from "../meshes/fabriks/fabriksCollection";
-import { buildFabriksPrefix } from "../meshes/fabriks/writer/fabriksPrefix";
+import { FabriksCollection, type FabriksTransport } from "../../meshes/fabriks/fabriksCollection";
+import { buildFabriksPrefix } from "../../meshes/fabriks/writer/fabriksPrefix";
 import { loadObjectsFromCollection } from "./loadCollection";
 
-const FIXTURES = join(dirname(fileURLToPath(import.meta.url)), "..", "meshes", "fabriks", "__fixtures__");
+const FIXTURES = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "meshes", "fabriks", "__fixtures__");
 
 const fixtureTransport = (variant: string): FabriksTransport => {
   const root = join(FIXTURES, variant);

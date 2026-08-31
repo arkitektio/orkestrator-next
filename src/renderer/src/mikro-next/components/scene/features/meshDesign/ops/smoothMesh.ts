@@ -1,4 +1,4 @@
-import type { DesignGeometry } from "./store/meshDesignStore";
+import type { DesignGeometry } from "../store/meshDesignStore";
 
 /**
  * Taubin (λ|μ) smoothing on an indexed mesh — Laplacian smoothing without

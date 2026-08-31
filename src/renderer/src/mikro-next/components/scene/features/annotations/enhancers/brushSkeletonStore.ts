@@ -6,6 +6,7 @@ import {
 } from "./shared/corridorCost";
 import { appendSample, type BrushSample, type Vec3 } from "./shared/strokeModel";
 import { DEFAULT_MARCHER, type MarcherId } from "./meshes/marcher";
+import type { DesignToolId } from "../../../platform/stores/modeStore";
 
 /**
  * The skeleton brush's session state: the stroke being painted, the extracted
@@ -91,10 +92,10 @@ export interface BrushSkeletonState {
    */
   strokeMode: "stroke" | "blob";
   /**
-   * DESIGN only: whether the stroke ADDS its surface to the active design
-   * mesh or ERASES within its brush. Always "add" in ANNOTATE.
+   * DESIGN only: the tool the gesture was captured FOR — its `run` gets the
+   * release (`meshDesign/tools/registry.ts`). "brush" in ANNOTATE.
    */
-  strokeIntent: "add" | "erase";
+  strokeTool: DesignToolId;
   /** Smooth-blob only: box-blur radius (level voxels) applied to the field
    * before the surface is marched — the "Smooth" slider. */
   blobSmoothness: number;
@@ -121,7 +122,7 @@ export interface BrushSkeletonState {
   setPolishIterations: (iterations: number) => void;
   setBlobSmoothness: (radius: number) => void;
   setBlobGap: (voxels: number) => void;
-  beginStroke: (layerId: string, mode?: "stroke" | "blob", intent?: "add" | "erase") => void;
+  beginStroke: (layerId: string, mode?: "stroke" | "blob", tool?: DesignToolId) => void;
   /** Returns whether the sample was kept (`strokeModel.appendSample`). */
   addSample: (sample: BrushSample) => boolean;
   /** The pointer lifted: hand over to extraction. No-op unless painting. */
@@ -155,7 +156,7 @@ export const createBrushSkeletonStore = () =>
     strokeVersion: 0,
     strokeLayerId: null,
     strokeMode: "stroke" as const,
-    strokeIntent: "add" as const,
+    strokeTool: "brush" as DesignToolId,
     candidate: null,
     liveTube: null,
 
@@ -181,14 +182,14 @@ export const createBrushSkeletonStore = () =>
     setBlobSmoothness: (blobSmoothness) => set({ blobSmoothness }),
     setBlobGap: (blobGap) => set({ blobGap }),
 
-    beginStroke: (layerId, mode = "stroke", intent = "add") => {
+    beginStroke: (layerId, mode = "stroke", tool = "brush") => {
       const stroke = get().stroke;
       stroke.length = 0;
       set({
         status: "painting",
         strokeLayerId: layerId,
         strokeMode: mode,
-        strokeIntent: intent,
+        strokeTool: tool,
         strokeVersion: 0,
         candidate: null,
         liveTube: null,

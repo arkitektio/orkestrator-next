@@ -1,4 +1,4 @@
-import type { DesignGeometry } from "./store/meshDesignStore";
+import type { DesignGeometry } from "../store/meshDesignStore";
 
 /**
  * Mesh simplification for the designer — a DESIGN tool, not an LOD builder.

@@ -1,6 +1,5 @@
 import * as THREE from "three";
 import { AnnotationKind, type SceneAnnotationFragment } from "@/mikro-next/api/graphql";
-import { ellipsoidCrossSectionScale } from "./primitiveDraw";
 import { MIN_DEPTH, ellipseRing, getVectorPoint } from "./annotationBounds";
 import { resolveStyle } from "./annotationStyle";
 
@@ -40,12 +39,16 @@ export const ELLIPSE_SEGMENTS = 48;
 export function outlinePoints(
   annotation: SceneAnnotationFragment,
   flattenToPlane: boolean,
-  planeZ: number | null,
 ): [number, number, number][] | null {
   const vectors = annotation.vectors;
   if (!vectors || vectors.length === 0) return null;
 
   if (annotation.kind === AnnotationKind.Point) return null;
+
+  // A legacy painted SURFACE's vectors are mesh vertices in no meaningful
+  // order — a polyline through them is spaghetti. Defence in depth: the
+  // query filters them out too, but a row that arrives anyway draws nothing.
+  if (annotation.kind === AnnotationKind.Surface) return null;
 
   if (annotation.kind === AnnotationKind.Line && vectors.length >= 2) {
     return vectors.map((vector) => getVectorPoint(vector, flattenToPlane));
@@ -84,17 +87,15 @@ export function outlinePoints(
     // True 3D sphere/ellipsoid: wireframe mesh, not a fat line.
     if (!flattenToPlane && rz >= MIN_DEPTH) return null;
 
-    const depthCenter = ((vectors[0][2] ?? 0) + (vectors[1][2] ?? 0)) / 2;
+    // A SECTIONED ellipsoid's ring depends on the drawn plane, and the batch
+    // deliberately does not: rebuilding every collection's Float32Arrays at
+    // z-scrub cadence was the cost the batch exists to avoid. Those few
+    // shapes keep their own per-shape `<Line>` (AnnotationShape's ellipse
+    // branch), which re-renders alone on a scrub (`shapeReadsPlaneZ`).
     const depthRadius = Math.abs((vectors[1][2] ?? 0) - (vectors[0][2] ?? 0)) / 2;
-    const section =
-      planeZ === null || depthRadius < MIN_DEPTH
-        ? 1
-        : Math.max(
-            ellipsoidCrossSectionScale(planeZ, depthCenter, depthRadius) ?? 0,
-            MIN_CROSS_SECTION_SCALE,
-          );
+    if (flattenToPlane && depthRadius >= MIN_DEPTH) return null;
 
-    const points = ellipseRing(cx, cy, z0, rx * section, ry * section, ELLIPSE_SEGMENTS);
+    const points = ellipseRing(cx, cy, z0, rx, ry, ELLIPSE_SEGMENTS);
     points.push(points[0]);
     return points;
   }
@@ -124,11 +125,11 @@ export type OutlineBatch<R> = {
   lineWidth: number;
   /** Interleaved segment endpoints, 6 floats per segment (xyz, xyz). */
   positions: Float32Array;
-  /** Endpoint colors, 6 floats per segment (rgb, rgb). */
-  colors: Float32Array;
   /** Sorted by `start`; one entry per contributing shape. */
   ranges: OutlineRange<R>[];
   segmentCount: number;
+  /** Per range, the annotation id and base stroke — `batchColors` reads these. */
+  strokes: { annotationId: string; stroke: string; selectedStroke: string }[];
 };
 
 const SCRATCH_COLOR = new THREE.Color();
@@ -141,43 +142,40 @@ const SCRATCH_COLOR = new THREE.Color();
 export function buildOutlineBatches<R>(
   entries: readonly { annotation: SceneAnnotationFragment; roi: R }[],
   flattenToPlane: boolean,
-  planeZ: number | null,
-  isActive: (annotationId: string) => boolean,
 ): OutlineBatch<R>[] {
   type Accumulator = {
     lineWidth: number;
     positions: number[];
-    colors: number[];
     ranges: OutlineRange<R>[];
+    strokes: OutlineBatch<R>["strokes"];
     segments: number;
   };
   const byWidth = new Map<number, Accumulator>();
 
   for (const { annotation, roi } of entries) {
-    const points = outlinePoints(annotation, flattenToPlane, planeZ);
+    const points = outlinePoints(annotation, flattenToPlane);
     if (!points || points.length < 2) continue;
-    const style = resolveStyle(annotation, isActive(annotation.id));
+    // GEOMETRY is selection-independent (selection changes color, never
+    // width — asserted below in `batchColors`): a click re-tints, it never
+    // re-uploads positions.
+    const base = resolveStyle(annotation, false);
+    const active = resolveStyle(annotation, true);
 
-    let batch = byWidth.get(style.strokeWidth);
+    let batch = byWidth.get(base.strokeWidth);
     if (!batch) {
-      batch = { lineWidth: style.strokeWidth, positions: [], colors: [], ranges: [], segments: 0 };
-      byWidth.set(style.strokeWidth, batch);
+      batch = { lineWidth: base.strokeWidth, positions: [], ranges: [], strokes: [], segments: 0 };
+      byWidth.set(base.strokeWidth, batch);
     }
-
-    SCRATCH_COLOR.set(style.stroke);
-    const r = SCRATCH_COLOR.r;
-    const g = SCRATCH_COLOR.g;
-    const b = SCRATCH_COLOR.b;
 
     const start = batch.segments;
     for (let i = 0; i < points.length - 1; i++) {
       const [ax, ay, az] = points[i];
       const [bx, by, bz] = points[i + 1];
       batch.positions.push(ax, ay, az, bx, by, bz);
-      batch.colors.push(r, g, b, r, g, b);
     }
     batch.segments += points.length - 1;
     batch.ranges.push({ start, end: batch.segments, roi });
+    batch.strokes.push({ annotationId: annotation.id, stroke: base.stroke, selectedStroke: active.stroke });
   }
 
   return [...byWidth.values()]
@@ -185,10 +183,36 @@ export function buildOutlineBatches<R>(
     .map((batch) => ({
       lineWidth: batch.lineWidth,
       positions: new Float32Array(batch.positions),
-      colors: new Float32Array(batch.colors),
       ranges: batch.ranges,
       segmentCount: batch.segments,
+      strokes: batch.strokes,
     }));
+}
+
+/**
+ * The color buffer for one batch under one selection — the ONLY thing a
+ * selection change recomputes: `setColors` re-tints in place while the
+ * positions (and their GPU buffer) stay untouched.
+ */
+export function batchColors<R>(
+  batch: OutlineBatch<R>,
+  isActive: (annotationId: string) => boolean,
+): Float32Array {
+  const colors = new Float32Array(batch.segmentCount * 6);
+  for (let k = 0; k < batch.ranges.length; k++) {
+    const range = batch.ranges[k];
+    const stroke = batch.strokes[k];
+    SCRATCH_COLOR.set(isActive(stroke.annotationId) ? stroke.selectedStroke : stroke.stroke);
+    const r = SCRATCH_COLOR.r;
+    const g = SCRATCH_COLOR.g;
+    const b = SCRATCH_COLOR.b;
+    for (let i = range.start * 6; i < range.end * 6; i += 3) {
+      colors[i] = r;
+      colors[i + 1] = g;
+      colors[i + 2] = b;
+    }
+  }
+  return colors;
 }
 
 /** The ROI owning a picked segment (`faceIndex` from the fat-line raycast). */

@@ -12,13 +12,26 @@ import { buildAffineMatrix } from "../../platform/coords/worldTransform";
 import { useViewerStore, useViewerStoreApi } from "../../platform/stores/viewerStore";
 import { perfMonitor } from "../../platform/perf/perfMonitor";
 import { useBrickLayer } from "../bricks/layers/useBrickPlaneProbe";
+import { intersectLocalVolumeBox } from "../bricks/probeMath";
+import { marchResidentBricks } from "../bricks/octree/brickSampling";
+import { useBrushSkeletonStoreApi } from "../annotations/enhancers/brushSkeletonStore";
+import { DESIGN_TOOL_GESTURES, useModeStore } from "../../platform/stores/modeStore";
+import {
+  clickProbeEnabled,
+  hoverProbeEnabled,
+  type ProbeGateInput,
+} from "../../platform/probe/probeGating";
+import { effectiveProbeLayerId, layerAnswersProbe } from "../../platform/probe/probeTargeting";
+import type { ProbeOrigin, ProbeResult } from "../../platform/probe/probeTypes";
+import { createRafCoalescer } from "../../platform/perf/rafCoalesce";
+import { useSceneStoreApi } from "../../platform/stores/sceneStore";
 import { useBrickMaterialBundle } from "../bricks/layers/useBrickMaterialBundle";
 import {
   useStepScaleUniform,
   useVolumePassRegistration,
   useVolumeRayUniforms,
 } from "../bricks/layers/useVolumeRayUniforms";
-import { useBrickStore } from "../bricks/store/brickSlice";
+import { useBrickStore, useBrickStoreApi } from "../bricks/store/brickSlice";
 
 /**
  * A label mask in 3D: a unit-box proxy whose fragment shader marches the brick
@@ -37,11 +50,14 @@ import { useBrickStore } from "../bricks/store/brickSlice";
  * channel compositor unrolled per member, so a label merge needs its own
  * unrolling, and two masks over one array is a rare enough scene to wait.
  *
- * NO PROBE, unlike the 2D plane. The 3D probe closure in `BrickVolumeLayer` is
- * bound up with ROI drawing, the annotation placement path and the merged-member
- * bookkeeping; a mask is probed on the plane, where the object under the cursor
- * is unambiguous. A first-hit surface would make "which voxel" a second question.
- * Worth revisiting, but not by half-copying that closure.
+ * PROBED by a FIRST-HIT march over the raw ids: with the march normalized to
+ * the trivial [0, 1] window and a threshold of 0, "first sample above the
+ * threshold" is exactly "first NON-BACKGROUND label along the ray" — the
+ * object you see is the object you probe, since the shader's projection is
+ * first-hit too. Deliberately not the intensity layer's full closure (no ROI
+ * drawing, no merged-member bookkeeping): PROBE reads the id under the
+ * cursor, and DESIGN's click tools (the label LIFT above all) capture here,
+ * which is what makes lifting work in 3D and not only on the plane.
  */
 export const BrickLabelVolumeLayer = ({ layerId }: { layerId: string }) => {
   perfMonitor.countRender("BrickLabelVolumeLayer"); // no-op unless a recording is armed
@@ -72,6 +88,7 @@ export const BrickLabelVolumeLayer = ({ layerId }: { layerId: string }) => {
    * probe yet, so it registers here.
    */
   const groupRef = useRef<THREE.Group>(null!);
+  const meshRef = useRef<THREE.Mesh>(null!);
   useEffect(() => {
     const refProxy = { kind: "layer" as const, id: layerId, ref: groupRef };
     register(refProxy);
@@ -79,6 +96,30 @@ export const BrickLabelVolumeLayer = ({ layerId }: { layerId: string }) => {
   }, [layerId, register, unregister]);
   const invalidate = useThree((state) => state.invalidate);
   const viewerStoreApi = useViewerStoreApi();
+  const sceneStoreApi = useSceneStoreApi();
+  const brickStoreApi = useBrickStoreApi();
+  const brushApi = useBrushSkeletonStoreApi();
+
+  const interactionMode = useModeStore((s) => s.interactionMode);
+  const probeFollowsCursor = useModeStore((s) => s.probeFollowsCursor);
+  const designTool = useModeStore((s) => s.designTool);
+  // The raycast gate (P20): PROBE hovers/clicks; DESIGN's click tools (LIFT)
+  // arm while their key is held. ANNOTATE never probes a mask.
+  const gate: ProbeGateInput = {
+    interactionMode,
+    probeFollowsCursor,
+    drawingToolActive: false,
+    annotateProbes: false,
+  };
+  const designClick =
+    interactionMode === "DESIGN" && designTool != null && DESIGN_TOOL_GESTURES[designTool] === "volume-click";
+  const hoverEnabled = hoverProbeEnabled(gate);
+  const clickEnabled = clickProbeEnabled(gate) || designClick;
+
+  // Pointermove storms coalesce to ≤1 march per frame (the BrickVolumeLayer
+  // idiom): thunks close over a CLONED ray, only the newest runs.
+  const probeCoalescer = useMemo(() => createRafCoalescer<() => void>((run) => run()), []);
+  useEffect(() => () => probeCoalescer.cancel(), [probeCoalescer]);
 
   const affineMatrix = useMemo(
     () => (layer ? buildAffineMatrix(layer) : new THREE.Matrix4().identity()),
@@ -124,6 +165,97 @@ export const BrickLabelVolumeLayer = ({ layerId }: { layerId: string }) => {
   // indexing; only what a texel is USED for differs.
   useLabelColorLut(bundle?.nodes, layer);
 
+  /**
+   * First-hit over the RAW ids: normalization is the trivial [0, 1] window,
+   * so any label ≥ 1 clamps to full visibility and background stays 0 — the
+   * threshold-0 first-hit is exactly "first non-background voxel". Shares
+   * `marchResidentBricks` with the intensity probe, so the voxel convention
+   * (corner-anchored, no flip) cannot drift.
+   */
+  const probeFromRay = (ray: THREE.Ray, origin: ProbeOrigin): ProbeResult | null => {
+    const mesh = meshRef.current;
+    const plan = brickStoreApi.getState().nodePlans[layerId];
+    if (!mesh || !pool || !plan || !brickSystem) return null;
+    const inverseMatrix = new THREE.Matrix4().copy(mesh.matrixWorld).invert();
+    const localOrigin = ray.origin.clone().applyMatrix4(inverseMatrix);
+    const localDirection = ray.direction.clone().transformDirection(inverseMatrix).normalize();
+    const bounds = intersectLocalVolumeBox(localOrigin, localDirection);
+    if (!bounds) return null;
+    perfMonitor.markProbe(); // no-op unless a perf recording is armed
+    const baseLevel = pool.geometry.levels[0];
+    const hit = marchResidentBricks({
+      origin: [localOrigin.x, localOrigin.y, localOrigin.z],
+      direction: [localDirection.x, localDirection.y, localDirection.z],
+      bounds: [Math.max(bounds.start, 0), bounds.end],
+      baseShape: baseLevel.spatialShape,
+      desiredLevel: plan.targetLevel,
+      channel: 0,
+      minValue: 0,
+      maxValue: 1,
+      climMin: 0,
+      climMax: 1,
+      threshold: 0,
+      strategy: "first-hit",
+      sample: (baseVoxel, desiredLevel, channel) =>
+        brickSystem.sampleResident(layerId, baseVoxel, desiredLevel, channel),
+    });
+    // A coverage fallback is a sample the ray never actually hit — for ids
+    // that would name a wrong object, so only a true first hit answers.
+    if (!hit || hit.fallback) return null;
+    const shape = baseLevel.spatialShape;
+    const clampIndex = (norm: number, extent: number) =>
+      Math.max(0, Math.min(extent - 1, Math.floor(norm * extent)));
+    const voxelIndex: [number, number, number] = [
+      clampIndex(hit.position[0] + 0.5, shape[0]),
+      clampIndex(hit.position[1] + 0.5, shape[1]),
+      clampIndex(hit.position[2] + 0.5, shape[2]),
+    ];
+    const resident = brickSystem.sampleResidentEx(layerId, voxelIndex, plan.targetLevel);
+    const world = new THREE.Vector3(hit.position[0], hit.position[1], hit.position[2]).applyMatrix4(
+      mesh.matrixWorld,
+    );
+    return {
+      layerId,
+      localPos: [hit.position[0], hit.position[1], hit.position[2]],
+      voxelIndex,
+      worldPos: [world.x, world.y, world.z],
+      strategy: "first-hit",
+      origin,
+      purpose: interactionMode === "DESIGN" ? "placement" : "readout",
+      values: resident
+        ? resident.values.map((value, channel) => ({ channel, value }))
+        : [{ channel: 0, value: hit.rawValue }],
+      provenance: resident
+        ? { source: "resident", level: resident.level }
+        : { source: "pending", level: plan.targetLevel },
+      dtype: baseLevel.dtype,
+      sliceSignature: pool.sliceSignature,
+    };
+  };
+
+  const answersProbe = () =>
+    layerAnswersProbe(
+      effectiveProbeLayerId(viewerStoreApi.getState().probeLayerId, sceneStoreApi.getState().layers),
+      layerId,
+    );
+
+  const updateProbe = (probe: ProbeResult | null) => {
+    const state = viewerStoreApi.getState();
+    if (!probe) {
+      if (state.probedCoordinate?.layerId === layerId) state.setProbedCoordinate(null);
+      return;
+    }
+    const cur = state.probedCoordinate;
+    if (
+      probe.origin === "hover" &&
+      cur?.layerId === probe.layerId &&
+      cur.voxelIndex.every((v, i) => v === probe.voxelIndex[i])
+    ) {
+      return;
+    }
+    state.setProbedCoordinate(probe);
+  };
+
   if (layer?.visible === false) return null;
   if (planMode !== "3D" || !pool || !bundle) return null;
 
@@ -148,9 +280,43 @@ export const BrickLabelVolumeLayer = ({ layerId }: { layerId: string }) => {
           Folding labels into their own cached target is a noted follow-up. */}
       <mesh
         key={pool.structureSignature}
+        ref={meshRef}
         scale={volumeSize}
         position={[volumeSize[0] / 2, volumeSize[1] / 2, volumeSize[2] / 2]}
         renderOrder={2}
+        onPointerMove={!hoverEnabled ? undefined : (e) => {
+          if (e.buttons !== 0) return;
+          if (!answersProbe()) return;
+          e.stopPropagation();
+          const ray = e.ray.clone();
+          probeCoalescer.schedule(() => updateProbe(probeFromRay(ray, "hover")));
+        }}
+        onPointerOut={!hoverEnabled ? undefined : () => {
+          if (!answersProbe()) return;
+          probeCoalescer.cancel();
+          updateProbe(null);
+        }}
+        onPointerDown={!clickEnabled ? undefined : (e) => {
+          // ONE layer answers, always — the pinned probe target, by default
+          // the first visible layer (`effectiveProbeLayerId`). Declining
+          // WITHOUT stopPropagation lets the event fall through to it.
+          if (!answersProbe()) return;
+          if (designClick && designTool) {
+            // One probed click IS the design gesture (LIFT above all): the
+            // first non-background voxel seeds the tool. Decline off-object
+            // clicks silently so the drag stays the camera's.
+            const probe = probeFromRay(e.ray, "click");
+            if (!probe?.worldPos) return;
+            e.stopPropagation();
+            const brush = brushApi.getState();
+            brush.beginStroke(layerId, "blob", designTool);
+            brush.addSample({ world: probe.worldPos, voxel: probe.voxelIndex });
+            brush.endStroke();
+            return;
+          }
+          e.stopPropagation();
+          updateProbe(probeFromRay(e.ray, "click"));
+        }}
       >
         <boxGeometry args={[1, 1, 1]} />
         <primitive object={bundle.material} attach="material" />

@@ -3,7 +3,7 @@ import { SceneLayerFragment } from "@/mikro-next/api/graphql";
 import { ImagePlaneLayer } from "../features/volume/ImagePlaneLayer";
 import { ImageVolumeLayer } from "../features/volume/ImageVolumeLayer";
 import { FabriksCollectionLayer } from "../features/meshes/FabriksCollectionLayer";
-import { AnnotationLayerRenderer } from "../features/annotations/AnnotationLayer";
+import { AnnotationLayerRenderer } from "../features/annotations/layer/AnnotationLayerRenderer";
 import { LabelPlaneLayer, LabelVolumeLayer } from "../features/labels/LabelPlaneLayer";
 import { TrackLayerRenderer } from "../features/tracks/TracksLayer";
 import { PointLayerRenderer } from "../features/points/PointsLayer";

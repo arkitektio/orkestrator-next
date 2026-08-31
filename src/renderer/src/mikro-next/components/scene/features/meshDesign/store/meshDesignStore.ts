@@ -1,7 +1,7 @@
 import { createStore } from "zustand/vanilla";
 import { createScopedStoreHooks } from "@/lib/generic/createScopedStore";
-import { eraseNearPolyline, mergeGeometry, type Vec3 } from "../sculpt";
-import type { SculptField } from "../sculptField";
+import { eraseNearPolyline, mergeGeometry, type Vec3 } from "../ops/sculpt";
+import type { SculptField } from "../field/sculptField";
 
 /**
  * The mesh DESIGN session: meshes extracted from the volume, waiting to be
@@ -56,6 +56,9 @@ export type DesignMesh = {
 
 export type DesignStatus = "idle" | "editing" | "baking" | "uploading" | "committing" | "error";
 
+export type StampShape = "sphere" | "box" | "ellipsoid";
+export type SculptVariant = "inflate" | "deflate" | "smooth";
+
 export type DesignOrigin = {
   collectionId: string;
   version: string;
@@ -76,6 +79,12 @@ export interface MeshDesignState {
    * and field is immutable. Depth-capped: fields are megabytes each. */
   history: DesignSnapshot[];
   future: DesignSnapshot[];
+  /** The stamp tool's primitive (S). */
+  stampShape: StampShape;
+  /** The sculpt brush's verb (B). */
+  sculptVariant: SculptVariant;
+  /** A two-click tool's parked first point (bridge, split). */
+  pendingPoint: { world: Vec3; voxel: Vec3 } | null;
 
   /** Add a mesh; returns its session id. `objectId` is assigned unless given. */
   addMesh: (mesh: {
@@ -104,6 +113,9 @@ export interface MeshDesignState {
   ) => string;
   undo: () => void;
   redo: () => void;
+  setStampShape: (shape: StampShape) => void;
+  setSculptVariant: (variant: SculptVariant) => void;
+  setPendingPoint: (point: { world: Vec3; voxel: Vec3 } | null) => void;
   removeMesh: (id: string) => void;
   renameMesh: (id: string, name: string) => void;
   setVisible: (id: string, visible: boolean) => void;
@@ -155,6 +167,9 @@ export const createMeshDesignStore = () =>
     nextObjectId: 1,
     history: [],
     future: [],
+    stampShape: "sphere" as StampShape,
+    sculptVariant: "inflate" as SculptVariant,
+    pendingPoint: null,
 
     addMesh: ({ name, geometry, source, objectId }) => {
       snapshot();
@@ -240,6 +255,9 @@ export const createMeshDesignStore = () =>
     },
     select: (selectedId) => set({ selectedId }),
     setOrigin: (origin) => set({ origin }),
+    setStampShape: (stampShape) => set({ stampShape }),
+    setSculptVariant: (sculptVariant) => set({ sculptVariant }),
+    setPendingPoint: (pendingPoint) => set({ pendingPoint }),
     setStatus: (status, message = null) => set({ status, message }),
     applySculpt: (id, sculpt) => {
       const state = get();

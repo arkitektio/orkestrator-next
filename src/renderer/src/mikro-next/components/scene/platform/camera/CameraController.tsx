@@ -291,7 +291,7 @@ const PanScaleSync = () => {
 
 export const CameraController = () => {
   const interactionMode = useModeStore((s) => s.interactionMode);
-  const designModifier = useModeStore((s) => s.designModifier);
+  const designTool = useModeStore((s) => s.designTool);
   const displayMode = useModeStore((s) => s.displayMode);
   const zoomToCursor = useModeStore((s) => s.zoomToCursor);
   const smoothOrbit = useModeStore((s) => s.smoothOrbit);
@@ -348,7 +348,7 @@ export const CameraController = () => {
   // DESIGN navigates like NAVIGATE — the left button is the camera's — until
   // a brush key (C/V/X) is held, when it hands the left button to the stroke.
   const isNavigate =
-    interactionMode === "NAVIGATE" || (interactionMode === "DESIGN" && designModifier === null);
+    interactionMode === "NAVIGATE" || (interactionMode === "DESIGN" && designTool === null);
 
   return (
     <>

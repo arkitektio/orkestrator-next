@@ -40,6 +40,7 @@ describe("availableInteractionModes", () => {
       "NAVIGATE",
       "ANNOTATE",
       "PROBE",
+      "DESIGN",
     ]);
     expect(availableInteractionModes(ctx3D)).toEqual([
       "NAVIGATE",
@@ -51,7 +52,8 @@ describe("availableInteractionModes", () => {
 
   it("drops DESIGN with PROBE when nothing can answer a probe", () => {
     expect(isInteractionModeAvailable("DESIGN", noLayers3D)).toBe(false);
-    expect(isInteractionModeAvailable("DESIGN", ctx2D)).toBe(false);
+    // 2D offers DESIGN too: label lift and contour lofting are 2D gestures.
+    expect(isInteractionModeAvailable("DESIGN", ctx2D)).toBe(true);
     expect(isInteractionModeAvailable("DESIGN", ctx3D)).toBe(true);
   });
 

@@ -19,7 +19,7 @@ import { formatCount, hueStyle, objectLabel } from "../../platform/model/selecti
 import { useMeshStore } from "./store/meshSlice";
 import { useModeStore } from "../../platform/stores/modeStore";
 import { useMeshDesignStoreApi } from "../meshDesign/store/meshDesignStore";
-import { loadObjectsFromCollection } from "../meshDesign/loadCollection";
+import { loadObjectsFromCollection } from "../meshDesign/commit/loadCollection";
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 
 /** Above this many indices the designer declines an edit — a segmentation is not a design. */
@@ -314,7 +314,7 @@ const MeshLayerSection = ({
    * Load this collection's objects into the mesh DESIGN session: decode at
    * the finest level, weld, place in world, and switch to DESIGN. Committing
    * the session then writes a NEW collection derived from this one — the
-   * prefix itself is never edited (features/meshDesign/loadCollection.ts).
+   * prefix itself is never edited (features/meshDesign/commit/loadCollection.ts).
    */
   const editInDesign = async () => {
     if (!manager) return;

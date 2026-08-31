@@ -11,6 +11,14 @@
  * R3F carries the same event on to the next intersected object — the target
  * layer — which handles it normally. Stopping propagation first would swallow
  * the event and probe nothing.
+ *
+ * This covers EVERY probe-shaped gesture, not just PROBE-mode readouts: the
+ * DESIGN tools' volume clicks and strokes (brush, blob, wand, lift, bridge)
+ * are captured by the intensity volume, the label raymarcher and the 2D
+ * plane through the same `layerAnswersProbe` guard — so a design gesture
+ * lands on the pinned layer (or the default first visible one), never on
+ * "whatever the ray hit first". Lifting from a mask that is not the first
+ * visible layer therefore means pinning it (the layer row's probe pin).
  */
 
 /**

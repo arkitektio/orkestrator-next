@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useDatalayerEndpoint, useMikro } from "@/app/Arkitekt";
 import { useDialog } from "@/app/dialog";
-import { commitMeshDesign, type CommitProgress, type CommitResult, type WorldSystemLike } from "./commitDesign";
-import { DESIGN_TRIANGLE_BUDGET, totalTriangles, type DesignMesh, type DesignOrigin } from "./store/meshDesignStore";
+import { commitMeshDesign, type CommitProgress, type CommitResult, type WorldSystemLike } from "../commit/commitDesign";
+import { DESIGN_TRIANGLE_BUDGET, totalTriangles, type DesignMesh, type DesignOrigin } from "../store/meshDesignStore";
 
 /**
  * The commit dialog — registered as `commitmeshdesign` in `app/dialog.tsx`.

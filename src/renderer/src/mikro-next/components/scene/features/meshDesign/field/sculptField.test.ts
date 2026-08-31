@@ -2,8 +2,8 @@ import * as THREE from "three";
 import { describe, expect, it } from "vitest";
 
 import { createField, marchField, meshToField, subtractCapsule, unionMesh } from "./sculptField";
-import type { DesignGeometry } from "./store/meshDesignStore";
-import { weldIndexed } from "./weld";
+import type { DesignGeometry } from "../store/meshDesignStore";
+import { weldIndexed } from "../ops/weld";
 
 const sphereMesh = (radius: number, centre: [number, number, number]): DesignGeometry => {
   const geometry = new THREE.SphereGeometry(radius, 24, 24);

@@ -82,6 +82,42 @@ describe("marchResidentBricks (first-hit)", () => {
   });
 });
 
+describe("marchResidentBricks over LABEL ids (the 3D mask probe)", () => {
+  // The label layer's parameterization: the trivial [0, 1] window and a
+  // threshold of 0 make "first sample above threshold" exactly "first
+  // NON-BACKGROUND label" — any id ≥ 1 clamps to full visibility.
+  const labelMarch = (values: (number | null)[]) =>
+    marchResidentBricks({
+      origin: [-0.5, 0, 0],
+      direction: [1, 0, 0],
+      bounds: [0, 1],
+      baseShape: [values.length, 1, 1],
+      desiredLevel: 0,
+      channel: 0,
+      minValue: 0,
+      maxValue: 1,
+      climMin: 0,
+      climMax: 1,
+      threshold: 0,
+      strategy: "first-hit",
+      steps: values.length * 4,
+      sample: (voxel) => values[Math.min(values.length - 1, Math.floor(voxel[0]))] ?? null,
+    });
+
+  it("hits the FIRST non-zero id, whatever its magnitude", () => {
+    const hit = labelMarch([0, 0, 4711, 3, 0]);
+    expect(hit).not.toBeNull();
+    expect(hit!.rawValue).toBe(4711);
+    expect(hit!.fallback).toBeUndefined();
+  });
+
+  it("answers null over pure background, and skips unresident gaps", () => {
+    expect(labelMarch([0, 0, 0, 0])).toBeNull();
+    const hit = labelMarch([0, null, null, 9]);
+    expect(hit!.rawValue).toBe(9);
+  });
+});
+
 describe("marchResidentBricks (max)", () => {
   it("returns the brightest sample along the ray, not the first hit", () => {
     // Dim slab at x ∈ [20, 40), bright peak at x ∈ [70, 75).

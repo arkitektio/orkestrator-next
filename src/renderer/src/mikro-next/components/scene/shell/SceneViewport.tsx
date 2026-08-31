@@ -40,7 +40,7 @@ import { SceneShortcuts } from "./keyboard/SceneShortcuts";
 import { CenterLodReadout } from "../features/bricks/CenterLodReadout";
 import { DrawSizeReadout } from "../features/annotations/DrawSizeReadout";
 import { RoiToolbar } from "../features/annotations/RoiToolbar";
-import { MeshDesignToolbar } from "../features/meshDesign/MeshDesignToolbar";
+import { MeshDesignToolbar } from "../features/meshDesign/ui/MeshDesignToolbar";
 import { SceneScreenshot } from "./chrome/SceneScreenshot";
 import { CanvasHueProbe } from "./theme/CanvasHueProbe";
 import { DebugPanel } from "../features/debug/DebugPanel";

@@ -115,12 +115,13 @@ is precisely what turned the old `core/` into a 153-file grab-bag.
   gesture, panels and tool store) and the fabriks reader/writer. These are the
   composition itself; they go away only if the brush and the fabriks writer
   move down to `platform/`, which they should not — both are features.
-- `annotations -> meshDesign` (the brush verdict routes an accepted surface
-  into the design session, simplified to the extraction level's voxel size on
-  the way) and `meshes -> meshDesign` (the Meshes panel's
-  "edit in design" entry): the two hand-over seams. Removed by giving the
-  enhancer registry a per-mode verdict sink and moving the entry onto a
-  design-owned panel.
+- `annotations -> meshDesign` (the brush hook dispatches a DESIGN release to
+  `meshDesign/tools/registry` and the ANNOTATE candidate's "add to design"
+  hands over the welded surface) and `meshes -> meshDesign` (the Meshes
+  panel's "edit in design" entry): the hand-over seams. The tool registry
+  CONCENTRATES the reverse edges — each design tool imports the annotation
+  extraction core (`enhancers/paths/brushSkeleton/extraction.ts`) rather than
+  the hook, which is what the raised meshDesign->annotations count pays for.
 
 `architecture.test.ts` asserts these rules in `pnpm test`. Three are hard
 zeroes; "features do not reach sideways" is a RATCHET against a known list, in

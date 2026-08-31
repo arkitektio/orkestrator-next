@@ -1,3 +1,37 @@
+# [2.0.0](https://github.com/arkitektio/orkestrator-next/compare/v1.68.0...v2.0.0) (2026-08-31)
+
+
+* perf!: shared color-by/filter-by machinery across layers ([97a684d](https://github.com/arkitektio/orkestrator-next/commit/97a684d00e31a066ed65025693575d3248522bcd))
+
+
+### Bug Fixes
+
+* batchColors ([2572946](https://github.com/arkitektio/orkestrator-next/commit/25729465586a1fecb1360256daaa81dfd6549b6e))
+* more mesh design stuff ([b2d1aa5](https://github.com/arkitektio/orkestrator-next/commit/b2d1aa541b3d55c5e8a4b0e8a51ac358cd943a10))
+* with some column options ([ae32c48](https://github.com/arkitektio/orkestrator-next/commit/ae32c48e34e33d464ea80d22a9951ff4577731eb))
+* with vector fields ([f3a52bc](https://github.com/arkitektio/orkestrator-next/commit/f3a52bc2416f45658267d8eaa652bde8f6163cde))
+* zoom problems ([894cb90](https://github.com/arkitektio/orkestrator-next/commit/894cb90e87a9cf81d0d63e7e0f83d314b70dede9))
+
+
+### Features
+
+* first mesh implementation ([02ca9ce](https://github.com/arkitektio/orkestrator-next/commit/02ca9ce0fb4a26e4b562323f11e90c30b1519e41))
+* less fetchy zoom ([23335e9](https://github.com/arkitektio/orkestrator-next/commit/23335e91238cea9ccbdcf0fe7dfab464887576dc))
+* with colorby and filter by ([2bc9b26](https://github.com/arkitektio/orkestrator-next/commit/2bc9b26116c81d922e174b9b3138f9520a3c1efb))
+* with first network layer + shards ([115939e](https://github.com/arkitektio/orkestrator-next/commit/115939e58a7bc175016fddb97a9aa9aa65a45848))
+* with reange queries ([27b0761](https://github.com/arkitektio/orkestrator-next/commit/27b0761938ce78d5bdda1787272e9f93c42087e6))
+* with time extensions ([7fc941c](https://github.com/arkitektio/orkestrator-next/commit/7fc941c817490519a8a76237fb392aa0f13ec852))
+
+
+### BREAKING CHANGES
+
+* fabriksMaterial's colour LUT contract is the RG8
+value-code table (setColorLut carries the quantisation window;
+palette/clims move to setColorAppearance).
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01ABbVjxQm4yPRLpEXN9cFAa
+
 # [1.68.0](https://github.com/arkitektio/orkestrator-next/compare/v1.67.8...v1.68.0) (2026-08-29)
 
 

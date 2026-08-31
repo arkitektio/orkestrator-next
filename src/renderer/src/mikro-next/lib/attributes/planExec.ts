@@ -1,5 +1,5 @@
 import type { AxisCoords } from "../coords/axisPath";
-import { isMeshSample, type AttributePlanLike } from "./attributeTypes";
+import { isMeshSample, isNetworkSample, type AttributePlanLike } from "./attributeTypes";
 
 /**
  * Pure plan-execution arithmetic: turning a path-mapped point plus a sampled
@@ -98,8 +98,9 @@ export function resolveSampleIndex(
   plan: AttributePlanLike,
   coords: AxisCoords,
 ): number[] | null {
-  // A mesh sample has no array to index — the id rides on geometry rows.
-  if (isMeshSample(plan.sample)) return null;
+  // A mesh or network sample has no array to index — the id rides on
+  // geometry rows, so only a pick can execute such a plan.
+  if (isMeshSample(plan.sample) || isNetworkSample(plan.sample)) return null;
   const axes = [...plan.sample.system.axes].sort((a, b) => a.order - b.order);
   if (axes.length === 0) return null;
   const shape = plan.sample.store.shape ?? null;

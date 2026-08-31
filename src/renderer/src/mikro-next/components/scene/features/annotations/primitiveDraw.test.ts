@@ -3,6 +3,7 @@ import {
   ellipsoidCrossSectionScale,
   planarRadius,
   primitiveCornerVectors,
+  spatialRadius,
 } from "./primitiveDraw";
 
 describe("primitiveCornerVectors", () => {
@@ -61,5 +62,15 @@ describe("ellipsoidCrossSectionScale", () => {
 
   it("reads a negative radius as its magnitude", () => {
     expect(ellipsoidCrossSectionScale(12, 10, -4)).toBeCloseTo(Math.sqrt(0.75), 10);
+  });
+});
+
+describe("spatialRadius", () => {
+  it("counts the z the camera-facing sizing plane legitimately introduces", () => {
+    expect(spatialRadius([0, 0, 0], [3, 4, 12])).toBe(13);
+  });
+
+  it("agrees with planarRadius when the cursor stays on the anchor's plane", () => {
+    expect(spatialRadius([1, 2, 5], [4, 6, 5])).toBe(planarRadius([1, 2, 5], [4, 6, 5]));
   });
 });

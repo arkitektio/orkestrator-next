@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { SceneVolume } from "./SceneVolume";
 import { BrushStrokeSession } from "../features/annotations/enhancers/paths/brushSkeleton/BrushStrokeSession";
+import { MeshDesignSession } from "../features/meshDesign/ui/MeshDesignSession";
 import { DoubleClickRecenter } from "../features/probe/DoubleClickRecenter";
 import { ProbeAxisGuides } from "../features/probe/ProbeAxisGuides";
 import { RoiDrawer } from "../features/annotations/RoiDrawer";
@@ -31,6 +32,8 @@ export const ThreeDScene = () => {
           suspension, extraction trigger. The capture itself lives in
           BrickVolumeLayer's pointer handlers. */}
       <BrushStrokeSession />
+      {/* The mesh designer's session meshes — mutable overlays, DESIGN only. */}
+      <MeshDesignSession />
     </>
   );
 };

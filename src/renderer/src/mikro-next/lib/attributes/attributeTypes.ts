@@ -89,16 +89,28 @@ export type MeshSampleLike = SampleStepCommonLike & {
   store: { id: string; bucket?: string; key?: string };
 };
 
-export const isMeshSample = (
-  sample: ArraySampleLike | MeshSampleLike,
-): sample is MeshSampleLike => sample.__typename === "MeshSample";
+/** The wireframe twin of `MeshSampleLike`: the id lives per GEOMETRY ROW of a
+ * konnektion collection, one per traced OBJECT — never per node, whose ids are
+ * unique only within their object. */
+export type NetworkSampleLike = SampleStepCommonLike & {
+  __typename: "NetworkSample";
+  store: { id: string; bucket?: string; key?: string };
+};
+
+export type SampleLike = ArraySampleLike | MeshSampleLike | NetworkSampleLike;
+
+export const isMeshSample = (sample: SampleLike): sample is MeshSampleLike =>
+  sample.__typename === "MeshSample";
+
+export const isNetworkSample = (sample: SampleLike): sample is NetworkSampleLike =>
+  sample.__typename === "NetworkSample";
 
 export type AttributePlanLike = {
   /** The FIELD edge the plan was built from — half of the staleness key. */
   edge: { id: string; version: number };
   table: { id: string; name: string };
   path: readonly AttributePathStep[];
-  sample: ArraySampleLike | MeshSampleLike;
+  sample: SampleLike;
   lookup: {
     store: ParquetStoreLike;
     keyColumns: readonly { axis: string; column: AttributeColumnLike }[];

@@ -44,3 +44,6 @@ allowBuilds:
 
 patchedDependencies:
   three: patches/three.patch
+
+minimumReleaseAgeExclude:
+  - hyparquet-writer@0.16.9

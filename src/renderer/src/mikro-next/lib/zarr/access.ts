@@ -5,6 +5,8 @@ import {
 import {
   RequestGeneralFabriksAccessDocument,
   RequestGeneralFabriksAccessMutation,
+  RequestGeneralKonnektionAccessDocument,
+  RequestGeneralKonnektionAccessMutation,
   RequestGeneralZarrAccessDocument,
   RequestGeneralZarrAccessMutation,
 } from "@/mikro-next/api/graphql";
@@ -15,15 +17,17 @@ import type { GeneralZarrAccessGrant, MikroClient } from "@/lib/zarr/store/types
  *
  * A general grant is bucket-wide, so one covers every store of its kind — but
  * the KINDS are separate mutations issuing separate credentials, and a fabriks
- * prefix cannot be read with a zarr grant. Hence a kind rather than a single
- * cache: a second kind must not clobber the first.
+ * prefix cannot be read with a zarr grant, nor a konnektion prefix with a
+ * fabriks one. Hence a kind rather than a single cache: a second kind must not
+ * clobber the first.
  */
-export type AccessKind = "zarr" | "fabriks";
+export type AccessKind = "zarr" | "fabriks" | "konnektion";
 
 /**
  * The one general-credentials round-trip per kind, shared by every consumer
  * that opens datalayer stores imperatively (scene store creation, the
- * attribute pipeline's foreign-array opens, fabriks collections). Imperative
+ * attribute pipeline's foreign-array opens, fabriks and konnektion
+ * collections). Imperative
  * `client.mutate` — no hook mounts, so the Guard.Mikro obligation stays on the
  * calling host.
  */
@@ -43,6 +47,21 @@ export async function requestGeneralAccess(
     }
     // Same shape as the zarr grant — bucket-wide credentials either way — so
     // `buildS3FetchConfig` consumes both without knowing which it was handed.
+    return credentials;
+  }
+
+  if (kind === "konnektion") {
+    const access = (await client.mutate({
+      mutation: RequestGeneralKonnektionAccessDocument,
+      variables: { input: {} },
+    })) as { data?: RequestGeneralKonnektionAccessMutation };
+
+    const credentials = access.data?.requestGeneralKonnektionAccess;
+    if (!credentials) {
+      throw new Error("Failed to obtain general konnektion access credentials");
+    }
+    // Same shape again — the three grants differ in what they authorize, not in
+    // what they look like — so `buildS3FetchConfig` takes this unchanged too.
     return credentials;
   }
 

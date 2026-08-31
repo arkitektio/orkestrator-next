@@ -8,6 +8,16 @@ import {
   type FabriksInstanceColormap,
   type InstanceColormapSpec,
 } from "../../../platform/gpu/instanceColormaps";
+import {
+  disposeMeasurePalette,
+  identityPaletteTexture,
+  setMeasurePalette,
+} from "../../../platform/gpu/measurePalette";
+import {
+  VALUE_LUT_HIDDEN_EDGE,
+  emitValueLutColor,
+  identityValueLutTexture,
+} from "../../../platform/gpu/valueLutNodes";
 
 // Same escape hatch as brickNodeMaterials.ts: three's TSL TypeScript surface
 // lags the runtime API (method chaining on nodes is typed dynamically).
@@ -57,36 +67,26 @@ export type FabriksMaterialHandle = {
     selectedOrdinal: { value: number };
     /** 1 = draw ONLY the selected instance (isolation); 0 = draw all. */
     isolate: { value: number };
-    /** 1 = the LUT's rgb IS this object's colour (a `colorBy` is active). */
+    /** 1 = the LUT's decoded value IS this object's colour (a `colorBy` is active). */
     lutColorize: { value: number };
-    /** 1 = the LUT's alpha decides visibility (a `filterBy` is active). */
+    /** 1 = the LUT's sentinel decides visibility (a `filterBy` is active). */
     lutFilter: { value: number };
     /** The LUT's dimensions, for the ordinal → texel decomposition. */
     lutWidth: { value: number };
     lutHeight: { value: number };
+    /** The range the codes were quantised over (`valueLut.ts`). */
+    uLutValueMin: { value: number };
+    uLutValueMax: { value: number };
+    /** The colormap window — appearance, movable without touching the table. */
+    uLutClimMin: { value: number };
+    uLutClimMax: { value: number };
   };
-  /** The ordinal → RGBA lookup (`fabriksColorLut.ts`); swap `.value` to rebind. */
+  /** The ordinal → 16-bit value-code lookup (`fabriksColorLut.ts`); swap
+   *  `.value` to rebind. RG8, the label mask's encoding — `valueLut.ts`. */
   lut: { node: { value: THREE.Texture } };
-};
-
-/**
- * The LUT's identity: white and opaque, so a material with no colouring and no
- * filter renders exactly as it did before the LUT existed. Every mesh layer
- * starts here, and the two `lut*` mode uniforms stay 0 until something is
- * actually bound — the placeholder is the fallback, never the answer.
- */
-const createPlaceholderLut = (): THREE.DataTexture => {
-  const lut = new THREE.DataTexture(
-    new Uint8Array([255, 255, 255, 255]),
-    1,
-    1,
-    THREE.RGBAFormat,
-  );
-  lut.magFilter = THREE.NearestFilter;
-  lut.minFilter = THREE.NearestFilter;
-  lut.generateMipmaps = false;
-  lut.needsUpdate = true;
-  return lut;
+  /** The 256×1 colormap row the decoded value samples. Adopted in place —
+   *  `setMeasurePalette`'s WebGPU-safe dance. */
+  lutPalette: { node: { value: THREE.Texture }; identity: THREE.DataTexture };
 };
 
 /** ordinal → rgb node for one colormap spec. */
@@ -133,27 +133,40 @@ const composeColorNode = (handle: FabriksMaterialHandle, baseNode: unknown) =>
     const height = float(handle.uniforms.lutHeight);
     const column = ordinal.mod(width);
     const row = ordinal.div(width).floor();
-    const lut = (handle.lut.node as unknown as { sample: (uv: unknown) => any }).sample(
+    const lutTexel = (handle.lut.node as unknown as { sample: (uv: unknown) => any }).sample(
       vec2(column.add(0.5).div(width), row.add(0.5).div(height)),
     );
+
+    // The table holds a VALUE code, not a colour (`valueLut.ts`): the decode,
+    // the window and the palette are uniforms, so a colormap or clim nudge
+    // never repaints or re-uploads the table. A colouring REPLACES the base
+    // rather than tinting it — `emitValueLutColor` mixes by
+    // `lutColorize · hasValue`, so a slot with no value keeps the id hash.
+    const { code, rgb } = emitValueLutColor(lutTexel, handle.lutPalette.node, vec3(baseNode), {
+      uLutColorize: float(handle.uniforms.lutColorize),
+      uLutValueMin: float(handle.uniforms.uLutValueMin),
+      uLutValueMax: float(handle.uniforms.uLutValueMax),
+      uLutClimMin: float(handle.uniforms.uLutClimMin),
+      uLutClimMax: float(handle.uniforms.uLutClimMax),
+    });
 
     // A rule that drops this object drops it here rather than by removing it
     // from the batch: the batch's slots and the LOD cache are planned by what
     // is RESIDENT, and a filter must not re-plan and re-fetch on every toggle.
-    // Visibility rides in ALPHA and the colouring in `rgb` — one table for both;
-    // `columnLut.ts`'s header says why that split rather than a colour sentinel.
-    Discard(float(handle.uniforms.lutFilter).greaterThan(0.5).and(lut.a.lessThan(0.5)));
+    // Visibility is the HIDDEN sentinel code now rather than an alpha channel
+    // — the table holds a value and has no spare channel; see `valueLut.ts`.
+    Discard(
+      float(handle.uniforms.lutFilter)
+        .greaterThan(0.5)
+        .and(code.greaterThan(float(VALUE_LUT_HIDDEN_EDGE))),
+    );
 
     // Float equality is exact here: ordinals are integers ≤ 2^24 on both sides.
     const selected = ordinal.equal(float(handle.uniforms.selectedOrdinal));
     Discard(float(handle.uniforms.isolate).greaterThan(0.5).and(selected.not()));
 
-    // A colouring REPLACES the base rather than tinting it: the base is the
-    // instance-id hash (or the flat material), and multiplying a colormap by a
-    // random hue is neither of the two things the user asked for.
-    const base = mix(vec3(baseNode), lut.rgb, float(handle.uniforms.lutColorize));
     // ~35% toward white: the identified object pops without a recompile.
-    return select(selected, mix(base, vec3(1.0), 0.35), base);
+    return select(selected, mix(rgb, vec3(1.0), 0.35), rgb);
   })();
 
 export function createFabriksMaterial(): FabriksMaterialHandle {
@@ -163,6 +176,7 @@ export function createFabriksMaterial(): FabriksMaterialHandle {
   material.metalness = 0.0;
   material.side = THREE.DoubleSide;
   material.flatShading = true; // derivative normals — no normal attribute
+  const paletteIdentity = identityPaletteTexture();
   const handle: FabriksMaterialHandle = {
     material,
     uniforms: {
@@ -172,8 +186,13 @@ export function createFabriksMaterial(): FabriksMaterialHandle {
       lutFilter: uniform(0),
       lutWidth: uniform(1),
       lutHeight: uniform(1),
+      uLutValueMin: uniform(0),
+      uLutValueMax: uniform(1),
+      uLutClimMin: uniform(0),
+      uLutClimMax: uniform(1),
     },
-    lut: { node: texture(createPlaceholderLut()) },
+    lut: { node: texture(identityValueLutTexture()) },
+    lutPalette: { node: texture(paletteIdentity), identity: paletteIdentity },
   };
   setInstanceColoring(handle, DEFAULT_INSTANCE_COLORMAP);
   return handle;
@@ -194,23 +213,54 @@ export function setInstanceColoring(
 }
 
 /**
- * Bind a freshly built ordinal → RGBA lookup, or `null` to fall back to the
- * placeholder (white, opaque — the identity).
+ * Bind a freshly built ordinal → value-code lookup, or `null` to fall back to
+ * the identity (visible, no value).
  *
  * Rebinding is a uniform write and a texture swap, never a graph change, so it
  * costs no recompile. The caller owns disposing the texture it replaces: this
- * module never learns when the old one stopped being referenced.
+ * module never learns when the old one stopped being referenced. The WINDOW —
+ * the range the codes were quantised over — travels with the table it
+ * describes; the clims and the palette are appearance and travel through
+ * `setColorAppearance` instead.
  */
 export function setColorLut(
   handle: FabriksMaterialHandle,
-  lut: { texture: THREE.Texture; width: number; height: number } | null,
+  lut: {
+    texture: THREE.Texture;
+    width: number;
+    height: number;
+    window: { valueMin: number; valueMax: number };
+  } | null,
   modes: { colorize: boolean; filter: boolean },
 ): void {
   if (lut) {
     handle.lut.node.value = lut.texture;
     handle.uniforms.lutWidth.value = lut.width;
     handle.uniforms.lutHeight.value = lut.height;
+    handle.uniforms.uLutValueMin.value = lut.window.valueMin;
+    handle.uniforms.uLutValueMax.value = lut.window.valueMax;
   }
   handle.uniforms.lutColorize.value = lut && modes.colorize ? 1 : 0;
   handle.uniforms.lutFilter.value = lut && modes.filter ? 1 : 0;
+}
+
+/**
+ * The APPEARANCE half: the palette row and the clim window, neither of which
+ * touches the table — dragging a contrast slider or switching a colormap is
+ * two uniform writes and a 1 KB palette refill, the `setLabelColorStyle`
+ * split. The palette is adopted in place (`setMeasurePalette`), so the bound
+ * texture object survives — the WebGPU bind-group invariant.
+ */
+export function setColorAppearance(
+  handle: FabriksMaterialHandle,
+  style: { palette: THREE.DataTexture | null; climMin: number; climMax: number },
+): void {
+  handle.uniforms.uLutClimMin.value = style.climMin;
+  handle.uniforms.uLutClimMax.value = style.climMax;
+  setMeasurePalette(handle.lutPalette.node, handle.lutPalette.identity, style.palette);
+}
+
+/** Dispose what the handle's palette slot owns. For the manager's teardown. */
+export function disposeColorAppearance(handle: FabriksMaterialHandle): void {
+  disposeMeasurePalette(handle.lutPalette.node, handle.lutPalette.identity);
 }

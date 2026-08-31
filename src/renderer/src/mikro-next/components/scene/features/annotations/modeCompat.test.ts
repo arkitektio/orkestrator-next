@@ -35,17 +35,26 @@ describe("hasProbeableLayer", () => {
 describe("availableInteractionModes", () => {
   // The overlay renders this array directly, so the order is part of the
   // contract, not an implementation detail.
-  it("offers all three in canonical order when a layer can be probed", () => {
+  it("offers the modes in canonical order when a layer can be probed; DESIGN only in 3D", () => {
     expect(availableInteractionModes(ctx2D)).toEqual([
       "NAVIGATE",
       "ANNOTATE",
       "PROBE",
+      "DESIGN",
     ]);
     expect(availableInteractionModes(ctx3D)).toEqual([
       "NAVIGATE",
       "ANNOTATE",
       "PROBE",
+      "DESIGN",
     ]);
+  });
+
+  it("drops DESIGN with PROBE when nothing can answer a probe", () => {
+    expect(isInteractionModeAvailable("DESIGN", noLayers3D)).toBe(false);
+    // 2D offers DESIGN too: label lift and contour lofting are 2D gestures.
+    expect(isInteractionModeAvailable("DESIGN", ctx2D)).toBe(true);
+    expect(isInteractionModeAvailable("DESIGN", ctx3D)).toBe(true);
   });
 
   it("drops PROBE when nothing can answer a probe, in either view", () => {
@@ -87,7 +96,6 @@ describe("availableAnnotateTools", () => {
       "LINE",
       "PATH",
       "BRUSH",
-      "BLOB",
     ]);
     expect(tools).not.toContain("SELECT");
   });

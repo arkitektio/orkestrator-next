@@ -2,7 +2,8 @@ import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 import { nodeBaseBox } from "./octree/nodeAddress";
 import { buildAffineMatrix } from "../../platform/coords/worldTransform";
-import { useSceneStore } from "../../platform/stores/sceneStore";
+import { layersPlanKey } from "../../platform/model/layerPlanKey";
+import { useSceneStore, useSceneStoreApi } from "../../platform/stores/sceneStore";
 import { useViewerStore } from "../../platform/stores/viewerStore";
 import { useBrickStore } from "./store/brickSlice";
 
@@ -25,13 +26,18 @@ export function BrickResidencyOverlay() {
   const debug = useViewerStore((s) => s.debug);
   const residencyVersion = useBrickStore((s) => s.residencyVersion);
   const brickSystem = useBrickStore((s) => s.brickSystem);
-  const layers = useSceneStore((s) => s.layers);
+  const sceneStoreApi = useSceneStoreApi();
+  // A SCALAR key, not the array (P9c/P17): the wireframes read only id +
+  // placement — fields `layerPlanSignature` captures — so a contrast drag's
+  // per-tick layer replacement must not rebuild every box. Debug-only, but the
+  // subscription is live regardless of the debug flag.
+  const layersKey = useSceneStore((s) => layersPlanKey(s.layers));
 
   const groups = useMemo(() => {
     if (!debug || !brickSystem) return [];
     const residency = brickSystem.snapshotResidency();
 
-    return layers.flatMap((layer) => {
+    return sceneStoreApi.getState().layers.flatMap((layer) => {
       const pool = brickSystem.getLayerPool(layer.id);
       const bricks = residency[layer.id];
       if (!pool || !bricks || bricks.length === 0) return [];
@@ -68,9 +74,10 @@ export function BrickResidencyOverlay() {
       );
       return [{ layerId: layer.id, matrix, segments }];
     });
-    // residencyVersion is the rebuild trigger even though it's not read here.
+    // residencyVersion is the rebuild trigger even though it's not read here;
+    // layersKey stands for the layers array read via getState().
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debug, brickSystem, layers, residencyVersion]);
+  }, [debug, brickSystem, layersKey, residencyVersion, sceneStoreApi]);
 
   // Wireframe geometries are rebuilt per residency change — dispose the
   // superseded generation or every streaming batch leaks GPU buffers.

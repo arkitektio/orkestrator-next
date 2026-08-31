@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef } from "react";
 import { EXCLUDE_FROM_CAPTURE } from "../../platform/visibility/captureVisibility";
 import { computeSceneWorldBox } from "../../platform/camera/sceneFit";
+import { layersPlanKey } from "../../platform/model/layerPlanKey";
 import { useModeStore } from "../../platform/stores/modeStore";
-import { useSceneStore } from "../../platform/stores/sceneStore";
+import { useSceneStore, useSceneStoreApi } from "../../platform/stores/sceneStore";
 import { useViewerStoreApi } from "../../platform/stores/viewerStore";
 import { perfMonitor } from "../../platform/perf/perfMonitor";
 import { PreviewLine, type PreviewLineHandle } from "../../platform/draw/PreviewLine";
@@ -31,7 +32,11 @@ const padOf = (min: number, max: number) => (max - min) * 0.05 + 1e-3;
 export const ProbeAxisGuides = () => {
   perfMonitor.countRender("ProbeAxisGuides"); // no-op unless a perf recording is armed
   const interactionMode = useModeStore((s) => s.interactionMode);
-  const layers = useSceneStore((s) => s.layers);
+  const sceneStoreApi = useSceneStoreApi();
+  // A SCALAR key, not the array (P9c/P17): `computeSceneWorldBox` reads only
+  // fields `layerPlanSignature` captures (axis mapping, lens shape, affine),
+  // so a contrast drag's per-tick layer replacement must not refit the box.
+  const layersKey = useSceneStore((s) => layersPlanKey(s.layers));
   const viewerStoreApi = useViewerStoreApi();
 
   const xRef = useRef<PreviewLineHandle | null>(null);
@@ -41,8 +46,13 @@ export const ProbeAxisGuides = () => {
   const drawnRef = useRef<readonly [number, number, number] | null>(null);
 
   // The scene's three-space extent — the same box the initial camera fit
-  // frames. Layers only change identity on real edits, so this is cold.
-  const box = useMemo(() => computeSceneWorldBox(layers), [layers]);
+  // frames. The plan key only changes on real structural edits, so this is cold.
+  const box = useMemo(
+    () => computeSceneWorldBox(sceneStoreApi.getState().layers),
+    // The key STANDS FOR the layers array read via getState().
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [layersKey, sceneStoreApi],
+  );
 
   const guidesApply =
     interactionMode === "PROBE" || interactionMode === "ANNOTATE";

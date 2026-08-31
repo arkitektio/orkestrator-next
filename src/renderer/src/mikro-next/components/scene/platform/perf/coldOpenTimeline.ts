@@ -52,6 +52,9 @@ export const COLD_OPEN_PHASES = [
   "firstBrickDecoded",
   /** The first brick was written into the atlas — first voxels are on screen. */
   "firstBrickUploaded",
+  /** The first brick with its real 1-voxel border landed (two-phase bricks:
+   * the halo refine; legacy single-phase: same instant as firstBrickUploaded). */
+  "firstBrickFull",
 ] as const;
 
 export type ColdOpenPhase = (typeof COLD_OPEN_PHASES)[number];

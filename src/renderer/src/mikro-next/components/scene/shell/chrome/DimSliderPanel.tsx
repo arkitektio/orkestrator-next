@@ -2,46 +2,50 @@ import { useMemo } from 'react'
 import { Slider } from '@/components/ui/slider'
 import { cn } from '@/lib/utils'
 import { useSceneDockOrientation, type SceneDockOrientation } from '../SceneDock'
-import { buildSliceMap, resolveCollapsedSelection } from '../../platform/coords/selection'
-import { collapsibleDims } from '../../platform/model/sliceSignature'
-import { useSceneStore } from '../../platform/stores/sceneStore'
+import {
+  declaredDimExtents,
+  foldDimExtents,
+  lensDimExtents,
+  type DimContribution
+} from '../../platform/model/dimExtents'
+import { layersPlanKey } from '../../platform/model/layerPlanKey'
+import { useSceneStore, useSceneStoreApi } from '../../platform/stores/sceneStore'
 import { useViewerStore } from '../../platform/stores/viewerStore'
 
 /**
- * Scene-wide scrubbers for the COLLAPSIBLE dims (t, tau, … — everything not
+ * Scene-wide scrubbers for the COLLAPSIBLE dims (t, tau, ... - everything not
  * mapped to x/y/z/intensity), one slider per dim NAME, in BOTH display modes
  * (unlike the 2D-only z-slider: z is a spatial brick axis, these select which
- * data to fetch). Where they sit is the host's call — see Scene.Dock; the
+ * data to fetch). Where they sit is the host's call - see Scene.Dock; the
  * default composition keeps them bottom-centred, napari-style.
  *
  * Scrubbing writes `viewerStore.dimSelections[dim]`, which enters the slice
- * SIGNATURE of every layer carrying that dim → debounced replan → wholesale
+ * SIGNATURE of every layer carrying that dim -> debounced replan -> wholesale
  * pool flush + refetch (by design: a different t is different data in every
  * brick). Layers without the dim are untouched. Scrubbing back to a recently
  * visited index re-repacks from the decoded-chunk LRU without refetching.
  *
- * TWO SOURCES, because there are two kinds of layer. The brick layers declare
- * their dims through a LENS (`collapsibleDims` reads its axis names, shape and
- * slices), and that is where every dim but one comes from. A TRACK layer has no
- * lens at all — it is a table, and its time is a column — so it publishes the
- * extent it actually observed into `sceneStore.trackTimeExtents` once its read
- * lands, and that is folded in below under the same `t`. Without that second
- * fold a scene of only tracks would offer nothing to scrub, and its tail would
- * be frozen at the end of the data.
+ * THREE SOURCES, folded into one scrubber per dim by `foldDimExtents`. The
+ * split is DECLARED vs OBSERVED, not brick vs non-brick:
+ *
+ *  1. Brick layers, declared - asked of their normalized `LayerState`, because
+ *     their intensity and phasor axes are resolved from the RENDER GRAPH during
+ *     normalization; re-deriving those from `renderAxes` here would disagree
+ *     with the pool the layer actually built.
+ *  2. Other lens-backed layers, declared - a vector field is a Lens over an
+ *     array exactly as an image is, but it is a typed carve-out from the brick
+ *     path (`layerGuards.NonBrickLensTypename`) and so never reaches
+ *     `sceneStore.layers`. Read off the fragment via `declaredDimExtents`.
+ *  3. Table-backed layers, observed - a track's time is a parquet COLUMN, not
+ *     an axis, and its timeline is unknowable until the scan returns. Those
+ *     renderers publish into `sceneStore.layerDimExtents` once their read lands.
+ *
+ * Why 1 and 2 are derived here rather than published like 3: `LayerRenderer`
+ * culls layers by GPU budget and remounts them on a mode toggle, so a slider
+ * that depended on a renderer effect would vanish under budget pressure and
+ * flicker on a 2D/3D switch - for a fact that never changed. Declared extents
+ * exist at first paint; only observed ones have to wait for data.
  */
-
-/** The dim a track layer's time joins — the same one a brick layer's t uses. */
-const TIME_DIM = 't'
-
-type DimScrubber = {
-  dim: string
-  /** Slider range: 0 … max extent − 1 across layers carrying the dim. */
-  maxIndex: number
-  /** What renders when no selection exists (the lens' collapsed default). */
-  defaultIndex: number
-  /** Per-layer readouts: the layer-clamped index actually shown. */
-  perLayer: { id: string; index: number; maxIndex: number }[]
-}
 
 /**
  * Follows its dock's orientation, falling back to horizontal — the shape it has
@@ -55,70 +59,77 @@ export const DimSliderPanel = ({
 } = {}) => {
   const dockOrientation = useSceneDockOrientation('horizontal')
   const orientation = orientationProp ?? dockOrientation
-  const layers = useSceneStore((s) => s.layers)
-  const trackTimeExtents = useSceneStore((s) => s.trackTimeExtents)
+  const sceneStoreApi = useSceneStoreApi()
+  // A SCALAR key, not the array (P9c/P17): the scrubbers read only fields
+  // `layerPlanSignature` captures (visibility, lens axis names/shape/slices),
+  // so a contrast drag's per-tick layer replacement must not re-render here.
+  const layersKey = useSceneStore((s) => layersPlanKey(s.layers))
+  const layers = useMemo(
+    () => sceneStoreApi.getState().layers,
+    // The key STANDS FOR the array the getState() read returns.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [layersKey, sceneStoreApi]
+  )
+  // The non-brick DECLARED half. A second scalar key over `sceneLayers`, the
+  // `LayerRenderer.dispatchKey` idiom: the extents read only a layer's id, kind,
+  // visibility and lens identity, so a mesh card's palette edit (which
+  // republishes `sceneLayers`) must not re-render here.
+  const declaredKey = useSceneStore((s) =>
+    s.sceneLayers
+      .map(
+        (layer) =>
+          `${layer.id}:${layer.__typename}:${layer.visible === false ? 0 : 1}:${
+            (layer as { lens?: { id: string } }).lens?.id ?? ''
+          }`
+      )
+      .join('|')
+  )
+  const sceneLayers = useMemo(
+    () => sceneStoreApi.getState().sceneLayers,
+    // The key STANDS FOR the array the getState() read returns.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [declaredKey, sceneStoreApi]
+  )
+  const layerDimExtents = useSceneStore((s) => s.layerDimExtents)
   const dimSelections = useViewerStore((s) => s.dimSelections)
   const setDimSelection = useViewerStore((s) => s.setDimSelection)
 
-  const scrubbers = useMemo((): DimScrubber[] => {
-    const byDim = new Map<string, DimScrubber>()
+  const scrubbers = useMemo(() => {
+    const contributions: DimContribution[] = []
+
+    // 1. Brick layers, from their normalized state.
     for (const layer of layers) {
       if (layer.visible === false) continue
-      const sliceMap = buildSliceMap(layer.lens.slices)
-      for (const dim of collapsibleDims(layer)) {
-        const position = layer.lens.axisNames.indexOf(dim)
-        const extent = layer.lens.shape[position] ?? 1
-        const layerDefault = resolveCollapsedSelection(sliceMap[dim], extent)
-        const selected = dimSelections[dim]
-        const shown =
-          selected !== undefined
-            ? Math.max(0, Math.min(extent - 1, Math.round(selected)))
-            : layerDefault
-        const existing = byDim.get(dim)
-        if (existing) {
-          existing.maxIndex = Math.max(existing.maxIndex, extent - 1)
-          existing.perLayer.push({ id: layer.id, index: shown, maxIndex: extent - 1 })
-        } else {
-          byDim.set(dim, {
-            dim,
-            maxIndex: extent - 1,
-            defaultIndex: layerDefault,
-            perLayer: [{ id: layer.id, index: shown, maxIndex: extent - 1 }]
-          })
-        }
-      }
+      contributions.push({
+        layerId: layer.id,
+        declared: true,
+        extents: lensDimExtents(layer.lens, [
+          layer.xAxis,
+          layer.yAxis,
+          layer.zAxis,
+          layer.intensityAxis,
+          layer.phasorAxis
+        ])
+      })
     }
-    // The non-lens fold. A track layer joins whatever `t` scrubber the brick
-    // layers already produced rather than minting its own — a track and the
-    // image it was tracked on share one timeline, and two sliders labelled `t`
-    // would be a lie about that. Its extent widens the shared range where the
-    // table runs longer than the image.
-    for (const [layerId, maxIndex] of Object.entries(trackTimeExtents)) {
-      if (maxIndex < 1) continue
-      const selected = dimSelections[TIME_DIM]
-      const shown =
-        selected !== undefined
-          ? Math.max(0, Math.min(maxIndex, Math.round(selected)))
-          : maxIndex
-      const existing = byDim.get(TIME_DIM)
-      if (existing) {
-        existing.maxIndex = Math.max(existing.maxIndex, maxIndex)
-        existing.perLayer.push({ id: layerId, index: shown, maxIndex })
-      } else {
-        byDim.set(TIME_DIM, {
-          dim: TIME_DIM,
-          maxIndex,
-          // A track with no selection shows its whole trajectory, so the
-          // default index is the END of its timeline rather than 0 — opening a
-          // scene on an empty viewport would read as a broken layer.
-          defaultIndex: maxIndex,
-          perLayer: [{ id: layerId, index: shown, maxIndex }]
-        })
+
+    // 2. Lens-backed layers off the brick path, from their fragment.
+    for (const layer of sceneLayers) {
+      if (layer.visible === false) continue
+      const extents = declaredDimExtents(layer)
+      if (extents.length > 0) {
+        contributions.push({ layerId: layer.id, declared: true, extents })
       }
     }
 
-    return [...byDim.values()].sort((a, b) => a.dim.localeCompare(b.dim))
-  }, [layers, dimSelections, trackTimeExtents])
+    // 3. Table-backed layers, from what their read observed. The publisher
+    //    clears its entry while hidden, so no visibility check is needed here.
+    for (const [layerId, extents] of Object.entries(layerDimExtents)) {
+      contributions.push({ layerId, declared: false, extents })
+    }
+
+    return foldDimExtents(contributions, dimSelections)
+  }, [layers, sceneLayers, layerDimExtents, dimSelections])
 
   if (scrubbers.length === 0) return null
 

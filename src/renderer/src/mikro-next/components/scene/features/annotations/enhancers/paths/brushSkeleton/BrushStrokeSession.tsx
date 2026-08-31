@@ -4,6 +4,7 @@ import { useThree } from "@react-three/fiber";
 
 import { effectiveProbeLayerId } from "../../../../../platform/probe/probeTargeting";
 import { useBrushSkeleton } from "./useBrushSkeleton";
+import { smoothSoupNormals } from "../../meshes/soupNormals";
 import { PreviewLine, type PreviewLineHandle } from "../../../../../platform/draw/PreviewLine";
 import { useBrushSkeletonStore, useBrushSkeletonStoreApi } from "../../brushSkeletonStore";
 import { useModeStore } from "../../../../../platform/stores/modeStore";
@@ -41,8 +42,10 @@ export const BrushStrokeSession = () => {
 
   const interactionMode = useModeStore((s) => s.interactionMode);
   const activeTool = useRoiDrawingStore((s) => s.activeTool);
+  // ANNOTATE and DESIGN share the gesture; only the verdict differs
+  // (`useBrushSkeleton.save`).
   const armed =
-    interactionMode === "ANNOTATE" &&
+    (interactionMode === "ANNOTATE" || interactionMode === "DESIGN") &&
     (activeTool === "BRUSH" || activeTool === "BLOB");
   // Gesture-cadence facts, fine to select on: which phase drives extraction
   // and whether a candidate line should be shown. `liveTube` moves at the
@@ -103,15 +106,16 @@ export const BrushStrokeSession = () => {
   }, [brushApi]);
 
   // The tube surface preview — the final candidate's tube when it exists,
-  // else the live one from the drag. Non-indexed soup + computeVertexNormals
-  // = flat per-face normals, which is what the tet-marched surface reads
-  // best with.
+  // else the live one from the drag.
   const tubeGeometry = useMemo(() => {
     const tube = candidate?.tube ?? liveTube;
     if (!tube || tube.positions.length === 0) return null;
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute("position", new THREE.BufferAttribute(tube.positions, 3));
-    geometry.computeVertexNormals();
+    // Smooth normals on the soup, without welding it: corners that share a
+    // position share a normal, so the preview reads like the surface the
+    // design will keep — not like its triangles.
+    geometry.setAttribute("normal", new THREE.BufferAttribute(smoothSoupNormals(tube.positions), 3));
     return geometry;
   }, [candidate, liveTube]);
   useEffect(() => () => tubeGeometry?.dispose(), [tubeGeometry]);
@@ -152,7 +156,7 @@ export const BrushStrokeSession = () => {
     };
 
     const unsubscribe = brushApi.subscribe((state, previous) => {
-      if (state.status !== "painting" || !state.tubeEnabled) return;
+      if (state.status !== "painting" || !(state.tubeEnabled || interactionMode === "DESIGN")) return;
       if (
         state.strokeVersion !== previous.strokeVersion ||
         state.tubeEnabled !== previous.tubeEnabled ||
@@ -168,7 +172,7 @@ export const BrushStrokeSession = () => {
       window.clearTimeout(timer);
       unsubscribe();
     };
-  }, [armed, brushApi, previewLiveTube]);
+  }, [armed, brushApi, previewLiveTube, interactionMode]);
 
   // The candidate centerline — click cadence, so plain React is fine.
   useEffect(() => {

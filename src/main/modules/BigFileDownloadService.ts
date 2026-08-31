@@ -6,7 +6,17 @@ import path from 'path';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { pipeline } from 'stream/promises';
 import { Readable, Transform } from 'stream';
+import https from 'https';
 import { BigFileAccessGrant } from '../schemas/mikro';
+
+// See the note in BigFileUploadService: Node's TLS stack ignores the app-wide
+// certificate-error overrides in src/main/index.ts, so the datalayer client
+// needs its own agent or self-signed/expired certs break transfers.
+const datalayerHttpsAgent = new https.Agent({
+    keepAlive: true,
+    maxSockets: 50,
+    rejectUnauthorized: false,
+});
 
 type DownloadArgs = {
     downloadId: string;
@@ -79,6 +89,7 @@ export class BigFileDownloadService implements AppModule {
                 sessionToken: grant.sessionToken,
             },
             forcePathStyle: true,
+            requestHandler: { httpsAgent: datalayerHttpsAgent },
         });
 
         const abortController = new AbortController();

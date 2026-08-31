@@ -5,7 +5,11 @@
 import { describe, expect, it } from "vitest";
 
 import type { AttributeLookupEngine } from "@/mikro-next/lib/attributes/lookupEngine";
-import { readColumnByObjectIdCached } from "./columnValueCache";
+import {
+  readColumnByObjectIdBatchedCached,
+  readColumnByObjectIdCached,
+  readColumnValuesBatchedCached,
+} from "./columnValueCache";
 
 const access = (storeId = "store-a", keyColumn = "object_id") => ({
   store: { id: storeId, bucket: "b", key: "k" },
@@ -66,5 +70,65 @@ describe("readColumnByObjectIdCached", () => {
     await readColumnByObjectIdCached(second.engine, access(), "area");
     expect(first.calls()).toBe(1);
     expect(second.calls()).toBe(1);
+  });
+});
+
+/** An engine whose columnar path answers (or declines), counting statements. */
+const columnarEngine = (opts?: { declineColumnwise?: boolean }) => {
+  let typed = 0;
+  let rows = 0;
+  const engine = {
+    readColumnsTyped: async (
+      _stores: readonly unknown[],
+      buildSql: (urlOf: (id: string) => string) => string,
+      columns: readonly string[],
+    ) => {
+      buildSql(() => "s3://b/k");
+      typed += 1;
+      if (opts?.declineColumnwise) return null;
+      const out: Record<string, ArrayLike<number> | ArrayLike<string>> = {};
+      for (const name of columns) {
+        out[name] = name === "object_id" ? new Float64Array([1, 2]) : ["a", "b"];
+      }
+      return out;
+    },
+    readAcross: async () => {
+      rows += 1;
+      return [
+        { object_id: 1, value: "a" },
+        { object_id: 2, value: "b" },
+      ];
+    },
+  } as unknown as AttributeLookupEngine;
+  return { engine, typed: () => typed, rows: () => rows };
+};
+
+describe("readColumnByObjectIdBatchedCached", () => {
+  it("derives the row map from the columnar read — no second scan of the column", async () => {
+    const { engine, typed, rows } = columnarEngine();
+    const map = await readColumnByObjectIdBatchedCached(engine, access(), "phenotype");
+    expect(typed()).toBe(1);
+    expect(rows()).toBe(0);
+    expect(map.get(1)).toBe("a");
+    expect(map.get(2)).toBe("b");
+    // ...and the columnar cache already holds the same column: no new scan.
+    await readColumnValuesBatchedCached(engine, access(), "phenotype");
+    expect(typed()).toBe(1);
+  });
+
+  it("falls back to the row path when the columnar read declines", async () => {
+    const { engine, typed, rows } = columnarEngine({ declineColumnwise: true });
+    const map = await readColumnByObjectIdBatchedCached(engine, access(), "phenotype");
+    expect(typed()).toBe(1);
+    expect(rows()).toBe(1);
+    expect(map.get(1)).toBe("a");
+  });
+
+  it("caches the derived map — a second call is no read at all", async () => {
+    const { engine, typed } = columnarEngine();
+    const first = await readColumnByObjectIdBatchedCached(engine, access(), "phenotype");
+    const second = await readColumnByObjectIdBatchedCached(engine, access(), "phenotype");
+    expect(typed()).toBe(1);
+    expect(second).toBe(first);
   });
 });

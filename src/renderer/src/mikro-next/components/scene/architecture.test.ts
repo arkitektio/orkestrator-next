@@ -39,13 +39,17 @@ const KNOWN_SIDEWAYS: Record<string, number> = {
   "features/debug->features/bricks": 8,
   "features/debug->features/meshes": 3,
   "features/debug->features/annotations": 1,
-  // BrickVolumeLayer and useBrickPlaneProbe run annotation drawing inline.
-  // Removed when BrickVolumeLayer is split.
-  "features/bricks->features/annotations": 5,
+  // BrickVolumeLayer and useBrickPlaneProbe run annotation drawing inline,
+  // and both capture DESIGN gestures into the brush store (the plane carries
+  // the label LIFT click). Removed when BrickVolumeLayer is split.
+  "features/bricks->features/annotations": 6,
+  // The 3D label raymarcher captures DESIGN click gestures (the label LIFT)
+  // into the brush store, exactly like the bricks layers do.
+  "features/labels->features/annotations": 1,
   // FabriksCollectionLayer reads the ROI drawing store directly.
   "features/meshes->features/annotations": 1,
-  // SelectedPointPanel's "create annotation from probe" action.
-  "features/probe->features/annotations": 3,
+  // SelectedPointPanel's "Mark point" (create annotation from probe) action.
+  "features/probe->features/annotations": 1,
   // AttributeProbeTracker calls identifyObjectId on the fabriks managers to
   // resolve a probed instance. NOT a new coupling — it used to reach them via
   // `meshSystems` on the platform store, which laundered a real feature
@@ -53,6 +57,17 @@ const KNOWN_SIDEWAYS: Record<string, number> = {
   // the point; removing it means giving the probe a narrower way to ask
   // "which object is this?".
   "features/probe->features/meshes": 1,
+  // The mesh designer composes the annotation brush (its gesture, panels and
+  // tool store) with the fabriks reader/writer: the downward edges are the
+  // composition itself. The two upward edges are the seams where those
+  // features hand over to it — the brush verdict routing an accepted surface
+  // into the design session, and the Meshes panel's "edit in design" entry.
+  // Removed by giving the enhancer registry a per-mode verdict sink and
+  // moving the entry onto a design-owned panel. See ARCHITECTURE.md.
+  "features/meshDesign->features/annotations": 26,
+  "features/meshDesign->features/meshes": 7,
+  "features/annotations->features/meshDesign": 4,
+  "features/meshes->features/meshDesign": 2,
 };
 
 type Edge = { from: string; to: string; fromBucket: string; toBucket: string; typeOnly: boolean };

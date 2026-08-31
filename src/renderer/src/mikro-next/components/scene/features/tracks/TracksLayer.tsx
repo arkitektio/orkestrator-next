@@ -36,7 +36,9 @@ import {
 import type { SceneLayerFragment } from "@/mikro-next/api/graphql";
 import { affineToMatrix4 } from "../../platform/coords/worldTransform";
 import { paletteRowFor, DEFAULT_MEASURE_COLORMAP } from "../../platform/attributes/valueLut";
+import { TIME_DIM, type DimExtent } from "../../platform/model/dimExtents";
 import { useSceneStore } from "../../platform/stores/sceneStore";
+import { usePublishDimExtents } from "../../platform/stores/useLayerDimExtents";
 import { useViewerStoreApi } from "../../platform/stores/viewerStore";
 import { createTrackMaterial, setTrackPalette } from "./tracksMaterial";
 import {
@@ -49,8 +51,6 @@ import {
 /** Tail length in timepoints when the layer has not been told otherwise. */
 export const DEFAULT_TAIL_WINDOW = 10;
 
-/** The dim every layer's time axis is keyed by — brick layers included. */
-const TIME_DIM = "t";
 
 export const TrackLayerRenderer = ({ layerId }: { layerId: string }) => {
   const layer = useSceneStore((s) => s.sceneLayers.find((candidate) => candidate.id === layerId));
@@ -293,18 +293,26 @@ const TrackLines = ({ layer }: { layer: TrackLayerView }) => {
   /**
    * Publish the observed time span so a T slider can exist at all.
    *
-   * `DimSliderPanel` folds its scrubbers out of the normalized BRICK layers via
-   * `collapsibleDims`, which reads a lens. A track layer has no lens, so
-   * without this a scene containing only tracks shows no T slider and the tail
-   * cannot be scrubbed. The extent is not knowable until the table is read,
-   * which is why it is published here rather than derived from the fragment.
+   * A track layer has no lens: its time is a parquet COLUMN, and its timeline is
+   * unknowable until the scan returns — which is why this is published rather
+   * than derived from the fragment the way a lens-backed layer's dims are.
+   * Without it a scene containing only tracks shows no T slider and the tail
+   * cannot be scrubbed.
+   *
+   * The default index is the END of the timeline, not 0: a track with no
+   * selection draws its whole trajectory, and opening a scene on an empty
+   * viewport reads as a broken layer. Stating it here is what keeps that out of
+   * the panel as a special case.
+   *
+   * Null while hidden — a hidden layer must not keep a slider alive.
    */
-  const publishTrackTime = useSceneStore((s) => s.setTrackTimeExtent);
-  useEffect(() => {
+  const timeExtents = useMemo((): DimExtent[] | null => {
     const timeline = geometry?.timeline ?? null;
-    publishTrackTime(entity.id, timeline ? timeline.length - 1 : null);
-    return () => publishTrackTime(entity.id, null);
-  }, [publishTrackTime, entity.id, geometry]);
+    if (!timeline || entity.visible === false) return null;
+    const maxIndex = timeline.length - 1;
+    return [{ dim: TIME_DIM, maxIndex, defaultIndex: maxIndex }];
+  }, [geometry, entity.visible]);
+  usePublishDimExtents(entity.id, timeExtents);
 
   if (entity.visible === false) return null;
   // Never mount a Line2 whose geometry has no segments: the shader would be

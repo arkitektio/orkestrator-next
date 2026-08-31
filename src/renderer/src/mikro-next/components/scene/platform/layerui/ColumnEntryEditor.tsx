@@ -645,6 +645,95 @@ export const ColumnEntrySettings = ({
     onCommit({ colormap: colormapOfPalette(value as FabriksInstanceColormap) });
   };
 
+  // A GRAPH entry names a per-node value the network collection itself
+  // carries — no table to resolve, no matrix to slice, and no parquet to scan
+  // a domain out of: the values ride the decoded geometry, and an open clim
+  // end already means "stretch over what was read" down in the renderer. So
+  // the editor is deliberately spare: the ramp, free-form bounds, which of the
+  // network's two row sets the entry aims at, and (for a rule) the invert.
+  const graphAttribute = (entry as { attribute?: string | null }).attribute;
+  if (graphAttribute) {
+    const target = ((entry as { target?: string | null }).target ?? "NODE") as string;
+    const parseBound = (raw: string): number | null => {
+      const value = Number(raw);
+      return raw.trim() === "" || !Number.isFinite(value) ? null : value;
+    };
+    return (
+      <div className="space-y-2 text-xs">
+        <div className="truncate text-[9px] text-white/35">
+          graph attribute “{graphAttribute}” — one value per node, off the collection itself
+        </div>
+        {!isFilter && (
+          <div className="space-y-1.5">
+            <div className="text-[9px] uppercase tracking-[0.08em] text-white/35">colormap</div>
+            <ColormapSelect
+              value={colouring.colormap ?? ColorMap.Viridis}
+              choices={measureChoices}
+              onChange={(value) => onCommit({ colormap: value as ColorMap })}
+              title="The ramp the attribute's values are painted with — always measured, never a palette"
+            />
+          </div>
+        )}
+        <div className="space-y-1">
+          <div className="text-[9px] uppercase tracking-[0.08em] text-white/35">
+            {isFilter ? "keep between" : "clims"}
+          </div>
+          <div className="flex items-center gap-1.5">
+            {(["min", "max"] as const).map((end) => (
+              <input
+                key={end}
+                type="number"
+                step="any"
+                placeholder={end}
+                defaultValue={(isFilter ? rule : clims)[end] ?? ""}
+                onBlur={(event) => onCommit({ [end]: parseBound(event.target.value) })}
+                className="w-full rounded border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[10px] text-white/80"
+                title={
+                  isFilter
+                    ? "Inclusive bound; leave empty for an open end"
+                    : "Leave empty to stretch the ramp over the values on screen"
+                }
+              />
+            ))}
+          </div>
+        </div>
+        <div className="space-y-1">
+          <div className="text-[9px] uppercase tracking-[0.08em] text-white/35">applies to</div>
+          <div className="flex gap-1">
+            {(["NODE", "EDGE"] as const).map((choice) => (
+              <button
+                key={choice}
+                type="button"
+                onClick={() => onCommit({ target: choice } as never)}
+                className={`rounded border px-1.5 py-0.5 text-[9px] uppercase tracking-[0.06em] ${
+                  target === choice
+                    ? "border-white/30 bg-white/10 text-white/90"
+                    : "border-white/10 bg-white/5 text-white/45 hover:text-white/80"
+                }`}
+                title={
+                  choice === "NODE"
+                    ? "Nodes and everything touching them — a segment takes its start node's value, so this paints (or hides) the wireframe too"
+                    : "Segments only; node glyphs keep the base colour (a rule hides segments without taking their glyphs)"
+                }
+              >
+                {choice.toLowerCase()}s
+              </button>
+            ))}
+          </div>
+        </div>
+        {isFilter && (
+          <label className="flex items-center justify-between gap-2 border-t border-white/5 pt-2 text-[10px]">
+            <span className="text-white/40">invert — drop what matches instead</span>
+            <Switch
+              checked={rule.exclude}
+              onCheckedChange={(checked) => onCommit({ exclude: checked })}
+            />
+          </label>
+        )}
+      </div>
+    );
+  }
+
   // A SPARSE entry names a matrix and a position rather than a table and a
   // column, so it gets its own settings entirely: which slice to read, and the
   // bounds over it. There is no role to resolve and no column stats to scan — a

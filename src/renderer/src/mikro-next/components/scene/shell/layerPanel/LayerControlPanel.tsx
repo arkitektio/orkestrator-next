@@ -7,6 +7,7 @@ import { perfMonitor } from "../../platform/perf/perfMonitor";
 import { useSelectionStore } from "../../platform/stores/selectionStore";
 import { LayerState, useSceneStore } from "../../platform/stores/sceneStore";
 import { LAYER_CARDS, renderLayerCard, type AnyLayerCardEntry } from "./cardRegistry";
+import { DesignStagingCard } from "../../features/meshDesign/ui/DesignStagingCard";
 import { useViewerStore } from "../../platform/stores/viewerStore";
 import { useBrickStore } from "../../features/bricks/store/brickSlice";
 
@@ -157,6 +158,10 @@ export const LayerControlPanel = ({
             : "pointer-events-auto flex max-h-full flex-col overflow-y-auto"
         }
       >
+        {/* The uncommitted design session, staged where layers live: it
+            renders in the scene like a layer, so it is managed like one.
+            Session-local — renders null outside a design session. */}
+        <DesignStagingCard />
         {/* One column while narrow; a wide rail unfolds into two and then three
             so the cards stay readable instead of stretching to a full page
             width. `items-start` keeps an unfolded card from dragging its row

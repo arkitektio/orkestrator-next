@@ -10,19 +10,22 @@
  * `TABLE` -- and a table's rows have positions and nothing else, so until now they had no
  * renderer. See `docs/visualising-a-sparse-dataset.md`.
  */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useThree } from "@react-three/fiber";
 
 import { useDatalayerEndpoint, useMikro } from "@/app/Arkitekt";
 import { useAttributeServiceOrNull } from "@/mikro-next/lib/attributes/AttributeServiceProvider";
 import { loadSparseSource } from "@/mikro-next/lib/sparse/sparseSource";
-import { readColumnByObjectIdCached } from "../../platform/attributes/columnValueCache";
+import { readColumnByObjectIdBatchedCached } from "../../platform/attributes/columnValueCache";
 import { accessForTable } from "../../platform/attributes/columnLut";
 import { paletteRowFor, DEFAULT_MEASURE_COLORMAP } from "../../platform/attributes/valueLut";
 import { isColumnColorBy } from "../../platform/layerui/columnOptions";
 import type { SceneLayerFragment } from "@/mikro-next/api/graphql";
+import { TIME_DIM, type DimExtent } from "../../platform/model/dimExtents";
 import { useSceneStore } from "../../platform/stores/sceneStore";
+import { usePublishDimExtents } from "../../platform/stores/useLayerDimExtents";
+import { useViewerStoreApi } from "../../platform/stores/viewerStore";
 import { placementToSpatialAffine, spatialAxisTriple } from "@/mikro-next/lib/coords/transformGraph";
 import { affineToMatrix4 } from "../../platform/coords/worldTransform";
 import { StorageInstancedBufferAttribute } from "three/webgpu";
@@ -35,6 +38,8 @@ import {
   type PointCull,
   type PointScatter,
 } from "./pointsCompute";
+import { fillPointFilterMask } from "./pointsFilterMask";
+import type { ColumnLutEntryFilterBy } from "../../platform/attributes/columnLut";
 import { loadPointGeometry, scatterPointValues, type PointGeometry } from "./pointsSource";
 import { valueWindowOf } from "../../platform/attributes/valueWindow";
 
@@ -70,6 +75,7 @@ const PointCloud = ({ layer }: { layer: PointLayerView }) => {
     xColumn?: string | null;
     yColumn?: string | null;
     zColumn?: string | null;
+    tColumn?: string | null;
     idColumn?: string | null;
     pointSize?: number | null;
     colormap?: string | null;
@@ -77,6 +83,8 @@ const PointCloud = ({ layer }: { layer: PointLayerView }) => {
     opacity?: number | null;
     activeColorBy?: number | null;
     colorBys?: readonly Record<string, unknown>[] | null;
+    activeFilterBys?: readonly number[] | null;
+    filterBys?: readonly Record<string, unknown>[] | null;
     asAffine?: { matrix: number[][]; inputAxes: string[]; outputAxes: string[] } | null;
     placementInvariance?: string | null;
   };
@@ -116,6 +124,14 @@ const PointCloud = ({ layer }: { layer: PointLayerView }) => {
     return (entity.colorBys?.[index] ?? null) as never;
   }, [entity.activeColorBy, entity.colorBys]);
 
+  const activeRules = useMemo(
+    () =>
+      (entity.activeFilterBys ?? [])
+        .map((index) => entity.filterBys?.[index] as ColumnLutEntryFilterBy | undefined)
+        .filter((rule): rule is ColumnLutEntryFilterBy => Boolean(rule)),
+    [entity.activeFilterBys, entity.filterBys],
+  );
+
   // ------------------------------------------------------------------ positions
   // Read ONCE per table. Positions do not change with a colouring, and re-reading them on every
   // gene switch is the cost this split exists to avoid.
@@ -128,6 +144,7 @@ const PointCloud = ({ layer }: { layer: PointLayerView }) => {
       x: entity.xColumn,
       y: entity.yColumn,
       z: entity.zColumn ?? null,
+      t: entity.tColumn ?? null,
     })
       .then((read) => {
         if (cancelled || !read) return;
@@ -144,7 +161,15 @@ const PointCloud = ({ layer }: { layer: PointLayerView }) => {
     return () => {
       cancelled = true;
     };
-  }, [service, entity.tableDataset.store, entity.xColumn, entity.yColumn, entity.zColumn, entity.idColumn]);
+  }, [
+    service,
+    entity.tableDataset.store,
+    entity.xColumn,
+    entity.yColumn,
+    entity.zColumn,
+    entity.tColumn,
+    entity.idColumn,
+  ]);
 
   // ------------------------------------------------------------------ the mesh
   useEffect(() => {
@@ -156,11 +181,15 @@ const PointCloud = ({ layer }: { layer: PointLayerView }) => {
       new StorageInstancedBufferAttribute(geometry.positions, geometry.stride),
       geometry.count,
       geometry.stride,
+      geometry.times ? new StorageInstancedBufferAttribute(geometry.times, 1) : null,
     );
-    const made = createPointMaterial(geometry.positions, new Float32Array(geometry.count), geometry.stride, {
-      attribute: culling.visible,
-      count: geometry.count,
-    });
+    const made = createPointMaterial(
+      geometry.positions,
+      new Float32Array(geometry.count),
+      geometry.stride,
+      { attribute: culling.visible, count: geometry.count },
+      culling.mask,
+    );
     // Capacity is the point count: the worst slice a dataset can produce mentions every object,
     // and a buffer sized for the common case would refuse exactly the dense genes.
     const scattering = createScatterPass(made.values, geometry.count, geometry.count);
@@ -217,7 +246,7 @@ const PointCloud = ({ layer }: { layer: PointLayerView }) => {
             ? { store: entity.tableDataset.store as never, keyColumn: entity.idColumn as string }
             : accessForTable([], (colorBy as { table: string }).table, { kind: "mesh" });
         if (!access) return;
-        byId = await readColumnByObjectIdCached(engine, access, (colorBy as { column: string }).column);
+        byId = await readColumnByObjectIdBatchedCached(engine, access, (colorBy as { column: string }).column);
       } else if (datalayer) {
         const sparse = await loadSparseSource(client, datalayer, (colorBy as { dataset: string }).dataset);
         const read = await sparse.read(
@@ -278,9 +307,7 @@ const PointCloud = ({ layer }: { layer: PointLayerView }) => {
     const colormap = ((colorBy as { colormap?: string } | null)?.colormap ??
       entity.colormap ??
       DEFAULT_MEASURE_COLORMAP) as never;
-    const row = paletteRowFor(colormap);
-    const handle = current.material as unknown as { userData: Record<string, unknown> };
-    handle.userData.palette = row;
+    current.setPalette(paletteRowFor(colormap));
     current.nodes.uClimMin.value =
       (colorBy as { min?: number | null } | null)?.min ?? Number.NEGATIVE_INFINITY;
     current.nodes.uClimMax.value =
@@ -291,22 +318,185 @@ const PointCloud = ({ layer }: { layer: PointLayerView }) => {
   }, [bundle, colorBy, entity.colormap, entity.pointSize, entity.opacity, invalidate]);
 
   // ------------------------------------------------------------------ culling
-  // Re-run when the view moves, not every frame: the survivor list is only wrong once the
-  // camera has actually changed what is on screen, and a dispatch per frame would spend more
-  // than the culling saves at the sizes this layer is capped to.
-  const cullBounds = useSceneStore((s) => s.transformContext);
-  useEffect(() => {
+  /**
+   * Re-dispatch the cull pass. Called when the view moves and when the time
+   * scrubber moves — both change which points survive, neither changes a buffer.
+   */
+  const runCull = useCallback(() => {
     const culling = cullRef.current;
-    if (!culling || !geometry) return;
+    if (!culling) return;
     // The box is in the DATA's own space, because the layer's affine sits between it and the
     // world -- testing in world space would need the inverse per point. Unbounded until a
     // viewport box is threaded through, at which point this is the one place to set it.
     culling.bounds.min.value = new THREE.Vector3(-Infinity, -Infinity, -Infinity);
     culling.bounds.max.value = new THREE.Vector3(Infinity, Infinity, Infinity);
     void renderer.computeAsync(culling.node as never).then(() => invalidate());
-    // `renderer` and `invalidate` are stable infrastructure; the view is what re-runs this.
+  }, [renderer, invalidate]);
+
+  // ------------------------------------------------------------------ filters
+  // The stored `filterBys`, applied at last: resolved to a per-point uint mask
+  // (`pointsFilterMask.ts`) the cull pass ANDs into its predicate. A rule
+  // change is one O(N) CPU refill, a buffer update and one cull dispatch — no
+  // geometry rebuild, no re-scatter; the columns ride the same batched cache
+  // the colouring reads through. A CONTENT key, for the reason `dataKey` is.
+  const filterKey = useMemo(() => JSON.stringify(activeRules), [activeRules]);
+
+  useEffect(() => {
+    const culling = cullRef.current;
+    if (!geometry || !culling) return;
+    const mask = culling.mask.array as Uint32Array;
+    if (activeRules.length === 0) {
+      mask.fill(1);
+      culling.mask.needsUpdate = true;
+      runCull();
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const notApplied: string[] = [];
+      const ruleValues = await Promise.all(
+        activeRules.map(async (rule): Promise<Map<number, unknown> | null> => {
+          // A SPARSE rule reads one slice of a matrix — no SQL in that path.
+          if (rule.dataset != null) {
+            if (!datalayer) {
+              notApplied.push(`rule over matrix ${rule.dataset}: no datalayer connection`);
+              return null;
+            }
+            try {
+              const source = await loadSparseSource(client, datalayer, rule.dataset);
+              const read = await source.read(
+                source.source,
+                (rule.at ?? []).map((position) => ({ axis: position.axis, value: position.value })),
+              );
+              return read.values as Map<number, unknown>;
+            } catch (error) {
+              notApplied.push(
+                `rule over matrix ${rule.dataset}: ${error instanceof Error ? error.message : String(error)}`,
+              );
+              return null;
+            }
+          }
+          // A point layer's objects ARE rows of its own table — the same
+          // direct access the colouring takes, and the same limitation: a
+          // rule over another table or through a join has no plan to reach it.
+          const engine = service?.engine;
+          if (
+            !engine ||
+            !rule.column ||
+            rule.table !== entity.tableDataset.id ||
+            (rule.joinPath?.length ?? 0) > 0
+          ) {
+            notApplied.push(
+              `rule over ${rule.column ?? "?"}: only this table's own columns are readable here`,
+            );
+            return null;
+          }
+          try {
+            return await readColumnByObjectIdBatchedCached(
+              engine,
+              { store: entity.tableDataset.store as never, keyColumn: entity.idColumn as string },
+              rule.column,
+            );
+          } catch (error) {
+            notApplied.push(
+              `rule over ${rule.column}: ${error instanceof Error ? error.message : String(error)}`,
+            );
+            return null;
+          }
+        }),
+      );
+      // The cancel check comes BEFORE the mask write: a superseded build must
+      // not overwrite the bytes the live dispatch reads.
+      if (cancelled) return;
+      if (notApplied.length > 0) {
+        console.warn("[points] rules that do not apply yet:", notApplied);
+      }
+      fillPointFilterMask(mask, geometry.count, activeRules, ruleValues, geometry.slotOf);
+      culling.mask.needsUpdate = true;
+      runCull();
+      invalidate();
+    })().catch((error: unknown) => {
+      if (!cancelled) console.warn("[points] could not resolve the filters:", error);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // `activeRules` is read inside; `filterKey` decides re-runs. `client` and
+    // `datalayer` are infrastructure, per the colouring effect's note.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [service, geometry, bundle, filterKey, runCull, invalidate]);
+
+  // Re-run when the view moves, not every frame: the survivor list is only wrong once the
+  // camera has actually changed what is on screen, and a dispatch per frame would spend more
+  // than the culling saves at the sizes this layer is capped to.
+  const cullBounds = useSceneStore((s) => s.transformContext);
+  useEffect(() => {
+    if (!geometry) return;
+    runCull();
+    // `runCull` is stable infrastructure; the view is what re-runs this.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [geometry, bundle, cullBounds]);
+
+  /**
+   * The timepoint, read IMPERATIVELY, exactly as the tracks layer reads it.
+   *
+   * P17 (`ARCHITECTURE.md`): `AnimationPlayer` writes `setDimSelection` from
+   * inside `useFrame` while a camera tour plays, so a
+   * `useViewerStore((s) => s.dimSelections)` selector here would re-render this
+   * layer at frame rate. A vanilla subscription with an identity latch writes the
+   * uniforms and re-dispatches, touching React not at all.
+   *
+   * The window is ONE timepoint wide: a point cloud is a snapshot, not a
+   * trajectory, so there is no tail to fade the way a track has one. With no
+   * selection every timepoint is shown — a layer whose slider has never moved
+   * must not open empty.
+   */
+  const viewerApi = useViewerStoreApi();
+  useEffect(() => {
+    const culling = cullRef.current;
+    const timeline = geometry?.timeline ?? null;
+    if (!culling || !timeline) return;
+    const maxIndex = timeline.length - 1;
+
+    const apply = () => {
+      const selected = viewerApi.getState().dimSelections[TIME_DIM];
+      if (selected === undefined) {
+        culling.time.min.value = -Infinity;
+        culling.time.max.value = Infinity;
+      } else {
+        const index = Math.max(0, Math.min(maxIndex, Math.round(selected)));
+        culling.time.min.value = index;
+        culling.time.max.value = index;
+      }
+      runCull();
+    };
+    apply();
+
+    let last = viewerApi.getState().dimSelections;
+    return viewerApi.subscribe((state) => {
+      if (state.dimSelections === last) return;
+      const previous = last;
+      last = state.dimSelections;
+      if (previous[TIME_DIM] === last[TIME_DIM]) return;
+      apply();
+    });
+  }, [geometry, bundle, viewerApi, runCull]);
+
+  /**
+   * Publish the observed timeline so a T slider can exist at all — the same rail
+   * the tracks layer publishes on, and for the same reason: a point table's time
+   * is a COLUMN, and its timeline is unknowable until the scan returns.
+   *
+   * Unlike a track, the default is index 0 rather than the end: with no selection
+   * the cull window is unbounded and every timepoint draws, so the default only
+   * says where a slider first lands.
+   */
+  const timeExtents = useMemo((): DimExtent[] | null => {
+    const timeline = geometry?.timeline ?? null;
+    if (!timeline || entity.visible === false) return null;
+    return [{ dim: TIME_DIM, maxIndex: timeline.length - 1, defaultIndex: 0 }];
+  }, [geometry, entity.visible]);
+  usePublishDimExtents(entity.id, timeExtents);
 
   useEffect(() => {
     if (skipped.length > 0) console.warn("[points] not drawn:", skipped);

@@ -117,6 +117,28 @@ needed: t as a brick/page-table axis (would make t-scrubbing flush-free like
 z, at a multiplied atlas/page cost), anchor labels / physical-time display on
 the slider (needs the TIME calibration edge).
 
+**The sliders are not brick-only.** Which dims exist is a scene-wide question,
+and every layer kind answers it through one protocol — `DimExtent`
+(`platform/model/dimExtents.ts`): a dim NAME, how far it runs, and where it
+starts. The split is DECLARED vs OBSERVED, not brick vs non-brick:
+
+- **Declared**, from a fragment, derived by the panel. Every lens-backed layer,
+  brick or not — a vector field is a Lens over an array exactly as an image is
+  (the `NonBrickLensTypename` carve-out), and reads its own frame through the
+  same `resolveFixedDimIndex`, settled at 200 ms so it lands with the bricks.
+  Derived rather than published because `LayerRenderer` culls by GPU budget and
+  remounts on a mode toggle: a slider tied to a renderer effect would vanish
+  under budget pressure and flicker on a 2D/3D switch.
+- **Observed**, from the data, published into `sceneStore.layerDimExtents` by
+  the renderer that read it. Table-backed layers — tracks, points — whose time
+  is a parquet COLUMN and whose timeline is unknowable until the scan returns.
+  Rows resolve to timeline INDICES (`platform/model/timeline.ts`) so a table and
+  the image it was tracked on share one slider whatever the column's units were.
+
+Ranges merge by dim name and widen to the longest contributor; per-layer clamping
+means an out-of-range step keeps a shorter layer's signature unchanged and never
+re-flushes it. Adding a layer kind means publishing extents, not editing the panel.
+
 **A brick is not a zarr chunk.** The fetch unit stays the zarr chunk (keeps
 the worker pipeline and caches untouched); `chunksTouchingBrick` maps a brick's
 fetch box to the 1–N chunks that intersect it, and repack cuts the brick out of
@@ -332,6 +354,17 @@ penalized by the angle off the view axis (derived per class by unprojecting
 the NDC center — `cameraPose` carries no orientation), so the screen CENTER
 sharpens before equidistant screen-edge bricks. Strictly ordering-only — it
 never admits or rejects a node; orthographic/2D fall back to plain distance.
+
+**Refinement has hysteresis and a motion ceiling** (P30). A node that was
+refined in the previous plan (`previousKeepKeys`) holds its refinement while
+its footprint stays within `1/LOD_HYSTERESIS` (1.15) of the unlock threshold —
+a two-sided band, never a ratchet — so a zoom resting at a level boundary no
+longer flips the whole plan every replan. While the camera moves the tracker
+passes `refineCeilingLevel` = the previous plan's `targetLevel`: coarsening is
+immediate, refinement waits for the settle replan, so a quick zoom never queues
+the intermediate-level sets its mid-gesture replans used to. Both are inputs
+the driver derives from the previous plan (only when its mode and
+`sliceSignature` match); the planner itself stays pure.
 
 ### 2.7 The plan driver (`features/bricks/residency/nodePlanTracker.ts`)
 
@@ -588,6 +621,119 @@ to coarser levels (bounded by `MAX_BRICK_LEVELS = 10`).
   compositor with its texture tap replaced by `sampleBrick(vec3(uv, slabZ),
   uDesiredLevel, ch)`.
 
+### 2.11a Sharded arrays (`lib/zarr/runner/sharding.ts`, `shardIndexCache.ts`)
+
+Zarr v3 `sharding_indexed` is handled **dynamically per array** — no flag. At
+`openZarrArray` the array's `zarr.json` is read through `readArrayMetadataCached`
+(`lib/zarr/runner/get-worker.ts`); a `sharding_indexed` top-level codec is
+unwrapped (`resolveShardingLayout`) so that:
+
+- the worker codec pipeline is built from the INNER chunk shape + inner codecs
+  (our pipeline uses zarrita's codec registry, which has no `sharding_indexed`
+  entry — a sharded chain handed to a worker would fail to load);
+- `effectiveChunkShapeOf(arr)` answers the INNER chunk shape synchronously, and
+  `buildLevelSources` uses it instead of `arr.chunks`. **Invariant: everything
+  downstream — `spatialChunks`, `chunksTouchingBrick`, `enumerateBrickChunkCoords`,
+  decode-allowance accounting, prefetch, chunk cache keys — works in inner
+  chunks.** Shard coordinates appear only inside `resolveChunkLocation` when
+  the storage key is built.
+
+Fetch path for a sharded chunk: `resolveChunkLocation` → main-thread
+`ShardIndexCache` (one suffix-`Range` read of the 16 B/inner-chunk index per
+shard per scene, single-flight, LRU 1024) → `lookupInnerChunk` → the worker
+receives an ordinary `fetch_decode` with a `Range` header. A `(2^64-1, 2^64-1)`
+index pair means "never written": fill on the main thread, no worker task, no
+"object missing" warning. The worker verifies a ranged response (206 with the
+expected length; a 200 without `Content-Range` is sliced locally — gateways that
+ignore `Range`). Signed `Range` requests are forced to `cache: 'no-store'`
+(`s3-request.ts`, Chromium rewrites signed range headers) — expected.
+
+Unsharded arrays take exactly the old path: `sharding` undefined, whole-object
+GET, same cache key.
+
+**Range coalescing** (`lib/zarr/runner/rangeCoalesce.ts`, `getChunkGroupWorker`
+in get-worker.ts): a brick's chunk set goes through ONE grouped call
+(`fetchChunksShared` in brickResidency.ts — same per-chunk in-flight sharing
+and per-chunk abort as `fetchChunkShared`). Inner chunks of the same shard
+whose byte ranges sit within `maxGap` (256 KiB) of each other, up to `maxBytes`
+(8 MiB) per run, become a single ranged GET; the worker's `fetch_decode_multi`
+slices the body and decodes each part. A run's worker task is cancelled only
+when EVERY chunk in it aborted (`whenAllAborted`). `stats.rangeRequests`
+counts tasks; `chunkRequests / rangeRequests` = chunks per request. Unsharded
+arrays, cache hits, absent inner chunks and singleton runs take the single
+path bit-for-bit. Backend contract that maximises this: write a shard's inner
+chunks in **Morton order** so a brick's 2×2×2 / 3×3×3 neighbourhood is
+contiguous (C-order writers still get pairs along x).
+
+**Cross-brick batching** (`lib/zarr/runner/shardRunBatch.ts`): range reads do
+not dispatch inside their group call — each call contributes its post-index
+`{offset, length}` items to a pending batch keyed by everything a merged
+`fetch_decode_multi` must share (pool, workerUrl, store, shard, metaId,
+fidelity, SAB, requestInit, coalesce opts), and a `setTimeout(0)` flush
+coalesces ACROSS the contributors. The dispatch loop is synchronous and
+same-shard index reads share one single-flight promise, so neighbouring
+bricks dispatched in one reconcile tick land in the same batch; a lone call
+pays at most one macrotask. Merged-run priority = `max(members)` (WorkerPool
+runs higher numbers first — a colliding halo part briefly rides its
+co-members' priority; collisions are rare since `dispatchHalos` requires an
+idle on-screen pipeline). Cancellation stays `whenAllAborted` over every
+member across bricks. `onDispatch` is additive and attributes each physical
+request once (to the run's lead item), so the scene-wide
+`chunkRequests / rangeRequests` ratio stays exact while per-call counts are
+approximate for shared runs.
+
+**Whole-shard dense merge** (`coalesceRangesDense`): when a batch's items
+cover ≥ `denseMergeDensity` (0.5) of their min..max span as a UNION of
+intervals and the span fits `denseMergeMaxBytes` (8 MiB), the whole span goes
+out as ONE GET regardless of `maxGap` — at density 0.5 the discarded gap
+bytes are at most the needed bytes while one request replaces at least two.
+Below the threshold the greedy gap rule applies unchanged.
+
+**Shard index prefetch**: `warmShardIndexes` (reconcile, after `pendingFetch`
+is built) fires `prefetchShardIndex` for the head of the queue (≤256 chunks)
+so the index round trip overlaps the queue wait instead of preceding the
+first inner-chunk read of every shard.
+
+Backend contract that makes this pay off: brick-aligned inner chunks (64³ 3D,
+or 256×256×1 for 2D-only levels), shards written whole at ingest (zarr-python
+≥ 3.3 / zarrs / zarr-java all read partial shards; only zarrs writes them
+partially). Follow-ups: route SINGLE-coord group calls through the batch too —
+`coordsList.length < 2` still short-circuits to the single path, so aligned
+core-phase bricks (1 chunk each) never merge with a neighbour; per-shard
+occupancy sidecar.
+
+### 2.11b Two-phase bricks (`features/bricks/residency/twoPhase.ts`)
+
+`orkestrator.twoPhaseBricks` (default ON, read once per manager). A 3D brick's
+fetch box is payload ± 1 border, so with brick-aligned 64³ chunks an INTERIOR
+brick touches 3 chunks per axis = **27 chunks** (8 at the origin corner) — all
+awaited before repack, for a 1-voxel rind; bytes amortise through the shared
+decode cache, latency and cache footprint (~14 MB decoded per 1.1 MB brick)
+do not. Two-phase splits the fetch (`FetchPhase` in `octree/nodeAddress.ts`):
+
+- **core** — `chunksTouchingBrick(…, "core")` = the payload box only (1 chunk
+  when aligned). Repack with `fetchBox = brickFetchBox(…, "core")`: the CPU
+  `replicateEdges` and the kernel's clamp fill the rind from the payload edge,
+  exactly as level-edge bricks always have. Upload → RESIDENT and listed in
+  `pool.provisionalKeys`; a halo entry is pushed to `pool.pendingHalo`.
+- **halo** — `fetchBrick(pool, node, "full", halo = true)`: the legacy 27-chunk
+  gather, re-repacked into the SAME slot (`BrickPoolState.acquire` on a
+  resident key returns its slot). Dispatched by `dispatchHalos` only when every
+  pool's planned queue is empty AND the band-2 gate holds (resting camera, no
+  on-screen fetch in flight); chunk tasks at priority −1; never counts as
+  on-screen; never retried; dropped by `haloStillWanted` if the brick was
+  evicted, refined, unplanned or re-queued in between.
+- EMPTY (uniform payload) bricks get no halo: nothing to refine.
+- 2D bricks (border 0) and the flag OFF ⇒ `initialFetchPhase` = `"full"`, the
+  legacy single pass bit-for-bit.
+
+Bookkeeping: `provisionalKeys` cleared on halo upload, eviction (all four
+release sites), flush; `pendingHalo` pruned to `protectedKeys` per reconcile
+and counted by `anyPipelineWork` (so `timeToSharpMs` and the streaming flag
+include the rind). Stats `coreBricks` / `haloRefines`; per-pool report
+`provisional` / `pendingHalo`; DebugPanel badge `◐N`; cold-open phase
+`firstBrickFull` (equals `firstBrickUploaded` with the flag off).
+
 ### 2.11 Probes (`features/bricks/octree/brickSampling.ts`)
 
 `marchResidentBricks` is a CPU march in **lockstep with the GLSL
@@ -603,6 +749,7 @@ Keep the two in sync when touching either.
 | Pure core | `features/bricks/octree/{brickSpec, nodeAddress, pageTableLayout, brickPoolState, nodePlanning, brickRepack, brickSampling}.ts` (each with a `.test.ts`). `levelGeometry.ts` sits in `platform/coords/` — level scale/shape is a coordinate fact the probe and the transform graph need too |
 | Coordinate graph | `@/mikro-next/lib/coords/transformGraph.ts` (+ `.test.ts`) — client-side edge composition into `LayerState.affineMatrix` / mesh & ROI transforms; see COORDINATE_SYSTEMS.md |
 | Mesh layers | `features/meshes/fabriks/` (fabriks prefix, row-group streaming, own README + `fabriksCore.test.ts`) |
+| Network layers | `features/network/konnektion/` (konnektion prefix, ONE level at a time — the format makes no boundary claim, so a seam between levels is a missing branch rather than a crack; own README + `konnektionCore.test.ts`) |
 | Drivers | `features/bricks/residency/nodePlanTracker.ts`, `features/bricks/residency/brickResidency.ts`, `features/bricks/residency/BrickSystemProvider.tsx`, started from `shell/VisibilityManager.tsx` |
 | GPU | `features/bricks/gpu/{texSubImage3d, brickAtlas, pageTableTexture}.ts` |
 | Shaders | `features/bricks/gpu/{brickNodeMaterials, channelUniforms}.ts` (TSL → WGSL) |
@@ -643,6 +790,23 @@ cache only dedups *completed* fetches.
 ~1.1 MB on the GPU but ~14 MB of decode when the chunk is `[2, 2048, 2048]`.
 Plans that looked cheap in slot bytes downloaded entire levels. The refinement
 floor must count *chunk-aligned decoded bytes* of the visible region.
+(The structural fix is upstream: brick-aligned inner chunks in a sharded
+pyramid — §2.11a.)
+
+**P5b — zarrita's `arr.chunks` is the SHARD shape on a sharded array.** Feed it
+to the planner and every brick expands to whole 512³ shards — far worse than
+the plane-chunk case. `buildLevelSources` must use `effectiveChunkShapeOf(arr)`
+(inner chunks); anything that reads `arr.chunks` directly for planning is a
+bug. Also: a suffix-range index read can land at a non-8-aligned byte offset —
+`decodeShardIndex` realigns before the `BigUint64Array` view.
+
+**P5c — The border, not the chunk shape, is the request multiplier.** Even
+with perfectly brick-aligned chunks, payload ± 1 makes an interior brick touch
+27 chunks. Re-chunking alone therefore cut BYTES, not latency; the two-phase
+brick (§2.11b) is what brought first-pixel back to one request. A halo refine
+must never ride `pendingFetch`: `peekLiveFetch` drops any key that is already
+resident, which is exactly what a halo target is — hence the separate
+`pendingHalo` queue.
 
 **P4 — Sizing atlases by budget share, ignoring dataset size.** A 4-brick toy
 layer got a 296-slot / ~140 MB float32 atlas — ×4 layers ≈ 1.1 GB of zeroed
@@ -1161,6 +1325,31 @@ drops quality on time. Related: the occupancy-range promotion
 pipeline is quiet* and bumps `poolsVersion` unthrottled — that is correct and
 converging (post-promotion `observedSpan === encodeSpan`), and it is this
 debounce that keeps its brief burst from tripping the ladders.
+
+**P30 — A quick zoom must fetch only the FINAL, ON-SCREEN set.** Three
+mechanisms compounded to make a one-second zoom cost several times the bricks
+it ended up showing. (1) `wantFiner` was a bare `>= 1` footprint threshold, so
+a zoom resting at a level boundary flipped the whole plan every replan; each
+flip aborted unprotected in-flight bricks, could trim every resident finer than
+the new `minTargetLevel`, and refetched them on the flip back — the oscillation
+the residency comments measured at 13× fetch amplification. (2) Mid-gesture
+replans (every 500 ms in motion) launched wide intermediate-level fetch sets:
+at 500 ms into a zoom the frustum is still wide, and since chunk decodes are
+deliberately never aborted, the settle plan only freed their concurrency slots
+while the decodes kept competing with the final bricks for worker time and
+upload budget. (3) Margin-only band-2 prefetch was ordered last but always
+fetched, decoded and uploaded, during the gesture too. Fixes, all pure and
+unit-tested: LOD hysteresis via `previousKeepKeys` + `LOD_HYSTERESIS`
+(per node, so exact under per-node perspective LOD, uniform in 2D); the motion
+ceiling `refineCeilingLevel` (previous `targetLevel` while `cameraMoving` —
+the settle-edge reschedule lifts it ~150 ms after rest); and
+`shouldDeferPrefetch` in the global dispatcher — band 2 dispatches only with a
+resting camera and zero on-screen bricks in flight (the k-way merge sorts by
+band, so a band-2 winner already means nothing on-screen is pending). A
+wheel-driven zoom also relies on `cameraInteraction`'s wheel hold
+(`platform/camera/cameraMotion.ts`): before it, `cameraMoving` flickered on
+every trackpad tick and each flicker was a settle edge, i.e. 3–5 extra plans
+per zoom.
 
 **P20 — Handler ATTACHMENT is the raycast gate, not the handler body.** R3F
 puts an object in `internal.interaction` as soon as it carries any event
@@ -1703,7 +1892,8 @@ continuous load-proportional control fed by a real cost model —
 **R6 — Small.** (a) Cross-pool fetch prioritization: order is foveated within
 a pool but arrival-order across pools; Neuroglancer has one global priority
 queue. (b) Prefetch is 2D-adjacent-z only — no 3D margin or temporal (t±1)
-prefetch. (c) The settle restore lands DPR + tricubic + adaptive depth in one
+prefetch; band-2 margin prefetch is gated to a resting camera with an empty
+on-screen pipeline (P30). (c) The settle restore lands DPR + tricubic + adaptive depth in one
 frame — a visible quality pop; staggering them would soften it.
 
 **Non-gaps** (deliberate design differences — do not "fix"): slice-first

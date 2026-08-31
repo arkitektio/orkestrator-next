@@ -17,6 +17,11 @@ import { assessPoolViability } from "../octree/poolViability";
 import { buildPlanInputSignature } from "../octree/planInputSignature";
 import { buildPoolKey, poolValueSemantics } from "../octree/poolKey";
 import { buildSliceSignature } from "../../../platform/model/sliceSignature";
+import {
+  layerPlanSignature,
+  layersPlanKey,
+  sameLayerElements,
+} from "../../../platform/model/layerPlanKey";
 import { resolveLayerDataRange } from "../../../platform/model/dataRange";
 import {
   buildLayerLevelGeometry,
@@ -98,6 +103,21 @@ const scratchViewDirection = new THREE.Vector3();
  * covers newly exposed regions until the next replan lands.
  */
 const MIN_REPLAN_INTERVAL_MS = 200;
+
+/** The previous plan's "keep" keys (nodes that were refined), built once per
+ * plan object — the same representative serves every member of a merge
+ * class on every replan. */
+const keepKeysCache = new WeakMap<LayerNodePlan, ReadonlySet<string>>();
+const keepKeysOf = (plan: LayerNodePlan): ReadonlySet<string> => {
+  let keys = keepKeysCache.get(plan);
+  if (!keys) {
+    const set = new Set<string>();
+    for (const node of plan.nodes) if (node.role === "keep") set.add(node.key);
+    keys = set;
+    keepKeysCache.set(plan, keys);
+  }
+  return keys;
+};
 
 /**
  * Min interval WHILE THE CAMERA IS MOVING. Every mid-gesture replan turns the
@@ -188,9 +208,13 @@ export function startNodePlanTracking({
       let entry: DerivationEntry;
       if (
         cached &&
-        cached.layer === layer &&
         cached.dataArrays === layer.lens.dataset.dataArrays &&
-        cached.mode === mode
+        cached.mode === mode &&
+        // Identity first (free), else the plan signature: a window-only layer
+        // replacement (clim drag) must not re-derive geometry on a replan some
+        // OTHER input (camera, z) triggered mid-drag.
+        (cached.layer === layer ||
+          layerPlanSignature(cached.layer as typeof layer) === layerPlanSignature(layer))
       ) {
         entry = cached;
       } else {
@@ -395,6 +419,13 @@ export function startNodePlanTracking({
       // the next replan.
       const prevRepresentative =
         members.map((m) => prevPlans[m.layer.id]).find(Boolean) ?? null;
+      // A previous plan only informs this one when it planned the SAME data
+      // in the same mode: a slice-signature change (t/c/z selection) is
+      // different content, and its hysteresis/ceiling would be meaningless.
+      const prevCompatible =
+        prevRepresentative !== null &&
+        prevRepresentative.mode === mode &&
+        prevRepresentative.sliceSignature === buildSliceSignature(layer, viewerState.dimSelections);
       const next = planLayerNodes({
         layer,
         geometry,
@@ -415,9 +446,14 @@ export function startNodePlanTracking({
         // `undefined` lets the planner derive it from the cache share above.
         decodeAllowanceBytes: prevRepresentative ? undefined : 0,
         anisoLod: isAnisoLodEnabled(),
-        previousBudgetMinLevel:
-          prevRepresentative && prevRepresentative.mode === mode
-            ? prevRepresentative.budgetMinLevel
+        previousBudgetMinLevel: prevCompatible ? prevRepresentative.budgetMinLevel : undefined,
+        previousKeepKeys: prevCompatible ? keepKeysOf(prevRepresentative) : undefined,
+        // Motion ceiling: while the camera moves, never plan finer than the
+        // last plan. The settle-edge reschedule below replans immediately
+        // with the ceiling lifted, so sharpening starts ~150 ms after rest.
+        refineCeilingLevel:
+          prevCompatible && viewStore.getState().cameraMoving
+            ? prevRepresentative.targetLevel
             : undefined,
       });
 
@@ -527,9 +563,23 @@ export function startNodePlanTracking({
   });
 
   let lastLayers = sceneStore.getState().layers;
+  let lastLayersKey = layersPlanKey(lastLayers);
   const unsubscribeScene = sceneStore.subscribe((state) => {
-    if (state.layers !== lastLayers) {
-      lastLayers = state.layers;
+    if (state.layers === lastLayers) return;
+    const previous = lastLayers;
+    lastLayers = state.layers;
+    // `touchImageLayers` republishes IDENTICAL elements in a fresh array
+    // precisely to request a replan (a zarr store opened late) — that touch
+    // must schedule unconditionally. A real element replacement schedules
+    // only when a PLANNING input moved: a clim/gamma drag replaces the layer
+    // sixty times a second and none of that is a planner read (layerPlanKey).
+    if (sameLayerElements(previous, state.layers)) {
+      schedule();
+      return;
+    }
+    const key = layersPlanKey(state.layers);
+    if (key !== lastLayersKey) {
+      lastLayersKey = key;
       schedule();
     }
   });

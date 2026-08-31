@@ -48,6 +48,7 @@ export type Candidate = AddLayerCandidateFragment;
 export type LensCandidate = Extract<Candidate, { __typename: "Lens" }>;
 export type TableCandidate = Extract<Candidate, { __typename: "TableDataset" }>;
 export type MeshCandidate = Extract<Candidate, { __typename: "MeshCollection" }>;
+export type NetworkCandidate = Extract<Candidate, { __typename: "NetworkCollection" }>;
 export type AnnotationCandidate = Extract<
   Candidate,
   { __typename: "AnnotationCollection" }
@@ -87,7 +88,7 @@ export type SpaceLike = {
  * decides, and the alternatives stay behind a disclosure for the case where the
  * inference is not what someone wanted.
  */
-export type LayerKind = "LABEL" | "VOLUME" | "INTENSITY" | "RGB";
+export type LayerKind = "LABEL" | "VECTOR" | "VOLUME" | "INTENSITY" | "RGB";
 
 export const LAYER_KIND_INFO: Record<
   LayerKind,
@@ -96,6 +97,10 @@ export const LAYER_KIND_INFO: Record<
   LABEL: {
     title: "Segmentation",
     description: "Object ids, drawn as coloured regions you can click",
+  },
+  VECTOR: {
+    title: "Vector field",
+    description: "Per-voxel vectors, drawn as glyphs coloured by magnitude",
   },
   VOLUME: {
     title: "Volume",
@@ -171,6 +176,15 @@ export type MeshEntry = {
   space: SpaceRef;
 };
 
+export type NetworkEntry = {
+  kind: "network";
+  key: string;
+  network: NetworkCandidate;
+  name: string;
+  secondary?: string;
+  space: SpaceRef;
+};
+
 export type AnnotationEntry = {
   kind: "annotation";
   key: string;
@@ -180,9 +194,9 @@ export type AnnotationEntry = {
   space: SpaceRef;
 };
 
-export type Entry = DatasetEntry | TableEntry | MeshEntry | AnnotationEntry;
+export type Entry = DatasetEntry | TableEntry | MeshEntry | NetworkEntry | AnnotationEntry;
 
-export type SectionId = "datasets" | "meshes" | "tables" | "annotations";
+export type SectionId = "datasets" | "meshes" | "networks" | "tables" | "annotations";
 
 export type Section = {
   id: SectionId;
@@ -195,6 +209,7 @@ export type Source =
   | { kind: "lens"; dataset: DatasetEntry; option: LensOption }
   | { kind: "table"; entry: TableEntry }
   | { kind: "mesh"; entry: MeshEntry }
+  | { kind: "network"; entry: NetworkEntry }
   | { kind: "annotation"; entry: AnnotationEntry };
 
 // ---------------------------------------------------------------------------
@@ -229,6 +244,19 @@ export const isRgbCapable = (lens: LensCandidate): boolean =>
   extentOf(lens, lens.renderAxes?.intensity) >= 3;
 
 /**
+ * Whether this lens IS a vector field a glyph can draw: a DISPLACEMENT value
+ * axis of 2 or 3 components, no wider than the spatial axes. The same three
+ * conditions `createVectorLayer` refuses on, asked as a predicate — and like
+ * LABEL's CATEGORIZED edge, the axis type is something an author STATED, which
+ * is why (unlike RGB) it is allowed to decide the inference outright.
+ */
+export const isVectorField = (lens: LensCandidate): boolean => {
+  const components = extentOf(lens, lens.renderAxes?.vector);
+  const spatial = lens.renderAxes?.z != null ? 3 : 2;
+  return components >= 2 && components <= 3 && components <= spatial;
+};
+
+/**
  * What a lens becomes, in preference order — the first is what it becomes
  * without being asked.
  *
@@ -255,6 +283,15 @@ export const inferLensKinds = (
 
   const kinds: LayerKind[] = [];
   if (label && answered) kinds.push("LABEL");
+  // A vector field wins over every raster reading, and offers them only where
+  // there is genuinely a channel axis beside the field: the server now REFUSES
+  // `createIntensityLayer` with the axis omitted on such a lens, because drawing
+  // the components as one grey picture was the wrong picture this kind closed.
+  if (isVectorField(lens)) {
+    kinds.push("VECTOR");
+    if (image && lens.renderAxes?.intensity) kinds.push("INTENSITY");
+    return kinds;
+  }
   if (image) {
     if (isVolumetric(lens)) kinds.push("VOLUME");
     kinds.push("INTENSITY");
@@ -310,6 +347,7 @@ export const buildSections = (input: {
   const datasets = new Map<string, DatasetEntry>();
   const tables: TableEntry[] = [];
   const meshes: MeshEntry[] = [];
+  const networks: NetworkEntry[] = [];
   const annotations: AnnotationEntry[] = [];
 
   const datasetEntry = (
@@ -384,6 +422,19 @@ export const buildSections = (input: {
             space: spaceRef,
           });
           break;
+        // A konnektion collection. Nameless like a mesh collection, so the row
+        // shows the version and the spec — which is what `residentName` already
+        // assumes for both.
+        case "NetworkCollection":
+          networks.push({
+            kind: "network",
+            key: `NetworkCollection:${resident.id}`,
+            network: resident,
+            name: residentName(resident),
+            secondary: `spec ${resident.specVersion}`,
+            space: spaceRef,
+          });
+          break;
         case "AnnotationCollection":
           annotations.push({
             kind: "annotation",
@@ -426,6 +477,7 @@ export const buildSections = (input: {
       entries: datasetEntries.sort(byName),
     },
     { id: "meshes", title: "Meshes", entries: meshes.sort(byName) },
+    { id: "networks", title: "Networks", entries: networks.sort(byName) },
     { id: "tables", title: "Measurements", entries: tables.sort(byName) },
     { id: "annotations", title: "Annotations", entries: annotations.sort(byName) },
   ];

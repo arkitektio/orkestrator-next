@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -16,7 +17,8 @@ import { useModeStore } from "../../platform/stores/modeStore";
 import { LIGHT_RIG_RANGES } from "../../platform/gpu/shading";
 import { VOLUME_POST_RANGES } from "../../platform/gpu/volumePost";
 import { ProjectionMode } from "@/mikro-next/api/graphql";
-import { useSceneStore } from "../../platform/stores/sceneStore";
+import { identityOf } from "../../platform/model/objectIdentity";
+import { useSceneStore, useSceneStoreApi } from "../../platform/stores/sceneStore";
 import { useViewerStore } from "../../platform/stores/viewerStore";
 
 const SettingRow = ({
@@ -97,13 +99,15 @@ const CinematicSection = () => {
   const resetPost = useModeStore((s) => s.resetPost);
   const isoThreshold = useModeStore((s) => s.isoThreshold);
   const setIsoThreshold = useModeStore((s) => s.setIsoThreshold);
-  const layers = useSceneStore((s) => s.layers);
-
   // The iso threshold defines the surface, so it is only meaningful when some
-  // visible layer actually extracts one.
-  const hasIsosurface = layers.some(
-    (candidate) =>
-      candidate.visible !== false && candidate.projection === ProjectionMode.Isosurface,
+  // visible layer actually extracts one. A SCALAR selector (P9c/P17): only the
+  // boolean matters here, and the `layers` array changes identity on every
+  // per-tick layer edit.
+  const hasIsosurface = useSceneStore((s) =>
+    s.layers.some(
+      (candidate) =>
+        candidate.visible !== false && candidate.projection === ProjectionMode.Isosurface,
+    ),
   );
 
   return (
@@ -273,25 +277,46 @@ const ProbeSettingsSection = () => {
   const setProbeThreshold = useViewerStore((s) => s.setProbeThreshold);
   const probeLayerId = useViewerStore((s) => s.probeLayerId);
   const setProbeLayerId = useViewerStore((s) => s.setProbeLayerId);
-  const layers = useSceneStore((s) => s.layers);
+  const sceneStoreApi = useSceneStoreApi();
+  // A SCALAR key over exactly what this section reads per layer (P9c/P17):
+  // identity + display-label inputs for the picker, visibility, and the
+  // projection the strategy resolves against. `layersPlanKey` won't do here —
+  // it deliberately ignores `projection` and `name` — and subscribing to the
+  // array re-rendered this popover on every per-tick layer edit.
+  const layersKey = useSceneStore((s) =>
+    s.layers
+      .map(
+        (l) =>
+          `${l.id}:${l.visible === false ? 0 : 1}:${l.projection ?? ""}:${
+            l.name ?? ""
+          }:${l.__typename}:${identityOf(l.lens)}:${l.phasors.length}:${l.channels.length}`,
+      )
+      .join("|"),
+  );
 
   // Both brick layers bail on `visible === false`, so a hidden layer cannot
   // answer a probe (`features/annotations/modeCompat.ts`). An alive explicit pin drives the
   // picker's value; a dead pin (hidden/gone layer) shows as Auto WITHOUT being
   // erased — it heals by derivation and resurrects if its layer comes back.
-  const probeableLayers = layers.filter((candidate) => candidate.visible !== false);
-  const pinnedLayer =
-    probeLayerId !== null
-      ? layers.find(
-          (candidate) => candidate.id === probeLayerId && candidate.visible !== false,
-        )
-      : undefined;
-
+  //
   // The strategy resolves against the layer that will ANSWER the next probe —
   // the effective target — since this section configures future probes, not a
   // reading that already happened.
-  const targetId = effectiveProbeLayerId(probeLayerId, layers);
-  const targetLayer = layers.find((candidate) => candidate.id === targetId);
+  const { probeableLayers, pinnedLayer, targetLayer } = useMemo(() => {
+    const { layers } = sceneStoreApi.getState();
+    const probeableLayers = layers.filter((candidate) => candidate.visible !== false);
+    const pinnedLayer =
+      probeLayerId !== null
+        ? layers.find(
+            (candidate) => candidate.id === probeLayerId && candidate.visible !== false,
+          )
+        : undefined;
+    const targetId = effectiveProbeLayerId(probeLayerId, layers);
+    const targetLayer = layers.find((candidate) => candidate.id === targetId);
+    return { probeableLayers, pinnedLayer, targetLayer };
+    // The key STANDS FOR the layers array read via getState().
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [layersKey, probeLayerId, sceneStoreApi]);
   const resolved = resolveProbeStrategy(
     probeMode,
     targetLayer?.projection,

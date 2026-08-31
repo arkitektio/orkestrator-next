@@ -137,3 +137,33 @@ fragment GeneralFabriksAccessGrant on GeneralFabriksAccessGrant {
   region
   bucket
 }
+
+# A scoped PREFIX grant: `key` is the prefix every file of the collection is
+# written under, not a single object (see fabriksUpload.ts).
+fragment FabriksUploadGrant on FabriksUploadGrant {
+  accessKey
+  secretKey
+  sessionToken
+  path
+  key
+  bucket
+  region
+  expiresIn
+  maxBytes
+  # The fabriks store's id — what `finishFabriksUpload` takes as `storeId`,
+  # and the `FabriksLike` value `createMeshCollection` wants.
+  store
+}
+
+
+# Konnektion prefixes get their OWN credentials. A fabriks grant does not read
+# a konnektion prefix -- see lib/zarr/access.ts, where the kinds are separate
+# mutations with separate caches precisely so one cannot clobber the other.
+fragment GeneralKonnektionAccessGrant on GeneralKonnektionAccessGrant {
+  accessKey
+  secretKey
+  sessionToken
+  expiresIn
+  region
+  bucket
+}

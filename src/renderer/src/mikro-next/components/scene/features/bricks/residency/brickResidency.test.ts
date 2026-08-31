@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { decideStreamingFlag, hasPendingEncodeWork, occPromotionWorthwhile, resolveReusedAutoRange } from "./brickResidency";
+import {
+  decideStreamingFlag,
+  hasPendingEncodeWork,
+  occPromotionWorthwhile,
+  resolveReusedAutoRange,
+  shouldDeferPrefetch,
+} from "./brickResidency";
 
 describe("hasPendingEncodeWork (the drain idle-latch guard)", () => {
   // The drain's idle latch (`drainNeeded = false`) must never clear while a
@@ -210,5 +216,25 @@ describe("decideStreamingFlag (both-edge hysteresis)", () => {
     // window must be comfortably inside that or genuine loading renders sharp
     // and janky instead of soft and smooth.
     expect(ASSERT).toBeLessThan(250);
+  });
+});
+
+describe("shouldDeferPrefetch (margin prefetch waits for rest + empty on-screen pipeline)", () => {
+  it("never defers backdrop or on-screen bricks", () => {
+    for (const fetchBand of [0, 1] as const) {
+      expect(shouldDeferPrefetch({ fetchBand, inFlightOnScreen: 3, interacting: true })).toBe(false);
+    }
+  });
+
+  it("defers margin bricks while the camera moves", () => {
+    expect(shouldDeferPrefetch({ fetchBand: 2, inFlightOnScreen: 0, interacting: true })).toBe(true);
+  });
+
+  it("defers margin bricks while any on-screen brick is in flight", () => {
+    expect(shouldDeferPrefetch({ fetchBand: 2, inFlightOnScreen: 1, interacting: false })).toBe(true);
+  });
+
+  it("dispatches margin bricks once settled with nothing on-screen in flight", () => {
+    expect(shouldDeferPrefetch({ fetchBand: 2, inFlightOnScreen: 0, interacting: false })).toBe(false);
   });
 });

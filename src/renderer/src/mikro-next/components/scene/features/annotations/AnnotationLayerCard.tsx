@@ -7,7 +7,12 @@ import {
 } from "@/mikro-next/api/graphql";
 import { useRoiSelectionStore } from "./roiSelectionStore";
 import { useSceneStore } from "../../platform/stores/sceneStore";
-import { Badge, RowLabel, formatCount } from "../../platform/layerui/cardControls";
+import {
+  Badge,
+  LayerCardShell,
+  RowLabel,
+  formatCount,
+} from "../../platform/layerui/cardControls";
 
 /**
  * A compact card for an `AnnotationLayer` in the Layers panel.
@@ -43,9 +48,15 @@ const kindCaption = (kind: string, count: number): string => {
 export const AnnotationLayerCard = memo(
   ({
     layer,
+    expanded,
+    onSelect,
     onRemove,
   }: {
     layer: AnnotationLayerVariant;
+    /** Whether the card's controls are unfolded (`LayerCardShell`). */
+    expanded: boolean;
+    /** The panel's toggle — handed the current state, see `cardShell.tsx`. */
+    onSelect: (id: string, currentlyExpanded: boolean) => void;
     onRemove?: (id: string) => void;
   }) => {
     const patchSceneLayer = useSceneStore((s) => s.patchSceneLayer);
@@ -83,43 +94,60 @@ export const AnnotationLayerCard = memo(
     const total = annotations?.length ?? 0;
 
     return (
-      <div
-        className={`@container/card rounded-lg border border-white/10 bg-black/40 backdrop-blur-md transition-opacity ${
-          hidden ? "opacity-50" : ""
-        }`}
-      >
-        {/* ------------------------------------------------ header --------- */}
-        <div className="flex items-center gap-1.5 px-2 py-1.5">
-          <span className="grid h-5 w-5 shrink-0 place-items-center rounded bg-amber-400/15">
-            <Shapes className="h-3 w-3 text-amber-300" />
-          </span>
-          <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-white/90">
-            {collection?.name?.trim() ||
-              (collection ? `Annotations ${collection.id}` : "Annotations (no collection)")}
-          </span>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-5 w-5 shrink-0 text-white/45 hover:text-white/90"
-            title={hidden ? "Show (session)" : "Hide (session)"}
-            onClick={() => patchSceneLayer(layer.id, { visible: hidden })}
-          >
-            {hidden ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-          </Button>
-          {onRemove && (
+      <LayerCardShell
+        icon={<Shapes className="h-3 w-3 text-amber-300" />}
+        tile="bg-amber-400/15"
+        title={
+          collection?.name?.trim() ||
+          (collection ? `Annotations ${collection.id}` : "Annotations (no collection)")
+        }
+        hidden={hidden}
+        expanded={expanded}
+        onToggle={() => onSelect(layer.id, expanded)}
+        // The one fact a user can get nowhere else, kept out from behind the
+        // fold: shapes are pinned to discrete coordinates, so a fully visible
+        // layer can still draw nothing on the current slice.
+        badges={
+          total > 0 ? (
+            <span
+              className={`shrink-0 font-mono text-[9px] ${
+                inView === 0 ? "text-amber-300/80" : "text-white/50"
+              }`}
+              title={
+                inView === 0
+                  ? "None of this layer's shapes are on the current slice — scrub z or switch to 3D to see them"
+                  : "Shapes currently drawn, of the layer's total"
+              }
+            >
+              {formatCount(inView)} / {formatCount(total)}
+            </span>
+          ) : undefined
+        }
+        actions={
+          <>
             <Button
               variant="ghost"
               size="icon"
-              className="h-5 w-5 shrink-0 text-white/35 hover:text-red-300"
-              title="Remove layer from scene"
-              onClick={() => onRemove(layer.id)}
+              className="h-5 w-5 shrink-0 text-white/45 hover:text-white/90"
+              title={hidden ? "Show (session)" : "Hide (session)"}
+              onClick={() => patchSceneLayer(layer.id, { visible: hidden })}
             >
-              <Trash2 className="h-3 w-3" />
+              {hidden ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
             </Button>
-          )}
-        </div>
-
+            {onRemove && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5 shrink-0 text-white/35 hover:text-red-300"
+                title="Remove layer from scene"
+                onClick={() => onRemove(layer.id)}
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            )}
+          </>
+        }
+      >
         {/* ------------------------------------------------ shapes --------- */}
         <div className="flex flex-wrap items-center gap-1.5 border-t border-white/5 px-2 py-1.5">
           <RowLabel>shapes</RowLabel>
@@ -166,7 +194,7 @@ export const AnnotationLayerCard = memo(
             )}
           </div>
         )}
-      </div>
+      </LayerCardShell>
     );
   },
 );

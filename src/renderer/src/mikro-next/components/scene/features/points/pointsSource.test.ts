@@ -49,6 +49,42 @@ describe("loadPointGeometry", () => {
     expect([...got.positions]).toEqual([1, 2, 3]);
   });
 
+  /**
+   * Time is read in the SAME scan as the coordinates, and resolved to timeline
+   * INDICES on the way out — so this layer's `t` scrubber is the scrubber an
+   * image's t axis drives, whatever units the table used.
+   */
+  it("resolves a time column to per-point timeline indices", async () => {
+    const got = (await loadPointGeometry(
+      engineWith({
+        object_id: new Float64Array([1, 2, 3]),
+        px: new Float64Array([1, 1, 1]),
+        py: new Float64Array([2, 2, 2]),
+        // Unevenly sampled on purpose: indices count OBSERVATIONS, not seconds.
+        pt: new Float64Array([100, 0, 100]),
+      }),
+      store,
+      { ...columns, t: "t" },
+    )) as PointGeometry;
+
+    expect([...got.timeline!]).toEqual([0, 100]);
+    expect([...got.times!]).toEqual([1, 0, 1]);
+  });
+
+  it("leaves an untimed table exactly as it was: no timeline, no per-point times", async () => {
+    const got = (await loadPointGeometry(
+      engineWith({
+        object_id: new Float64Array([1]),
+        px: new Float64Array([1]),
+        py: new Float64Array([2]),
+      }),
+      store,
+      columns,
+    )) as PointGeometry;
+    expect(got.timeline).toBeNull();
+    expect(got.times).toBeNull();
+  });
+
   it("refuses past the budget rather than drawing a subset", async () => {
     // Subsampling would misrepresent density, which is usually the thing being looked at, so
     // the cap is loud like the label LUT's rather than silent like the mesh one's was.

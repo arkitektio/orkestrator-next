@@ -19,8 +19,8 @@ import {
 } from "../../platform/attributes/valueLut";
 import type { SparseReadRequest } from "@/mikro-next/lib/sparse/sparseSource";
 import {
-  readColumnByObjectIdCached,
-  readColumnValuesCached,
+  readColumnByObjectIdBatchedCached,
+  readColumnValuesBatchedCached,
 } from "../../platform/attributes/columnValueCache";
 import type { AttributeLookupEngine as Engine } from "@/mikro-next/lib/attributes/lookupEngine";
 import type { TableAccess } from "../../platform/attributes/columnLut";
@@ -232,8 +232,8 @@ const readLabelColumn = async (
   access: TableAccess,
   column: string,
 ): Promise<ValueSource | null> =>
-  (await readColumnValuesCached(engine, access, column)) ??
-  (await readColumnByObjectIdCached(engine, access, column));
+  (await readColumnValuesBatchedCached(engine, access, column)) ??
+  (await readColumnByObjectIdBatchedCached(engine, access, column));
 
 export const buildLabelColorLut = async (
   request: LabelColorLutRequest,

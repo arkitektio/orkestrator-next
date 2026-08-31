@@ -143,6 +143,62 @@ fragment MeshFilterBy on MeshFilterBy {
   }
 }
 
+# One entry of a network layer's colour picker. The mesh shape plus a third
+# arm: a GRAPH entry names a per-node value the collection itself carries
+# (`attribute` — strahler, degree, depth, component, a writer's own column, or
+# `radius` off the encoding) and aims it with `target`. Per NODE, not per
+# object — the one entry kind whose value varies inside an object.
+fragment NetworkColorBy on NetworkColorBy {
+  kind
+  table
+  column
+  # Same whole-array-replace hazard as `MeshColorBy.joinPath` — see there.
+  joinPath {
+    table
+    column
+  }
+  colormap
+  min
+  max
+  label
+  dataset
+  at {
+    axis
+    value
+  }
+  # The GRAPH arm. `target` says whether node glyphs are painted too (NODE) or
+  # segments only (EDGE); a segment takes its START node's value either way,
+  # since an edge owns no durable value of its own.
+  attribute
+  target
+}
+
+# One entry of a network layer's filter picker. A COLUMN or SPARSE rule keeps
+# or drops whole objects; a GRAPH rule — always bounds, a graph attribute is
+# measured — hides individual nodes and their segments ("trunk only" is
+# strahler >= 3).
+fragment NetworkFilterBy on NetworkFilterBy {
+  kind
+  table
+  column
+  joinPath {
+    table
+    column
+  }
+  label
+  min
+  max
+  values
+  exclude
+  dataset
+  at {
+    axis
+    value
+  }
+  attribute
+  target
+}
+
 # Not a TransferFunction: a label map has one source, no compositing tree, and
 # none of an intensity image's vocabulary. `background` is the id painted fully
 # transparent; `seed` seeds the id->color hash.
@@ -404,6 +460,33 @@ fragment SceneLayer on Layer {
       ...PhasorRender
     }
   }
+  # The sixth lens-backed kind, and the fourth fixed-shape recipe: a DISPLACEMENT
+  # value axis read as geometry (glyphs), not composited as channels. `vectorAxis`
+  # is DERIVED server-side from the axis types — never stored, never sent — and its
+  # description fixes the component ORDER: position i displaces along the i-th
+  # spatial axis in array order, so the last component displaces along x.
+  ... on VectorLayer {
+    lens {
+      ...SceneLens
+    }
+    vectorAxis
+    glyph
+    glyphStride
+    # Scene units per unit of magnitude; null auto-normalizes. A world-space
+    # length, so meaningful only from SIMILARITY up (placementInvariance below).
+    glyphScale
+    # Aliased for IntensityLayer's reason: `ColorMap!` here, nullable on
+    # Point/Track — same response key, different nullability, GraphQL rejects
+    # the merge.
+    vectorColormap: colormap
+    color
+    # MAGNITUDE window, not an intensity window: a vector length in the
+    # component axis's unit. The columns are shared with intensity; the meaning
+    # is not.
+    climMin
+    climMax
+    placementInvariance
+  }
   # Shares ImageLayer's source (a Lens over an array) and none of its render
   # settings: clim, gamma, colormaps and projections are all meaningless over
   # object ids. `labelRender` carries what replaces them. `levelPaths` is
@@ -475,6 +558,9 @@ fragment SceneLayer on Layer {
     }
     materialColor
     wireframe
+    # The stored shading seeds the session's `flatNormals` (SMOOTH → smooth
+    # normals on); the card's toggle overrides it for the session.
+    shading
     # The layer publishes PICKERS, not a single choice: `colorBys`/`filterBys`
     # are what it offers (server-checked to be reachable and to exist), and the
     # active indices are the choice. The deprecated singular `colorBy` is
@@ -488,5 +574,49 @@ fragment SceneLayer on Layer {
       ...MeshFilterBy
     }
     activeFilterBys
+  }
+  # A node/edge graph from a konnektion collection: a traced arbor, a vessel
+  # tree, a connectome. Distinct from TrackLayer, which draws trajectories from
+  # a table and can only express a PATH — a network has branch points.
+  #
+  # Publishes the two pickers now, with a third entry kind the other layer
+  # types do not have: a GRAPH entry colours or filters per NODE, by a value
+  # the collection itself carries (strahler, degree, depth, component, a
+  # writer's own column, `radius` off the encoding) — resolved from the decoded
+  # attribute blobs, never from a parquet lookup.
+  ... on NetworkLayer {
+    collection {
+      ...NetworkCollection
+    }
+    materialColor
+    # The flat width of every segment, in SCENE units. Segments are drawn as
+    # camera-facing quads rather than GL lines, which is the only reason a width
+    # in scene units means anything — and it means it only from SIMILARITY up,
+    # which is what `placementInvariance` below reports.
+    lineWidth
+    # Two declared width overrides that name PARQUET ATTRIBUTE COLUMNS, reached
+    # through the join/attribute-plan machinery this layer type has no pickers
+    # for. Selected so the card can say they are set and unimplemented rather
+    # than ignore them silently; the renderer uses `lineWidth` plus the format's
+    # own `radii` blob instead.
+    nodeSizeColumn
+    edgeWidthColumn
+    # Both are RENDER settings, never facts about the graph: an edge is always
+    # stored source-to-target whether or not its direction is drawn.
+    directed
+    showNodes
+    # A budget capping octree depth, not a choice of level — which level is
+    # fetched still follows from the zoom. Commonly moot: konnektion picks its
+    # depth from the data and a traced arbor is usually single-level.
+    maxLevel
+    colorBys {
+      ...NetworkColorBy
+    }
+    activeColorBy
+    filterBys {
+      ...NetworkFilterBy
+    }
+    activeFilterBys
+    placementInvariance
   }
 }

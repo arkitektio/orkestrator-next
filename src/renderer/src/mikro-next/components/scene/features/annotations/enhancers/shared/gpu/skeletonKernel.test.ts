@@ -13,6 +13,7 @@ import {
   SKELETON_RELAX_WGSL,
   SKELETON_SMOOTH_WGSL,
   SKELETON_TUBE_WGSL,
+  tubeWgslFor,
   SMOOTH_PARAMS_BYTES,
   TUBE_PARAMS_BYTES,
   packCostParams,
@@ -136,10 +137,15 @@ describe("skeletonWorkgroups", () => {
 });
 
 describe("tube kernel", () => {
-  it("embeds the generated tet table", () => {
-    expect(SKELETON_TUBE_WGSL).toContain("TET_TRI_OFFSETS = array<u32, 97>");
-    expect(SKELETON_TUBE_WGSL).toContain("TET_MASK_CORNERS = array<u32, 24>");
-    expect(SKELETON_TUBE_WGSL).toContain("fn main(");
+  it("embeds the generated case table of each marcher", () => {
+    const tets = tubeWgslFor("tets");
+    expect(tets).toContain("TET_TRI_OFFSETS = array<u32, 97>");
+    expect(tets).toContain("TET_MASK_CORNERS = array<u32, 24>");
+    expect(tets).toContain("fn main(");
+    const cubes = tubeWgslFor("cubes");
+    expect(cubes).toContain("MC_TRI_OFFSETS = array<u32, 257>");
+    expect(cubes).toContain("emit_triangle(MC_TRI_EDGES[e]");
+    expect(SKELETON_TUBE_WGSL).toBe(cubes); // the default marcher
   });
 
   it("never declares a WGSL reserved word as an identifier", () => {

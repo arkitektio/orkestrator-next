@@ -33,14 +33,6 @@ export type LayerCardProps<L> = {
   onClose: () => void;
 };
 
-/**
- * The card's own surface. `@container/card`: the card is its own query context,
- * so a row and its editor adapt to the width the CARD got — which in a
- * multi-column list is not the panel's width.
- */
-export const CARD_SHELL_CLASSES = (expanded: boolean): string =>
-  `@container/card overflow-hidden rounded-lg border backdrop-blur-md bg-black transition-colors ${
-    expanded
-      ? "border-black/10 bg-black/60"
-      : "border-black/10 bg-black/40 hover:border-black/20 hover:bg-black/70"
-  }`;
+// The card's surface lives in `platform/layerui/cardControls.tsx`
+// (`layerCardShellClasses` / `LayerCardShell`) — one dialect for every layer
+// kind, brick-backed and collection-backed alike.

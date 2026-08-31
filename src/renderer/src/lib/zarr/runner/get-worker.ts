@@ -30,9 +30,41 @@ import {
   get_strides,
 } from "./internals/util"
 import type { ChunkCache, CodecChunkMeta, GetWorkerOptions, TextureFidelity } from "./types"
-import { disposeWorker, getMetaId, workerFetchDecode } from "./worker-rpc"
-import { isWorkerFetchCapableStore, workerFetchConfigFor } from "@/lib/zarr/store/types"
-import { serializeRequestInit } from "./s3-request"
+import {
+  disposeWorker,
+  getMetaId,
+  workerFetchDecode,
+  workerFetchDecodeMulti,
+} from "./worker-rpc"
+import {
+  DEFAULT_DENSE_COALESCE,
+  type CoalescedRange,
+  type DenseCoalesceOptions,
+} from "./rangeCoalesce"
+import {
+  contributeShardItems,
+  shardBatchKeyFor,
+  type ShardBatchItem,
+} from "./shardRunBatch"
+import {
+  isRangeReadableStore,
+  isWorkerFetchCapableStore,
+  workerFetchConfigFor,
+} from "@/lib/zarr/store/types"
+import {
+  serializeRequestInit,
+  type S3FetchConfig,
+  type SerializedRequestInit,
+} from "./s3-request"
+import {
+  innerLinearIndex,
+  lookupInnerChunk,
+  rangeHeaderFor,
+  resolveShardingLayout,
+  shardCoordOf,
+  type ShardingLayout,
+} from "./sharding"
+import { DEFAULT_SHARD_INDEX_CACHE } from "./shardIndexCache"
 
 /**
  * Default URL for the codec worker. Uses `import.meta.url` to resolve
@@ -284,9 +316,148 @@ export function createCacheKey<D extends DataType, Store extends Readable>(
 // ---------------------------------------------------------------------------
 
 export interface ArrayMetadata {
+  /**
+   * What a decode worker needs. For a SHARDED array this is the INNER chunk
+   * shape + inner codec chain — the sharding layer is unwrapped here, because
+   * the worker pipeline is built from zarrita's codec registry, which has no
+   * `sharding_indexed` entry.
+   */
   codecMeta: CodecChunkMeta
+  /** Encodes STORAGE-object coords: chunk coords when unsharded, shard coords when sharded. */
   encodeChunkKey: (chunk_coords: number[]) => string
   fillValue: Scalar<DataType> | null
+  /** Present iff the array's top-level codec is `sharding_indexed`. */
+  sharding?: ShardingLayout
+}
+
+/**
+ * The chunk shape consumers should plan/fetch in: the inner chunk shape for a
+ * sharded array, else the array's chunk shape. Populated synchronously once
+ * `readArrayMetadataCached` resolves (the scene's array open awaits it), so
+ * planners that are sync can read it without a promise. `undefined` for an
+ * array whose metadata has not been read yet.
+ */
+const effectiveChunkShapes = new WeakMap<object, readonly number[]>()
+
+export function effectiveChunkShapeOf(arr: object): readonly number[] | undefined {
+  return effectiveChunkShapes.get(arr)
+}
+
+/**
+ * Where one chunk's bytes live: the storage object to GET, the decoded-chunk
+ * cache key, and — for a sharded array — the byte range inside the shard, or
+ * `missing` when the shard index says the inner chunk is absent.
+ */
+export interface ChunkLocation {
+  chunkPath: `/${string}`
+  cacheKey: string
+  /** Set only for sharded arrays with a present inner chunk. */
+  range?: { offset: number; length: number }
+  /** Sharded arrays only: the index marks this inner chunk absent (fill). */
+  missing: boolean
+}
+
+/**
+ * Decoded-chunk cache key for a chunk coordinate, SYNCHRONOUS for both layouts
+ * (no shard index needed — the key only depends on coordinates). Sharded: the
+ * shard key plus the inner chunk's C-order position, because inner coords
+ * pushed through the SHARD key encoder would alias distinct inner chunks.
+ * Unsharded: identical to `createCacheKey`.
+ */
+export function chunkCacheKeyFor<D extends DataType, Store extends Readable>(
+  arr: ZarrArray<D, Store>,
+  meta: ArrayMetadata,
+  chunkCoords: readonly number[],
+): string {
+  const { sharding, encodeChunkKey } = meta
+  if (!sharding) return createCacheKey(arr, encodeChunkKey, [...chunkCoords])
+  const shardKey = encodeChunkKey(shardCoordOf(chunkCoords, sharding))
+  const linear = innerLinearIndex(chunkCoords, sharding)
+  return `${getStoreId(arr.store)}:${arr.path}:${shardKey}/${linear}`
+}
+
+/**
+ * Storage-object path for a chunk coordinate, SYNCHRONOUS for both layouts
+ * (the shard object's path needs no index — only the byte range inside it
+ * does). Sharded: the shard's path; unsharded: the chunk's own path.
+ */
+export function chunkStoragePathFor<D extends DataType, Store extends Readable>(
+  arr: ZarrArray<D, Store>,
+  meta: ArrayMetadata,
+  chunkCoords: readonly number[],
+): `/${string}` {
+  const { sharding, encodeChunkKey } = meta
+  const key = sharding
+    ? encodeChunkKey(shardCoordOf(chunkCoords, sharding))
+    : encodeChunkKey([...chunkCoords])
+  return arr.resolve(key).path
+}
+
+export async function resolveChunkLocation<D extends DataType, Store extends Readable>(
+  arr: ZarrArray<D, Store>,
+  meta: ArrayMetadata,
+  chunkCoords: readonly number[],
+  storeOpts?: Parameters<Store["get"]>[1],
+): Promise<ChunkLocation> {
+  const { sharding } = meta
+  const cacheKey = chunkCacheKeyFor(arr, meta, chunkCoords)
+  if (!sharding) {
+    return { chunkPath: chunkStoragePathFor(arr, meta, chunkCoords), cacheKey, missing: false }
+  }
+  const shardPath = chunkStoragePathFor(arr, meta, chunkCoords)
+  const linear = innerLinearIndex(chunkCoords, sharding)
+  const storeId = getStoreId(arr.store)
+  const store = arr.store
+  if (!isRangeReadableStore(store)) {
+    throw new Error(
+      `[zarr sharding] store for ${arr.path} has no getRange — cannot read sharded array`,
+    )
+  }
+  const index = await DEFAULT_SHARD_INDEX_CACHE.get(
+    store,
+    storeId,
+    shardPath,
+    sharding,
+    storeOpts as RequestInit | undefined,
+  )
+  if (index === null) return { chunkPath: shardPath, cacheKey, missing: true }
+  const location = lookupInnerChunk(index, linear)
+  if (location === "missing") return { chunkPath: shardPath, cacheKey, missing: true }
+  return { chunkPath: shardPath, cacheKey, range: location, missing: false }
+}
+
+/**
+ * Warm the shard index for a chunk (no-op for unsharded arrays, cache hits,
+ * or stores without ranged reads). Fire-and-forget: a failure here just means
+ * the real fetch pays the index round trip itself.
+ */
+export function prefetchShardIndex<D extends DataType, Store extends Readable>(
+  arr: ZarrArray<D, Store>,
+  meta: ArrayMetadata,
+  chunkCoords: readonly number[],
+): void {
+  const { sharding, encodeChunkKey } = meta
+  if (!sharding) return
+  const store = arr.store
+  if (!isRangeReadableStore(store)) return
+  const shardKey = encodeChunkKey(shardCoordOf(chunkCoords, sharding))
+  void DEFAULT_SHARD_INDEX_CACHE.get(
+    store,
+    getStoreId(store),
+    arr.resolve(shardKey).path,
+    sharding,
+  ).catch(() => {})
+}
+
+/** `init` for the worker fetch, with the inner-chunk `Range` folded in when sharded. */
+function requestInitFor(
+  storeOpts: RequestInit | undefined,
+  location: ChunkLocation,
+): RequestInit | undefined {
+  if (!location.range) return storeOpts
+  const headers = new Headers(storeOpts?.headers)
+  headers.set("Range", rangeHeaderFor(location.range))
+  return { ...storeOpts, headers }
 }
 
 /**
@@ -310,9 +481,12 @@ export function readArrayMetadataCached<
   if (cached) return cached
   const promise = readArrayMetadata(arr, storeOpts)
   arrayMetadataCache.set(arr, promise)
-  promise.catch(() => {
-    if (arrayMetadataCache.get(arr) === promise) arrayMetadataCache.delete(arr)
-  })
+  promise.then(
+    (meta) => effectiveChunkShapes.set(arr, meta.codecMeta.chunk_shape),
+    () => {
+      if (arrayMetadataCache.get(arr) === promise) arrayMetadataCache.delete(arr)
+    },
+  )
   return promise
 }
 
@@ -332,14 +506,20 @@ export async function readArrayMetadata<
   const v3Bytes = await store.get(v3Path, storeOpts)
   if (v3Bytes) {
     const metadata = JSON.parse(decoder.decode(v3Bytes))
+    const outerChunkShape: number[] = metadata.chunk_grid.configuration.chunk_shape
+    // Dynamic per array: a `sharding_indexed` top-level codec is unwrapped so
+    // everything downstream (worker pipeline, planner, cache keys) works in
+    // INNER chunks; an unsharded array is returned exactly as before.
+    const sharding = resolveShardingLayout(outerChunkShape, metadata.codecs)
     return {
       codecMeta: {
         data_type: metadata.data_type,
-        chunk_shape: metadata.chunk_grid.configuration.chunk_shape,
-        codecs: metadata.codecs,
+        chunk_shape: sharding ? sharding.innerChunkShape : outerChunkShape,
+        codecs: sharding ? sharding.innerCodecs : metadata.codecs,
       },
       encodeChunkKey: create_chunk_key_encoder(metadata.chunk_key_encoding),
       fillValue: metadata.fill_value ?? null,
+      sharding,
     }
   }
 
@@ -353,6 +533,302 @@ export async function readArrayMetadata<
     encodeChunkKey: create_chunk_key_encoder({ name: "default" }),
     fillValue: null,
   }
+}
+
+// ---------------------------------------------------------------------------
+// getChunkGroupWorker — coalesced reads of several chunks of one array
+// ---------------------------------------------------------------------------
+
+export interface ChunkGroupOptions<StoreOpts = unknown> extends GetWorkerOptions<StoreOpts> {
+  /** Merge rule for inner chunks of one shard (see `rangeCoalesce.ts`). */
+  coalesce?: Partial<DenseCoalesceOptions>
+  /**
+   * Per-coordinate abort signals (same length as the coordinate list). A
+   * coalesced worker task is cancelled only when EVERY chunk it carries has
+   * aborted; `opts.signal` still aborts everything at once.
+   */
+  signals?: (AbortSignal | undefined)[]
+  /**
+   * Called with the number of worker tasks enqueued — possibly MORE THAN
+   * ONCE per call (additively): range reads dispatch through the cross-call
+   * shard batch, which attributes each physical request once, to the run's
+   * lead item, when the batch flushes.
+   */
+  onDispatch?: (taskCount: number) => void
+}
+
+interface Deferred<T> {
+  promise: Promise<T>
+  resolve: (value: T) => void
+  reject: (error: unknown) => void
+}
+
+function createDeferred<T>(): Deferred<T> {
+  let resolve!: (value: T) => void
+  let reject!: (error: unknown) => void
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res
+    reject = rej
+  })
+  promise.catch(() => {}) // consumers attach their own handlers
+  return { promise, resolve, reject }
+}
+
+/** A signal that fires once EVERY input has aborted (never, if any input is undefined). */
+function whenAllAborted(signals: (AbortSignal | undefined)[]): AbortSignal | undefined {
+  if (signals.length === 0 || signals.some((s) => s === undefined)) return undefined
+  const controller = new AbortController()
+  let remaining = signals.length
+  for (const signal of signals as AbortSignal[]) {
+    if (signal.aborted) {
+      remaining -= 1
+      continue
+    }
+    signal.addEventListener(
+      "abort",
+      () => {
+        remaining -= 1
+        if (remaining === 0) controller.abort()
+      },
+      { once: true },
+    )
+  }
+  if (remaining === 0) controller.abort()
+  return controller.signal
+}
+
+/** The non-per-item arguments of one `workerFetchDecodeMulti` call. Everything
+ * here is covered by `shardBatchKeyFor`, so all items of a flushed run share
+ * one context regardless of which group call contributed them. */
+interface ShardRunContext {
+  pool: GetWorkerOptions["pool"]
+  workerUrl: string | URL | undefined
+  workerStore: S3FetchConfig
+  shardPath: `/${string}`
+  metaId: number
+  codecMeta: CodecChunkMeta
+  requestInit: SerializedRequestInit | undefined
+  textureFidelity: TextureFidelity
+  useShared: boolean
+}
+
+/**
+ * Dispatch one coalesced run (possibly spanning several group calls) as one
+ * worker task + one ranged GET. Cancellation: `whenAllAborted` over every
+ * member's effective signal — the run dies only when every contributing chunk
+ * did. Priority: max of members (WorkerPool runs higher numbers first), so a
+ * merged halo part rides at its co-members' priority.
+ */
+function executeShardRun(ctx: ShardRunContext, run: CoalescedRange<ShardBatchItem>): void {
+  const members = run.items.map((entry) => entry.item)
+  const parts = run.items.map((entry) => ({
+    offset: entry.offset,
+    length: entry.length,
+    actualChunkShape: entry.item.actualChunkShape,
+  }))
+  const runSignal = whenAllAborted(members.map((member) => member.signal))
+  const handle = enqueueWorkerTask<void>(
+    ctx.pool,
+    ctx.workerUrl,
+    runSignal,
+    async (worker) => {
+      const result = await workerFetchDecodeMulti(
+        worker,
+        ctx.workerStore,
+        ctx.shardPath,
+        { offset: run.offset, length: run.length },
+        parts,
+        ctx.metaId,
+        ctx.codecMeta,
+        ctx.requestInit,
+        ctx.textureFidelity,
+        ctx.useShared,
+      )
+      result.chunks.forEach((chunk, k) => members[k].onChunk(chunk ?? undefined))
+      logChunkTiming("[zarr run timing]", {
+        shardPath: ctx.shardPath,
+        parts: run.items.length,
+        rangeBytes: run.length,
+        workerFetchMs: roundTiming(result.timings.fetchMs),
+        workerTotalMs: roundTiming(result.timings.totalWorkerMs),
+        fromHttpCache: result.timings.fromHttpCache,
+        protocol: result.timings.protocol,
+      })
+    },
+    Math.max(...members.map((member) => member.priority)),
+  )
+  handle.promise.catch((error) => {
+    for (const member of members) member.onError(error)
+  })
+}
+
+function edgeShapeOf(arr: { shape: readonly number[] }, chunkShape: number[], coords: readonly number[]): number[] {
+  return coords.map((coord, dim) => Math.min(chunkShape[dim], arr.shape[dim] - coord * chunkShape[dim]))
+}
+
+function fillChunkOf<D extends DataType>(
+  shape: number[],
+  OutputCtr: ReturnType<typeof getTextureOutputConstructor>,
+  fillValue: Scalar<DataType> | null,
+): Chunk<D> {
+  const size = shape.reduce((a, b) => a * b, 1)
+  const data = new OutputCtr(size)
+  if (fillValue != null) data.fill(Number(fillValue))
+  return { data: data as Chunk<D>["data"], shape, stride: get_strides(shape) }
+}
+
+/**
+ * Fetch several chunks of one array, coalescing inner chunks that sit close
+ * together inside the same shard into ONE ranged GET + worker task (decoded
+ * into N chunks by the worker). Returns one promise per coordinate, in order,
+ * synchronously — so callers can register them for in-flight sharing before
+ * any I/O happens.
+ *
+ * Unsharded arrays, cache hits, absent inner chunks (fill) and chunks that end
+ * up alone in their run all take the exact single-chunk path (`getChunkWorker`).
+ */
+export function getChunkGroupWorker<D extends DataType, Store extends Readable>(
+  arr: ZarrArray<D, Store>,
+  coordsList: readonly (readonly number[])[],
+  opts: ChunkGroupOptions<Parameters<Store["get"]>[1]>,
+): Promise<Chunk<D>>[] {
+  const deferreds = coordsList.map(() => createDeferred<Chunk<D>>())
+  const signals = opts.signals ?? coordsList.map(() => undefined)
+  const single = (index: number): void => {
+    getChunkWorker(arr, [...coordsList[index]], { ...opts, signal: signals[index] ?? opts.signal }).then(
+      deferreds[index].resolve,
+      deferreds[index].reject,
+    )
+  }
+
+  void (async () => {
+    let tasks = 0
+    try {
+      throwIfAborted(opts.signal)
+      const storeOpts = withAbortSignal(opts.opts, opts.signal)
+      const meta = await readArrayMetadataCached(arr, storeOpts)
+      if (!meta.sharding || coordsList.length < 2) {
+        coordsList.forEach((_, i) => single(i))
+        tasks = coordsList.length
+        return
+      }
+      const cache = opts.cache ?? DEFAULT_CHUNK_CACHE
+      const textureFidelity = opts.textureFidelity ?? "default"
+      const OutputCtr = getTextureOutputConstructor(meta.codecMeta.data_type, textureFidelity)
+      const chunkShape = meta.codecMeta.chunk_shape
+      // Cache FIRST, synchronously: the decoded-chunk key needs no shard index
+      // (`chunkCacheKeyFor`), so hits resolve before any index read and a
+      // fully-cached group costs zero store round trips.
+      const missIndices: number[] = []
+      for (let i = 0; i < coordsList.length; i++) {
+        const cached = cache.get(chunkCacheKeyFor(arr, meta, coordsList[i]))
+        if (cached) {
+          deferreds[i].resolve(cached as Chunk<D>)
+        } else {
+          missIndices.push(i)
+        }
+      }
+      if (missIndices.length === 0) return
+      // Index reads only for the misses — parallel, deduped per shard by the
+      // index cache's single-flight promises.
+      const locations = new Map<number, ChunkLocation>()
+      await Promise.all(
+        missIndices.map(async (i) => {
+          locations.set(i, await resolveChunkLocation(arr, meta, coordsList[i], storeOpts))
+        }),
+      )
+      const byShard = new Map<string, { offset: number; length: number; item: number }[]>()
+      for (const i of missIndices) {
+        const location = locations.get(i)!
+        if (location.missing) {
+          const fill = fillChunkOf<D>(edgeShapeOf(arr, chunkShape, coordsList[i]), OutputCtr, meta.fillValue)
+          cache.set(location.cacheKey, fill)
+          deferreds[i].resolve(fill)
+          continue
+        }
+        if (!location.range) {
+          single(i)
+          tasks += 1
+          continue
+        }
+        let items = byShard.get(location.chunkPath)
+        if (!items) byShard.set(location.chunkPath, (items = []))
+        items.push({ offset: location.range.offset, length: location.range.length, item: i })
+      }
+
+      if (byShard.size === 0) return
+      if (!isWorkerFetchCapableStore(arr.store)) {
+        throw new Error("Worker chunk loading requires a worker-fetch-capable store")
+      }
+      assertSharedArrayBufferAvailable()
+      const workerStore = await workerFetchConfigFor(arr.store)
+      const metaId = getMetaId(meta.codecMeta)
+      const requestInit = serializeRequestInit(storeOpts as RequestInit | undefined)
+
+      // Range reads route through the cross-call shard batch: same-tick group
+      // calls (neighbouring bricks) contribute to one pending set per
+      // compatible-options key, and the `setTimeout(0)` flush coalesces
+      // ACROSS them. Runs of 1 fall back to the single-chunk path there.
+      const denseOptions: DenseCoalesceOptions = { ...DEFAULT_DENSE_COALESCE, ...opts.coalesce }
+      const useShared = opts.useSharedArrayBuffer !== false
+      for (const [shardPath, items] of byShard) {
+        const ctx: ShardRunContext = {
+          pool: opts.pool,
+          workerUrl: opts.workerUrl,
+          workerStore,
+          shardPath: shardPath as `/${string}`,
+          metaId,
+          codecMeta: meta.codecMeta,
+          requestInit,
+          textureFidelity,
+          useShared,
+        }
+        const batchItems = items.map(({ offset, length, item: i }): ShardBatchItem => {
+          const edge = edgeShapeOf(arr, chunkShape, coordsList[i])
+          const isEdge = edge.some((size, dim) => size !== chunkShape[dim])
+          return {
+            offset,
+            length,
+            actualChunkShape: isEdge ? edge : undefined,
+            priority: opts.priority ?? 0,
+            signal: signals[i] ?? opts.signal,
+            dispatchSingle: () => single(i),
+            onChunk: (chunk) => {
+              const settled: Chunk<D> =
+                (chunk as Chunk<D> | undefined) ??
+                fillChunkOf<D>(edgeShapeOf(arr, chunkShape, coordsList[i]), OutputCtr, meta.fillValue)
+              cache.set(locations.get(i)!.cacheKey, settled)
+              deferreds[i].resolve(settled)
+            },
+            onError: (error) => deferreds[i].reject(error),
+            attributeTasks: (count) => opts.onDispatch?.(count),
+          }
+        })
+        contributeShardItems(
+          shardBatchKeyFor({
+            pool: opts.pool,
+            workerUrl: opts.workerUrl,
+            storeId: getStoreId(arr.store),
+            shardPath,
+            metaId,
+            textureFidelity,
+            useSharedArrayBuffer: useShared,
+            serializedRequestInit: requestInit,
+            coalesce: denseOptions,
+          }),
+          batchItems,
+          denseOptions,
+          (run) => executeShardRun(ctx, run),
+        )
+      }
+    } catch (error) {
+      for (const deferred of deferreds) deferred.reject(error)
+    } finally {
+      opts.onDispatch?.(tasks)
+    }
+  })()
+
+  return deferreds.map((deferred) => deferred.promise)
 }
 
 // ---------------------------------------------------------------------------
@@ -386,10 +862,8 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
   assertSharedArrayBufferAvailable()
 
   const metadataReadStartedAt = performance.now()
-  const { codecMeta, encodeChunkKey, fillValue } = await readArrayMetadataCached(
-    arr,
-    storeOptsWithSignal,
-  )
+  const arrayMeta = await readArrayMetadataCached(arr, storeOptsWithSignal)
+  const { codecMeta, fillValue } = arrayMeta
   const metadataReadMs = performance.now() - metadataReadStartedAt
 
   const actualChunkShape = codecMeta.chunk_shape
@@ -406,26 +880,17 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
   const OutputCtr = getTextureOutputConstructor(correctedCodecMeta.data_type, textureFidelity)
   const metaId = getMetaId(correctedCodecMeta)
 
-  if (!isWorkerFetchCapableStore(arr.store)) {
-    throw new Error("Worker chunk loading requires a worker-fetch-capable store")
-  }
-
-  const workerStore = await workerFetchConfigFor(arr.store)
-  const chunkKey = encodeChunkKey(chunkCoords)
-  const chunkPath = arr.resolve(chunkKey).path
-  const edgeChunkShape = chunkCoords.map((coord, dim) =>
-    Math.min(actualChunkShape[dim], arr.shape[dim] - coord * actualChunkShape[dim]),
-  )
-  const isEdgeChunk = edgeChunkShape.some((size, index) => size !== actualChunkShape[index])
-
-  const cacheKey = createCacheKey(arr, encodeChunkKey, chunkCoords)
+  // Cache FIRST: the decoded-chunk key is synchronous for both layouts (see
+  // `chunkCacheKeyFor`), so a hit skips the store config await AND — for a
+  // sharded array — the shard-index read entirely.
+  const cacheKey = chunkCacheKeyFor(arr, arrayMeta, chunkCoords)
   const cacheLookupStartedAt = performance.now()
   const cachedChunk = cache.get(cacheKey)
   const cacheLookupMs = performance.now() - cacheLookupStartedAt
 
   if (cachedChunk) {
     logChunkTiming("[zarr chunk timing]", {
-      chunkPath,
+      chunkPath: chunkStoragePathFor(arr, arrayMeta, chunkCoords),
       chunkCoords: [...chunkCoords],
       cacheStatus: "hit",
       metadataReadMs: roundTiming(metadataReadMs),
@@ -451,6 +916,65 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
     return cachedChunk as Chunk<D>
   }
 
+  if (!isWorkerFetchCapableStore(arr.store)) {
+    throw new Error("Worker chunk loading requires a worker-fetch-capable store")
+  }
+
+  const workerStore = await workerFetchConfigFor(arr.store)
+  // Sharded: one deduped index read per shard, then a Range inside it. Reached
+  // only on a cache miss — the key above did not need the index.
+  const location = await resolveChunkLocation(arr, arrayMeta, chunkCoords, storeOptsWithSignal)
+  const { chunkPath } = location
+  const edgeChunkShape = chunkCoords.map((coord, dim) =>
+    Math.min(actualChunkShape[dim], arr.shape[dim] - coord * actualChunkShape[dim]),
+  )
+  const isEdgeChunk = edgeChunkShape.some((size, index) => size !== actualChunkShape[index])
+
+  const makeFillChunk = (): Chunk<D> => {
+    const fillChunkStrides = get_strides(edgeChunkShape)
+    const fillChunkSize = edgeChunkShape.reduce(
+      (accumulator: number, dimension: number) => accumulator * dimension,
+      1,
+    )
+    const chunkData = new OutputCtr(fillChunkSize)
+    if (fillValue != null) {
+      chunkData.fill(Number(fillValue))
+    }
+    return {
+      data: chunkData as Chunk<D>["data"],
+      shape: edgeChunkShape,
+      stride: fillChunkStrides,
+    }
+  }
+
+  if (location.missing) {
+    // The shard index says this inner chunk was never written: fill without
+    // a worker round trip (and without the "object missing" warning — absence
+    // inside a shard is the normal encoding of an all-fill chunk).
+    const fillStartedAt = performance.now()
+    const fillChunk = makeFillChunk()
+    cache.set(cacheKey, fillChunk)
+    logChunkTiming("[zarr chunk timing]", {
+      chunkPath,
+      chunkCoords: [...chunkCoords],
+      cacheStatus: "missing-fill",
+      metadataReadMs: roundTiming(metadataReadMs),
+      cacheLookupMs: roundTiming(cacheLookupMs),
+      queueWaitMs: 0,
+      workerMetaInitMs: 0,
+      workerRoundTripMs: 0,
+      workerFetchMs: 0,
+      workerDecodeMs: 0,
+      workerReshapeMs: 0,
+      workerPromoteMs: 0,
+      workerTotalMs: 0,
+      fillChunkMs: roundTiming(performance.now() - fillStartedAt),
+      mainThreadWriteMs: 0,
+      totalMs: roundTiming(performance.now() - startedAt),
+    })
+    return fillChunk
+  }
+
   const enqueuedAt = performance.now()
   const taskPriority = opts.priority ?? 0
   const handle = enqueueWorkerTask(
@@ -465,7 +989,9 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
         chunkPath,
         metaId,
         correctedCodecMeta,
-        serializeRequestInit(storeOptsWithSignal as RequestInit | undefined),
+        serializeRequestInit(
+          requestInitFor(storeOptsWithSignal as RequestInit | undefined, location),
+        ),
         isEdgeChunk ? edgeChunkShape : undefined,
         // Explicit defaults for the trailing positionals: this call previously
         // stopped at 7 args, silently dropping the caller's useSharedArrayBuffer
@@ -483,20 +1009,7 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
       } else {
         warnFillChunk(chunkPath, fillValue)
         const fillStartedAt = performance.now()
-        const fillChunkStrides = get_strides(edgeChunkShape)
-        const fillChunkSize = edgeChunkShape.reduce(
-          (accumulator: number, dimension: number) => accumulator * dimension,
-          1,
-        )
-        const chunkData = new OutputCtr(fillChunkSize)
-        if (fillValue != null) {
-          chunkData.fill(Number(fillValue))
-        }
-        chunkToReturn = {
-          data: chunkData as Chunk<D>["data"],
-          shape: edgeChunkShape,
-          stride: fillChunkStrides,
-        }
+        chunkToReturn = makeFillChunk()
         cache.set(cacheKey, chunkToReturn)
         fillChunkMs = performance.now() - fillStartedAt
       }
@@ -518,6 +1031,8 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
         fillChunkMs: roundTiming(fillChunkMs),
         mainThreadWriteMs: 0,
         totalMs: roundTiming(performance.now() - startedAt),
+        fromHttpCache: workerTimings.fromHttpCache,
+        protocol: workerTimings.protocol,
       })
 
       return chunkToReturn
@@ -598,10 +1113,8 @@ export async function getWorker<
 
   // Read metadata from store — single read, single parse
   const metadataReadStartedAt = performance.now()
-  const { codecMeta, encodeChunkKey, fillValue } = await readArrayMetadataCached(
-    arr,
-    storeOptsWithSignal,
-  )
+  const arrayMeta = await readArrayMetadataCached(arr, storeOptsWithSignal)
+  const { codecMeta, fillValue } = arrayMeta
   const metadataReadMs = performance.now() - metadataReadStartedAt
 
   const actualChunkShape = codecMeta.chunk_shape
@@ -648,19 +1161,23 @@ export async function getWorker<
   const tasks: Array<WorkerPoolTaskHandle<void>> = []
   const taskPriority = opts.priority ?? 0
 
+  // Sync pass first: cache hits copy straight into the output (the key needs
+  // no shard index — `chunkCacheKeyFor`); misses are collected and their
+  // locations resolved in ONE parallel batch below, so a selection spanning N
+  // cold shards costs one round of index reads instead of N serial ones.
+  const pending: Array<{
+    chunk_coords: number[]
+    mapping: Parameters<typeof setter.set_from_chunk>[2]
+    cacheKey: string
+    chunkStartedAt: number
+    cacheLookupMs: number
+  }> = []
+
   for (const { chunk_coords, mapping } of indexer) {
     const chunkStartedAt = performance.now()
-    const chunkKey = encodeChunkKey(chunk_coords)
-    const chunkPath = arr.resolve(chunkKey).path
-
-    // Compute edge chunk shape: min(chunk_shape[d], array_shape[d] - coord * chunk_shape[d])
-    const edgeChunkShape = chunk_coords.map((coord, dim) =>
-      Math.min(chunkShape[dim], arr.shape[dim] - coord * chunkShape[dim]),
-    )
-    const isEdgeChunk = edgeChunkShape.some((s, i) => s !== chunkShape[i])
+    const cacheKey = chunkCacheKeyFor(arr, arrayMeta, chunk_coords)
 
     // Check cache before building the task — cache hits skip the worker entirely
-    const cacheKey = createCacheKey(arr, encodeChunkKey, chunk_coords)
     const cacheLookupStartedAt = performance.now()
     const cachedChunk = cache.get(cacheKey)
     const cacheLookupMs = performance.now() - cacheLookupStartedAt
@@ -672,7 +1189,7 @@ export async function getWorker<
       setter.set_from_chunk(out, cachedChunk as Chunk<D>, mapping)
       const mainThreadWriteMs = performance.now() - writeStartedAt
       logChunkTiming("[zarr chunk timing]", {
-        chunkPath,
+        chunkPath: chunkStoragePathFor(arr, arrayMeta, chunk_coords),
         chunkCoords: [...chunk_coords],
         cacheStatus: "hit",
         metadataReadMs: roundTiming(metadataReadMs),
@@ -687,6 +1204,65 @@ export async function getWorker<
         workerTotalMs: 0,
         fillChunkMs: 0,
         mainThreadWriteMs: roundTiming(mainThreadWriteMs),
+        totalMs: roundTiming(performance.now() - chunkStartedAt),
+      })
+      continue
+    }
+
+    pending.push({ chunk_coords, mapping, cacheKey, chunkStartedAt, cacheLookupMs })
+  }
+
+  const pendingLocations = await Promise.all(
+    pending.map((entry) =>
+      resolveChunkLocation(arr, arrayMeta, entry.chunk_coords, storeOptsWithSignal),
+    ),
+  )
+
+  for (let p = 0; p < pending.length; p++) {
+    const { chunk_coords, mapping, cacheKey, chunkStartedAt, cacheLookupMs } = pending[p]
+    const location = pendingLocations[p]
+    const { chunkPath } = location
+
+    // Compute edge chunk shape: min(chunk_shape[d], array_shape[d] - coord * chunk_shape[d])
+    const edgeChunkShape = chunk_coords.map((coord, dim) =>
+      Math.min(chunkShape[dim], arr.shape[dim] - coord * chunkShape[dim]),
+    )
+    const isEdgeChunk = edgeChunkShape.some((s, i) => s !== chunkShape[i])
+
+    if (location.missing) {
+      // Sharded array, inner chunk absent from the shard index: fill on the
+      // main thread — no object to fetch, so no worker task.
+      const fillStartedAt = performance.now()
+      const fillChunkSize = edgeChunkShape.reduce((a: number, b: number) => a * b, 1)
+      const chunkData = new OutputCtr(fillChunkSize)
+      if (fillValue != null) {
+        chunkData.fill(Number(fillValue))
+      }
+      const fillChunk: Chunk<D> = {
+        data: chunkData as Chunk<D>["data"],
+        shape: edgeChunkShape,
+        stride: get_strides(edgeChunkShape),
+      }
+      cache.set(cacheKey, fillChunk)
+      const fillChunkMs = performance.now() - fillStartedAt
+      const writeStartedAt = performance.now()
+      setter.set_from_chunk(out, fillChunk, mapping)
+      logChunkTiming("[zarr chunk timing]", {
+        chunkPath,
+        chunkCoords: [...chunk_coords],
+        cacheStatus: "missing-fill",
+        metadataReadMs: roundTiming(metadataReadMs),
+        cacheLookupMs: roundTiming(cacheLookupMs),
+        queueWaitMs: 0,
+        workerMetaInitMs: 0,
+        workerRoundTripMs: 0,
+        workerFetchMs: 0,
+        workerDecodeMs: 0,
+        workerReshapeMs: 0,
+        workerPromoteMs: 0,
+        workerTotalMs: 0,
+        fillChunkMs: roundTiming(fillChunkMs),
+        mainThreadWriteMs: roundTiming(performance.now() - writeStartedAt),
         totalMs: roundTiming(performance.now() - chunkStartedAt),
       })
       continue
@@ -707,7 +1283,9 @@ export async function getWorker<
             chunkPath,
             metaId,
             correctedCodecMeta,
-            serializeRequestInit(storeOptsWithSignal as RequestInit | undefined),
+            serializeRequestInit(
+              requestInitFor(storeOptsWithSignal as RequestInit | undefined, location),
+            ),
             isEdgeChunk ? edgeChunkShape : undefined,
           )
 
@@ -758,6 +1336,8 @@ export async function getWorker<
             fillChunkMs: roundTiming(fillChunkMs),
             mainThreadWriteMs: roundTiming(mainThreadWriteMs),
             totalMs: roundTiming(performance.now() - chunkStartedAt),
+            fromHttpCache: workerTimings.fromHttpCache,
+            protocol: workerTimings.protocol,
           })
         },
         taskPriority,

@@ -371,7 +371,8 @@ export class StepScaleDriver {
 
   constructor(
     private readonly viewStoreApi: {
-      getState(): { cameraMoving: boolean };
+      // `interacting` optional so pre-existing test fixtures stay valid.
+      getState(): { cameraMoving: boolean; interacting?: boolean };
       subscribe(listener: () => void): () => void;
     },
     /** Injectable for tests; the module singleton in production. */
@@ -380,10 +381,13 @@ export class StepScaleDriver {
 
   private snapshot(): StepScaleInputs {
     const g = this.governor;
+    const view = this.viewStoreApi.getState();
     return {
       profile: g.getProfile(),
       tier: g.getTier(),
-      active: this.viewStoreApi.getState().cameraMoving || g.isStreaming(),
+      // A live window drag (`interacting`) degrades exactly as camera motion
+      // does — the settle-refine ladder restores quality on its falling edge.
+      active: view.cameraMoving || !!view.interacting || g.isStreaming(),
       loadFactor: g.getLoadFactor(),
       volumePassCount: g.getVolumePassCount(),
       settleRefineStage: g.getSettleRefineStage(),

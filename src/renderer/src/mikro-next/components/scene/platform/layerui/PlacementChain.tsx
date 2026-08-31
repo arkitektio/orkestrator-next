@@ -6,6 +6,7 @@ import {
 import { MikroCoordinateSystem } from "@/linkers";
 import { describeTransformation } from "@/mikro-next/components/coordinates/types";
 import { ChevronRight, Waypoints } from "lucide-react";
+import { memo } from "react";
 import { LayerState, useSceneStore } from "../stores/sceneStore";
 
 type SystemRef = { id: string; name?: string | null };
@@ -113,25 +114,33 @@ export const PlacementChain = ({ layer }: { layer: LayerState }) => {
  * unfolded card. The popover carries its own dark surface because the chain is
  * scene chrome (white-on-black pills), not themed form UI.
  */
-export const PlacementPopover = ({ layer }: { layer: LayerState }) => (
-  <Popover>
-    <PopoverTrigger asChild>
-      <button
-        className="flex items-center gap-1 self-start rounded border border-white/10 px-1.5 py-0.5 text-[10px] text-white/50 transition-colors hover:border-white/25 hover:text-white/90"
-        title="Which coordinate systems this layer passes through on its way into the scene's world"
-        onClick={(e) => e.stopPropagation()}
+export const PlacementPopover = memo(
+  ({ layer }: { layer: LayerState }) => (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          className="flex items-center gap-1 self-start rounded border border-white/10 px-1.5 py-0.5 text-[10px] text-white/50 transition-colors hover:border-white/25 hover:text-white/90"
+          title="Which coordinate systems this layer passes through on its way into the scene's world"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Waypoints className="h-3 w-3" />
+          Placement
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        className="w-72 border-white/10 bg-black/90 p-2 text-white/85 backdrop-blur-md"
       >
-        <Waypoints className="h-3 w-3" />
-        Placement
-      </button>
-    </PopoverTrigger>
-    <PopoverContent
-      align="start"
-      className="w-72 border-white/10 bg-black/90 p-2 text-white/85 backdrop-blur-md"
-    >
-      <PlacementChain layer={layer} />
-    </PopoverContent>
-  </Popover>
+        <PlacementChain layer={layer} />
+      </PopoverContent>
+    </Popover>
+  ),
+  // The chain reads only the lens's source system and `pathToWorld` — both
+  // spread-preserved by the cards' live preview folds, so a contrast drag
+  // must not re-diff the popover per tick inside an unfolded card.
+  (prev, next) =>
+    prev.layer.lens === next.layer.lens && prev.layer.pathToWorld === next.layer.pathToWorld,
 );
+PlacementPopover.displayName = "PlacementPopover";
 
 export default PlacementChain;

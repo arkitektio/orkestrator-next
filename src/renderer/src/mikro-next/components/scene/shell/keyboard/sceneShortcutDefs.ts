@@ -1,3 +1,4 @@
+import { DESIGN_TOOLS } from "../../features/meshDesign/tools/registry";
 /**
  * Every key the scene answers to, in one place.
  *
@@ -46,7 +47,17 @@ export const SCENE_SHORTCUTS: SceneShortcutGroup[] = [
     shortcuts: [
       { keys: ["A"], description: "Hold to annotate" },
       { keys: ["P"], description: "Hold to probe" },
+      { keys: ["M"], description: "Hold to design meshes" },
       { keys: ["D"], description: "Draw a path from the probe" },
+    ],
+  },
+  {
+    title: "Mesh design",
+    shortcuts: [
+      // One entry per registered tool — a tool cannot exist half-documented.
+      ...DESIGN_TOOLS.map((tool) => tool.shortcut),
+      { keys: ["⌘", "Z"], description: "Undo the last sculpt (⇧ redoes)" },
+      { keys: ["Esc"], description: "Cancel the stroke in progress" },
     ],
   },
   {

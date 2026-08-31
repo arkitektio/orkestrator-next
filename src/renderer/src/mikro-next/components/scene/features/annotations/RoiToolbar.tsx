@@ -14,7 +14,6 @@ import {
   Box,
   Brush,
   Crosshair,
-  Droplet,
   Minus,
   MousePointer2,
   Pentagon,
@@ -46,9 +45,8 @@ const TOOLS: {
   // The skeleton brush (3D-only): paint a stroke over a bright structure,
   // the extracted centerline becomes a PATH annotation.
   { tool: "BRUSH", label: "Brush", icon: Brush },
-  // The smooth blob (3D-only): click a probed point, a smoothed surface
-  // grows around the bright structure until it closes.
-  { tool: "BLOB", label: "Blob", icon: Droplet },
+  // The smooth blob lives in DESIGN mode: a grown surface is a mesh, not an
+  // annotation (`features/meshDesign/ui/MeshDesignToolbar`).
 ];
 
 export const RoiToolbar = () => {

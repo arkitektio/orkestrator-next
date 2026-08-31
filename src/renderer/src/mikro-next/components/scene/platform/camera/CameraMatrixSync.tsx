@@ -117,8 +117,10 @@ export const CameraMatrixSync = ({
     // cheap-quality. A damped coast keeps changing the matrix long after the
     // gesture, and treating that as motion held the whole scene at half
     // resolution until it stopped.
+    // Wall clock, NOT r3f's `clock` — see the note above the settle timer.
+    const nowMs = performance.now();
     const moving = isCameraMoving(
-      cameraInteraction.isInteracting(),
+      cameraInteraction.isInteracting(nowMs),
       sizeChanged ? Number.POSITIVE_INFINITY : matrixRelativeDelta(cur, prev),
     );
 
@@ -166,7 +168,6 @@ export const CameraMatrixSync = ({
     // leading emission below is suppressed for the whole recording — which is
     // exactly how a report of continuous panning came back with almost no
     // replans. The trailing settle already uses wall time (setTimeout).
-    const nowMs = performance.now();
     lastChangeAtRef.current = nowMs;
 
     // 6a. Trailing settle: guarantees a final, crisp update once the camera
@@ -176,13 +177,24 @@ export const CameraMatrixSync = ({
     if (timeoutRef.current === null) {
       const armSettle = (delayMs: number) => {
         timeoutRef.current = setTimeout(() => {
-          const quietForMs = performance.now() - lastChangeAtRef.current;
-          if (quietForMs >= settleMs) {
-            timeoutRef.current = null;
-            emit(false); // settled — matrixRef/pending hold the last change
-          } else {
+          const now = performance.now();
+          const quietForMs = now - lastChangeAtRef.current;
+          if (quietForMs < settleMs) {
             armSettle(settleMs - quietForMs);
+            return;
           }
+          // Quiet matrix, but the user is still driving: a wheel hold (the
+          // matrix is still between trackpad ticks) or a paused drag. Publishing
+          // `false` here would flip cameraMoving mid-gesture — exactly the
+          // flicker the hold exists to prevent — so wait the hold out instead.
+          // A drag's `end` produces no matrix change of its own, so poll at the
+          // settle cadence until it lets go.
+          if (cameraInteraction.isInteracting(now)) {
+            armSettle(Math.max(settleMs, cameraInteraction.holdRemainingMs(now)));
+            return;
+          }
+          timeoutRef.current = null;
+          emit(false); // settled — matrixRef/pending hold the last change
         }, delayMs);
       };
       armSettle(settleMs);

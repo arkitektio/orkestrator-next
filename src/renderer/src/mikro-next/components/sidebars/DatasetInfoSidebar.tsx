@@ -37,6 +37,13 @@ export const DatasetInfoSidebar = ({ dataset }: { dataset: PageDataset }) => {
   const nbytes = datasetNbytes(dataset.dataArrays);
   // `level` is a field, not a position — the API does not promise order.
   const levels = [...dataset.dataArrays].sort((a, b) => a.level - b.level);
+  // Storage layout off the base level, like the dtype: `store.chunks` is the
+  // effective INNER chunk shape (the fetch/brick unit), `store.shards` the
+  // outer storage object for a sharding_indexed array — null when unsharded.
+  const baseArray =
+    dataset.dataArrays.find((array) => array.level === 0) ?? dataset.dataArrays[0];
+  const chunkShape = baseArray?.store.chunks;
+  const shardShape = baseArray?.store.shards;
 
   // cache-and-network so reopening the tab after a task ran shows what it
   // produced rather than the answer from before it started.
@@ -66,6 +73,23 @@ export const DatasetInfoSidebar = ({ dataset }: { dataset: PageDataset }) => {
           <div className="flex items-baseline gap-2">
             <span className="text-xs text-muted-foreground">Dtype</span>
             <span className="font-mono text-xs">{dtype}</span>
+          </div>
+        )}
+        {chunkShape && (
+          <div className="flex items-baseline gap-2">
+            <span className="text-xs text-muted-foreground">Chunks</span>
+            <span className="font-mono text-xs">
+              {formatShape(dataset.axisNames, chunkShape)}
+            </span>
+          </div>
+        )}
+        {/* Only when sharded: no row is "unsharded", not a missing fact. */}
+        {shardShape && (
+          <div className="flex items-baseline gap-2">
+            <span className="text-xs text-muted-foreground">Shards</span>
+            <span className="font-mono text-xs">
+              {formatShape(dataset.axisNames, shardShape)}
+            </span>
           </div>
         )}
         {nbytes !== undefined && (

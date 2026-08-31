@@ -31,6 +31,7 @@ export const LayerRow = ({
   onFocus,
   onRemove,
   embedded = false,
+  compact = false,
   graphDirty = false,
   savingGraph = false,
   onSaveGraph,
@@ -48,6 +49,14 @@ export const LayerRow = ({
    * renders the flex header inline.
    */
   embedded?: boolean;
+  /**
+   * Wear the COMPACT card dialect: the same 5x5 leading tile, 11px name and
+   * h-5 icon buttons the collection-backed cards (annotation, label, mesh)
+   * are built from. Opt-in rather than the default because the image card's
+   * row is the one that has to survive a narrow in-viewport column, where the
+   * roomier hit areas are what make it usable.
+   */
+  compact?: boolean;
   /** The render graph has unsaved edits — surfaces a tiny Save button. */
   graphDirty?: boolean;
   /** Save mutation in flight (disables the button). */
@@ -69,6 +78,11 @@ export const LayerRow = ({
     (s) => effectiveProbeLayerId(probeLayerId, s.layers) === layer.id,
   );
   const setProbeLayerId = useViewerStore((s) => s.setProbeLayerId);
+  // One size vocabulary per variant, so the row cannot end up half-compact.
+  const buttonSize = compact
+    ? "h-5 w-5 p-0"
+    : "h-6 w-6 p-0 @md/card:h-7 @md/card:w-7";
+  const iconMuted = compact ? "text-white/45 hover:text-white/90" : "text-white/70 hover:text-white";
 
   const row = (
     <div
@@ -83,11 +97,22 @@ export const LayerRow = ({
       } ${hidden ? "opacity-50" : ""}`}
       onClick={onSelect}
     >
+      {/* The leading mark. Compact reads it as the other cards' icon TILE —
+          same geometry as their kind icon — except the tile is the layer's
+          own colormap, which says more than a generic glyph would. */}
       <span
-        className="h-3 w-3 shrink-0 rounded-full ring-1 ring-black/30"
+        className={
+          compact
+            ? "h-5 w-5 shrink-0 rounded ring-1 ring-white/10"
+            : "h-3 w-3 shrink-0 rounded-full ring-1 ring-black/30"
+        }
         style={{ background: layerSwatchBackground(layer.channels) }}
       />
-      <span className="min-w-0 flex-1 truncate text-xs font-medium text-white/90">
+      <span
+        className={`min-w-0 flex-1 truncate font-medium text-white/90 ${
+          compact ? "text-[11px]" : "text-xs"
+        }`}
+      >
         {label}
       </span>
       {/* Secondary to the name: the flavor badge only competes for width once
@@ -122,8 +147,8 @@ export const LayerRow = ({
           size="xs"
           className={
             isProbeTarget
-              ? "h-6 w-6 p-0 text-sky-300 hover:text-sky-200 @md/card:h-7 @md/card:w-7"
-              : "h-6 w-6 p-0 text-white/70 hover:text-white @md/card:h-7 @md/card:w-7"
+              ? `${buttonSize} text-sky-300 hover:text-sky-200`
+              : `${buttonSize} ${iconMuted}`
           }
           // A hidden layer draws no mesh, so it can answer no probe — pinning
           // it is merely pointless now (the target derivation falls back to
@@ -151,7 +176,7 @@ export const LayerRow = ({
         <Button
           variant="ghost"
           size="xs"
-          className="h-6 w-6 p-0 text-white/70 hover:text-white @md/card:h-7 @md/card:w-7"
+          className={`${buttonSize} ${iconMuted}`}
           title="Fit camera to layer"
           onClick={(e) => {
             e.stopPropagation();
@@ -163,7 +188,7 @@ export const LayerRow = ({
         <Button
           variant="ghost"
           size="xs"
-          className="h-6 w-6 p-0 text-white/70 hover:text-white @md/card:h-7 @md/card:w-7"
+          className={`${buttonSize} ${iconMuted}`}
           title="Toggle visibility"
           onClick={(e) => {
             e.stopPropagation();
@@ -180,7 +205,9 @@ export const LayerRow = ({
           <Button
             variant="ghost"
             size="xs"
-            className="h-6 w-6 p-0 text-white/70 hover:text-red-400 @md/card:h-7 @md/card:w-7"
+            className={`${buttonSize} ${
+              compact ? "text-white/35" : "text-white/70"
+            } hover:text-red-400`}
             title="Remove layer from scene"
             onClick={(e) => {
               e.stopPropagation();

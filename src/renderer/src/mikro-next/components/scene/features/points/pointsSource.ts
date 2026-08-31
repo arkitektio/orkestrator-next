@@ -14,6 +14,7 @@ import type { ParquetStoreLike } from "@/mikro-next/lib/attributes/attributeType
 import { readPointPositions } from "@/mikro-next/lib/attributes/columnarReads";
 import type { ColumnLutEntryColorBy } from "../../platform/attributes/columnLut";
 import { valueWindowOf } from "../../platform/attributes/valueWindow";
+import { resolveTimeline } from "../../platform/model/timeline";
 
 /**
  * The byte budget for one point layer's GPU-resident data.
@@ -28,7 +29,16 @@ import { valueWindowOf } from "../../platform/attributes/valueWindow";
  * has none, so aggregation would have to be invented rather than reached for.
  */
 export const POINT_MAX_BYTES = 16 * 1024 * 1024;
+/**
+ * Position `xy` f32 (8 B) + value f32 (4 B). A timed table adds a timeline-index
+ * f32 per point, which `bytesEachFor` accounts for — the budget refusal quotes a
+ * real number or it is not a budget.
+ */
 export const POINT_BYTES_EACH = 12;
+/** With a time column each point carries one more f32 (its timeline index). */
+export const POINT_TIME_BYTES_EACH = 4;
+export const bytesEachFor = (timed: boolean): number =>
+  POINT_BYTES_EACH + (timed ? POINT_TIME_BYTES_EACH : 0);
 export const POINT_MAX_COUNT = Math.floor(POINT_MAX_BYTES / POINT_BYTES_EACH);
 
 export type PointGeometry = {
@@ -39,9 +49,27 @@ export type PointGeometry = {
   count: number;
   /** `objectId -> instance index`, so a value keyed by id finds its point. */
   slotOf: (objectId: number) => number;
+  /**
+   * Per-point TIMELINE INDEX, parallel to `positions`. Null when the table
+   * declares no time column — which is the common case, and the one where the
+   * cull pass must behave exactly as it always did.
+   *
+   * Indices rather than raw t, so this layer's `t` scrubber is the same scrubber
+   * an image's t axis drives. See `platform/model/timeline.ts`.
+   */
+  times: Float32Array | null;
+  /** The distinct times observed, ascending. Null with no time column. */
+  timeline: Float64Array | null;
 };
 
-export type PointColumns = { key: string; x: string; y: string; z?: string | null };
+export type PointColumns = {
+  key: string;
+  x: string;
+  y: string;
+  z?: string | null;
+  /** The time column, if the table declares one. Read in the same scan. */
+  t?: string | null;
+};
 
 /**
  * Read every point's position, once.
@@ -58,10 +86,11 @@ export const loadPointGeometry = async (
   if (!read) return null;
 
   const count = read.count;
-  if (count > POINT_MAX_COUNT) {
+  const bytesEach = bytesEachFor(read.t !== null);
+  if (count * bytesEach > POINT_MAX_BYTES) {
     return {
       error:
-        `this table holds ${count.toLocaleString()} points, which is ${Math.round((count * POINT_BYTES_EACH) / 1e6)} MB of positions and values ` +
+        `this table holds ${count.toLocaleString()} points, which is ${Math.round((count * bytesEach) / 1e6)} MB of positions and values ` +
         `against a budget of ${Math.round(POINT_MAX_BYTES / 1e6)} MB — no points are drawn. Drawing a subset instead would misrepresent the density.`,
     };
   }
@@ -79,7 +108,18 @@ export const loadPointGeometry = async (
   const slots = new Map<number, number>();
   for (let index = 0; index < count; index += 1) slots.set(read.ids[index], index);
 
-  return { positions, stride, count, slotOf: (objectId) => slots.get(objectId) ?? -1 };
+  // Resolved in the same pass as the positions, from the same scan, so the two are
+  // structurally aligned rather than aligned by coincidence.
+  const resolved = resolveTimeline(read.t);
+
+  return {
+    positions,
+    stride,
+    count,
+    slotOf: (objectId) => slots.get(objectId) ?? -1,
+    times: resolved?.rowIndices ?? null,
+    timeline: resolved?.timeline ?? null,
+  };
 };
 
 export type PointValues = {

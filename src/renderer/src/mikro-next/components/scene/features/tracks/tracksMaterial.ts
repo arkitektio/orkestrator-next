@@ -49,23 +49,28 @@ import * as TSLTyped from "three/tsl";
 // GRAPH is typed dynamically; this module's PUBLIC surface — the uniform-node
 // record the layer writes to — is hand-typed below.
 const TSL = TSLTyped as any;
-const { Fn, attribute, clamp, float, max, mix, texture, uniform, vec2, vec3 } = TSL;
+const { Fn, attribute, clamp, float, max, mix, texture, uniform, vec3 } = TSL;
 /* eslint-enable @typescript-eslint/no-explicit-any */
+
+import {
+  createMeasureAppearance,
+  disposeMeasurePalette,
+  identityPaletteTexture,
+  measureRampColor,
+  setMeasurePalette,
+  type MeasureAppearanceNodes,
+} from "../../platform/gpu/measurePalette";
 
 /**
  * The uniform nodes the layer component writes to. `any` for the reason the
  * label material gives: a TSL uniform node carries the whole operator surface at
  * runtime, and a `{ value }` type only ever described the slot a setter writes.
  */
-export type TrackMaterialNodes = {
+export type TrackMaterialNodes = MeasureAppearanceNodes & {
   /** The scene's current timepoint, in the track table's own t units. */
   uCurrentT: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   /** Tail length in those same units. **Zero or less draws every segment.** */
   uTailWindow: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-  uClimMin: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-  uClimMax: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-  /** 0 = flat `materialColor`, 1 = the colormap. */
-  uColorize: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   uOpacity: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   /**
    * The bound palette row, as a TSL texture node. `any` for the same reason the
@@ -82,18 +87,6 @@ export type TrackMaterialBundle = {
   material: Line2NodeMaterial;
   nodes: TrackMaterialNodes;
   dispose: () => void;
-};
-
-/** 1×1 white, so an uncoloured layer draws its flat colour rather than black. */
-const identityPalette = (): THREE.DataTexture => {
-  const texture = new THREE.DataTexture(
-    new Uint8Array([255, 255, 255, 255]),
-    1,
-    1,
-    THREE.RGBAFormat,
-  );
-  texture.needsUpdate = true;
-  return texture;
 };
 
 export const createTrackMaterial = (options: {
@@ -124,13 +117,11 @@ export const createTrackMaterial = (options: {
   // (`passVisibility.ts` gates on `isMesh`).
   material.depthWrite = false;
 
-  const base = identityPalette();
+  const base = identityPaletteTexture();
   const nodes: TrackMaterialNodes = {
     uCurrentT: uniform(0),
     uTailWindow: uniform(0),
-    uClimMin: uniform(0),
-    uClimMax: uniform(1),
-    uColorize: uniform(options.colorize ? 1 : 0),
+    ...createMeasureAppearance(options.colorize ? 1 : 0),
     uOpacity: uniform(1),
     palette: texture(base),
     identityPalette: base,
@@ -143,10 +134,7 @@ export const createTrackMaterial = (options: {
   const instanceValue = attribute("instanceValue", "float");
 
   material.lineColorNode = Fn(() => {
-    const span = max(nodes.uClimMax.sub(nodes.uClimMin), float(1e-9));
-    const ramp = clamp(instanceValue.sub(nodes.uClimMin).div(span), 0.0, 1.0);
-    // Sampled at the row's centre; the palette is 256×1.
-    const mapped = nodes.palette.sample(vec2(ramp, 0.5)).rgb;
+    const mapped = measureRampColor(instanceValue, nodes, nodes.palette);
     return mix(vec3(1.0, 1.0, 1.0), mapped, nodes.uColorize);
   })();
 
@@ -172,45 +160,22 @@ export const createTrackMaterial = (options: {
     material,
     nodes,
     dispose: () => {
-      const bound = nodes.palette.value as THREE.DataTexture;
-      if (bound !== base) bound.dispose();
-      base.dispose();
+      disposeMeasurePalette(nodes.palette, base);
       material.dispose();
     },
   };
 };
 
 /**
- * Swap the colormap row, ADOPTING ITS BYTES IN PLACE when the size matches.
- *
- * Copied from `labelNodeMaterials.setLabelColorStyle` for the reason it records:
- * under WebGPU, rebinding and disposing leaves the bind group pointing at a
- * destroyed `GPUTexture`, which three silently replaces with white. That is also
- * the shape of the live bug in `pointsMaterial.ts`, where the real row is
- * written to `material.userData` and never bound at all — which this module
- * deliberately does not imitate.
+ * Swap the colormap row, ADOPTING ITS BYTES IN PLACE when the size matches —
+ * the shared `setMeasurePalette` dance (see `measurePalette.ts` for why the
+ * bound texture object must survive under WebGPU). Null is a no-op here: the
+ * layer always has SOME colormap and never asks to go back to the identity.
  */
 export const setTrackPalette = (
   nodes: TrackMaterialNodes,
   palette: THREE.DataTexture | null,
 ): void => {
   if (!palette) return;
-  const bound = nodes.palette.value as THREE.DataTexture;
-  if (bound === palette) return;
-
-  const boundImage = bound.image as { data?: Uint8Array } | undefined;
-  const nextImage = palette.image as { data?: Uint8Array } | undefined;
-  if (
-    bound !== nodes.identityPalette &&
-    boundImage?.data &&
-    nextImage?.data &&
-    boundImage.data.length === nextImage.data.length
-  ) {
-    boundImage.data.set(nextImage.data);
-    bound.needsUpdate = true;
-    palette.dispose();
-    return;
-  }
-  if (bound !== nodes.identityPalette) bound.dispose();
-  nodes.palette.value = palette;
+  setMeasurePalette(nodes.palette, nodes.identityPalette, palette);
 };

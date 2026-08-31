@@ -17,7 +17,51 @@ import {
  * of PROBE. Camera behaviour that used to be an exclusive mode is now composable
  * booleans below.
  */
-export type InteractionMode = "NAVIGATE" | "ANNOTATE" | "PROBE";
+/**
+ * DESIGN is the mesh designer: brush/blob extractions become meshes in a
+ * session (`features/meshDesign`), committed together as one fabriks mesh
+ * collection rather than as annotations. 3D-only, like the tools it hosts.
+ */
+export type InteractionMode = "NAVIGATE" | "ANNOTATE" | "PROBE" | "DESIGN";
+
+/**
+ * The DESIGN-mode tool vocabulary. DESIGN navigates like NAVIGATE — the
+ * camera never fights the brush — and only a HELD key arms exactly one tool
+ * (`designTool`, tracked here from the keyboard controller) so the volume
+ * layer arms its probe handlers, and the camera releases the left button,
+ * only while a key is down. The ids and their gesture classes live on the
+ * PLATFORM because the volume layer and the camera must branch on them; the
+ * tools themselves — labels, keys, behaviour — live in
+ * `features/meshDesign/tools/registry.ts`.
+ */
+export type DesignToolId =
+  | "brush"
+  | "blob"
+  | "carve"
+  | "wand"
+  | "stamp"
+  | "sculpt"
+  | "trim"
+  | "lift"
+  | "bridge"
+  | "split";
+
+/** Who captures a tool's gesture; see `meshDesign/tools/registry.ts`. */
+export const DESIGN_TOOL_GESTURES: Record<
+  DesignToolId,
+  "volume-stroke" | "volume-click" | "surface" | "screen"
+> = {
+  brush: "volume-stroke",
+  carve: "volume-stroke",
+  blob: "volume-click",
+  wand: "volume-click",
+  lift: "volume-click",
+  bridge: "volume-click",
+  stamp: "surface",
+  sculpt: "surface",
+  split: "surface",
+  trim: "screen",
+};
 export type DisplayMode = "2D" | "3D";
 
 export type DisplayModeOption = {
@@ -51,6 +95,12 @@ export const interactionModeOptions: InteractionModeOption[] = [
     label: "Probe",
     value: "PROBE",
     description: "Click a layer to read its voxel values (hold P)",
+  },
+  {
+    label: "Design",
+    value: "DESIGN",
+    description:
+      "Navigate as usual; hold C and drag to brush a mesh, V to grow a blob, X to remove (hold M)",
   },
 ];
 
@@ -95,6 +145,8 @@ export interface ModeState {
    * re-renders.
    */
   probeFollowsCursor: boolean;
+  /** The DESIGN tool currently held, or null (see `DesignToolId`). */
+  designTool: DesignToolId | null;
   /**
    * The presentation/faithful switch. OFF is the SCIENTIFIC look and is the
    * renderer as it has always been, plus `NoToneMapping`; ON adds volume
@@ -142,6 +194,7 @@ export interface ModeState {
   setPivotOnProbe: (on: boolean) => void;
   setSmoothOrbit: (on: boolean) => void;
   setProbeFollowsCursor: (on: boolean) => void;
+  setDesignTool: (tool: DesignToolId | null) => void;
   setCinematic: (on: boolean) => void;
   setIsoThreshold: (value: number) => void;
   setLightRig: (patch: Partial<LightRig>) => void;
@@ -167,6 +220,7 @@ export const createModeStore = ({
     pivotOnProbe: false,
     smoothOrbit: false,
     probeFollowsCursor: true,
+    designTool: null,
     cinematic: false,
     isoThreshold: 0.5,
     lightRig: { ...CINEMATIC_DEFAULTS },
@@ -196,6 +250,10 @@ export const createModeStore = ({
     setProbeFollowsCursor: (on) =>
       set((state) => {
         state.probeFollowsCursor = on;
+      }),
+    setDesignTool: (tool) =>
+      set((state) => {
+        state.designTool = tool;
       }),
     setCinematic: (on) =>
       set((state) => {

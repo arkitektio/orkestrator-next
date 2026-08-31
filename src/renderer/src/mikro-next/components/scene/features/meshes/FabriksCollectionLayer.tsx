@@ -1,3 +1,4 @@
+import { effectiveFlatNormals } from "./meshLayerDefaults";
 import { useThree, type ThreeEvent } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
@@ -21,7 +22,12 @@ import { useViewStoreApi } from "../../platform/stores/viewStore";
 import { FabriksCollection } from "./fabriks/fabriksCollection";
 import { FabriksCollectionManager } from "./fabriks/fabriksManager";
 import { openFabriksCollection } from "./fabriks/fabriksSource";
-import { buildColorLut } from "./fabriks/fabriksColorLut";
+import { buildColorLut, composeMeshLutAppearance } from "./fabriks/fabriksColorLut";
+import {
+  entryAppearanceKeyOf,
+  entryDataKeyOf,
+} from "../../platform/attributes/entryKeys";
+import type { ValueLutArena, ValueLutWindow } from "../../platform/attributes/valueLut";
 import { loadSparseSource } from "@/mikro-next/lib/sparse/sparseSource";
 import { isColumnColorBy } from "../../platform/layerui/columnOptions";
 import { useAttributeServiceOrNull } from "@/mikro-next/lib/attributes/AttributeServiceProvider";
@@ -243,17 +249,33 @@ const FabriksCollectionGroup = ({
   );
   const systemId = collection.coordinateSystem?.id ?? null;
   /**
-   * A CONTENT key, not the object references, because the fold after a picker
+   * CONTENT keys, not the object references, because the fold after a picker
    * mutation writes the server's arrays back with `Object.assign` into an immer
    * draft — whether that yields new array identities is structural sharing's
-   * call, not ours. Depending on references would let an edited bound show in
-   * the card while the meshes kept the old one.
+   * call, not ours. TWO of them (`entryKeys.ts`): the DATA key re-reads and
+   * repaints the table, the APPEARANCE key is two uniform writes and a 1 KB
+   * palette refill — the `useLabelColorLut` split, on meshes.
    */
-  const lutKey = useMemo(() => JSON.stringify([colorBy, activeRules]), [colorBy, activeRules]);
+  const lutKey = useMemo(() => entryDataKeyOf(colorBy, activeRules), [colorBy, activeRules]);
+  const appearanceKey = useMemo(() => entryAppearanceKeyOf(colorBy), [colorBy]);
+
+  /** The reused table arena, and what the last completed paint derived — the
+   *  appearance effect recomposes over it. `dataKey` stamps which build it
+   *  belongs to, so a recompose never rides a stale data half. */
+  const lutArenaRef = useRef<ValueLutArena | null>(null);
+  const lutPaintRef = useRef<{
+    dataKey: string;
+    window: ValueLutWindow;
+    qualitative: boolean;
+  } | null>(null);
 
   useEffect(() => {
     if (!manager) return;
     if (!attributeService || !systemId || (!colorBy && activeRules.length === 0)) {
+      // The manager disposes the bound texture on the way to null, so the
+      // arena must not be offered for reuse again.
+      lutArenaRef.current = null;
+      lutPaintRef.current = null;
       manager.setColorLut(null, { colorize: false, filter: false });
       return;
     }
@@ -282,7 +304,7 @@ const FabriksCollectionGroup = ({
             return source.read(source.source, at);
           }
         : null;
-      const lut = await buildColorLut({
+      const prepared = await buildColorLut({
         objects,
         colorBy,
         sparse,
@@ -291,23 +313,35 @@ const FabriksCollectionGroup = ({
         plans,
         engine: attributeService.engine,
       });
-      // A superseded build must not reach the GPU, and its texture is ours to
-      // free — `setColorLut` only ever disposes what it replaces.
-      if (cancelled) {
-        lut.texture.dispose();
-        return;
+      // The cancel check comes BEFORE the paint: painting into the shared
+      // arena from a superseded build would overwrite the bytes the live
+      // texture uploads. Nothing to free — a prepared build owns no texture.
+      if (cancelled) return;
+      if (prepared.skipped.length > 0) {
+        console.warn("[mesh] picker entries that do not render yet:", prepared.skipped);
       }
-      if (lut.skipped.length > 0) {
-        console.warn("[mesh] picker entries that do not render yet:", lut.skipped);
-      }
-      manager.setColorLut(lut, {
-        colorize: colorBy !== null,
-        filter: activeRules.length > 0,
-      });
+      const { arena, window, qualitative } = prepared.paint(lutArenaRef.current);
+      lutArenaRef.current = arena;
+      lutPaintRef.current = { dataKey: lutKey, window, qualitative };
+      manager.setColorLut(
+        {
+          texture: arena.texture,
+          width: arena.lut.width,
+          height: arena.lut.height,
+          window,
+        },
+        {
+          colorize: colorBy !== null,
+          filter: activeRules.length > 0,
+        },
+      );
+      manager.setColorAppearance(composeMeshLutAppearance(colorBy, { window, qualitative }));
       invalidate();
     })().catch((error) => {
       if (cancelled) return;
       console.warn("[mesh] could not build the colour lookup:", error);
+      lutArenaRef.current = null;
+      lutPaintRef.current = null;
       manager.setColorLut(null, { colorize: false, filter: false });
     });
     return () => {
@@ -322,6 +356,22 @@ const FabriksCollectionGroup = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [manager, attributeService, systemId, lutKey, sparseDatasetId, invalidate]);
 
+  // The appearance half: colormap and clim edits recompose over the LAST
+  // COMPLETED paint — two uniform writes and a palette refill, no re-read, no
+  // repaint. A stale stamp means the data effect is (re)running and will
+  // apply the fresh appearance itself when it lands.
+  useEffect(() => {
+    if (!manager) return;
+    const paint = lutPaintRef.current;
+    if (!paint || paint.dataKey !== lutKey) return;
+    manager.setColorAppearance(
+      composeMeshLutAppearance(colorBy, { window: paint.window, qualitative: paint.qualitative }),
+    );
+    invalidate();
+    // `colorBy` is read inside; `appearanceKey` decides re-runs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [manager, appearanceKey, lutKey, invalidate]);
+
   // Per-layer LOD preset: replans immediately against the last settle.
   useEffect(() => {
     manager?.setPlanConfig({ pixelBudget: DETAIL_BUDGETS[layer.detail ?? "balanced"] });
@@ -332,10 +382,11 @@ const FabriksCollectionGroup = ({
     manager?.setVisible(visible);
   }, [manager, visible]);
 
+  const flatNormals = effectiveFlatNormals(layer);
   useEffect(() => {
-    manager?.setFlatNormals(layer.flatNormals ?? true);
+    manager?.setFlatNormals(flatNormals);
     invalidate();
-  }, [manager, layer.flatNormals, invalidate]);
+  }, [manager, flatNormals, invalidate]);
 
   // The scene-wide picked instance, pushed into this layer's shader uniforms
   // (highlight/isolate) — uniform writes only, never a recompile. A VANILLA

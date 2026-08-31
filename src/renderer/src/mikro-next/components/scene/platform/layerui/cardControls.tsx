@@ -2,6 +2,10 @@
  * The control vocabulary every layer card in the Layers panel speaks. Shared
  * rather than copied so the cards cannot drift into three dialects:
  *
+ *  - `LayerCardShell` is the card ITSELF: one collapsible surface with the
+ *    5x5 icon tile, the 11px name, the trailing icon actions and the folded
+ *    body every kind shares. A card supplies its identity and its sections;
+ *    the shell owns the border, the fold and the click-to-toggle header.
  *  - SEGMENTED groups (`SegmentGroup` + `Segment`) for mutually-exclusive
  *    choices: one joined pill, the active segment filled sky.
  *  - ICON TOGGLES (`IconToggle`) for independent booleans: icon + label, sky
@@ -24,7 +28,90 @@
 
 import { ChevronDown } from "lucide-react";
 import { memo } from "react";
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { Slider } from "@/components/ui/slider";
+
+/**
+ * The card surface, ONE dialect for every layer kind: `border-white/10
+ * bg-black/40 backdrop-blur-md`, a slightly firmer border when unfolded, and
+ * `opacity-50` for a hidden layer. `@container/card` makes the card its own
+ * query context, so rows adapt to the width the CARD got — which in a
+ * multi-column list is not the panel's width.
+ */
+export const layerCardShellClasses = (expanded: boolean, hidden: boolean): string =>
+  `@container/card overflow-hidden rounded-lg border bg-black/40 backdrop-blur-md transition-colors ${
+    expanded ? "border-white/25" : "border-white/10 hover:border-white/20"
+  } ${hidden ? "opacity-50" : ""}`;
+
+/**
+ * The collapsible card every collection- and table-backed layer kind wears —
+ * the sibling of the brick-backed cards' `LayerRow`-headed collapsible, built
+ * from the same pieces so the panel reads as one list.
+ *
+ * The HEADER is the toggle: clicking anywhere on it folds the body, exactly
+ * as clicking a `LayerRow` does on the image cards, and expansion shows as
+ * the firmer border rather than a chevron — the panel's existing signal.
+ * Trailing `actions` (save, visibility, remove, per-card toggles) live in a
+ * container that stops propagation, so a button click never also toggles the
+ * fold and the cards do not each have to remember to.
+ *
+ * NO open/close animation, same reason as the image card: the collapsible
+ * height animation forced layout + paint of the whole editor subtree on every
+ * toggle — the cards snap instead.
+ */
+export const LayerCardShell = ({
+  icon,
+  tile,
+  title,
+  badges,
+  actions,
+  hidden,
+  expanded,
+  onToggle,
+  children,
+}: {
+  /** The kind glyph, sized by the caller (`h-3 w-3 text-…`). */
+  icon: React.ReactNode;
+  /** The icon tile's tint, e.g. `bg-emerald-400/15`. */
+  tile: string;
+  title: string;
+  /** Facts beside the name — `Badge`s, a dirty-save button's spot is `actions`. */
+  badges?: React.ReactNode;
+  /** Trailing header buttons. Clicks here never toggle the fold. */
+  actions?: React.ReactNode;
+  hidden: boolean;
+  expanded: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) => (
+  <Collapsible open={expanded} className={layerCardShellClasses(expanded, hidden)}>
+    <div
+      className="flex cursor-pointer items-center gap-1.5 px-2 py-1.5"
+      title={expanded ? "Collapse the layer's controls" : "Unfold the layer's controls"}
+      onClick={onToggle}
+    >
+      <span className={`grid h-5 w-5 shrink-0 place-items-center rounded ${tile}`}>
+        {icon}
+      </span>
+      <span
+        className="min-w-0 flex-1 truncate text-[11px] font-medium text-white/90"
+        title={title}
+      >
+        {title}
+      </span>
+      {badges}
+      <div
+        className="flex shrink-0 items-center"
+        onClick={(event) => event.stopPropagation()}
+      >
+        {actions}
+      </div>
+    </div>
+    <CollapsibleContent className="overflow-hidden">
+      <div className="flex flex-col border-t border-white/10">{children}</div>
+    </CollapsibleContent>
+  </Collapsible>
+);
 
 /** Fixed-width row label, aligning every control row. */
 export const RowLabel = ({ children }: { children: React.ReactNode }) => (

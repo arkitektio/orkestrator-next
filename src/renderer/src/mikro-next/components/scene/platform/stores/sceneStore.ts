@@ -2,6 +2,7 @@ import { createStore } from "zustand/vanilla";
 import { immer } from "zustand/middleware/immer";
 import { AxisType, PreferredView, SceneFragment, SceneLayerFragment } from "@/mikro-next/api/graphql";
 import { createScopedStoreHooks } from "@/lib/generic/createScopedStore";
+import { sameDimExtents, type DimExtent } from "../model/dimExtents";
 import { isBrickLayer, type BrickLayerFragment } from "../model/layerGuards";
 import { reconcileSceneLayers } from "../model/layerReconcile";
 import { layerStructureKey } from "../model/sceneStructure";
@@ -40,8 +41,33 @@ export type MeshLayerSessionState = {
   slabScale?: number;
 };
 
+/**
+ * Session-local render state a NETWORK layer carries beyond its fragment.
+ *
+ * `detail` and `slabScale` mean exactly what they mean for a mesh. The two
+ * `*Override` fields exist because `showNodes` and `directed` ARE stored on the
+ * layer — the override is what lets the card toggle them instantly and keep the
+ * server write behind Save, so a glance at the graph never costs a round trip.
+ * A null override means "use the stored value".
+ */
+export type NetworkLayerSessionState = {
+  /** Which instance colormap the graph is colored by (default "hues"). */
+  instanceColormap?: FabriksInstanceColormap;
+  /** Color by instance id (the DEFAULT, the mesh layer's convention) vs the
+   * layer's uniform materialColor — same field, same semantics. */
+  colorByInstance?: boolean;
+  /** Per-layer LOD preset: the planner's pixel-error budget. */
+  detail?: "fine" | "balanced" | "fast";
+  /** 2D cross-section thickness multiplier over the scene's z-step (1/3/5). */
+  slabScale?: number;
+  /** Session override of the stored `showNodes`. */
+  showNodesOverride?: boolean;
+  /** Session override of the stored `directed`. */
+  directedOverride?: boolean;
+};
+
 /** A polymorphic scene layer plus its session-local render state. */
-export type SceneLayer = SceneLayerFragment & MeshLayerSessionState;
+export type SceneLayer = SceneLayerFragment & MeshLayerSessionState & NetworkLayerSessionState;
 
 export interface SceneState {
   /**
@@ -126,18 +152,26 @@ export interface SceneState {
   trackTailWindows: Record<string, number>;
   setTrackTailWindow: (layerId: string, window: number) => void;
   /**
-   * The largest time index each track layer observed in its table, published by
-   * the renderer once the read lands.
+   * The dims a layer OBSERVED in its data, published by its renderer once the
+   * read lands. One half of the scrubber protocol (`DimExtent`); the other half
+   * is DECLARED and never comes through here.
    *
-   * This exists so a T slider can exist at all. `DimSliderPanel` folds its
-   * scrubbers out of the normalized BRICK layers via `collapsibleDims`, which
-   * reads a lens; a table-backed layer has none, so without this a scene of
-   * only tracks offers nothing to scrub and the tail is frozen. Not derivable
-   * from the fragment — the extent is a fact about the DATA, known only after
-   * the parquet is read. Null clears the entry on unmount.
+   * The split is declared vs observed, not brick vs non-brick:
+   *  - A lens-backed layer — image, label, vector field — states its extents in
+   *    its fragment. `DimSliderPanel` derives those directly, so its sliders
+   *    exist at first paint and survive a mode toggle or a budget cull. Routing
+   *    them through a renderer effect would tie a fact that never changes to
+   *    whether `LayerRenderer` chose to mount the layer.
+   *  - A table-backed layer — tracks, points — has no lens. Its timeline is a
+   *    fact about the PARQUET, unknowable until the scan returns, so it can only
+   *    be published, and only from the renderer that read it.
+   *
+   * Null clears a layer's entry: on unmount, and while the layer is hidden — a
+   * hidden layer must not keep a slider alive, which is what the panel's brick
+   * half has always done by skipping `visible === false`.
    */
-  trackTimeExtents: Record<string, number>;
-  setTrackTimeExtent: (layerId: string, maxIndex: number | null) => void;
+  layerDimExtents: Record<string, DimExtent[]>;
+  setLayerDimExtents: (layerId: string, extents: DimExtent[] | null) => void;
   patchSceneLayer: (id: string, patch: Partial<SceneLayer>) => void;
 }
 
@@ -172,7 +206,7 @@ export const createSceneStore = ({ scene }: { scene: SceneFragment }) => {
         worldCoordinateSystem: scene.worldCoordinateSystem,
       },
       trackTailWindows: {},
-      trackTimeExtents: {},
+      layerDimExtents: {},
       sceneLayers: scene.layers,
       layers: brickLayers.map((layer) =>
         normalizeBrickLayer(layer, defaultVolumeLods.get(layer.id) ?? null, scene),
@@ -192,17 +226,19 @@ export const createSceneStore = ({ scene }: { scene: SceneFragment }) => {
         set((state) => {
           state.trackTailWindows[layerId] = window;
         }),
-      setTrackTimeExtent: (layerId, maxIndex) =>
+      setLayerDimExtents: (layerId, extents) =>
         set((state) => {
-          // Guard the no-op: this is written from an effect on every geometry
-          // reload, and a fresh object identity for an unchanged extent would
-          // re-run every selector reading it.
-          if (maxIndex === null) {
-            if (layerId in state.trackTimeExtents) delete state.trackTimeExtents[layerId];
+          // Guard the no-op STRUCTURALLY, not by identity: this is written from
+          // an effect on every geometry reload, and the publisher rebuilds the
+          // array each run, so a fresh array of identical entries would replace
+          // the record and re-run every selector reading it (P17).
+          if (extents === null || extents.length === 0) {
+            if (layerId in state.layerDimExtents) delete state.layerDimExtents[layerId];
             return;
           }
-          if (state.trackTimeExtents[layerId] === maxIndex) return;
-          state.trackTimeExtents[layerId] = maxIndex;
+          const current = state.layerDimExtents[layerId];
+          if (current && sameDimExtents(current, extents)) return;
+          state.layerDimExtents[layerId] = extents;
         }),
       patchSceneLayer: (id, patch) =>
         set((state) => {
@@ -232,6 +268,10 @@ export const createSceneStore = ({ scene }: { scene: SceneFragment }) => {
             defaultVolumeLOD: previous.defaultVolumeLOD,
             visible: previous.visible,
           }),
+          // EVERY session field must be listed here. One that is omitted
+          // silently resets on each scene re-emission, and nothing type-checks
+          // it — the type is an intersection, so an unlisted field is merely
+          // absent rather than wrong.
           carryRawSession: (previous, next) => ({
             ...next,
             instanceColormap: previous.instanceColormap,
@@ -240,6 +280,8 @@ export const createSceneStore = ({ scene }: { scene: SceneFragment }) => {
             flatNormals: previous.flatNormals,
             doubleSided: previous.doubleSided,
             slabScale: previous.slabScale,
+            showNodesOverride: previous.showNodesOverride,
+            directedOverride: previous.directedOverride,
           }),
         });
 

@@ -151,6 +151,27 @@ export function sceneZExtent(layers: readonly LayerState[]): SceneZExtent | null
   return { min, max, step: range > 0 ? range / maxVoxelSpan : 1 };
 }
 
+/**
+ * The finest per-LAYER z step among layers with a real stack — the honest
+ * slab thickness for "is this z on the drawn plane". `sceneZExtent.step` is a
+ * SCENE-WIDE average (pooled range / finest count), which a sparse two-slice
+ * layer inflates for everyone: with 0.1 µm slices next to a 1000 µm two-slice
+ * stack the average grants ±5 µm of slack and fifty slices' worth of
+ * annotations "on" every plane. Null when no layer has a stack.
+ */
+export function finestLayerZStep(layers: readonly LayerState[]): number | null {
+  let finest = Infinity;
+  for (const layer of layers) {
+    const zSize = getLayerZSize(layer);
+    if (zSize === null || zSize <= 1) continue;
+    const affine = buildAffineMatrix(layer);
+    const span = Math.abs(voxelToPhysicalZ(affine, zSize - 1) - voxelToPhysicalZ(affine, 0));
+    if (span <= 0) continue;
+    finest = Math.min(finest, span / (zSize - 1));
+  }
+  return Number.isFinite(finest) ? finest : null;
+}
+
 /** Convert a physical Z coordinate to the closest voxel Z index, clamped to [0, maxZ] */
 export function physicalToVoxelZ(
   affine: THREE.Matrix4,
@@ -160,5 +181,23 @@ export function physicalToVoxelZ(
   const inv = affine.clone().invert();
   const pt = new THREE.Vector3(0, 0, physicalZ);
   pt.applyMatrix4(inv);
+  return Math.max(0, Math.min(maxVoxelZ, Math.round(pt.z)));
+}
+
+/**
+ * Like `physicalToVoxelZ`, but honest about range: null when the plane lies
+ * OUTSIDE the layer's stack (beyond half a voxel past either end) instead of
+ * clamping to the nearest slice. The clamp is right for a slider snapping to
+ * a slice; it is wrong for a visibility test, where it makes a plane far past
+ * a stack report the stack's end slice as "showing".
+ */
+export function physicalToVoxelZStrict(
+  affine: THREE.Matrix4,
+  physicalZ: number,
+  maxVoxelZ: number,
+): number | null {
+  const inv = affine.clone().invert();
+  const pt = new THREE.Vector3(0, 0, physicalZ).applyMatrix4(inv);
+  if (pt.z < -0.5 || pt.z > maxVoxelZ + 0.5) return null;
   return Math.max(0, Math.min(maxVoxelZ, Math.round(pt.z)));
 }

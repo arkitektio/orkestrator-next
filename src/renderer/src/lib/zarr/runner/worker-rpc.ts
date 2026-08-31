@@ -18,6 +18,11 @@ export interface WorkerDecodeTimings {
   reshapeMs: number
   promoteMs: number
   totalWorkerMs: number
+  /** Served without network transfer; `null` = Resource Timing was opaque
+   * (cross-origin without `Timing-Allow-Origin`), i.e. "cannot tell". */
+  fromHttpCache: boolean | null
+  /** Negotiated protocol (`http/1.1`, `h2`); `null` when opaque. */
+  protocol: string | null
 }
 
 export interface WorkerFetchDecodeResult<D extends DataType> {
@@ -151,6 +156,100 @@ export function getMetaId(meta: CodecChunkMeta): number {
 
 let nextRequestId = 0
 
+/** One inner chunk of a coalesced shard read (absolute byte offsets). */
+export interface WorkerFetchPart {
+  offset: number
+  length: number
+  actualChunkShape?: number[]
+}
+
+export interface WorkerFetchDecodeMultiResult<D extends DataType> {
+  /** Per part, in request order; `undefined` = the shard object was missing. */
+  chunks: (TexturedChunk<D> | undefined)[]
+  timings: {
+    roundTripMs: number
+    fetchMs: number
+    totalWorkerMs: number
+    fromHttpCache: boolean | null
+    protocol: string | null
+  }
+}
+
+/**
+ * Coalesced read: one ranged GET over `range`, decoded into `parts.length`
+ * chunks by the worker. Same meta piggybacking as `workerFetchDecode`.
+ */
+export async function workerFetchDecodeMulti<D extends DataType>(
+  worker: Worker,
+  store: S3FetchConfig,
+  path: `/${string}`,
+  range: { offset: number; length: number },
+  parts: WorkerFetchPart[],
+  metaId: number,
+  meta: CodecChunkMeta,
+  requestInit?: SerializedRequestInit,
+  textureFidelity: TextureFidelity = 'default',
+  useSharedArrayBuffer = false,
+): Promise<WorkerFetchDecodeMultiResult<D>> {
+  const dispatcher = getDispatcher(worker)
+  let inlineMeta: CodecChunkMeta | undefined
+  if (!dispatcher.hasMeta(metaId)) {
+    inlineMeta = meta
+    dispatcher.markMeta(metaId)
+  }
+  const id = nextRequestId++
+  const roundTripStartedAt = performance.now()
+  const response = (await dispatcher.send(id, {
+    type: 'fetch_decode_multi' as const,
+    id,
+    store,
+    path,
+    range,
+    parts,
+    metaId,
+    meta: inlineMeta,
+    requestInit,
+    textureFidelity,
+    useSharedArrayBuffer,
+  })) as {
+    parts: ({
+      promotedType?: TextureCompatibleDataType
+      textureBounds?: TextureChunkBounds
+      data?: ArrayBufferLike
+      byteOffset?: number
+      byteLength?: number
+      shape?: number[]
+      stride?: number[]
+    } | null)[]
+    timings?: { fetchMs?: number; totalMs?: number; fromHttpCache?: boolean | null; protocol?: string | null }
+  }
+  return {
+    chunks: response.parts.map((part) => {
+      if (!part) return undefined
+      const data = createPromotedArray<D>(
+        part.promotedType,
+        part.data!,
+        part.byteOffset ?? 0,
+        part.byteLength ?? part.data!.byteLength,
+        meta,
+      )
+      return {
+        data,
+        shape: part.shape!,
+        stride: part.stride!,
+        textureBounds: part.textureBounds,
+      } as TexturedChunk<D>
+    }),
+    timings: {
+      roundTripMs: performance.now() - roundTripStartedAt,
+      fetchMs: response.timings?.fetchMs ?? 0,
+      totalWorkerMs: response.timings?.totalMs ?? 0,
+      fromHttpCache: response.timings?.fromHttpCache ?? null,
+      protocol: response.timings?.protocol ?? null,
+    },
+  }
+}
+
 export async function workerFetchDecode<D extends DataType>(
   worker: Worker,
   store: S3FetchConfig,
@@ -203,6 +302,8 @@ export async function workerFetchDecode<D extends DataType>(
       reshapeMs?: number
       promoteMs?: number
       totalMs?: number
+      fromHttpCache?: boolean | null
+      protocol?: string | null
     }
   }
 
@@ -214,6 +315,8 @@ export async function workerFetchDecode<D extends DataType>(
     reshapeMs: response.timings?.reshapeMs ?? 0,
     promoteMs: response.timings?.promoteMs ?? 0,
     totalWorkerMs: response.timings?.totalMs ?? 0,
+    fromHttpCache: response.timings?.fromHttpCache ?? null,
+    protocol: response.timings?.protocol ?? null,
   }
 
   if (response.missing) {

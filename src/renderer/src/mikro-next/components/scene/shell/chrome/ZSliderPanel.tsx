@@ -3,7 +3,8 @@ import { Slider } from '@/components/ui/slider'
 import { cn } from '@/lib/utils'
 import { useSceneDockOrientation, type SceneDockOrientation } from '../SceneDock'
 import { useModeStore } from '../../platform/stores/modeStore'
-import { useSceneStore } from '../../platform/stores/sceneStore'
+import { layersPlanKey } from '../../platform/model/layerPlanKey'
+import { useSceneStore, useSceneStoreApi } from '../../platform/stores/sceneStore'
 import { useViewerStore } from '../../platform/stores/viewerStore'
 import {
   buildAffineMatrix,
@@ -25,7 +26,17 @@ export const ZSliderPanel = ({
   const dockOrientation = useSceneDockOrientation('vertical')
   const orientation = orientationProp ?? dockOrientation
   const displayMode = useModeStore((s) => s.displayMode)
-  const layers = useSceneStore((s) => s.layers)
+  const sceneStoreApi = useSceneStoreApi()
+  // A SCALAR key, not the array (P9c/P17): the Z math below reads only fields
+  // `layerPlanSignature` captures (zAxis, lens shape, affine), so a contrast
+  // drag's per-tick layer replacement must not re-render the slider.
+  const layersKey = useSceneStore((s) => layersPlanKey(s.layers))
+  const layers = useMemo(
+    () => sceneStoreApi.getState().layers,
+    // The key STANDS FOR the array the getState() read returns.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [layersKey, sceneStoreApi]
+  )
   const currentZ = useViewerStore((s) => s.currentZ)
   const setCurrentZ = useViewerStore((s) => s.setCurrentZ)
 

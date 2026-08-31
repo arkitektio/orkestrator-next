@@ -18,6 +18,7 @@ import {
   ChevronRight,
   Image as ImageIcon,
   Shapes,
+  Share2,
   Spline,
   Table2,
   type LucideIcon,
@@ -32,7 +33,9 @@ import {
   useCreateAnnotationLayerMutation,
   useCreateIntensityLayerMutation,
   useCreateLabelLayerMutation,
+  useCreateVectorLayerMutation,
   useCreateMeshLayerMutation,
+  useCreateNetworkLayerMutation,
   useCreatePointLayerMutation,
   useCreateRgbLayerMutation,
   useCreateTrackLayerMutation,
@@ -46,6 +49,7 @@ import {
   LAYER_KIND_INFO,
   LayerKind,
   MeshEntry,
+  NetworkEntry,
   Section,
   Source,
   SpaceRef,
@@ -281,6 +285,21 @@ const EntryView = (props: {
           onClick={() => props.onSelect({ kind: "mesh", entry })}
         />
       );
+    case "network":
+      return (
+        <EntryRow
+          icon={Share2}
+          title={entry.name}
+          subtitle={
+            <>
+              {entry.secondary ? `${entry.secondary} · ` : ""}
+              <SpaceCaption space={entry.space} />
+            </>
+          }
+          badge="network"
+          onClick={() => props.onSelect({ kind: "network", entry })}
+        />
+      );
     case "table":
       return (
         <EntryRow
@@ -348,11 +367,13 @@ const LensLayerForm = (props: {
   const [createRgb] = useCreateRgbLayerMutation();
   const [createVolume] = useCreateVolumeLayerMutation();
   const [createLabel] = useCreateLabelLayerMutation();
+  const [createVector] = useCreateVectorLayerMutation();
 
   const submitIntensity = useGraphQLDialog(createIntensity, DIALOG_OPTIONS);
   const submitRgb = useGraphQLDialog(createRgb, DIALOG_OPTIONS);
   const submitVolume = useGraphQLDialog(createVolume, DIALOG_OPTIONS);
   const submitLabel = useGraphQLDialog(createLabel, DIALOG_OPTIONS);
+  const submitVector = useGraphQLDialog(createVector, DIALOG_OPTIONS);
 
   const form = useForm({
     defaultValues: { mode: ProjectionMode.Mip as string },
@@ -372,6 +393,11 @@ const LensLayerForm = (props: {
         });
       case "LABEL":
         return submitLabel({ variables: { input: base }, ...REFETCH_SCENE });
+      case "VECTOR":
+        // Which axis carries the components is not asked: the server derives it
+        // from the lens' DISPLACEMENT axis, the way point coordinates come from
+        // the table's declared roles.
+        return submitVector({ variables: { input: base }, ...REFETCH_SCENE });
     }
   });
 
@@ -606,6 +632,74 @@ const MeshLayerForm = (props: {
 };
 
 /**
+ * Step 2c-bis: a NetworkCollection becomes a network layer.
+ *
+ * The same shape as the mesh form and the same placement rule: the collection's
+ * own coordinate system is the layer's space, so it must already have a path to
+ * the scene's world — which is exactly what the picker listed it from.
+ *
+ * Only the two settings worth deciding up front are offered. Width, direction,
+ * detail and the level cap all live on the card, where you can see what they do
+ * to the picture; `lineWidth` in particular is in SCENE units and is very hard
+ * to guess before anything is drawn.
+ */
+const NetworkLayerForm = (props: {
+  scene: string;
+  entry: NetworkEntry;
+  onBack: () => void;
+}) => {
+  const [createNetwork] = useCreateNetworkLayerMutation();
+  const submitNetwork = useGraphQLDialog(createNetwork, DIALOG_OPTIONS);
+
+  const form = useForm({
+    defaultValues: {
+      showNodes: false,
+      opacity: undefined as number | undefined,
+    },
+  });
+
+  const onSubmit = form.handleSubmit(async (data) =>
+    submitNetwork({
+      variables: {
+        input: {
+          scene: props.scene,
+          networkCollection: props.entry.network.id,
+          showNodes: data.showNodes,
+          opacity: data.opacity ?? undefined,
+        },
+      },
+      ...REFETCH_SCENE,
+    }),
+  );
+
+  return (
+    <Form {...form}>
+      <form onSubmit={onSubmit} className="flex flex-col gap-3">
+        <div className="grid grid-cols-2 gap-2">
+          <SwitchField
+            name="showNodes"
+            label="Show nodes"
+            description="Draw a glyph at each node as well as the segments"
+          />
+          <FloatField
+            name="opacity"
+            label="Opacity"
+            description="Leave empty for the default"
+          />
+        </div>
+
+        <DialogFooter className="mt-2">
+          <Button type="button" variant="outline" onClick={props.onBack}>
+            Back
+          </Button>
+          <Button type="submit">Add layer</Button>
+        </DialogFooter>
+      </form>
+    </Form>
+  );
+};
+
+/**
  * Step 2d: an AnnotationCollection becomes an annotation layer.
  *
  * This is the path for adopting an EXISTING collection into a scene. Drawing a
@@ -666,6 +760,8 @@ const stepDescription = (source: Source): string => {
       return `How the rows of "${source.entry.name}" will be drawn.`;
     case "mesh":
       return `Add ${source.entry.name} to this scene.`;
+    case "network":
+      return `Draw the nodes and edges of ${source.entry.name} in this scene.`;
     case "annotation":
       return `Draw the shapes of "${source.entry.name}" in this scene.`;
   }
@@ -768,6 +864,12 @@ const AddLayerFormInner = (props: { scene: string }) => {
         />
       ) : source.kind === "mesh" ? (
         <MeshLayerForm
+          scene={props.scene}
+          entry={source.entry}
+          onBack={() => setSource(null)}
+        />
+      ) : source.kind === "network" ? (
+        <NetworkLayerForm
           scene={props.scene}
           entry={source.entry}
           onBack={() => setSource(null)}

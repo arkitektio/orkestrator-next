@@ -1,3 +1,4 @@
+import { collapsibleLensDims } from "./dimExtents";
 import type { LayerState } from "./layerModel";
 
 /**
@@ -23,17 +24,20 @@ import type { LayerState } from "./layerModel";
  * A phasor axis counts as RENDERED even though it maps to no screen axis: the
  * repack consumes every one of its bins to produce the layer's g/s/intensity
  * slabs, so there is no single index to pin and nothing for a slider to scrub.
+ *
+ * The rule itself lives in `dimExtents.collapsibleLensDims`, which asks it of a
+ * raw lens; this states which axes a normalized BRICK layer renders. The two
+ * must not drift — a lens layer off the brick path (a vector field) answers the
+ * same question through the same function, with its own rendered set.
  */
 export function collapsibleDims(layer: LayerState): string[] {
-  const rendered = new Set(
-    [layer.xAxis, layer.yAxis, layer.zAxis, layer.intensityAxis, layer.phasorAxis].filter(
-      Boolean,
-    ),
-  );
-  return layer.lens.axisNames.filter((dim, position) => {
-    if (rendered.has(dim)) return false;
-    return (layer.lens.shape[position] ?? 1) > 1;
-  });
+  return collapsibleLensDims(layer.lens, [
+    layer.xAxis,
+    layer.yAxis,
+    layer.zAxis,
+    layer.intensityAxis,
+    layer.phasorAxis,
+  ]);
 }
 
 export function buildSliceSignature(

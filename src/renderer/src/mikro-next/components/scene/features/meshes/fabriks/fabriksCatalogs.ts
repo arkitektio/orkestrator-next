@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import type { FabriksManifest } from "./fabriksManifest";
 import { rootLevel } from "./fabriksManifest";
-import { toNumber, toNumberOrNull, toTriple } from "./rowValues";
+import { toNumber, toNumberOrNull, toTriple } from "@/mikro-next/components/scene/platform/parquet/rowValues";
 
 /**
  * The two catalogs, and the world-space index the planner works from.

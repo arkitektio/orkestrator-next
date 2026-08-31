@@ -10,8 +10,8 @@ import {
 } from "./fabriksDecode";
 import { cellGridBox } from "./fabriksGrid";
 import type { FabriksEncoding, FabriksGrid } from "./fabriksManifest";
-import { PARQUET_COMPRESSORS } from "./parquetPart";
-import { toBytes, toNumber, toNumberArray } from "./rowValues";
+import { PARQUET_COMPRESSORS } from "@/mikro-next/components/scene/platform/parquet/parquetPart";
+import { toBytes, toNumber, toNumberArray } from "@/mikro-next/components/scene/platform/parquet/rowValues";
 
 /**
  * The post-fetch half of a row-group read — Parquet parse, wanted-filter and
@@ -24,7 +24,7 @@ import { toBytes, toNumber, toNumberArray } from "./rowValues";
  * numbers, bigints, byte arrays — and survives structured clone), the row
  * range, and the manifest's `grid`/`encoding`. Nothing here may touch the
  * transport: a worker cannot fetch through the credential-rotating
- * `FabriksStore`, which is exactly why the fetch stays on the main thread and
+ * `S3ParquetStore`, which is exactly why the fetch stays on the main thread and
  * only the CPU-bound half moved (README, "Known gaps").
  */
 
@@ -66,7 +66,7 @@ export type FabriksDecodeRequest = {
   spanStart: number;
   /** The prefetched span holding every column chunk of the row group. On the
    * worker path this arrives as a structured-clone COPY — the original is
-   * owned by the FabriksStore byte cache and must never be transferred. */
+   * owned by the S3ParquetStore byte cache and must never be transferred. */
   spanBytes: Uint8Array;
   /** The part's parsed footer. */
   metadata: FileMetaData;

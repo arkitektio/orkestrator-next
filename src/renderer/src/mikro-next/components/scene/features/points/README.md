@@ -114,4 +114,7 @@ The box is currently unbounded — threading a viewport box through is the one p
 - **Aggregation.** Culling removes what is off-screen, never what is redundant on-screen, so
   zoomed out the survivors still overdraw each other. `fabriksPlanner.ts` answers that by
   substituting pre-authored coarser geometry, which a point set has none of.
-- **Filters.** `filterBys` are stored and round-tripped but not applied here yet.
+- **Filter authoring.** `filterBys` ARE applied (a per-point uint mask ANDed into the cull
+  pass — `pointsFilterMask.ts`), but the card cannot yet ADD one: the picker needs a
+  table-rooted options query the server does not publish (`PointLayerCard.tsx`). Rules over
+  other tables or through joins are skipped and logged, exactly as the mesh path skips them.

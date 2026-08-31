@@ -14,14 +14,20 @@ import {
   useLabelFilterByOptionsLazyQuery,
   useMeshColorByOptionsLazyQuery,
   useMeshFilterByOptionsLazyQuery,
+  useNetworkColorByOptionsLazyQuery,
+  useNetworkFilterByOptionsLazyQuery,
 } from "@/mikro-next/api/graphql";
 import {
   isColumnOption,
+  isGraphOption,
   isMeasure,
   isSparseOption,
   optionKey,
   optionLabel,
+  PER_EDGE_NOTE,
+  PER_NODE_NOTE,
   type ColumnOption,
+  type GraphOption,
   type SparseOption,
 } from "./columnOptions";
 
@@ -63,7 +69,8 @@ export type ColumnOptionPickerMode = "color" | "filter";
  */
 export type ColumnOptionSource =
   | { kind: "mesh"; meshCollection: string }
-  | { kind: "label"; lens: string };
+  | { kind: "label"; lens: string }
+  | { kind: "network"; networkCollection: string };
 
 export const ColumnOptionPicker = ({
   source,
@@ -76,7 +83,7 @@ export const ColumnOptionPicker = ({
   mode: ColumnOptionPickerMode;
   /** `optionKey`s already stored on the layer — offered, but marked as added. */
   taken: ReadonlySet<string>;
-  onPick: (option: ColumnOption | SparseOption) => void;
+  onPick: (option: ColumnOption | SparseOption | GraphOption) => void;
   title?: string;
 }) => {
   const [open, setOpen] = useState(false);
@@ -86,46 +93,61 @@ export const ColumnOptionPicker = ({
   const [runMeshFilterBy, meshFilterByResult] = useMeshFilterByOptionsLazyQuery();
   const [runLabelColorBy, labelColorByResult] = useLabelColorByOptionsLazyQuery();
   const [runLabelFilterBy, labelFilterByResult] = useLabelFilterByOptionsLazyQuery();
+  const [runNetworkColorBy, networkColorByResult] = useNetworkColorByOptionsLazyQuery();
+  const [runNetworkFilterBy, networkFilterByResult] = useNetworkFilterByOptionsLazyQuery();
 
-  const isLabel = source.kind === "label";
-  const result = isLabel
-    ? mode === "color"
-      ? labelColorByResult
-      : labelFilterByResult
-    : mode === "color"
-      ? meshColorByResult
-      : meshFilterByResult;
+  const result =
+    source.kind === "label"
+      ? mode === "color"
+        ? labelColorByResult
+        : labelFilterByResult
+      : source.kind === "network"
+        ? mode === "color"
+          ? networkColorByResult
+          : networkFilterByResult
+        : mode === "color"
+          ? meshColorByResult
+          : meshFilterByResult;
 
-  // The source's own key is the query variable, so the two branches cannot be
-  // collapsed into one `run(variables)` call — `meshCollection` and `lens` are
-  // different arguments to different fields.
-  const sourceKey = isLabel ? source.lens : source.meshCollection;
+  // The source's own key is the query variable, so the branches cannot be
+  // collapsed into one `run(variables)` call — `meshCollection`, `lens` and
+  // `networkCollection` are different arguments to different fields.
+  const sourceKey =
+    source.kind === "label"
+      ? source.lens
+      : source.kind === "network"
+        ? source.networkCollection
+        : source.meshCollection;
 
   const fetchOptions = useCallback(
     (term: string) => {
       const filters = term.trim() ? { search: term.trim() } : undefined;
-      const request = isLabel
-        ? (mode === "color" ? runLabelColorBy : runLabelFilterBy)({
-            variables: { lens: sourceKey, filters },
-          })
-        : (mode === "color" ? runMeshColorBy : runMeshFilterBy)({
-            variables: { meshCollection: sourceKey, filters },
-          });
+      const request =
+        source.kind === "label"
+          ? (mode === "color" ? runLabelColorBy : runLabelFilterBy)({
+              variables: { lens: sourceKey, filters },
+            })
+          : source.kind === "network"
+            ? (mode === "color" ? runNetworkColorBy : runNetworkFilterBy)({
+                variables: { networkCollection: sourceKey, filters },
+              })
+            : (mode === "color" ? runMeshColorBy : runMeshFilterBy)({
+                variables: { meshCollection: sourceKey, filters },
+              });
       void request.catch((error) => {
-        console.warn(
-          `[${isLabel ? "label" : "mesh"}] could not load column options:`,
-          error,
-        );
+        console.warn(`[${source.kind}] could not load column options:`, error);
       });
     },
     [
-      isLabel,
+      source.kind,
       mode,
       sourceKey,
       runLabelColorBy,
       runLabelFilterBy,
       runMeshColorBy,
       runMeshFilterBy,
+      runNetworkColorBy,
+      runNetworkFilterBy,
     ],
   );
 
@@ -166,6 +188,16 @@ export const ColumnOptionPicker = ({
     [result.data],
   );
 
+  /**
+   * The GRAPH half, network sources only: the per-node values the collection
+   * itself carries, offered first because the server declares them first —
+   * they are the entries that cost no store read and no join to render.
+   */
+  const graphOptions = useMemo<GraphOption[]>(
+    () => (result.data?.options ?? []).filter(isGraphOption),
+    [result.data],
+  );
+
   /** Grouped by the table the value is READ FROM — the option's own `table`. */
   const groups = useMemo(() => {
     const byTable = new Map<string, { name: string; options: ColumnOption[] }>();
@@ -177,7 +209,11 @@ export const ColumnOptionPicker = ({
     return [...byTable.values()];
   }, [options]);
 
-  const empty = !result.loading && options.length === 0 && sparseOptions.length === 0;
+  const empty =
+    !result.loading &&
+    options.length === 0 &&
+    sparseOptions.length === 0 &&
+    graphOptions.length === 0;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -207,10 +243,40 @@ export const ColumnOptionPicker = ({
               <CommandEmpty className="px-3 py-2 text-[10px]">
                 {search
                   ? "No column matches."
-                  : isLabel
+                  : source.kind === "label"
                     ? `This mask's ids reach nothing worth ${mode === "color" ? "colouring" : "filtering"} by.`
                     : `This collection's ids reach nothing worth ${mode === "color" ? "colouring" : "filtering"} by.`}
               </CommandEmpty>
+            )}
+            {graphOptions.length > 0 && (
+              <CommandGroup heading="graph attributes">
+                {graphOptions.map((option) => {
+                  const key = optionKey(option);
+                  const added = taken.has(key);
+                  return (
+                    <CommandItem
+                      key={key}
+                      value={key}
+                      onSelect={() => {
+                        if (added) return;
+                        onPick(option);
+                        setOpen(false);
+                      }}
+                      className="gap-2 text-xs"
+                      disabled={added}
+                      // The one option kind whose value varies WITHIN an
+                      // object: per node, off the collection's own geometry,
+                      // with no parquet read behind it.
+                    >
+                      <span className="flex-1 truncate">{option.graphAttribute}</span>
+                      <span className="shrink-0 rounded bg-white/5 px-1 text-[9px] text-muted-foreground">
+                        per node
+                      </span>
+                      {added && <Check className="h-3 w-3 shrink-0" />}
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
             )}
             {sparseOptions.length > 0 && (
               <CommandGroup heading="matrices">
@@ -278,6 +344,18 @@ export const ColumnOptionPicker = ({
                         >
                           <ChevronRight className="h-2.5 w-2.5" />
                           joined
+                        </span>
+                      )}
+                      {/* The server's stamped granularity: this column's table
+                          is keyed by the collection's NODE ids, so its values
+                          vary within an object — the badge is what separates
+                          it from the object-level columns beside it. */}
+                      {option.target && (
+                        <span
+                          className="shrink-0 rounded bg-white/5 px-1 text-[9px] text-muted-foreground"
+                          title={(option.target === "EDGE" ? PER_EDGE_NOTE : PER_NODE_NOTE).slice(3)}
+                        >
+                          {option.target === "EDGE" ? "per edge" : "per node"}
                         </span>
                       )}
                       <span className="shrink-0 rounded bg-white/5 px-1 text-[9px] text-muted-foreground">

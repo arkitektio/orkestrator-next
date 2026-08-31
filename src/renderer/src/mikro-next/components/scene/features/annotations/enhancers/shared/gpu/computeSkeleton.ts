@@ -19,7 +19,7 @@ import {
   SKELETON_COST_WGSL,
   SKELETON_RELAX_WGSL,
   SKELETON_SMOOTH_WGSL,
-  SKELETON_TUBE_WGSL,
+  tubeWgslFor,
   SMOOTH_PARAMS_BYTES,
   TUBE_PARAMS_BYTES,
   packCostParams,
@@ -30,6 +30,7 @@ import {
   skeletonWorkgroups,
   tubeWorkgroups,
 } from "./skeletonKernel";
+import { DEFAULT_MARCHER, type MarcherId } from "../../meshes/marcher";
 
 /**
  * GPU skeleton extraction: runs the corridor cost + geodesic relaxation
@@ -145,6 +146,8 @@ export type SkeletonRunJob = {
     clampValue: number;
     maxVertices: number;
     smoothVoxels?: number;
+    /** Which case table the kernel marches with (`meshes/marcher.ts`). */
+    marcher?: MarcherId;
   };
 };
 
@@ -183,8 +186,10 @@ export type SkeletonTubeJob = Omit<SkeletonRunJob, "seed" | "tube"> & {
 
 export interface GpuSkeletonizer {
   ready(): boolean;
-  /** The tube-only path is alive (cost + tube pipelines; relax not needed). */
-  tubeReady(): boolean;
+  /** The tube-only path is alive for `marcher` (cost + that tube pipeline;
+   * relax not needed). Asking for a marcher whose pipeline is not built yet
+   * starts the build and answers false — the CPU twin covers that stroke. */
+  tubeReady(marcher?: MarcherId): boolean;
   status(): "pending" | "ready" | "broken";
   /** Null result = give up on the GPU for THIS run (unconverged, too big);
    * a rejected batch latches `broken` and the promise still resolves null. */
@@ -198,7 +203,9 @@ export interface GpuSkeletonizer {
 class GpuSkeletonizerImpl implements GpuSkeletonizer {
   private costPipeline: GpuComputePipeline | null = null;
   private relaxPipeline: GpuComputePipeline | null = null;
-  private tubePipeline: GpuComputePipeline | null = null;
+  /** One tube pipeline per marcher, built on first use (the default eagerly). */
+  private readonly tubePipelines = new Map<MarcherId, GpuComputePipeline>();
+  private readonly tubeBuilding = new Set<MarcherId>();
   private smoothPipeline: GpuComputePipeline | null = null;
   private broken = false;
   /** Tube-kernel failure only — must not take the centerline path down. */
@@ -370,25 +377,7 @@ class GpuSkeletonizerImpl implements GpuSkeletonizer {
         this.broken = true;
         console.warn("[skeleton] relax pipeline failed to build; using CPU path", error);
       });
-    const tubeModule = device.createShaderModule({
-      label: "skeleton-tube",
-      code: SKELETON_TUBE_WGSL,
-    });
-    device
-      .createComputePipelineAsync({
-        label: "skeleton-tube",
-        layout: device.createPipelineLayout({
-          bindGroupLayouts: [this.tubeGroup0Layout],
-        }),
-        compute: { module: tubeModule, entryPoint: "main" },
-      })
-      .then((pipeline) => {
-        this.tubePipeline = pipeline;
-      })
-      .catch((error) => {
-        this.tubeBroken = true;
-        console.warn("[skeleton] tube pipeline failed to build; tube uses CPU path", error);
-      });
+    this.buildTubePipeline(DEFAULT_MARCHER);
     const smoothModule = device.createShaderModule({
       label: "skeleton-smooth",
       code: SKELETON_SMOOTH_WGSL,
@@ -419,10 +408,46 @@ class GpuSkeletonizerImpl implements GpuSkeletonizer {
     );
   }
 
-  tubeReady(): boolean {
+  /** Kick off (once) the tube pipeline for a marcher; a failure latches
+   * `tubeBroken` for every marcher — the kernel prologue is shared, so one
+   * broken variant means the tube path itself is unhealthy on this device. */
+  private buildTubePipeline(marcher: MarcherId): void {
+    if (this.tubePipelines.has(marcher) || this.tubeBuilding.has(marcher) || this.tubeBroken) return;
+    this.tubeBuilding.add(marcher);
+    const module = this.device.createShaderModule({
+      label: `skeleton-tube-${marcher}`,
+      code: tubeWgslFor(marcher),
+    });
+    this.device
+      .createComputePipelineAsync({
+        label: `skeleton-tube-${marcher}`,
+        layout: this.device.createPipelineLayout({
+          bindGroupLayouts: [this.tubeGroup0Layout],
+        }),
+        compute: { module, entryPoint: "main" },
+      })
+      .then((pipeline) => {
+        if (!this.disposed) this.tubePipelines.set(marcher, pipeline);
+      })
+      .catch((error) => {
+        this.tubeBroken = true;
+        console.warn(`[skeleton] tube pipeline (${marcher}) failed to build; tube uses CPU path`, error);
+      })
+      .finally(() => this.tubeBuilding.delete(marcher));
+  }
+
+  /** The built pipeline for a marcher, or null (and a build in flight). */
+  private tubePipelineFor(marcher: MarcherId | undefined): GpuComputePipeline | null {
+    const id = marcher ?? DEFAULT_MARCHER;
+    const pipeline = this.tubePipelines.get(id) ?? null;
+    if (!pipeline) this.buildTubePipeline(id);
+    return pipeline;
+  }
+
+  tubeReady(marcher: MarcherId = DEFAULT_MARCHER): boolean {
     return (
       this.costPipeline !== null &&
-      this.tubePipeline !== null &&
+      this.tubePipelineFor(marcher) !== null &&
       !this.broken &&
       !this.tubeBroken &&
       !this.disposed
@@ -458,7 +483,7 @@ class GpuSkeletonizerImpl implements GpuSkeletonizer {
 
   extractTube(job: SkeletonTubeJob): Promise<SkeletonTubeResult | null> {
     const next = this.chain.then(() => {
-      if (!this.tubeReady()) return null;
+      if (!this.tubeReady(job.tube.marcher)) return null;
       if (job.atlas.channelsPerTexel !== 1) return null; // see run()
       return this.runTubeExclusive(job).catch((error) => {
         if (!this.disposed) {
@@ -663,7 +688,7 @@ class GpuSkeletonizerImpl implements GpuSkeletonizer {
         ],
       });
       const tubePass = encoder.beginComputePass();
-      tubePass.setPipeline(this.tubePipeline!);
+      tubePass.setPipeline(this.tubePipelineFor(job.tube.marcher)!);
       tubePass.setBindGroup(0, tubeGroup0);
       tubePass.dispatchWorkgroups(cells[0], cells[1], cells[2]);
       tubePass.end();
@@ -767,8 +792,8 @@ class GpuSkeletonizerImpl implements GpuSkeletonizer {
     // cost buffer the pass just wrote; pass order within a submit is
     // guaranteed). A dead tube pipeline degrades to tube: null — the caller
     // then marches the CPU twin — and never blocks the centerline.
-    const tube =
-      job.tube && this.tubePipeline !== null && !this.tubeBroken ? job.tube : null;
+    const tubePipeline = job.tube ? this.tubePipelineFor(job.tube.marcher) : null;
+    const tube = job.tube && tubePipeline !== null && !this.tubeBroken ? job.tube : null;
     let tubeCapacity = 0;
     if (tube) {
       tubeCapacity = Math.max(3, Math.floor(tube.maxVertices / 3) * 3);
@@ -831,7 +856,7 @@ class GpuSkeletonizerImpl implements GpuSkeletonizer {
         });
         const cells = tubeWorkgroups(job.box.size);
         const tubePass = encoder.beginComputePass();
-        tubePass.setPipeline(this.tubePipeline!);
+        tubePass.setPipeline(tubePipeline!);
         tubePass.setBindGroup(0, tubeGroup0);
         tubePass.dispatchWorkgroups(cells[0], cells[1], cells[2]);
         tubePass.end();

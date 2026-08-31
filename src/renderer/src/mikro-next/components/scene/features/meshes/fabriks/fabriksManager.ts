@@ -1,9 +1,11 @@
 import * as THREE from "three";
 import { ClippingGroup } from "three/webgpu";
-import { LruByteCache } from "./lruByteCache";
+import { LruByteCache } from "@/mikro-next/components/scene/platform/parquet/lruByteCache";
 import { FabriksBatchRenderer, type FabriksBatchStats } from "./fabriksBatch";
 import {
   createFabriksMaterial,
+  disposeColorAppearance,
+  setColorAppearance,
   setColorLut,
   setInstanceColoring,
   type FabriksMaterialHandle,
@@ -340,17 +342,23 @@ export class FabriksCollectionManager {
   }
 
   /**
-   * Bind the ordinal → RGBA lookup a layer's `colorBys` / `filterBys` resolve
-   * to (`fabriksColorLut.ts`), or `null` to drop back to the instance palette
-   * with nothing filtered.
+   * Bind the ordinal → value-code lookup a layer's `colorBys` / `filterBys`
+   * resolve to (`fabriksColorLut.ts`), or `null` to drop back to the instance
+   * palette with nothing filtered.
    *
    * Uniform writes and a texture swap, exactly like `setSelection` — a picker
-   * toggle must not recompile a pipeline. The previously bound texture is
-   * disposed here because this manager is what put it on the GPU; the caller
-   * only ever hands over the new one.
+   * toggle must not recompile a pipeline. A REUSED arena hands over the same
+   * texture object, which is the no-dispose case below; a previously bound
+   * texture that is actually replaced is disposed here because this manager
+   * is what put it on the GPU.
    */
   setColorLut(
-    lut: { texture: THREE.Texture; width: number; height: number } | null,
+    lut: {
+      texture: THREE.Texture;
+      width: number;
+      height: number;
+      window: { valueMin: number; valueMax: number };
+    } | null,
     modes: { colorize: boolean; filter: boolean },
   ): void {
     if (lut?.texture !== this.appliedLut) {
@@ -358,6 +366,21 @@ export class FabriksCollectionManager {
       this.appliedLut = lut?.texture ?? null;
     }
     setColorLut(this.materialHandle, lut, modes);
+    this.opts.onInvalidate();
+  }
+
+  /**
+   * The APPEARANCE half — palette row and clim window
+   * (`composeMeshLutAppearance`). Two uniform writes and an in-place palette
+   * refill; the table is never touched, which is the whole point of the
+   * value-code encoding.
+   */
+  setColorAppearance(style: {
+    palette: THREE.DataTexture | null;
+    climMin: number;
+    climMax: number;
+  }): void {
+    setColorAppearance(this.materialHandle, style);
     this.opts.onInvalidate();
   }
 
@@ -578,6 +601,17 @@ export class FabriksCollectionManager {
    * manager, which turned any placement-adjacent store change into a full
    * refetch.) A value-equal matrix is a no-op.
    */
+  /** The open collection — for readers that extract geometry outside the
+   * render plan (the mesh designer's edit-existing path). */
+  getCollection(): FabriksCollection {
+    return this.opts.collection;
+  }
+
+  /** A copy of the current voxel → world placement. */
+  getVoxelToWorld(): THREE.Matrix4 {
+    return this.voxelToWorld.clone();
+  }
+
   setVoxelToWorld(matrix: THREE.Matrix4): void {
     if (this.disposed || this.voxelToWorld.equals(matrix)) return;
     this.voxelToWorld.copy(matrix);
@@ -1149,6 +1183,7 @@ export class FabriksCollectionManager {
     this.group.clear();
     this.appliedLut?.dispose();
     this.appliedLut = null;
+    disposeColorAppearance(this.materialHandle);
     this.material.dispose();
     this.opts.collection.release();
   }

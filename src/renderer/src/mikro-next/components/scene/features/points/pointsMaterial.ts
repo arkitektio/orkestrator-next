@@ -28,15 +28,21 @@
 import * as THREE from "three";
 import { NodeMaterial, StorageBufferAttribute, StorageInstancedBufferAttribute } from "three/webgpu";
 import * as TSLTyped from "three/tsl";
+import {
+  createMeasureAppearance,
+  disposeMeasurePalette,
+  identityPaletteTexture,
+  measureRampColor,
+  setMeasurePalette,
+  type MeasureAppearanceNodes,
+} from "../../platform/gpu/measurePalette";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const TSL = TSLTyped as any;
 const {
   Fn,
-  clamp,
   float,
   instanceIndex,
-  max,
   mix,
   storage,
   texture,
@@ -47,17 +53,12 @@ const {
   vertexIndex,
 } = TSL;
 
-export type PointMaterialNodes = {
+export type PointMaterialNodes = MeasureAppearanceNodes & {
   // `any`, for the reason the label material gives: a TSL uniform node carries the whole
   // operator surface at runtime, and a `{ value }` type only ever described the slot a setter
   // writes to.
   uPointSize: any;
   uOpacity: any;
-  uColorize: any;
-  uValueMin: any;
-  uValueMax: any;
-  uClimMin: any;
-  uClimMax: any;
 };
 
 export type PointMaterialBundle = {
@@ -67,17 +68,10 @@ export type PointMaterialBundle = {
   values: StorageInstancedBufferAttribute;
   positions: StorageInstancedBufferAttribute;
   count: number;
+  /** Swap the colormap row the fragment samples; null returns to the identity
+   *  (flat white). In-place under WebGPU — see `measurePalette.ts`. */
+  setPalette: (row: THREE.DataTexture | null) => void;
   dispose: () => void;
-};
-
-/** A 1x1 white palette, bound from the start so a real one is a swap and not a recompile. */
-const identityPalette = (): THREE.DataTexture => {
-  const texture = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1, THREE.RGBAFormat);
-  texture.magFilter = THREE.LinearFilter;
-  texture.minFilter = THREE.LinearFilter;
-  texture.generateMipmaps = false;
-  texture.needsUpdate = true;
-  return texture;
 };
 
 /**
@@ -108,6 +102,13 @@ export const createPointMaterial = (
    * whole cost of GPU culling on the draw side — one extra storage read per vertex.
    */
   visible?: { attribute: StorageBufferAttribute; count: number } | null,
+  /**
+   * The `filterBys` mask (`pointsFilterMask.ts`), for the NO-CULL path only:
+   * with a cull pass the survivors already exclude filtered points and a
+   * second test would be redundant; without one, the fragment discards on the
+   * same buffer — so a filter never silently no-ops whichever path draws.
+   */
+  filterMask?: StorageBufferAttribute | null,
 ): PointMaterialBundle => {
   const count = values.length;
   const positionBuffer = new StorageInstancedBufferAttribute(positions, stride);
@@ -116,17 +117,15 @@ export const createPointMaterial = (
   const nodes: PointMaterialNodes = {
     uPointSize: uniform(3, "float"),
     uOpacity: uniform(1, "float"),
-    uColorize: uniform(0, "float"),
-    uValueMin: uniform(0, "float"),
-    uValueMax: uniform(1, "float"),
-    uClimMin: uniform(0, "float"),
-    uClimMax: uniform(1, "float"),
+    ...createMeasureAppearance(0),
   };
-  const palette = texture(identityPalette());
+  const paletteIdentity = identityPaletteTexture();
+  const palette = texture(paletteIdentity);
 
   const positionNode = storage(positionBuffer, stride === 3 ? "vec3" : "vec2", count);
   const valueNode = storage(valueBuffer, "float", count);
   const visibleNode = visible ? storage(visible.attribute, "uint", visible.count) : null;
+  const maskNode = !visible && filterMask ? storage(filterMask, "uint", count) : null;
   // Resolved once and reused by both stages, so the two cannot disagree about which point a
   // drawn instance is.
   const pointIndex = visibleNode ? visibleNode.element(instanceIndex) : instanceIndex;
@@ -152,11 +151,12 @@ export const createPointMaterial = (
     // A round point: the quad is a billboard and its corners are not part of the mark.
     const corner = emitCorner();
     TSL.Discard(corner.length().greaterThan(0.5));
+    if (maskNode) {
+      TSL.Discard(maskNode.element(pointIndex).equal(TSL.uint(0)));
+    }
 
     const raw = valueNode.element(pointIndex);
-    const span = max(nodes.uClimMax.sub(nodes.uClimMin), float(1e-9));
-    const t = clamp(raw.sub(nodes.uClimMin).div(span), 0.0, 1.0);
-    const mapped = palette.sample(vec2(t, 0.5)).rgb;
+    const mapped = measureRampColor(raw, nodes, palette);
     // Uncoloured points draw flat white rather than sampling a palette nothing selected.
     const rgb = mix(vec3(1.0), mapped, nodes.uColorize);
     return vec4(rgb, nodes.uOpacity);
@@ -168,7 +168,9 @@ export const createPointMaterial = (
     values: valueBuffer,
     positions: positionBuffer,
     count,
+    setPalette: (row) => setMeasurePalette(palette, paletteIdentity, row),
     dispose: () => {
+      disposeMeasurePalette(palette, paletteIdentity);
       material.dispose();
     },
   };

@@ -1,10 +1,17 @@
 import type { AttributeLookupEngine } from "@/mikro-next/lib/attributes/lookupEngine";
 import { LruMap } from "@/mikro-next/lib/attributes/lruMap";
 import {
+  columnValueAt,
   readColumnValues,
   type ColumnValues,
 } from "@/mikro-next/lib/attributes/columnarReads";
-import { readColumnByObjectId, type TableAccess } from "./columnLut";
+import { readColumnValuesBatched } from "@/mikro-next/lib/attributes/columnReadBatch";
+import {
+  readColumnByCompositeKey,
+  readColumnByObjectId,
+  type CompositeTableAccess,
+  type TableAccess,
+} from "./columnLut";
 
 /**
  * A per-engine cache of `objectId → value` column maps, sitting ABOVE
@@ -69,6 +76,93 @@ export const readColumnByObjectIdCached = (
 };
 
 /**
+ * `readColumnByObjectIdCached`, with the SCAN shared: the values come off the
+ * batched COLUMNAR read when it can answer (one multi-column SELECT for every
+ * same-tick entry over the table — `columnReadBatch.ts`), and the row map the
+ * legacy consumers index by id is derived from those arrays rather than by a
+ * second scan of the same column. Falls back to the plain row path when the
+ * columnar read declines (non-numeric key column, exotic result shape).
+ *
+ * Same cache, same key, same contract as `readColumnByObjectIdCached` — this
+ * is a drop-in for every `readColumn` injection.
+ */
+export const readColumnByObjectIdBatchedCached = (
+  engine: AttributeLookupEngine,
+  access: TableAccess,
+  column: string,
+): Promise<Map<number, unknown>> => {
+  let cache = caches.get(engine);
+  if (!cache) {
+    cache = new LruMap(CACHE_CAPACITY);
+    caches.set(engine, cache);
+  }
+  const key = `${access.store.id}:${access.keyColumn}:${column}`;
+  const hit = cache.get(key);
+  if (hit) return hit;
+  const promise: Promise<Map<number, unknown>> = readColumnValuesBatchedCached(
+    engine,
+    access,
+    column,
+  )
+    .then((columnar) => {
+      if (!columnar) return readColumnByObjectId(engine, access, column);
+      const map = new Map<number, unknown>();
+      for (let index = 0; index < columnar.count; index += 1) {
+        map.set(Number(columnar.ids[index]), columnValueAt(columnar, index));
+      }
+      return map;
+    })
+    .catch((error: unknown) => {
+      const current = caches.get(engine);
+      if (current && current.get(key) === promise) current.take(key);
+      throw error;
+    });
+  cache.set(key, promise);
+  return promise;
+};
+
+/**
+ * The same cache, for the COMPOSITE-keyed read (a network node/edge table's
+ * `(object, node…)` columns). Its own `LruMap` for the reason the columnar one
+ * has its own: the value type differs (`Map<string, …>` against
+ * `Map<number, …>`), and a shared cache with a union type would hand a caller
+ * the shape it did not ask for. Keyed by the ORDERED key-column list — order
+ * is meaning for a composite key, so `(a,b)` and `(b,a)` are different reads.
+ */
+const compositeCaches = new WeakMap<
+  AttributeLookupEngine,
+  LruMap<Promise<Map<string, unknown>>>
+>();
+
+export const readColumnByCompositeKeyCached = (
+  engine: AttributeLookupEngine,
+  access: CompositeTableAccess,
+  column: string,
+): Promise<Map<string, unknown>> => {
+  let cache = compositeCaches.get(engine);
+  if (!cache) {
+    cache = new LruMap(CACHE_CAPACITY);
+    compositeCaches.set(engine, cache);
+  }
+  const key = `${access.store.id}:${access.keyColumns.join(",")}:${column}`;
+  const hit = cache.get(key);
+  if (hit) return hit;
+  const promise: Promise<Map<string, unknown>> = readColumnByCompositeKey(
+    engine,
+    access,
+    column,
+  ).catch((error: unknown) => {
+    // Self-evict on failure — but only if this promise is still the cached
+    // one, so a retry that already replaced it is left alone.
+    const current = compositeCaches.get(engine);
+    if (current && current.get(key) === promise) current.take(key);
+    throw error;
+  });
+  cache.set(key, promise);
+  return promise;
+};
+
+/**
  * The same cache, for the COLUMNAR read.
  *
  * A separate `LruMap` rather than a shared one keyed by shape: the two hold
@@ -88,6 +182,35 @@ const columnarCaches = new WeakMap<
   AttributeLookupEngine,
   LruMap<Promise<ColumnValues | null>>
 >();
+
+/** `readColumnValuesCached`, with the batched read underneath — same cache,
+ *  same key, so batched and unbatched consumers share entries. The cache sits
+ *  OUTSIDE the batch: only true misses contribute to a tick's statement. */
+export const readColumnValuesBatchedCached = (
+  engine: AttributeLookupEngine,
+  access: TableAccess,
+  column: string,
+): Promise<ColumnValues | null> => {
+  let cache = columnarCaches.get(engine);
+  if (!cache) {
+    cache = new LruMap(CACHE_CAPACITY);
+    columnarCaches.set(engine, cache);
+  }
+  const key = `${access.store.id}:${access.keyColumn}:${column}`;
+  const hit = cache.get(key);
+  if (hit) return hit;
+  const promise: Promise<ColumnValues | null> = readColumnValuesBatched(
+    engine,
+    access,
+    column,
+  ).catch((error: unknown) => {
+    const current = columnarCaches.get(engine);
+    if (current && current.get(key) === promise) current.take(key);
+    throw error;
+  });
+  cache.set(key, promise);
+  return promise;
+};
 
 export const readColumnValuesCached = (
   engine: AttributeLookupEngine,

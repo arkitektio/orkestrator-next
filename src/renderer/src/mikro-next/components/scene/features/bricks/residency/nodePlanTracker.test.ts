@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createStore, type StoreApi } from "zustand/vanilla";
 import { startNodePlanTracking } from "./nodePlanTracker";
 import type { LayerNodePlan } from "../octree/nodePlanning";
@@ -185,6 +185,45 @@ describe("startNodePlanTracking", () => {
     stop();
   });
 
+  it("ignores a window-only layer replacement, but replans on a touch republish", async () => {
+    const stores = makeStores();
+    const stop = startNodePlanTracking(stores);
+    stores.viewerStore.setState({ layerViewRanges: { [LAYER_ID]: FULL_VIEW } });
+    await settle();
+    const planBefore = stores.viewerStore.getState().nodePlans[LAYER_ID];
+
+    // `schedule()` (and a recompute) read the view store; a quiet spy after
+    // the initial settle is therefore "no replan was even scheduled".
+    const viewReads = vi.spyOn(stores.viewStore, "getState");
+
+    // The exact pushChannels shape: fresh channels/sources arrays and moved
+    // window fields, every planning input spread through unchanged. Sixty of
+    // these a second is a contrast drag, and none may cost a replan.
+    stores.sceneStore.setState({
+      layers: [
+        {
+          ...layer,
+          channels: [{ transfer: { climMin: 5, climMax: 60 } }],
+          sources: [{ transfer: { climMin: 5, climMax: 60 } }],
+          climMin: 5,
+          climMax: 60,
+        } as unknown as LayerState,
+      ],
+    });
+    await settle();
+    expect(viewReads).not.toHaveBeenCalled();
+    expect(stores.viewerStore.getState().nodePlans[LAYER_ID]).toBe(planBefore);
+
+    // `touchImageLayers`: IDENTICAL elements in a fresh array — the explicit
+    // replan request for a zarr store that opened late. Must schedule.
+    stores.sceneStore.setState({ layers: [...stores.sceneStore.getState().layers] });
+    await settle();
+    expect(viewReads).toHaveBeenCalled();
+
+    viewReads.mockRestore();
+    stop();
+  });
+
   it("replans when the display mode flips", async () => {
     const stores = makeStores();
     const stop = startNodePlanTracking(stores);
@@ -305,6 +344,29 @@ describe("startNodePlanTracking", () => {
 
     // Settle edge: the deferred sharp replan lands promptly (well before the
     // motion timer would have fired).
+    stores.viewStore.setState({ cameraMoving: false });
+    await wait(100);
+    expect(stores.viewerStore.getState().nodePlans[LAYER_ID].targetLevel).toBe(0);
+
+    stop();
+  });
+
+  it("never plans FINER than the last plan while the camera moves; the settle replan does", async () => {
+    const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+    const stores = makeStores();
+    const stop = startNodePlanTracking(stores);
+    await settle(); // initial coarsest plan (targetLevel 1)
+    expect(stores.viewerStore.getState().nodePlans[LAYER_ID].targetLevel).toBe(1);
+
+    // A zoom-in during a gesture: the motion replan (500 ms) runs under the
+    // ceiling — the previous plan's targetLevel — so no intermediate/finer
+    // bricks are planned (and therefore fetched) mid-gesture.
+    stores.viewStore.setState({ cameraMoving: true });
+    stores.viewerStore.setState({ layerViewRanges: { [LAYER_ID]: FULL_VIEW } });
+    await wait(650);
+    expect(stores.viewerStore.getState().nodePlans[LAYER_ID].targetLevel).toBe(1);
+
+    // Settle edge: ceiling lifted, the fine plan lands promptly.
     stores.viewStore.setState({ cameraMoving: false });
     await wait(100);
     expect(stores.viewerStore.getState().nodePlans[LAYER_ID].targetLevel).toBe(0);

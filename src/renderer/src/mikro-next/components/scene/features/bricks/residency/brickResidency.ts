@@ -17,9 +17,13 @@ import {
 import { qualityGovernor } from "../../../platform/quality/qualityGovernor";
 import { getMax3DTextureSize, type SceneRenderer } from "../../../platform/gpu/sceneRenderer";
 import {
-  createCacheKey,
+  chunkCacheKeyFor,
+  effectiveChunkShapeOf,
+  getChunkGroupWorker,
   getChunkWorker,
+  prefetchShardIndex,
   readArrayMetadataCached,
+  type ArrayMetadata,
 } from "../../../../../../lib/zarr/runner/index";
 import { workerPool } from "../../../../../workers/pool";
 import { INTERACTIVE_FETCH_PRIORITY } from "@/lib/zarr/pool/types";
@@ -77,13 +81,20 @@ import {
 } from "../../../platform/coords/levelGeometry";
 import {
   brickGridForLevel,
+  brickFetchBox,
   chunksTouchingBrick,
-  fetchVoxelBox,
+  type FetchPhase,
   nodeKey,
   nodeVoxelBox,
   parseNodeKey,
   totalBrickCount,
 } from "../octree/nodeAddress";
+import {
+  haloStillWanted,
+  initialFetchPhase,
+  isTwoPhaseBricksEnabled,
+  needsHaloRefine,
+} from "./twoPhase";
 import { createNodeKeyMemo, type NodeKeyMemo } from "../octree/nodeKeyMemo";
 import {
   adjacentSelectionChunk,
@@ -238,6 +249,18 @@ export const resolveReusedAutoRange = (
  * drain idle-latch must NOT clear while any of these is set, or the second
  * drain of the promotion protocol never runs under the demand frame loop
  * (exported for the vitest matrix). */
+/**
+ * Margin-only prefetch (fetchBand 2) dispatch gate — see startNextFetchesGlobal.
+ * Pure so the policy is unit-testable without a manager.
+ */
+export function shouldDeferPrefetch(input: {
+  fetchBand: PlannedNode["fetchBand"];
+  inFlightOnScreen: number;
+  interacting: boolean;
+}): boolean {
+  return input.fetchBand === 2 && (input.inFlightOnScreen > 0 || input.interacting);
+}
+
 export const hasPendingEncodeWork = (pool: {
   occReencodePending: boolean;
   autoRangeEncodeDirty: boolean;
@@ -290,6 +313,10 @@ type PendingBrick = {
   /** GPU path: raw decoded chunks; the repack runs as a compute dispatch at
    * drain time, once a slot is acquired. */
   gpu: { chunks: GpuQueuedChunk[] } | null;
+  /** Which voxel box this brick was fetched with (two-phase bricks): `core`
+   * = payload only, border edge-replicated → the resident brick is
+   * provisional and a `full` halo refine follows; `full` = payload + border. */
+  phase: FetchPhase;
   /** Drains this PLANNED brick found every slot protected (defer-retry). */
   acquireRetries?: number;
 };
@@ -436,6 +463,13 @@ export type LayerBrickPool = {
    * REVERSE dispatch order — startNextFetches pops from the tail (O(1); a
    * shift-consumed queue was O(n²) across a large plan). */
   pendingFetch: PlannedNode[];
+  /** Resident bricks uploaded from a `core` fetch whose 1-voxel border is
+   * still edge-replicated (two-phase bricks). Cleared by the halo refine,
+   * eviction, or flush. */
+  provisionalKeys: Set<string>;
+  /** Halo refines waiting for dispatch (tail = next), served only when no
+   * pool has planned core work and the camera rests — see dispatchHalos. */
+  pendingHalo: PlannedNode[];
   /** Bounded per-key retry counts for failed fetches of still-planned bricks
    * (self-heal without waiting for the next replan). Cleared per reconcile. */
   fetchRetries: Map<string, number>;
@@ -561,7 +595,15 @@ export type BrickSystemStats = {
   /** Bricks whose fetch completed AND entered the upload queue (bricks
    * discarded by the staleness checkpoint count as `staleFetches` instead). */
   bricksFetched: number;
+  /** Two-phase bricks: fetches that ran payload-only (`core`), and resident
+   * provisional bricks whose halo refine has since landed. */
+  coreBricks: number;
+  haloRefines: number;
   chunkRequests: number;
+  /** Worker fetch tasks actually enqueued for brick chunks. Below
+   * `chunkRequests` when inner chunks of one shard coalesced into a single
+   * ranged GET (`chunkRequests / rangeRequests` = chunks per request). */
+  rangeRequests: number;
   /** Bytes of FIRST-SEEN chunks only — approximates unique decode volume
    * (cache hits and shared in-flight awaits are not re-counted). */
   bytesDecoded: number;
@@ -637,7 +679,9 @@ export class BrickResidencyManager {
   private readonly chunkCache = new ByteBudgetChunkCache(DECODED_CHUNK_CACHE_BYTES);
   /** Per-store zarr chunk-key encoders for the sync chunk-cache probe read
    * (`sampleChunkCacheSync`). null = metadata resolution in flight. */
-  private readonly chunkKeyEncoders = new Map<string, ((coords: number[]) => string) | null>();
+  /** Per store: the array metadata the probe path keys the chunk cache with
+   * (encoder + sharding layout); `null` while resolving. */
+  private readonly chunkKeyEncoders = new Map<string, ArrayMetadata | null>();
   /** Single-entry memo for the sync chunk-cache probe: consecutive march
    * steps overwhelmingly read the SAME decoded chunk, so the last one is
    * kept keyed by its FULL zarr chunk coords — a hit skips the cache-key
@@ -673,6 +717,10 @@ export class BrickResidencyManager {
    * then stayed unloaded until the next replan. Owner identity must be the
    * INVOCATION, not the brick. */
   private fetchOwnerSeq = 0;
+  /** In-flight bricks of fetchBand 0/1 (backdrop + on-screen) across all
+   * pools. Margin prefetch (band 2) dispatches only when this is 0 and the
+   * camera is at rest — see startNextFetchesGlobal. */
+  private inFlightOnScreen = 0;
   /** Chunk fetches outlive individual brick aborts (shared!); this cancels
    * them all on dispose. */
   private readonly fetchAbort = new AbortController();
@@ -687,6 +735,8 @@ export class BrickResidencyManager {
    * dispatch order. Interactive fetches use INTERACTIVE_FETCH_PRIORITY,
    * above every generation; the slab prefetch stays at −1, below all of it. */
   private fetchGeneration = 1;
+  /** Two-phase bricks kill switch, read once per manager (see twoPhase.ts). */
+  private readonly twoPhaseBricks = isTwoPhaseBricksEnabled();
   /** Trailing hysteresis for the governor's streaming flag (drainUploads). */
   private lastStreamingTrueAt = 0;
   private streamingClearTimer: ReturnType<typeof setTimeout> | null = null;
@@ -735,7 +785,10 @@ export class BrickResidencyManager {
   private drainNeeded = true;
   readonly stats: BrickSystemStats = {
     bricksFetched: 0,
+    coreBricks: 0,
+    haloRefines: 0,
     chunkRequests: 0,
+    rangeRequests: 0,
     bytesDecoded: 0,
     fetchMs: 0,
     repackMs: 0,
@@ -928,6 +981,21 @@ export class BrickResidencyManager {
    * (volume center and quarter point), read from the atlas CPU mirror via
    * `sampleResident`. Null entries = nothing resident there (or the mirror is
    * stale on the GPU-repack path). */
+  /**
+   * Whether a level's array is `sharding_indexed` — i.e. its planning chunk
+   * shape (inner chunks) differs from zarrita's `arr.chunks` (the shard).
+   * Debug report only; `false` when the array is not open yet.
+   */
+  private levelIsSharded(storeId: string): boolean {
+    try {
+      const arr = this.deps.viewerStore.getState().getArrayForStoreId(storeId);
+      const effective = effectiveChunkShapeOf(arr);
+      return effective !== undefined && effective.some((c, i) => c !== arr.chunks[i]);
+    } catch {
+      return false;
+    }
+  }
+
   private probeChannelSlabs(
     pool: LayerBrickPool,
   ): { voxel: Vec3; values: (number | null)[] }[] {
@@ -1020,7 +1088,10 @@ export class BrickResidencyManager {
           },
           levels: pool.geometry.levels.map((level) => ({
             spatialShape: level.spatialShape,
+            // INNER chunks for a sharded level (the fetch unit); `sharded`
+            // says whether `spatialChunks` differs from the storage object.
             spatialChunks: level.spatialChunks,
+            sharded: this.levelIsSharded(level.storeId),
             scale: level.scale,
             dtype: level.dtype,
             storeId: level.storeId,
@@ -1049,6 +1120,10 @@ export class BrickResidencyManager {
           inFlight: pool.inFlight.size,
           uploadQueue: pool.queue.length,
           pendingFetch: pool.pendingFetch.length,
+          // Two-phase bricks: residents still wearing a replicated rind, and
+          // halo refines waiting for an idle pipeline.
+          provisional: pool.provisionalKeys.size,
+          pendingHalo: pool.pendingHalo.length,
           protectedKeys: pool.protectedKeys.size,
           dataRange: [pool.minValue, pool.maxValue],
           occEncodeRange: [pool.occEncodeMin, pool.occEncodeMax],
@@ -1319,7 +1394,7 @@ export class BrickResidencyManager {
     if (this.chunkKeyEncoders.has(storeId)) return;
     this.chunkKeyEncoders.set(storeId, null); // resolving
     void readArrayMetadataCached(arr)
-      .then((meta) => this.chunkKeyEncoders.set(storeId, meta.encodeChunkKey))
+      .then((meta) => this.chunkKeyEncoders.set(storeId, meta))
       .catch((error) => {
         this.chunkKeyEncoders.delete(storeId); // retry on the next probe
         if (!this.warnedEncoderStores.has(storeId)) {
@@ -1403,7 +1478,7 @@ export class BrickResidencyManager {
         return null;
       }
       if (encoder === null) return null; // metadata still resolving
-      chunk = this.chunkCache.get(createCacheKey(arr, encoder, coords));
+      chunk = this.chunkCache.get(chunkCacheKeyFor(arr, encoder, coords));
       if (!chunk) return null;
       this.lastChunkRead = { storeId: level.storeId, coords: coords.slice(), chunk };
     }
@@ -1695,7 +1770,12 @@ export class BrickResidencyManager {
   /** Work anywhere in the pipeline? (Allocation-free — runs per drain frame.) */
   private anyPipelineWork(): boolean {
     for (const pool of this.pools.values()) {
-      if (pool.queue.length > 0 || pool.inFlight.size > 0 || pool.pendingFetch.length > 0) {
+      if (
+        pool.queue.length > 0 ||
+        pool.inFlight.size > 0 ||
+        pool.pendingFetch.length > 0 ||
+        pool.pendingHalo.length > 0
+      ) {
         return true;
       }
     }
@@ -1802,6 +1882,15 @@ export class BrickResidencyManager {
     // fetchScore units are each member layer's base voxels, so cross-layer
     // ordering is approximate (already true of the per-plan emission index).
     pool.pendingFetch = pending.sort(compareFetchOrder).reverse();
+    // Halo refines of bricks that left the plan are moot (dispatch re-checks
+    // too; this just keeps the queue bounded by the plan).
+    if (pool.pendingHalo.length > 0) {
+      pool.pendingHalo = pool.pendingHalo.filter((node) => protectedKeys.has(node.key));
+    }
+    // Sharded levels: warm the shard indexes the first fetches will need, so
+    // the index round trip overlaps the queue wait instead of preceding the
+    // first inner-chunk read of every shard.
+    this.warmShardIndexes(pool, pool.pendingFetch);
     // Fresh plan → fresh retry allowance (see the fetchBrick catch).
     pool.fetchRetries.clear();
 
@@ -1855,6 +1944,7 @@ export class BrickResidencyManager {
       pool.pool.release(key);
       setPageEntry(pool.pageTable, level, coords, null, PAGE_FLAG_UNMAPPED);
       pool.gpuStaleKeys.delete(key);
+      pool.provisionalKeys.delete(key);
       pool.coarsestResident.delete(key);
       // Same bookkeeping as eviction: brickRanges is bounded by slot count
       // only if released keys leave it (measuredRanges deliberately stays).
@@ -1946,11 +2036,68 @@ export class BrickResidencyManager {
           bestNode = node;
         }
       }
-      if (!bestPool || !bestNode) return;
+      if (!bestPool || !bestNode) break;
+      // Margin-only prefetch (band 2) waits for BOTH a resting camera and an
+      // empty on-screen pipeline. It used to be merely ordered last, so every
+      // gesture still paid its fetches, decodes (never aborted) and uploads
+      // for bricks that were never on screen — and a quick zoom's settle plan
+      // found the workers busy with them. compareFetchOrder sorts band first,
+      // so a band-2 winner here means no pool has band-0/1 work pending; the
+      // settle replan and every on-screen fetch's `finally` re-run this
+      // dispatch, which is when the deferred entries get their turn.
+      if (
+        shouldDeferPrefetch({
+          fetchBand: bestNode.fetchBand,
+          inFlightOnScreen: this.inFlightOnScreen,
+          interacting: this.deps.isInteracting?.() ?? false,
+        })
+      ) {
+        return;
+      }
       bestPool.pendingFetch.pop();
       globalInFlight += 1;
       coldOpenTimeline.stamp("firstBrickRequested");
       void this.fetchBrick(bestPool, bestNode);
+    }
+    this.dispatchHalos(globalInFlight, globalLimit, maxInflight);
+  }
+
+  /**
+   * Halo refines (two-phase bricks) run only once every pool's planned queue
+   * is empty — the loop above `break`s here in exactly that state — and under
+   * the band-2 gate (resting camera, no on-screen fetch in flight), so a rind
+   * refine never competes with a brick the user is waiting for. Arrival
+   * order across pools; a refine that no longer matches a provisional
+   * resident is dropped (the guards mirror `fetchBrick`'s halo checkpoint).
+   */
+  private dispatchHalos(globalInFlight: number, globalLimit: number, maxInflight: number): void {
+    if (
+      shouldDeferPrefetch({
+        fetchBand: 2,
+        inFlightOnScreen: this.inFlightOnScreen,
+        interacting: this.deps.isInteracting?.() ?? false,
+      })
+    ) {
+      return;
+    }
+    for (const pool of this.pools.values()) {
+      while (globalInFlight < globalLimit && pool.inFlight.size < maxInflight) {
+        const node = pool.pendingHalo.pop();
+        if (!node) break;
+        if (
+          !haloStillWanted({
+            planned: pool.protectedKeys.has(node.key),
+            resident: pool.pool.has(node.key),
+            provisional: pool.provisionalKeys.has(node.key),
+            inFlight: pool.inFlight.has(node.key),
+            queued: pool.queuedKeys.has(node.key),
+          })
+        ) {
+          continue;
+        }
+        globalInFlight += 1;
+        void this.fetchBrick(pool, node, "full", true);
+      }
     }
   }
 
@@ -2300,6 +2447,8 @@ export class BrickResidencyManager {
       coarsestResident: new Set(),
       inFlight: new Map(),
       pendingFetch: [],
+      provisionalKeys: new Set(),
+      pendingHalo: [],
       fetchRetries: new Map(),
       queue: [],
       queuedKeys: new Set(),
@@ -2363,6 +2512,79 @@ export class BrickResidencyManager {
    * signal — a shared result may still serve other bricks (or the cache);
    * the manager-level signal cancels everything on dispose.
    */
+  /**
+   * Grouped twin of `fetchChunkShared` for a brick's chunk set: the same
+   * per-chunk in-flight sharing and per-chunk abort bookkeeping, but chunks
+   * not already in flight go through `getChunkGroupWorker`, which coalesces
+   * near-adjacent inner chunks of one shard into a single ranged GET — also
+   * ACROSS bricks dispatched in the same tick (`shardRunBatch.ts`), which is
+   * why `rangeRequests` accumulates (`onDispatch` fires per flushed batch,
+   * each physical request attributed once scene-wide). Returns one promise
+   * per coordinate, in order.
+   */
+  private fetchChunksShared(
+    arr: Parameters<typeof getChunkWorker>[0],
+    storeId: string,
+    coordsList: number[][],
+    priority: number,
+  ): Promise<Chunk<DataType>>[] {
+    const out: Promise<Chunk<DataType>>[] = new Array(coordsList.length);
+    const fresh: { index: number; key: string; abort: AbortController }[] = [];
+    for (let i = 0; i < coordsList.length; i++) {
+      const key = `${storeId}:${coordsList[i].join(",")}`;
+      const existing = this.inFlightChunks.get(key);
+      if (existing) {
+        const existingAbort = this.inFlightChunkAborts.get(key);
+        if (!existingAbort || !existingAbort.signal.aborted) {
+          out[i] = existing;
+          continue;
+        }
+        this.inFlightChunks.delete(key);
+        this.inFlightChunkAborts.delete(key);
+      }
+      const abort = new AbortController();
+      this.inFlightChunkAborts.set(key, abort);
+      fresh.push({ index: i, key, abort });
+    }
+    if (fresh.length === 0) return out;
+
+    const promises = getChunkGroupWorker(
+      arr,
+      fresh.map((entry) => coordsList[entry.index]),
+      {
+        pool: workerPool,
+        priority,
+        signal: this.fetchAbort.signal,
+        signals: fresh.map((entry) => entry.abort.signal),
+        useSharedArrayBuffer: true,
+        cache: this.chunkCache,
+        textureFidelity: chunkFidelityForDtype(arr.dtype),
+        onDispatch: (tasks) => {
+          this.stats.rangeRequests += tasks;
+        },
+      },
+    );
+    fresh.forEach((entry, j) => {
+      const promise: Promise<Chunk<DataType>> = promises[j]
+        .then((chunk) => {
+          if (!this.countedChunkKeys.has(entry.key)) {
+            this.countedChunkKeys.add(entry.key);
+            this.stats.bytesDecoded += (chunk.data as { byteLength?: number }).byteLength ?? 0;
+          }
+          return chunk as Chunk<DataType>;
+        })
+        .finally(() => {
+          if (this.inFlightChunks.get(entry.key) === promise) {
+            this.inFlightChunks.delete(entry.key);
+            this.inFlightChunkAborts.delete(entry.key);
+          }
+        });
+      this.inFlightChunks.set(entry.key, promise);
+      out[entry.index] = promise;
+    });
+    return out;
+  }
+
   private fetchChunkShared(
     arr: Parameters<typeof getChunkWorker>[0],
     storeId: string,
@@ -2432,6 +2654,7 @@ export class BrickResidencyManager {
     pool: LayerBrickPool,
     levelIndex: number,
     brickCoords: Vec3,
+    phase: FetchPhase = "full",
   ): {
     spatial: Vec3;
     channelChunk: number;
@@ -2440,7 +2663,13 @@ export class BrickResidencyManager {
   }[] {
     const level = pool.geometry.levels[levelIndex];
     const { xPos, yPos, zPos, intensityPos, phasorPos } = pool.geometry.axes;
-    const spatialChunks = chunksTouchingBrick(pool.geometry, pool.spec, levelIndex, brickCoords);
+    const spatialChunks = chunksTouchingBrick(
+      pool.geometry,
+      pool.spec,
+      levelIndex,
+      brickCoords,
+      phase,
+    );
     const channelsPerChunk =
       intensityPos !== -1 ? Math.max(1, level.chunks[intensityPos] ?? 1) : 1;
     const channelChunkCount =
@@ -2485,13 +2714,60 @@ export class BrickResidencyManager {
     return out;
   }
 
-  private async fetchBrick(pool: LayerBrickPool, node: PlannedNode): Promise<void> {
+  /**
+   * Fire-and-forget shard-index prefetch for the head of a pool's fetch
+   * queue (tail of the reversed array = dispatched first). Bounded per call;
+   * the index cache dedups shards, so this costs at most one small ranged
+   * read per shard per scene. No-op for unsharded levels.
+   */
+  private warmShardIndexes(pool: LayerBrickPool, pendingReversed: readonly PlannedNode[]): void {
+    let budget = 256;
+    const state = this.deps.viewerStore.getState();
+    for (let i = pendingReversed.length - 1; i >= 0 && budget > 0; i--) {
+      const node = pendingReversed[i];
+      const level = pool.geometry.levels[node.level];
+      const meta = this.chunkKeyEncoders.get(level.storeId);
+      if (!meta?.sharding) continue;
+      let arr: ReturnType<typeof state.getArrayForStoreId>;
+      try {
+        arr = state.getArrayForStoreId(level.storeId);
+      } catch {
+        continue;
+      }
+      const phase = this.initialPhase(pool);
+      for (const { chunkCoords } of this.enumerateBrickChunkCoords(pool, node.level, node.coords, phase)) {
+        if (budget-- <= 0) return;
+        prefetchShardIndex(arr, meta, chunkCoords);
+      }
+    }
+  }
+
+  /** The phase a brick's FIRST fetch runs in for this pool (two-phase bricks). */
+  private initialPhase(pool: LayerBrickPool): FetchPhase {
+    return initialFetchPhase({ enabled: this.twoPhaseBricks, border: pool.spec.border });
+  }
+
+  /**
+   * @param phase `core` / `full` for a brick's first fetch (see
+   *   `initialPhase`); `full` with `halo` set for the deferred border refine
+   *   of an already-resident provisional brick.
+   */
+  private async fetchBrick(
+    pool: LayerBrickPool,
+    node: PlannedNode,
+    phase: FetchPhase = this.initialPhase(pool),
+    halo = false,
+  ): Promise<void> {
     const controller = new AbortController();
     pool.inFlight.set(node.key, controller);
+    // A halo refine is background work: it must never hold band-2 prefetch
+    // back, and its decodes sort below every planned fetch in the pool.
+    const onScreen = !halo && node.fetchBand <= 1;
+    if (onScreen) this.inFlightOnScreen += 1;
     const fetchStartedAt = performance.now();
     // Generation priority: this plan's decodes outrank stranded queued tasks
     // of earlier plans in the worker pool (see fetchGeneration).
-    const fetchPriority = this.fetchGeneration;
+    const fetchPriority = halo ? -1 : this.fetchGeneration;
     /** Chunk keys this brick registered as a referrer for (released in finally). */
     const acquiredChunkKeys: string[] = [];
     /** Unique per INVOCATION — see fetchOwnerSeq: the same brick key can have
@@ -2506,26 +2782,35 @@ export class BrickResidencyManager {
       const level = pool.geometry.levels[node.level];
       const arr = this.deps.viewerStore.getState().getArrayForStoreId(level.storeId);
 
-      const chunkSpecs = this.enumerateBrickChunkCoords(pool, node.level, node.coords);
+      const chunkSpecs = this.enumerateBrickChunkCoords(pool, node.level, node.coords, phase);
       for (const { chunkCoords } of chunkSpecs) {
         const chunkKey = `${level.storeId}:${chunkCoords.join(",")}`;
         acquiredChunkKeys.push(chunkKey);
         this.chunkRefs.acquire(chunkKey, ownerToken);
       }
 
+      // One grouped call: inner chunks of the same shard that sit close in
+      // the object coalesce into one ranged GET (sharded arrays only; the
+      // group degenerates to per-chunk fetches otherwise).
+      const chunkPromises = this.fetchChunksShared(
+        arr,
+        level.storeId,
+        chunkSpecs.map((spec) => spec.chunkCoords),
+        fetchPriority,
+      );
       const fetches: Promise<GpuQueuedChunk>[] = chunkSpecs.map(
-        ({ spatial, channelChunk, phasorChunk, chunkCoords }) =>
-        this.fetchChunkShared(arr, level.storeId, chunkCoords, fetchPriority).then((chunk) => ({
-          coords: spatial,
-          channelChunk,
-          phasorChunk,
-          data: chunk.data as BrickArray,
-          shape: chunk.shape,
-          stride: chunk.stride,
-          // Same key as fetchChunkShared — the GPU chunk-buffer cache
-          // mirrors the decoded-chunk cache's identity.
-          cacheKey: `${level.storeId}:${chunkCoords.join(",")}`,
-        })),
+        ({ spatial, channelChunk, phasorChunk, chunkCoords }, index) =>
+          chunkPromises[index].then((chunk) => ({
+            coords: spatial,
+            channelChunk,
+            phasorChunk,
+            data: chunk.data as BrickArray,
+            shape: chunk.shape,
+            stride: chunk.stride,
+            // Same key as fetchChunkShared — the GPU chunk-buffer cache
+            // mirrors the decoded-chunk cache's identity.
+            cacheKey: `${level.storeId}:${chunkCoords.join(",")}`,
+          })),
       );
       // Race the chunk await against the per-brick abort: a replan that drops
       // this brick (reconcileLayer aborts its controller) releases the
@@ -2549,6 +2834,23 @@ export class BrickResidencyManager {
       this.stats.chunkRequests += fetches.length;
       this.stats.fetchMs += performance.now() - fetchStartedAt;
 
+      // Halo refine: the brick must still be the provisional resident it was
+      // when queued (a replan, eviction or flush in between makes the rind
+      // moot — a fresh core fetch will schedule its own halo).
+      if (
+        halo &&
+        !haloStillWanted({
+          planned: pool.protectedKeys.has(node.key),
+          resident: pool.pool.has(node.key),
+          provisional: pool.provisionalKeys.has(node.key),
+          inFlight: false,
+          queued: pool.queuedKeys.has(node.key),
+        })
+      ) {
+        this.stats.staleFetches += 1;
+        return;
+      }
+
       // Staleness checkpoint: the plan moved on while fetching (2D pan — the
       // node set turns over as bricks scroll). The decoded chunks stay in the
       // shared cache, so a flip-back refetches at cache-hit cost plus one
@@ -2557,6 +2859,7 @@ export class BrickResidencyManager {
       // are exempt — protectedKeys only pins coarsest bricks already RESIDENT,
       // and an in-flight one is the shader's fallback of last resort.
       if (
+        !halo &&
         node.level !== pool.geometry.levels.length - 1 &&
         !pool.protectedKeys.has(node.key)
       ) {
@@ -2608,6 +2911,7 @@ export class BrickResidencyManager {
           slabRanges: null,
           bytes: atlasSlotBytes(pool.spec, pool.atlas.kind),
           gpu: { chunks },
+          phase,
         };
       } else {
         // Repack runs OFF the UI thread (worker pool); SAB-backed chunks travel
@@ -2624,7 +2928,9 @@ export class BrickResidencyManager {
             slabs: pool.geometry.slabs,
             phasorBins: pool.geometry.phasorBins,
             brickBox: nodeVoxelBox(pool.geometry, pool.spec, node.level, node.coords),
-            fetchBox: fetchVoxelBox(pool.geometry, pool.spec, node.level, node.coords),
+            // Core phase: the payload box — `replicateEdges` fills the rind
+            // from the payload's edge, exactly as for level-edge bricks.
+            fetchBox: brickFetchBox(pool.geometry, pool.spec, node.level, node.coords, phase),
             fixedOffsets: pool.fixedOffsets,
             chunks,
           },
@@ -2643,9 +2949,11 @@ export class BrickResidencyManager {
             pool.occSlabs > 1 ? normalizeSlabRanges(result.slabRanges, pool.spec.channelCount) : null,
           bytes: result.data.byteLength,
           gpu: null,
+          phase,
         };
       }
       this.stats.bricksFetched += 1;
+      if (phase === "core") this.stats.coreBricks += 1;
       coldOpenTimeline.stamp("firstBrickDecoded");
 
       this.wakeDrain();
@@ -2664,7 +2972,7 @@ export class BrickResidencyManager {
         // camera that is a visible hole for seconds. Two retries per plan,
         // reset each reconcile; the actual requeue happens in the finally
         // below, after our own inFlight entry is gone.
-        if (!this.disposed && pool.protectedKeys.has(node.key)) {
+        if (!halo && !this.disposed && pool.protectedKeys.has(node.key)) {
           const retries = pool.fetchRetries.get(node.key) ?? 0;
           if (retries < 2) {
             pool.fetchRetries.set(node.key, retries + 1);
@@ -2699,6 +3007,7 @@ export class BrickResidencyManager {
       ) {
         pool.pendingFetch.push(node); // tail = dispatched next
       }
+      if (onScreen) this.inFlightOnScreen -= 1;
       // ALL pools, not just this one: the freed global in-flight slot may be
       // what another pool's queue is blocked on (see startNextFetchesGlobal).
       if (!this.disposed) this.startNextFetchesGlobal();
@@ -2721,6 +3030,16 @@ export class BrickResidencyManager {
     progress: { bytes: number; bricks: number; uploadedAny: boolean },
   ): "done" | "defer" {
     if (pending.uniformValue !== null) {
+      // A halo refine of a resident brick cannot come back uniform (the
+      // payload was not), but never leave a slot behind an EMPTY entry.
+      if (pool.pool.has(pending.key)) {
+        pool.pool.release(pending.key);
+        pool.gpuStaleKeys.delete(pending.key);
+        pool.coarsestResident.delete(pending.key);
+        pool.brickRanges.delete(pending.key);
+        pool.brickSlabRanges.delete(pending.key);
+      }
+      pool.provisionalKeys.delete(pending.key);
       // Encode the uniform value 8-bit-quantized in R (see brickTraversal).
       // Mapped even when the plan moved on: EMPTY costs no slot and is
       // valid fallback data.
@@ -2765,6 +3084,7 @@ export class BrickResidencyManager {
       const evicted = parseNodeKey(acquired.evictedKey);
       setPageEntry(pool.pageTable, evicted.level, evicted.coords, null, PAGE_FLAG_UNMAPPED);
       pool.gpuStaleKeys.delete(acquired.evictedKey);
+      pool.provisionalKeys.delete(acquired.evictedKey);
       pool.coarsestResident.delete(acquired.evictedKey);
       pool.brickRanges.delete(acquired.evictedKey);
       pool.brickSlabRanges.delete(acquired.evictedKey);
@@ -2808,7 +3128,15 @@ export class BrickResidencyManager {
           slabs: pool.geometry.slabs,
           phasorBins: pool.geometry.phasorBins,
           brickBox: nodeVoxelBox(pool.geometry, pool.spec, pending.level, pending.coords),
-          fetchBox: fetchVoxelBox(pool.geometry, pool.spec, pending.level, pending.coords),
+          // Core phase: the kernel's border replication is a clamp to the
+          // fetch box, so the payload box alone yields the replicated rind.
+          fetchBox: brickFetchBox(
+            pool.geometry,
+            pool.spec,
+            pending.level,
+            pending.coords,
+            pending.phase,
+          ),
           fixedOffsets: pool.fixedOffsets,
           chunks: pending.gpu.chunks,
         },
@@ -2879,6 +3207,23 @@ export class BrickResidencyManager {
     progress.bricks += 1;
     this.stats.bricksUploaded += 1;
     coldOpenTimeline.stamp("firstBrickUploaded");
+    // Two-phase bookkeeping: a core upload leaves the brick provisional and
+    // queues its halo refine; a full upload (primary or refine) settles it.
+    if (needsHaloRefine({ phase: pending.phase, uniform: false })) {
+      pool.provisionalKeys.add(pending.key);
+      pool.pendingHalo.push({
+        key: pending.key,
+        level: pending.level,
+        coords: pending.coords,
+        role: "target",
+        priority: 0,
+        fetchScore: 0,
+        fetchBand: 2,
+      });
+    } else {
+      if (pool.provisionalKeys.delete(pending.key)) this.stats.haloRefines += 1;
+      coldOpenTimeline.stamp("firstBrickFull");
+    }
     this.stats.bytesUploaded += pending.bytes;
     if (!planned) this.stats.staleUploads += 1;
     progress.uploadedAny = true;
@@ -3578,6 +3923,7 @@ export class BrickResidencyManager {
       setPageEntry(pool.pageTable, level, coords, texel, PAGE_FLAG_EMPTY);
       pool.pool.release(result.token.key);
       pool.gpuStaleKeys.delete(result.token.key);
+      pool.provisionalKeys.delete(result.token.key);
       pool.coarsestResident.delete(result.token.key);
       pool.brickRanges.delete(result.token.key);
       pool.brickSlabRanges.delete(result.token.key);
@@ -3625,6 +3971,7 @@ export class BrickResidencyManager {
       setPageEntry(pool.pageTable, level, coords, null, PAGE_FLAG_UNMAPPED);
       pool.pool.release(token.key);
       pool.gpuStaleKeys.delete(token.key);
+      pool.provisionalKeys.delete(token.key);
       pool.coarsestResident.delete(token.key);
       pool.brickRanges.delete(token.key);
       pool.brickSlabRanges.delete(token.key);
@@ -3928,6 +4275,8 @@ export class BrickResidencyManager {
     for (const controller of pool.inFlight.values()) controller.abort();
     pool.inFlight.clear();
     pool.pendingFetch = [];
+    pool.pendingHalo = [];
+    pool.provisionalKeys.clear();
     pool.queue = [];
     pool.queuedKeys.clear();
     pool.emptyValues.clear();

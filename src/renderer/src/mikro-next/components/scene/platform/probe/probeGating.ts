@@ -24,7 +24,7 @@
  */
 
 /** The interaction modes these predicates discriminate on. */
-export type ProbeGateMode = "NAVIGATE" | "ANNOTATE" | "PROBE" | (string & {});
+export type ProbeGateMode = "NAVIGATE" | "ANNOTATE" | "PROBE" | "DESIGN" | (string & {});
 
 export interface ProbeGateInput {
   interactionMode: ProbeGateMode;
@@ -38,6 +38,11 @@ export interface ProbeGateInput {
    * so no other layer has any business arming for it.
    */
   brushToolActive?: boolean;
+  /**
+   * DESIGN only: a brush key (C/V/X) is held. Without one DESIGN behaves
+   * exactly like NAVIGATE — no hover probe, no click capture.
+   */
+  designArmed?: boolean;
   /**
    * Whether this layer answers ANNOTATE-mode probing at all. True for the 3D
    * volume and the mesh collection — there the probe IS the placement, since a
@@ -64,12 +69,16 @@ export const hoverProbeEnabled = ({
   probeFollowsCursor,
   drawingToolActive,
   brushToolActive = false,
+  designArmed = false,
   annotateProbes,
 }: ProbeGateInput): boolean =>
   (interactionMode === "PROBE" && probeFollowsCursor) ||
   (annotateProbes &&
     interactionMode === "ANNOTATE" &&
-    (drawingToolActive || brushToolActive));
+    (drawingToolActive || brushToolActive)) ||
+  // DESIGN hosts only the brush/blob gestures, which paint through the probe —
+  // and only while a modifier is held; otherwise it is NAVIGATE.
+  (annotateProbes && interactionMode === "DESIGN" && brushToolActive && designArmed);
 
 /**
  * Click probing: PROBE mode always — the follow-cursor modifier governs the
@@ -80,9 +89,11 @@ export const clickProbeEnabled = ({
   interactionMode,
   drawingToolActive,
   brushToolActive = false,
+  designArmed = false,
   annotateProbes,
 }: ProbeGateInput): boolean =>
   interactionMode === "PROBE" ||
   (annotateProbes &&
     interactionMode === "ANNOTATE" &&
-    (drawingToolActive || brushToolActive));
+    (drawingToolActive || brushToolActive)) ||
+  (annotateProbes && interactionMode === "DESIGN" && brushToolActive && designArmed);

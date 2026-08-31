@@ -939,6 +939,14 @@ export const DebugPanel = () => {
                           ↓{pool.inFlight.size} ⇡{pool.queue.length}
                         </span>
                       )}
+                      {pool.provisionalKeys.size > 0 && (
+                        <span
+                          className="px-1 rounded border border-sky-500/50 text-sky-300"
+                          title="Two-phase bricks: residents whose 1-voxel border is still edge-replicated (halo refine pending)"
+                        >
+                          ◐{pool.provisionalKeys.size}
+                        </span>
+                      )}
                     </>
                   )}
                 </div>

@@ -136,16 +136,10 @@ export interface RoiDrawingState {
   activeTool: AnnotateTool | null;
   drawnRois: DrawnRoi[];
   /**
-   * World-space first vertex for the next PATH session — set by "draw path
-   * from probe", consumed (and cleared) by `RoiDrawer` after its reset effect.
-   * Store-held rather than an imperative handle so it survives both the
-   * drawer's tool/mode reset and its remount on a 2D↔3D display flip.
-   */
-  pendingPathSeed: [number, number, number] | null;
-  /**
    * World-space center for the next SPHERE/CUBE session — seeded by a probe
-   * click on the volume, consumed (and cleared) by `RoiDrawer` the same way
-   * `pendingPathSeed` is.
+   * click on the volume, consumed (and cleared) by `RoiDrawer` after its reset
+   * effect. Store-held rather than an imperative handle so it survives both
+   * the drawer's tool/mode reset and its remount on a 2D↔3D display flip.
    */
   pendingPrimitiveAnchor: [number, number, number] | null;
   /**
@@ -207,7 +201,6 @@ export interface RoiDrawingState {
     annotationIds: Iterable<string>,
     now?: number,
   ) => void;
-  setPendingPathSeed: (seed: [number, number, number] | null) => void;
   setPendingPrimitiveAnchor: (anchor: [number, number, number] | null) => void;
   setPrimitiveSessionActive: (active: boolean) => void;
 }
@@ -217,7 +210,6 @@ export const createRoiDrawingStore = () =>
     immer((set) => ({
       activeTool: "RECTANGLE",
       drawnRois: [],
-      pendingPathSeed: null,
       pendingPrimitiveAnchor: null,
       primitiveSessionActive: false,
       enhancersOn: {},
@@ -238,10 +230,6 @@ export const createRoiDrawingStore = () =>
       setActiveTool: (tool) =>
         set((state) => {
           state.activeTool = tool;
-        }),
-      setPendingPathSeed: (seed) =>
-        set((state) => {
-          state.pendingPathSeed = seed;
         }),
       setPendingPrimitiveAnchor: (anchor) =>
         set((state) => {

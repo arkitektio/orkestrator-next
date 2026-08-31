@@ -58,29 +58,6 @@ fragment SceneAnnotation on Annotation {
   }
 }
 
-# The geometry of ONE painted region, fetched by its own query rather than the
-# 5s poll. A surface is the only kind whose vectors are bulk geometry — thousands
-# of vertices plus a face index, against a polygon's handful — so putting it on
-# `SceneAnnotation` would multiply the poll's payload by orders of magnitude for
-# every stroke on screen. It also barely changes: a surface is re-extracted by an
-# explicit edit, never by anything the poll is watching for.
-fragment SceneSurface on Annotation {
-  id
-  name
-  kind
-  vectors
-  # Index triples into `vectors`. Only a surface has them.
-  faces
-  strokeColor
-  fillColor
-  strokeWidth
-  filled
-  coordinates {
-    name
-    value
-  }
-}
-
 # The browse card's selection. Deliberately NO `vectors`: a card says what kind
 # of shape this is, and the path itself is a point list per annotation — pages
 # of numbers for a grid of cards, and unreadable anyway without the scene that

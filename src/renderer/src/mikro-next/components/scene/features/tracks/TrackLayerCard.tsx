@@ -8,10 +8,12 @@ import {
   type SceneLayerFragment,
   type UpdateTrackLayerInput,
 } from "@/mikro-next/api/graphql";
+import { publishedMaxIndex, TIME_DIM } from "../../platform/model/dimExtents";
 import { useSceneStore } from "../../platform/stores/sceneStore";
 import {
   Badge,
   CardSection,
+  LayerCardShell,
   OpacityRow,
   RowLabel,
   formatCount,
@@ -64,9 +66,15 @@ const TAIL_MAX = 60;
 export const TrackLayerCard = memo(
   ({
     layer,
+    expanded,
+    onSelect,
     onRemove,
   }: {
     layer: TrackLayerVariant;
+    /** Whether the card's controls are unfolded (`LayerCardShell`). */
+    expanded: boolean;
+    /** The panel's toggle — handed the current state, see `cardShell.tsx`. */
+    onSelect: (id: string, currentlyExpanded: boolean) => void;
     onRemove?: (id: string) => void;
   }) => {
     const patchSceneLayer = useSceneStore((s) => s.patchSceneLayer);
@@ -74,10 +82,13 @@ export const TrackLayerCard = memo(
     const tailWindow = useSceneStore(
       (s) => s.trackTailWindows[layer.id] ?? DEFAULT_TAIL_WINDOW,
     );
-    // A SCALAR selector: the extents map is rewritten whenever any track layer
-    // finishes a read, and subscribing to the object would re-render every
-    // card for a sibling's load (P17).
-    const timepoints = useSceneStore((s) => s.trackTimeExtents[layer.id]);
+    // A SCALAR selector: the extents record is rewritten whenever any layer
+    // finishes a read, and subscribing to the object — or to this layer's own
+    // extent ARRAY, which is rebuilt per publish — would re-render every card
+    // for a sibling's load (P17). `publishedMaxIndex` reduces it to a number.
+    const timepoints = useSceneStore((s) =>
+      publishedMaxIndex(s.layerDimExtents[layer.id], TIME_DIM),
+    );
 
     const [updateTrackLayer] = useUpdateTrackLayerMutation();
     const hidden = layer.visible === false;
@@ -128,42 +139,38 @@ export const TrackLayerCard = memo(
     const lineWidth = layer.lineWidth ?? 1;
 
     return (
-      <div
-        className={`@container/card rounded-lg border border-white/10 bg-black/40 backdrop-blur-md transition-opacity ${
-          hidden ? "opacity-50" : ""
-        }`}
-      >
-        {/* ------------------------------------------------ header --------- */}
-        <div className="flex items-center gap-1.5 px-2 py-1.5">
-          <span className="grid h-5 w-5 shrink-0 place-items-center rounded bg-sky-400/15">
-            <Spline className="h-3 w-3 text-sky-300" />
-          </span>
-          <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-white/90">
-            {layer.tableDataset?.name?.trim() || `Tracks ${layer.id}`}
-          </span>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-5 w-5 shrink-0 text-white/45 hover:text-white/90"
-            title={hidden ? "Show" : "Hide"}
-            onClick={() => persist({ visible: hidden })}
-          >
-            {hidden ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-          </Button>
-          {onRemove && (
+      <LayerCardShell
+        icon={<Spline className="h-3 w-3 text-sky-300" />}
+        tile="bg-sky-400/15"
+        title={layer.tableDataset?.name?.trim() || `Tracks ${layer.id}`}
+        hidden={hidden}
+        expanded={expanded}
+        onToggle={() => onSelect(layer.id, expanded)}
+        actions={
+          <>
             <Button
               variant="ghost"
               size="icon"
-              className="h-5 w-5 shrink-0 text-white/35 hover:text-red-300"
-              title="Remove layer from scene"
-              onClick={() => onRemove(layer.id)}
+              className="h-5 w-5 shrink-0 text-white/45 hover:text-white/90"
+              title={hidden ? "Show" : "Hide"}
+              onClick={() => persist({ visible: hidden })}
             >
-              <Trash2 className="h-3 w-3" />
+              {hidden ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
             </Button>
-          )}
-        </div>
-
+            {onRemove && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5 shrink-0 text-white/35 hover:text-red-300"
+                title="Remove layer from scene"
+                onClick={() => onRemove(layer.id)}
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            )}
+          </>
+        }
+      >
         {/* ------------------------------------------------ tail ----------- */}
         {hasTime && (
           <CardSection title="tail">
@@ -271,7 +278,7 @@ export const TrackLayerCard = memo(
             </Badge>
           )}
         </div>
-      </div>
+      </LayerCardShell>
     );
   },
 );

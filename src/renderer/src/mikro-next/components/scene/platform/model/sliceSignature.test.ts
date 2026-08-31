@@ -21,6 +21,26 @@ const makeLayer = (overrides?: {
     },
   }) as unknown as LayerState;
 
+/**
+ * The pool-flush contract, pinned to a literal.
+ *
+ * `buildSliceSignature`'s output IS a brick pool's identity: the residency
+ * manager flushes a layer wholesale when it changes. So a refactor of the dim
+ * vocabulary underneath it — `collapsibleDims` now delegates to
+ * `dimExtents.collapsibleLensDims`, shared with the non-brick lens kinds — must
+ * leave the string byte-identical, or the first load after deploy refetches
+ * every layer in every scene for no reason. Comparing to a recomputed value
+ * would not catch that; only a literal does.
+ */
+describe("buildSliceSignature — the pool identity", () => {
+  it("is byte-identical for a canonical layer", () => {
+    expect(buildSliceSignature(makeLayer(), { t: 3 })).toBe(
+      '{"xAxis":"x","yAxis":"y","zAxis":"z","intensityAxis":"c","phasorAxis":null,' +
+        '"phasors":[],"selections":{"t":3},"slices":[]}',
+    );
+  });
+});
+
 describe("collapsibleDims", () => {
   it("returns non-rendered dims with extent > 1", () => {
     expect(collapsibleDims(makeLayer())).toEqual(["t"]);

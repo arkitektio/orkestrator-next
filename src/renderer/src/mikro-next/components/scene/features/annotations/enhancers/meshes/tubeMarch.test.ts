@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 import type { CorridorBox } from "../shared/corridorPlan";
 import { corridorIndex } from "../shared/corridorPlan";
 import { TET_CORNERS, TET_TRIANGLE_TABLE, tetTableWGSL } from "./marchingTets";
-import { marchTube, tubeClampValue } from "./tubeMarch";
+import { tubeClampValue } from "./tubeMarch";
+import { MARCHERS } from "./marcher";
+import { MC_TRIANGLE_TABLE, mcTableWGSL } from "./marchingCubes";
 import { INF_COST } from "../shared/corridorCost";
 
 /**
@@ -63,7 +65,31 @@ describe("tet table", () => {
   });
 });
 
-describe("marchTube", () => {
+describe("cube table", () => {
+  it("has no triangles for the trivial masks and whole triangles everywhere else", () => {
+    expect(MC_TRIANGLE_TABLE[0]).toHaveLength(0);
+    expect(MC_TRIANGLE_TABLE[255]).toHaveLength(0);
+    for (let mask = 1; mask < 255; mask += 1) {
+      expect(MC_TRIANGLE_TABLE[mask].length % 3).toBe(0);
+      expect(MC_TRIANGLE_TABLE[mask].length).toBeGreaterThan(0);
+      // Never more than the tet decomposition would need (12 triangles).
+      expect(MC_TRIANGLE_TABLE[mask].length / 3).toBeLessThanOrEqual(12);
+    }
+    // (Complementary masks are deliberately NOT mirror images: the ambiguous
+    // face resolves by separating the INSIDE corners, which is what keeps two
+    // neighbouring cells consistent — see the random-field test.)
+  });
+
+  it("serializes offsets and edges consistently", () => {
+    const wgsl = mcTableWGSL();
+    expect(wgsl).toContain("MC_TRI_OFFSETS = array<u32, 257>");
+    const edges = MC_TRIANGLE_TABLE.reduce((n, t) => n + t.length, 0);
+    expect(wgsl).toContain(`MC_TRI_EDGES = array<u32, ${edges}>`);
+  });
+});
+
+describe.each(Object.values(MARCHERS))("$label", (marcher) => {
+  const marchTube = marcher.march;
   // Cost = distance from the sphere's center; iso = radius → the isosurface
   // is a sphere of radius 6 centered in a 16³ box.
   const box: CorridorBox = { origin: [0, 0, 0], size: [16, 16, 16] };
@@ -156,5 +182,37 @@ describe("marchTube", () => {
     expect(truncated).toBe(true);
     expect(triangles).toBeLessThanOrEqual(10);
     expect(positions.length % 9).toBe(0);
+  });
+
+  it("stays watertight on a random field — the ambiguity rule is consistent across cells", () => {
+    const fieldBox: CorridorBox = { origin: [0, 0, 0], size: [10, 10, 10] };
+    let seed = 7;
+    const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    const cost = new Float32Array(10 * 10 * 10).fill(INF_COST);
+    for (let z = 1; z < 9; z += 1) {
+      for (let y = 1; y < 9; y += 1) {
+        for (let x = 1; x < 9; x += 1) cost[corridorIndex(fieldBox, x, y, z)] = rand();
+      }
+    }
+    const { positions, truncated } = marchTube({ cost, box: fieldBox, iso: 0.5 });
+    expect(truncated).toBe(false);
+    for (const [, count] of edgeCounts(positions)) expect(count).toBe(2);
+  });
+});
+
+describe("marcher parity", () => {
+  it("cubes emit fewer triangles than tets for the same sphere", () => {
+    const box: CorridorBox = { origin: [0, 0, 0], size: [16, 16, 16] };
+    const cost = new Float32Array(16 * 16 * 16);
+    for (let z = 0; z < 16; z += 1) {
+      for (let y = 0; y < 16; y += 1) {
+        for (let x = 0; x < 16; x += 1) {
+          cost[corridorIndex(box, x, y, z)] = Math.hypot(x + 0.5 - 8, y + 0.5 - 8, z + 0.5 - 8);
+        }
+      }
+    }
+    const tets = MARCHERS.tets.march({ cost, box, iso: 6 });
+    const cubes = MARCHERS.cubes.march({ cost, box, iso: 6 });
+    expect(cubes.triangles).toBeLessThan(tets.triangles * 0.6);
   });
 });

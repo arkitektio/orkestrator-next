@@ -32,10 +32,12 @@
       "IntensityLayer",
       "LabelLayer",
       "MeshLayer",
+      "NetworkLayer",
       "PhasorLayer",
       "PointLayer",
       "RgbLayer",
-      "TrackLayer"
+      "TrackLayer",
+      "VectorLayer"
     ],
     "LayerRenderNode": [
       "BlendNode",
@@ -68,12 +70,14 @@
       "DataArray",
       "Lens",
       "MeshCollection",
+      "NetworkCollection",
       "SparseDataset",
       "TableDataset"
     ],
     "SampleStep": [
       "ArraySample",
-      "MeshSample"
+      "MeshSample",
+      "NetworkSample"
     ],
     "Transformation": [
       "AffineTransformation",
@@ -112,6 +116,7 @@
       "IdentityTransformation",
       "ImageLayer",
       "IntensityLayer",
+      "KonnektionStore",
       "LabelLayer",
       "Lens",
       "LightPath",
@@ -120,6 +125,8 @@
       "Membership",
       "MeshCollection",
       "MeshLayer",
+      "NetworkCollection",
+      "NetworkLayer",
       "OptikitState",
       "Organization",
       "ParquetStore",
@@ -144,6 +151,7 @@
       "UnmappableTransformation",
       "User",
       "ValueHistogram",
+      "VectorLayer",
       "ZarrStore"
     ]
   }

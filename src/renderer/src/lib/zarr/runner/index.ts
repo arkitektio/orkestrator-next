@@ -5,13 +5,18 @@
  * persistent WorkerPool queue with bounded concurrency.
  */
 
-export type { ArrayMetadata } from "./get-worker"
+export type { ArrayMetadata, ChunkLocation } from "./get-worker"
 export {
+  chunkCacheKeyFor,
   createCacheKey,
   createDefaultWorker,
   /** @deprecated Use {@link createDefaultWorker} instead. */
   DEFAULT_WORKER_URL,
+  effectiveChunkShapeOf,
+  getChunkGroupWorker,
   getChunkWorker,
+  prefetchShardIndex,
+  resolveChunkLocation,
   getStoreId,
   getWorker,
   readArrayMetadata,

@@ -9,7 +9,7 @@ import { composePlacementPath } from "@/mikro-next/lib/coords/transformGraph";
 
 import { affineToMatrix4 } from "../../platform/coords/worldTransform";
 import { padDegenerateAxes } from "../../platform/camera/cameraFit";
-import { zSpanOf, type ZSpan } from "./annotationVisibility";
+import { type ZSpan } from "./annotationVisibility";
 import type { SceneTransformContext } from "../../platform/model/layerModel";
 import type { RoiBounds } from "./roiSelectionStore";
 
@@ -127,10 +127,7 @@ export function getAnnotationSelectionPoints(
   }
 
   // Every remaining kind's vectors ARE its points: a path's and a polygon's
-  // vertices, a multi-point's marks, and a SURFACE's vertices — which is why a
-  // painted region needs no branch of its own here. Its `faces` say which of
-  // those vertices form triangles, and that changes what it looks like, never
-  // where it is or how far it reaches.
+  // vertices, a multi-point's marks.
   return vectors.map((vector) => getVectorPoint(vector, flattenToPlane));
 }
 
@@ -151,34 +148,58 @@ export function getWorldExtent(
   let maxX = -Infinity;
   let minY = Infinity;
   let maxY = -Infinity;
-  const worldPoints: [number, number, number][] = [];
+  let minZ = Infinity;
+  let maxZ = -Infinity;
 
-  points.forEach(([x, y, z]) => {
-    const world = new THREE.Vector3(x, y, z).applyMatrix4(affineMatrix);
-    minX = Math.min(minX, world.x);
-    maxX = Math.max(maxX, world.x);
-    minY = Math.min(minY, world.y);
-    maxY = Math.max(maxY, world.y);
-    worldPoints.push([world.x, world.y, world.z]);
-  });
+  // One scratch vector for the whole pass: this runs for EVERY annotation on
+  // every placement recompute, and an ellipse alone samples 24 points.
+  for (const [x, y, z] of points) {
+    EXTENT_SCRATCH.set(x, y, z).applyMatrix4(affineMatrix);
+    minX = Math.min(minX, EXTENT_SCRATCH.x);
+    maxX = Math.max(maxX, EXTENT_SCRATCH.x);
+    minY = Math.min(minY, EXTENT_SCRATCH.y);
+    maxY = Math.max(maxY, EXTENT_SCRATCH.y);
+    if (Number.isFinite(EXTENT_SCRATCH.z)) {
+      minZ = Math.min(minZ, EXTENT_SCRATCH.z);
+      maxZ = Math.max(maxZ, EXTENT_SCRATCH.z);
+    }
+  }
 
   return {
     bounds: { minX, maxX, minY, maxY },
-    zSpan: zSpanOf(worldPoints) ?? { min: 0, max: 0 },
+    zSpan: minZ === Infinity ? { min: 0, max: 0 } : { min: minZ, max: maxZ },
   };
 }
+
+const EXTENT_SCRATCH = new THREE.Vector3();
 
 /**
  * The collection's drawing space → scene world. The collection owns its
  * coordinate system, so its axes name the columns of every edge on the path;
  * `spatial` is the (x, y, z) triple the composer reads them out in.
  */
+/** Placement warnings fire once per collection, not once per recompute. */
+const warnedCollections = new Set<string>();
+
 export function resolveCollectionMatrix(
   layer: AnnotationLayerVariant,
   collection: AnnotationCollectionRef,
   transformContext: SceneTransformContext,
 ): THREE.Matrix4 {
   const names = (collection.coordinateSystem.axes ?? []).map((axis) => axis.name);
+  // Fewer than three axes cannot name an (x, y, z) triple — composing with
+  // undefined axis names would silently misplace; identity is the honest
+  // degradation (same rule as the null path below).
+  if (names.length < 3) {
+    if (!warnedCollections.has(collection.id)) {
+      warnedCollections.add(collection.id);
+      console.warn(
+        `[annotation] collection ${collection.id} declares ${names.length} axes; ` +
+          `three spatial axes are needed for placement — drawing in the collection's own space`,
+      );
+    }
+    return new THREE.Matrix4().identity();
+  }
   const spatial = [names[names.length - 1], names[names.length - 2], names[names.length - 3]];
   const composed = composePlacementPath(layer.pathToWorld, transformContext, spatial, names);
   if (!composed) {
@@ -186,10 +207,13 @@ export function resolveCollectionMatrix(
     // which, but the shared SceneLayer fragment does not select it. The shapes
     // are still drawn, in the collection's own space, rather than dropped
     // silently.
-    console.warn(
-      `[annotation] collection ${collection.id}: no path to world; ` +
-        `drawing in the collection's own space`,
-    );
+    if (!warnedCollections.has(collection.id)) {
+      warnedCollections.add(collection.id);
+      console.warn(
+        `[annotation] collection ${collection.id}: no path to world; ` +
+          `drawing in the collection's own space`,
+      );
+    }
     return new THREE.Matrix4().identity();
   }
   return affineToMatrix4(composed);

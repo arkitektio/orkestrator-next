@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useBrandOverride } from "@/providers/settings/useBrandOverride";
-import { useSceneStore } from "../../platform/stores/sceneStore";
+import { useSceneStore, useSceneStoreApi } from "../../platform/stores/sceneStore";
 import { useSelectionStore } from "../../platform/stores/selectionStore";
 import { useViewerStore } from "../../platform/stores/viewerStore";
 import { layerBrandTarget } from "./brandTarget";
@@ -20,18 +20,40 @@ import { layerBrandTarget } from "./brandTarget";
  * (dataset page, scene page) gets it without per-page wiring.
  */
 export const SceneBrandTheme = () => {
-  const layers = useSceneStore((state) => state.layers);
+  const sceneStoreApi = useSceneStoreApi();
   const selectedLayerId = useSelectionStore((state) => state.selectedLayerId);
   const sampled = useViewerStore((state) => state.sampledBrandTarget);
 
+  // A SCALAR key over exactly what the estimate reads (P9c/P17): which layer
+  // is main, and that layer's visible channels' colormap + base color. Those
+  // are WINDOW fields — `layersPlanKey` deliberately ignores them — but a
+  // clim/gamma drag leaves them unchanged, so this must not re-tint per tick.
+  const estimateKey = useSceneStore((state) => {
+    const mainLayer =
+      state.layers.find((layer) => layer.id === selectedLayerId) ??
+      state.layers.find((layer) => layer.visible !== false) ??
+      state.layers[0];
+    if (!mainLayer) return "";
+    return `${mainLayer.id}|${mainLayer.channels
+      .map((channel) =>
+        channel.visible === false
+          ? ""
+          : `${channel.transfer.colormap}:${(channel.transfer.color ?? []).join(",")}`,
+      )
+      .join("|")}`;
+  });
+
   const estimate = useMemo(() => {
+    const { layers } = sceneStoreApi.getState();
     const mainLayer =
       layers.find((layer) => layer.id === selectedLayerId) ??
       layers.find((layer) => layer.visible !== false) ??
       layers[0];
 
     return mainLayer ? layerBrandTarget(mainLayer.channels) : null;
-  }, [layers, selectedLayerId]);
+    // The key STANDS FOR the layers array read via getState().
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [estimateKey, selectedLayerId, sceneStoreApi]);
 
   useBrandOverride(sampled ?? estimate);
 

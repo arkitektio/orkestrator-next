@@ -35,6 +35,7 @@ scene/
 | `draw/` | WebGPU-native drei replacements: lines, grid, picking | what is being drawn |
 | `layerui/` | the shared layer-card vocabulary every feature card builds on | any specific layer kind |
 | `attributes/` | the DuckDB/Parquet column layer shared by meshes and labels | who is asking |
+| `parquet/` | the level-of-detail Parquet prefix plumbing both collection formats read through: the transport contract, the S3 store, row-group byte spans, Morton cell addressing, the byte-bounded LRU | which format's blobs are inside a row |
 | `input/` | keyboard target guards | which shortcut |
 | `perf/` | perf monitor, cold-open timeline, rAF coalescing, commit profiler | what it is measuring |
 | `sources/` | zarr store construction and array opening | rendering |
@@ -54,6 +55,7 @@ the one folder other features may import.
 | `labels/` | label-mask layers, label materials and uniforms, the object-id colour LUT, the label card |
 | `annotations/` | ROI geometry, drawing gestures, the drawers and handles, annotation layers and panels, the ROI stores, and `enhancers/` (vector trace, brush skeleton, smooth blob) |
 | `meshes/` | the fabriks Parquet mesh-collection renderer end-to-end |
+| `network/` | the konnektion Parquet network-collection renderer end-to-end — node/edge graphs (traced arbors, vessel trees, connectomes) |
 | `probe/` | the probe trackers, readout settler, axis guides, and the readout UI |
 | `animation/` | the camera-tour editor and player |
 | `debug/` | the debug panel shell and the residency overlay |
@@ -90,7 +92,15 @@ NOTHING with no error anywhere. That file now states the invariant as a type
 (`MissingFromBrickLayers`) so the compiler catches it too — keep that assertion.
 
 Adding a layer type is otherwise: one folder under `features/`, two registry
-lines.
+lines. A COLLECTION-backed type (fabriks, konnektion) adds two more that also
+fail silently rather than loudly:
+
+- `platform/stores/sceneStore.ts`'s `carryRawSession` — every session-local
+  field must be listed there, or it silently resets on each scene re-emission.
+  The type is an intersection, so an unlisted field is merely absent.
+- `mikro-next/lib/zarr/access.ts`'s `AccessKind` — the datalayer kinds issue
+  SEPARATE credentials, and a konnektion prefix cannot be read with a fabriks
+  grant. A missing kind downloads nothing.
 `features/annotations/enhancers/registry.tsx` already follows the same shape.
 
 ## Import rules
@@ -106,6 +116,22 @@ lines.
 invert it, or to demote the shared symbol to `platform/` — not to widen rule 2.
 Adding an entry needs a justification line here. The absence of any such check
 is precisely what turned the old `core/` into a 153-file grab-bag.
+
+**Known sideways edges, with their reasons** (the `KNOWN_SIDEWAYS` ceiling in
+`architecture.test.ts`):
+
+- `meshDesign -> annotations`, `meshDesign -> meshes`: the mesh designer
+  (`features/meshDesign`) is a COMPOSITION of the annotation brush (its
+  gesture, panels and tool store) and the fabriks reader/writer. These are the
+  composition itself; they go away only if the brush and the fabriks writer
+  move down to `platform/`, which they should not — both are features.
+- `annotations -> meshDesign` (the brush hook dispatches a DESIGN release to
+  `meshDesign/tools/registry` and the ANNOTATE candidate's "add to design"
+  hands over the welded surface) and `meshes -> meshDesign` (the Meshes
+  panel's "edit in design" entry): the hand-over seams. The tool registry
+  CONCENTRATES the reverse edges — each design tool imports the annotation
+  extraction core (`enhancers/paths/brushSkeleton/extraction.ts`) rather than
+  the hook, which is what the raised meshDesign->annotations count pays for.
 
 `architecture.test.ts` asserts these rules in `pnpm test`. Three are hard
 zeroes; "features do not reach sideways" is a RATCHET against a known list, in
@@ -136,7 +162,7 @@ and clearing an entry means deleting it so it cannot come back.
 - **Pitfall numbers P1–P24 are cross-referenced between documents.** Keep the
   numbering when splitting docs.
 
-### Three sibling pairs that must stay siblings
+### Four sibling pairs that must stay siblings
 
 These resolve at *bundle* time via `import.meta.url`, and two name a `.js` file
 that does not exist on disk — neither typecheck nor a `.ts` grep will catch a
@@ -147,6 +173,7 @@ break:
 | `features/bricks/octree/repackDispatcher.ts` | `new URL("./repack-worker.js", …)` | `repack-worker.ts` |
 | `features/meshes/fabriks/fabriksDecodeDispatcher.ts` | `new URL("./fabriksDecode-worker.js", …)` | `fabriksDecode-worker.ts` |
 | `features/meshes/fabriks/fabriksCore.test.ts` | `dirname(fileURLToPath(import.meta.url))` | `__fixtures__/` |
+| `features/network/konnektion/konnektionCore.test.ts` | `dirname(fileURLToPath(import.meta.url))` | `__fixtures__/` (committed bytes + `generate.py`) |
 
 ## Open items
 

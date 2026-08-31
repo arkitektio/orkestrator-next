@@ -1,15 +1,28 @@
 import * as THREE from "three";
-import { FabriksStoreFragment, SceneLayerFragment } from "@/mikro-next/api/graphql";
-import { composePlacementPath } from "@/mikro-next/lib/coords/transformGraph";
+import {
+  FabriksStoreFragment,
+  KonnektionStoreFragment,
+  SceneLayerFragment,
+} from "@/mikro-next/api/graphql";
+import {
+  composePlacementPath,
+  type PlacementStepLike,
+} from "@/mikro-next/lib/coords/transformGraph";
 import type { SceneTransformContext } from "./layerModel";
 import { affineToMatrix4 } from "../coords/worldTransform";
 
 /**
- * A mesh collection's placement: `pathToWorld` composed through the transform
- * graph — and NOTHING else (COORDINATE_SYSTEMS.md, "Coordinate conventions").
+ * A COLLECTION's placement — a fabriks mesh collection or a konnektion network
+ * collection: `pathToWorld` composed through the transform graph, and NOTHING
+ * else (COORDINATE_SYSTEMS.md, "Coordinate conventions").
  *
- * A mesh is continuous data IN its coordinate system, so the graph is the
- * complete CS→world story: coordinate c renders at exactly `pathToWorld(c)`.
+ * One module for both because there is one rule, not two. The formats differ in
+ * what they store; they agree exactly on how a collection is placed, and on the
+ * slot↔axis convention that makes the components mean anything.
+ *
+ * A mesh or a graph is continuous data IN its coordinate system, so the graph
+ * is the complete CS→world story: coordinate c renders at exactly
+ * `pathToWorld(c)`.
  * No anchoring to another layer's frame, no shape-derived recentering, no
  * client-injected flips — any origin or raster convention is the server's to
  * express as transform edges (or the writer's, in the vertices themselves).
@@ -21,6 +34,30 @@ import { affineToMatrix4 } from "../coords/worldTransform";
 
 export type MeshLayerVariant = Extract<SceneLayerFragment, { __typename: "MeshLayer" }>;
 export type MeshCollectionRef = NonNullable<MeshLayerVariant["collection"]>;
+
+export type NetworkLayerVariant = Extract<SceneLayerFragment, { __typename: "NetworkLayer" }>;
+export type NetworkCollectionRef = NonNullable<NetworkLayerVariant["collection"]>;
+
+/**
+ * What placement needs of a layer and of a collection — no more.
+ *
+ * Structural rather than a union of the two variants, so this module never has
+ * to grow an arm when a third collection format appears. All it reads is the
+ * path to world, the collection's coordinate system, and the store's axis
+ * declaration.
+ */
+type PlaceableLayer = {
+  // Typed as what `composePlacementPath` actually consumes rather than as one
+  // variant's `pathToWorld`: the per-typename fragment types are structurally
+  // identical here but nominally distinct, so naming one of them would reject
+  // the other for no reason.
+  pathToWorld?: readonly PlacementStepLike[] | null;
+};
+type PlaceableCollection = {
+  id: string;
+  coordinateSystem: MeshCollectionRef["coordinateSystem"];
+  store: { id: string; axes?: readonly string[] | null };
+};
 
 /**
  * Does this scene render any mesh at all?
@@ -37,6 +74,19 @@ export const sceneHasMeshLayer = (
   );
 
 /**
+ * Does this scene render any konnektion network at all?
+ *
+ * Same contract as {@link sceneHasMeshLayer} and same reason: it reads the
+ * FRAGMENT, so a page can decide from outside `SceneProvider`.
+ */
+export const sceneHasNetworkLayer = (
+  scene: { layers: readonly SceneLayerFragment[] } | null | undefined,
+): boolean =>
+  (scene?.layers ?? []).some(
+    (layer) => layer.__typename === "NetworkLayer" && !!layer.collection,
+  );
+
+/**
  * The collection's axis names in VERTEX COMPONENT order, or null if unstated.
  *
  * fabriks addresses components by position — `cellSize[0]`, `bbox_*_x` — and
@@ -45,8 +95,18 @@ export const sceneHasMeshLayer = (
  * renderer assumed otherwise. This is the store telling us the mapping, and it
  * is the only trustworthy source for it.
  */
+export const collectionAxisOrder = (node: {
+  axes?: readonly string[] | null;
+}): string[] | null => (node.axes && node.axes.length > 0 ? [...node.axes] : null);
+
+/** @deprecated Historical name for {@link collectionAxisOrder}; the rule is not
+ *  fabriks-specific — konnektion's store declares its axes the same way. */
 export const fabriksAxisOrder = (node: FabriksStoreFragment): string[] | null =>
-  node.axes && node.axes.length > 0 ? [...node.axes] : null;
+  collectionAxisOrder(node);
+
+/** The same, for a konnektion store. Both go through {@link collectionAxisOrder}. */
+export const konnektionAxisOrder = (node: KonnektionStoreFragment): string[] | null =>
+  collectionAxisOrder(node);
 
 /**
  * The collection's spatial axis names in VERTEX-COMPONENT (x, y, z slot)
@@ -55,10 +115,10 @@ export const fabriksAxisOrder = (node: FabriksStoreFragment): string[] | null =>
  * coordinates).
  */
 export const collectionSpatialAxes = (
-  collection: MeshCollectionRef,
+  collection: PlaceableCollection,
 ): [string | undefined, string | undefined, string | undefined] => {
   const names = (collection.coordinateSystem.axes ?? []).map((axis) => axis.name);
-  const declared = fabriksAxisOrder(collection.store);
+  const declared = collectionAxisOrder(collection.store);
   return declared
     ? [declared[0], declared[1], declared[2]]
     : [names[names.length - 1], names[names.length - 2], names[names.length - 3]];
@@ -69,8 +129,8 @@ export const collectionSpatialAxes = (
 const warnedCollections = new Set<string>();
 
 export function resolveCollectionMatrix(
-  layer: MeshLayerVariant,
-  collection: MeshCollectionRef,
+  layer: PlaceableLayer,
+  collection: PlaceableCollection,
   transformContext: SceneTransformContext,
 ): THREE.Matrix4 {
   const names = (collection.coordinateSystem.axes ?? []).map((axis) => axis.name);
@@ -78,7 +138,7 @@ export function resolveCollectionMatrix(
   // matrix's x. The store names them in that order when it can; fabriks itself
   // addresses components by position and says nothing about physical axes, so
   // the store's declaration is the only trustworthy source for the mapping.
-  const declared = fabriksAxisOrder(collection.store);
+  const declared = collectionAxisOrder(collection.store);
   const spatial = declared
     ? [declared[0], declared[1], declared[2]]
     : [names[names.length - 1], names[names.length - 2], names[names.length - 3]];
@@ -87,7 +147,7 @@ export function resolveCollectionMatrix(
   if (firstResolve) warnedCollections.add(collection.id);
   if (!declared && firstResolve) {
     console.warn(
-      `[fabriks] store ${collection.store.id} declares no axis order; assuming the coordinate ` +
+      `[collection] store ${collection.store.id} declares no axis order; assuming the coordinate ` +
         `system's last three axes map to vertex components 0, 1, 2. A collection written in a ` +
         `different component order will render transposed.`,
     );
@@ -100,7 +160,7 @@ export function resolveCollectionMatrix(
     // degradation images and annotations use.
     if (firstResolve) {
       console.warn(
-        `[fabriks] collection ${collection.id}: no path to world; ` +
+        `[collection] ${collection.id}: no path to world; ` +
           `rendering in the collection's own space`,
       );
     }

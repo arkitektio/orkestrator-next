@@ -72,3 +72,15 @@ describe("buildChannelDataSignature", () => {
     expect(buildChannelDataSignature(undefined)).not.toBe(buildChannelDataSignature(layer()));
   });
 });
+
+describe("the per-object signature cache", () => {
+  it("serves the SAME string for repeat calls on one object", () => {
+    // Layers are replaced immutably, so the WeakMap cache is sound — and the
+    // brick layers rebuild their member keys at drag cadence, so a repeat
+    // call must be a lookup, never a restringify. `toBe` on the same object
+    // twice, and value equality (asserted above) across distinct objects.
+    const one = layer();
+    expect(buildChannelDataSignature(one)).toBe(buildChannelDataSignature(one));
+    expect(buildChannelWindowSignature(one)).toBe(buildChannelWindowSignature(one));
+  });
+});

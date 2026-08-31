@@ -1,6 +1,18 @@
 import { useCallback } from "react";
+import { toast } from "sonner";
 import { useDeleteAnnotationMutation } from "@/mikro-next/api/graphql";
-import { useRoiSelectionStore } from "./roiSelectionStore";
+import { useRoiSelectionStore, type SelectedRoi } from "./roiSelectionStore";
+
+/**
+ * The layers (⇔ collections; one collection per layer) a selection spans.
+ * The marquee selects across every visible annotation layer, so a Backspace
+ * over overlapping collections would silently delete from a collection the
+ * user was not even looking at — deletion therefore refuses a multi-layer
+ * selection and says so.
+ */
+export function selectionLayerIds(selected: readonly Pick<SelectedRoi, "layerId">[]): string[] {
+  return [...new Set(selected.map((roi) => roi.layerId))];
+}
 
 /**
  * Delete every selected annotation, one mutation each, dropping only the
@@ -21,6 +33,14 @@ export const useDeleteSelectedRois = (): {
 
   const deleteSelectedRois = useCallback(async () => {
     if (selectedRois.length === 0 || isDeleting) return;
+
+    const layerIds = selectionLayerIds(selectedRois);
+    if (layerIds.length > 1) {
+      toast.warning(
+        `Selection spans ${layerIds.length} annotation collections — narrow it (or delete per collection from the annotations panel).`,
+      );
+      return;
+    }
 
     const roisToDelete = [...selectedRois];
 

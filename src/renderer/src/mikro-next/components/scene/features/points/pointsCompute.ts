@@ -115,10 +115,25 @@ export type PointCull = {
   /** Resets the count, then appends what survives. */
   node: unknown;
   bounds: { min: { value: unknown }; max: { value: unknown } };
+  /**
+   * The timepoint window a point must fall in to be drawn, as TIMELINE INDICES.
+   * Unbounded (±Infinity) when the table declares no time column, which is what
+   * keeps an untimed layer on exactly the path it was on before time existed.
+   */
+  time: { min: { value: number }; max: { value: number } };
+  /** One uint per point, 1 = visible — the `filterBys` mask
+   *  (`pointsFilterMask.ts`). Refill `.array`, flip `needsUpdate`, re-dispatch. */
+  mask: StorageBufferAttribute;
 };
 
 /**
  * Build the cull pass.
+ *
+ * Two predicates, one dispatch. The spatial box is why this exists; the TIME window
+ * rides along because a timed point cloud is a stack of snapshots, and showing every
+ * timepoint at once is not a view of it — it is every view at once. Filtering here
+ * rather than at read time is the whole point: the table is scanned once and the
+ * scrubber costs one compute dispatch, not a re-read.
  *
  * The survivors are appended with an atomic increment on the indirect buffer's `instanceCount`
  * word, which doubles as the append cursor — so the count the draw reads and the count the
@@ -133,15 +148,25 @@ export const createCullPass = (
   positions: StorageInstancedBufferAttribute,
   pointCount: number,
   stride: 2 | 3,
+  /** Per-point timeline index. Omitted for an untimed table. */
+  times?: StorageInstancedBufferAttribute | null,
 ): PointCull => {
   const indirect = new IndirectStorageBufferAttribute(new Uint32Array([VERTICES_PER_POINT, 0, 0, 0]), 4);
   const visible = new StorageBufferAttribute(new Uint32Array(pointCount), 1);
+  // Every point visible until a rule says otherwise — the filter identity.
+  const mask = new StorageBufferAttribute(new Uint32Array(pointCount).fill(1), 1);
 
   const boundsMin = uniform(TSL.vec3(-Infinity, -Infinity, -Infinity));
   const boundsMax = uniform(TSL.vec3(Infinity, Infinity, Infinity));
+  // Unbounded by default, so an untimed layer's predicate is trivially true and
+  // the timed and untimed paths differ by nothing but two comparisons.
+  const timeMin = uniform(float(-Infinity));
+  const timeMax = uniform(float(Infinity));
 
   const positionNode = storage(positions, stride === 3 ? "vec3" : "vec2", pointCount);
+  const timeNode = times ? storage(times, "float", pointCount) : null;
   const visibleNode = storage(visible, "uint", pointCount);
+  const maskNode = storage(mask, "uint", pointCount);
   // `toAtomic()` is what makes the append safe: without it every invocation would read the same
   // cursor and the survivors would overwrite each other.
   const indirectNode = storage(indirect, "uint", 4).toAtomic();
@@ -157,18 +182,32 @@ export const createCullPass = (
     const x = centre.x;
     const y = centre.y;
     const z = stride === 3 ? centre.z : float(0);
-    const inside = x
+    let inside = x
       .greaterThanEqual(boundsMin.x)
       .and(x.lessThanEqual(boundsMax.x))
       .and(y.greaterThanEqual(boundsMin.y))
       .and(y.lessThanEqual(boundsMax.y))
       .and(z.greaterThanEqual(boundsMin.z))
       .and(z.lessThanEqual(boundsMax.z));
+    if (timeNode) {
+      const time = timeNode.element(instanceIndex);
+      inside = inside.and(time.greaterThanEqual(timeMin)).and(time.lessThanEqual(timeMax));
+    }
+    // The `filterBys` mask, one storage read — the whole draw-side cost of a
+    // rule, because everything a rule drops never reaches the vertex stage.
+    inside = inside.and(maskNode.element(instanceIndex).notEqual(uint(0)));
     If(inside, () => {
       const slot = atomicAdd(indirectNode.element(uint(1)), uint(1));
       visibleNode.element(slot).assign(uint(instanceIndex));
     });
   })().compute(pointCount);
 
-  return { indirect, visible, node: [reset, cull], bounds: { min: boundsMin, max: boundsMax } };
+  return {
+    indirect,
+    visible,
+    node: [reset, cull],
+    bounds: { min: boundsMin, max: boundsMax },
+    time: { min: timeMin, max: timeMax },
+    mask,
+  };
 };

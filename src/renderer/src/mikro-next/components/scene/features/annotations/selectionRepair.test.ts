@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { repairedSelections } from "./selectionRepair";
+import { prunedSelections, repairedSelections } from "./selectionRepair";
 
 const sel = (id: string, layerId: string) => ({ id, layerId });
 
@@ -52,5 +52,32 @@ describe("repairedSelections", () => {
   it("short-circuits on empty input", () => {
     expect(repairedSelections([], [sel("ann:1", "layer:a")])).toEqual([]);
     expect(repairedSelections([sel("ann:1", "")], [])).toEqual([]);
+  });
+});
+
+describe("repairedSelections heals every mirrored field", () => {
+  const vectors = [[0, 0, 0]];
+  it("repairs a rename / kind / geometry change, not only the layer", () => {
+    const selected = [{ id: "a", layerId: "L", name: "old", kind: "POINT", systemId: "s", vectors }];
+    const truth = [{ id: "a", layerId: "L", name: "new", kind: "POINT", systemId: "s", vectors }];
+    expect(repairedSelections(selected, truth)).toEqual(truth);
+    const moved = [{ id: "a", layerId: "L", name: "old", kind: "POINT", systemId: "s", vectors: [[1, 1, 1]] }];
+    expect(repairedSelections(selected, moved)).toEqual(moved);
+  });
+  it("stays empty when everything (including vectors identity) matches", () => {
+    const entry = { id: "a", layerId: "L", name: "n", kind: "POINT", systemId: "s", vectors };
+    expect(repairedSelections([entry], [{ ...entry }])).toEqual([]);
+  });
+});
+
+describe("prunedSelections", () => {
+  it("drops only THIS layer's ids that the query no longer returns", () => {
+    const selected = [
+      { id: "mine-gone", layerId: "L" },
+      { id: "mine-here", layerId: "L" },
+      { id: "other-gone", layerId: "M" },
+    ];
+    expect(prunedSelections(selected, "L", new Set(["mine-here"]))).toEqual(["mine-gone"]);
+    expect(prunedSelections([], "L", new Set())).toEqual([]);
   });
 });

@@ -14,7 +14,11 @@ import {
 } from "./fabriksDecodeCore";
 import { levelParts, MANIFEST_NAME, parseFabriksManifest, type FabriksFileEntry, type FabriksManifest } from "./fabriksManifest";
 import type { FabriksFetchGroup } from "./fabriksPlanner";
-import { ParquetPart, type RangeReader } from "./parquetPart";
+import { ParquetPart } from "@/mikro-next/components/scene/platform/parquet/parquetPart";
+import type {
+  ParquetTransport,
+  ParquetTransportStats,
+} from "@/mikro-next/components/scene/platform/parquet/transport";
 
 /**
  * One fabriks collection: the manifest, the catalogs, and the open parts.
@@ -30,7 +34,7 @@ import { ParquetPart, type RangeReader } from "./parquetPart";
  */
 
 /** Reads a whole object. Separate from the ranged read: catalogs are read whole. */
-export type ObjectReader = (path: string) => Promise<Uint8Array>;
+export type { ObjectReader } from "@/mikro-next/components/scene/platform/parquet/transport";
 
 /**
  * Request counters a transport may keep, mutated in place (P17: no store
@@ -39,20 +43,11 @@ export type ObjectReader = (path: string) => Promise<Uint8Array>;
  * requests each contribute their full duration, so it overstates wall time.
  * Optional so test transports over a fixture directory owe nothing.
  */
-export type FabriksTransportStats = {
-  gets: number;
-  rangeGets: number;
-  bytesFetched: number;
-  fetchMs: number;
-  cacheHits: number;
-  errors: number;
-};
-
-export type FabriksTransport = {
-  get: ObjectReader;
-  getRange: RangeReader;
-  stats?: FabriksTransportStats;
-};
+// The transport contract is format-agnostic and lives in `platform/parquet`:
+// fabriks and konnektion lay their prefixes out identically, so they read
+// through one interface. These aliases keep the fabriks path reading as it did.
+export type FabriksTransportStats = ParquetTransportStats;
+export type FabriksTransport = ParquetTransport;
 
 export class FabriksCollection {
   private readonly parts = new Map<string, ParquetPart>();

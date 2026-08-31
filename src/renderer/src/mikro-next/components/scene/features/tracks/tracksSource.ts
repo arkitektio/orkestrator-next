@@ -21,6 +21,7 @@ import {
 import { readTrackPositions, type TrackColumns } from "@/mikro-next/lib/attributes/columnarReads";
 import type { AttributeLookupEngine } from "@/mikro-next/lib/attributes/lookupEngine";
 import type { ParquetStoreLike } from "@/mikro-next/lib/attributes/attributeTypes";
+import { distinctAscending, indexRows } from "../../platform/model/timeline";
 
 /**
  * The refusal budget, in the same spirit as the point layer's.
@@ -135,34 +136,6 @@ export const loadTrackGeometry = async (
     trackCount: read.runs.length,
     timeline,
   };
-};
-
-/** The distinct values of a column, ascending — the layer's timeline. */
-const distinctAscending = (column: ArrayLike<number>): Float64Array => {
-  const seen = new Set<number>();
-  for (let index = 0; index < column.length; index += 1) {
-    const value = column[index];
-    if (Number.isFinite(value)) seen.add(value);
-  }
-  return Float64Array.from(seen).sort();
-};
-
-/**
- * Each row's time as its position in the timeline.
- *
- * A `Map` rather than a binary search per row: the timeline is small (one entry
- * per frame) and the column is large, so one pass building the lookup beats
- * `n log m` probes. A row whose time is not finite lands at index 0 rather than
- * at NaN, which draws it at the start instead of never.
- */
-const indexRows = (column: ArrayLike<number>, timeline: Float64Array): Float32Array => {
-  const positions = new Map<number, number>();
-  for (let index = 0; index < timeline.length; index += 1) positions.set(timeline[index], index);
-  const out = new Float32Array(column.length);
-  for (let index = 0; index < column.length; index += 1) {
-    out[index] = positions.get(column[index]) ?? 0;
-  }
-  return out;
 };
 
 /** Min/max over the packed per-segment times, skipping non-finite entries. */

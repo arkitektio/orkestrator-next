@@ -3,6 +3,7 @@ import {
   ColorSourceKind,
   ColumnControl,
   ColumnRole,
+  GraphTarget,
   type ColorByOptionFragment,
   type FilterByOptionFragment,
   type LabelColorByFragment,
@@ -13,6 +14,10 @@ import {
   type MeshColorByInput,
   type MeshFilterByFragment,
   type MeshFilterByInput,
+  type NetworkColorByFragment,
+  type NetworkColorByInput,
+  type NetworkFilterByFragment,
+  type NetworkFilterByInput,
 } from "@/mikro-next/api/graphql";
 import { qualitativePalette } from "./colormap-utils";
 
@@ -83,12 +88,27 @@ export const isSparseOption = (option: OfferedOption): option is SparseOption =>
   option.sparseDataset != null && option.axes.length > 0;
 
 /**
+ * The third arm, network collections only: a per-node value the collection
+ * ITSELF carries — strahler, degree, depth, component, a writer's own column,
+ * or `radius` off the encoding. Present exactly when the other two arms are
+ * null. Always MEASURE, and the one option kind with no parquet behind it:
+ * its values ride the decoded geometry, so authoring one costs no store read
+ * and rendering one costs no DuckDB.
+ */
+export type GraphOption = OfferedOption & {
+  graphAttribute: NonNullable<OfferedOption["graphAttribute"]>;
+};
+
+export const isGraphOption = (option: OfferedOption): option is GraphOption =>
+  option.graphAttribute != null;
+
+/**
  * A stored colouring, either layer kind. `MeshColorByFragment` and
  * `LabelColorByFragment` are field-for-field identical — same relation, same
  * `joinPath`, same caption — so every consumer takes the union rather than
  * being written twice.
  */
-export type ColorByEntry = MeshColorByFragment | LabelColorByFragment;
+export type ColorByEntry = MeshColorByFragment | LabelColorByFragment | NetworkColorByFragment;
 
 /**
  * A stored colouring the renderers can execute: the COLUMN arm of the same
@@ -101,8 +121,8 @@ export type ColumnColorByEntry = ColorByEntry & { table: string; column: string 
 export const isColumnColorBy = (entry: ColorByEntry): entry is ColumnColorByEntry =>
   entry.table != null && entry.column != null;
 
-/** A stored filter rule, either layer kind. See `ColorByEntry`. */
-export type FilterByEntry = MeshFilterByFragment | LabelFilterByFragment;
+/** A stored filter rule, any picker-bearing layer kind. See `ColorByEntry`. */
+export type FilterByEntry = MeshFilterByFragment | LabelFilterByFragment | NetworkFilterByFragment;
 
 /**
  * A stored rule's COLUMN arm — the same either/or a colouring has. A `SPARSE`
@@ -170,8 +190,12 @@ const columnKey = (
   joinPath: readonly JoinStepLike[],
   table: string,
   column: string,
+  target?: string | null,
 ): string =>
-  `${joinPath.map((step) => `${step.table}.${step.column}`).join(">")}|${table}|${column}`;
+  // `target` is a fact of the TABLE's shape (a per-node table's columns are
+  // always NODE), so it can never split one candidate into two — it rides the
+  // key to keep an option's identity honest, not to disambiguate.
+  `${joinPath.map((step) => `${step.table}.${step.column}`).join(">")}|${table}|${column}${target ? `|${target}` : ""}`;
 
 /**
  * An offered option's identity, either arm.
@@ -181,10 +205,12 @@ const columnKey = (
  * are two entries and one option. That is what makes "already added" mean
  * "this matrix is in the picker", which is the useful reading here.
  */
-export const optionKey = (option: ColumnOption | SparseOption): string =>
-  isColumnOption(option)
-    ? columnKey(optionJoinPath(option), option.table.id, option.column.name)
-    : `sparse|${option.sparseDataset.id}`;
+export const optionKey = (option: ColumnOption | SparseOption | GraphOption): string => {
+  if (isColumnOption(option))
+    return columnKey(optionJoinPath(option), option.table.id, option.column.name, option.target);
+  if (isGraphOption(option)) return `graph|${option.graphAttribute}`;
+  return `sparse|${(option as SparseOption).sparseDataset.id}`;
+};
 
 /**
  * A stored entry's identity. A sparse entry names no column, so it keys on
@@ -196,13 +222,22 @@ export const entryKey = (entry: {
   column?: string | null;
   dataset?: string | null;
   at?: readonly { axis: string; value: number }[] | null;
+  attribute?: string | null;
+  target?: string | null;
   joinPath?: readonly JoinStepLike[] | null;
-}): string =>
-  entry.table != null && entry.column != null
-    ? columnKey(entryJoinPath(entry), entry.table, entry.column)
-    : `sparse|${entry.dataset ?? "?"}|${(entry.at ?? [])
-        .map((position) => `${position.axis}=${position.value}`)
-        .join(",")}`;
+}): string => {
+  // A COLUMN entry's `target` is the server's stamp (per-node/per-edge
+  // tables); a GRAPH entry's is an aim and deliberately NOT in its key.
+  if (entry.table != null && entry.column != null)
+    return columnKey(entryJoinPath(entry), entry.table, entry.column, entry.target);
+  // A graph entry keys on its attribute alone — like a sparse option and its
+  // matrix, "already added" means "this attribute is in the picker", and the
+  // target is a variation within it rather than a different candidate.
+  if (entry.attribute != null) return `graph|${entry.attribute}`;
+  return `sparse|${entry.dataset ?? "?"}|${(entry.at ?? [])
+    .map((position) => `${position.axis}=${position.value}`)
+    .join(",")}`;
+};
 
 /** Whether a stored entry is this option — same table, column and join. */
 export const entryMatchesOption = (
@@ -313,6 +348,49 @@ export const JOINED_NOTE = " — reached through a join, not rendered yet";
 export const SPARSE_NOTE = " — one slice of a sparse matrix";
 
 /**
+ * And for the GRAPH arm. It draws, and it is the one entry kind whose value
+ * varies WITHIN an object — per node, off the collection's own geometry.
+ */
+export const GRAPH_NOTE = " — a per-node value the collection carries";
+
+/**
+ * A COLUMN entry over a table identified by the collection's NODE ids — the
+ * post-hoc sibling of the GRAPH arm, read from parquet by (object, node) key.
+ * The stamped `target` says which; the badges tell a reader why this entry
+ * varies within an object where the other column entries cannot.
+ */
+export const PER_NODE_NOTE = " — a per-node table, keyed by (object, node)";
+
+/**
+ * The per-EDGE variant: two node axes, (source, target). Exact at level 0 and
+ * on pruned levels; a simplification RE-LINKS edges, so on such a level a
+ * drawn pair mostly has no row — it keeps its base colour, and a rule keeps
+ * what it never saw. Said here because the card badge is where a user reading
+ * a deep ladder's top level as "unmeasured" will look.
+ */
+export const PER_EDGE_NOTE =
+  " — a per-edge table, keyed by (object, source, target); void on simplified levels";
+
+/**
+ * The note a stored COLUMN entry's stamped `target` earns, or "" for an
+ * object-level entry (and for a GRAPH entry, whose target is an aim rather
+ * than a table fact — its note is `GRAPH_NOTE`, keyed off `attribute`).
+ * Structural on purpose: mesh and label fragments carry no `target` field and
+ * fall straight through to "".
+ */
+export const targetNote = (entry: { table?: string | null; target?: string | null }): string =>
+  entry.table == null
+    ? ""
+    : entry.target === "NODE"
+      ? PER_NODE_NOTE
+      : entry.target === "EDGE"
+        ? PER_EDGE_NOTE
+        : "";
+
+/** What a picker captions a graph candidate with: the attribute's own name. */
+export const graphOptionLabel = (option: GraphOption): string => option.graphAttribute;
+
+/**
  * The control a column admits, from its declared role — the same rule the
  * server derives `ColumnControl` by, restated here because a STORED entry
  * carries only its table id and column name and has to be re-classified from
@@ -389,6 +467,43 @@ export const toSparseColorByInput = (
   };
 };
 
+/**
+ * The GRAPH arm of the option → input mapping, network layers only.
+ *
+ * Fully determined by its option plus the aim: unlike a sparse entry there is
+ * no position to pick — the attribute IS the value source. `target` defaults
+ * to NODE (paint glyphs and segments); EDGE leaves glyphs at the base colour.
+ * Always measured, so the default colormap is a ramp, never a palette.
+ */
+export const toGraphColorByInput = (
+  option: GraphOption,
+  patch?: Partial<Omit<NetworkColorByInput, "kind" | "attribute">>,
+): NetworkColorByInput => ({
+  kind: ColorSourceKind.Graph,
+  attribute: option.graphAttribute,
+  target: GraphTarget.Node,
+  colormap: ColorMap.Viridis,
+  label: graphOptionLabel(option),
+  ...patch,
+});
+
+/**
+ * A rule over a graph attribute: always `min`/`max` bounds (a per-node metric
+ * is measured), and the one rule kind that hides individual nodes and their
+ * segments rather than whole objects — "trunk only" is strahler with min 3.
+ */
+export const toGraphFilterByInput = (
+  option: GraphOption,
+  patch?: Partial<Omit<NetworkFilterByInput, "kind" | "attribute">>,
+): NetworkFilterByInput => ({
+  kind: ColorSourceKind.Graph,
+  attribute: option.graphAttribute,
+  target: GraphTarget.Node,
+  label: graphOptionLabel(option),
+  exclude: false,
+  ...patch,
+});
+
 export const toFilterByInput = (
   option: ColumnOption,
   patch?: Partial<Omit<FilterByInputLike, "table" | "column" | "joinPath">>,
@@ -443,6 +558,20 @@ export const colorByEntryToInput = (entry: ColorByEntry): ColorByInputLike => ({
     axis: position.axis,
     value: position.value,
   })),
+  // The GRAPH arm, network entries only — and only WHEN CARRIED, both ways:
+  // a network entry re-sent without them comes back a COLUMN entry naming
+  // nothing (the joinPath hazard, one arm further out), while a mesh or label
+  // mutation handed variables carrying unknown keys is refused whole by
+  // GraphQL validation. Mesh and label fragments have no such fields, so the
+  // spread is empty exactly where the keys would be refused.
+  //
+  // Gated on `attribute`, NOT on `target`: a COLUMN entry over a per-node/
+  // per-edge table carries a target too, but that one is the server's STAMP —
+  // derived from the table's shape, refused if a caller sends it — so a
+  // whole-array re-send must strip it and let the server re-stamp.
+  ...("attribute" in entry && entry.attribute != null
+    ? { attribute: entry.attribute, target: entry.target ?? null }
+    : {}),
   joinPath: entryJoinPath(entry),
   colormap: entry.colormap ?? null,
   label: entry.label ?? null,
@@ -465,6 +594,11 @@ export const filterByEntryToInput = (entry: FilterByEntry): FilterByInputLike =>
     axis: position.axis,
     value: position.value,
   })),
+  // Conditional for `colorByEntryToInput`'s reason exactly — the stamped
+  // COLUMN target included: stripped on re-send, re-stamped by the server.
+  ...("attribute" in entry && entry.attribute != null
+    ? { attribute: entry.attribute, target: entry.target ?? null }
+    : {}),
   joinPath: entryJoinPath(entry),
   min: entry.min ?? null,
   max: entry.max ?? null,

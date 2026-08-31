@@ -23,12 +23,14 @@ export const ModeCompatGuard = () => {
   const setInteractionMode = useModeStore((s) => s.setInteractionMode);
   const activeTool = useRoiDrawingStore((s) => s.activeTool);
   const setActiveTool = useRoiDrawingStore((s) => s.setActiveTool);
-  const layers = useSceneStore((s) => s.layers);
+  // A SCALAR subscription (P9c/P17): only the boolean matters here, and the
+  // `layers` array changes identity on every per-tick layer edit.
+  const probeable = useSceneStore((s) => hasProbeableLayer(s.layers));
 
   useEffect(() => {
     const next = coerceModeState(
       { interactionMode, activeTool },
-      { displayMode, hasProbeableLayer: hasProbeableLayer(layers) },
+      { displayMode, hasProbeableLayer: probeable },
     );
     if (next.interactionMode !== interactionMode) {
       setInteractionMode(next.interactionMode);
@@ -38,7 +40,7 @@ export const ModeCompatGuard = () => {
     displayMode,
     interactionMode,
     activeTool,
-    layers,
+    probeable,
     setInteractionMode,
     setActiveTool,
   ]);

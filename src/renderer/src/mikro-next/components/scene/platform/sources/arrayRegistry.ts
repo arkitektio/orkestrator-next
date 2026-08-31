@@ -1,14 +1,24 @@
 import { open, type Array as ZarrArray, type DataType } from "zarrita";
 import { ZarrStore } from "@/lib/zarr/store/types";
+import { readArrayMetadataCached } from "@/lib/zarr/runner/get-worker";
 
 export type OpenedZarrArray = ZarrArray<DataType, ZarrStore>;
 
 /**
  * Open one configured store into a zarr Array. The single open site, so the
  * cold path and the reconcile path (`openMissingSceneArrays`) cannot drift.
+ *
+ * Also resolves the array's fetch metadata (zarr.json is already in the store's
+ * byte cache — no extra request) so `effectiveChunkShapeOf(arr)` is answerable
+ * synchronously by the time the array is registered: for a `sharding_indexed`
+ * array zarrita's `arr.chunks` is the SHARD shape, and the planner must see the
+ * inner chunk shape or it would fetch whole shards.
  */
-export const openZarrArray = (store: ZarrStore): Promise<OpenedZarrArray> =>
-  open.v3(store, { kind: "array" }) as Promise<OpenedZarrArray>;
+export const openZarrArray = async (store: ZarrStore): Promise<OpenedZarrArray> => {
+  const arr = (await open.v3(store, { kind: "array" })) as OpenedZarrArray;
+  await readArrayMetadataCached(arr);
+  return arr;
+};
 
 /**
  * Open every configured scene store into a zarr Array, keyed by store id.

@@ -1,3 +1,4 @@
+import { effectiveFlatNormals } from "./meshLayerDefaults";
 import { Button } from "@/components/ui/button";
 import {
   Box,
@@ -28,6 +29,7 @@ import {
   Badge,
   CardSection,
   IconToggle,
+  LayerCardShell,
   OpacityRow,
   Segment,
   SegmentGroup,
@@ -302,7 +304,19 @@ const MeshStatsFooter = memo(function MeshStatsFooter({
 /* -------------------------------------------------------------------- card */
 
 export const MeshLayerCard = memo(
-  ({ layer, onRemove }: { layer: MeshLayerVariant; onRemove?: (id: string) => void }) => {
+  ({
+    layer,
+    expanded,
+    onSelect,
+    onRemove,
+  }: {
+    layer: MeshLayerVariant;
+    /** Whether the card's controls are unfolded (`LayerCardShell`). */
+    expanded: boolean;
+    /** The panel's toggle — handed the current state, see `cardShell.tsx`. */
+    onSelect: (id: string, currentlyExpanded: boolean) => void;
+    onRemove?: (id: string) => void;
+  }) => {
     perfMonitor.countRender("MeshLayerCard"); // no-op unless a perf recording is armed
     const patchSceneLayer = useSceneStore((s) => s.patchSceneLayer);
     const [updateMeshLayer, { loading: saving }] = useUpdateMeshLayerMutation();
@@ -470,65 +484,61 @@ export const MeshLayerCard = memo(
     );
 
     return (
-      <div
-        className={`@container/card rounded-lg border border-white/10 bg-black/40 backdrop-blur-md transition-opacity ${
-          hidden ? "opacity-50" : ""
-        }`}
-      >
-        {/* ------------------------------------------------ header --------- */}
-        <div className="flex items-center gap-1.5 px-2 py-1.5">
-          <span className="grid h-5 w-5 shrink-0 place-items-center rounded bg-sky-400/15">
-            <Box className="h-3 w-3 text-sky-300" />
-          </span>
-          <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-white/90">
-            {collection ? `Mesh ${collection.id}` : "Mesh (no collection)"}
-          </span>
-
-          {/* The one server write — same affordance as the image layer card's
-              graph save: visible only while there is something to save. */}
-          {dirty && (
-            <button
-              className="shrink-0 rounded p-0.5 text-yellow-300/90 transition-colors hover:text-yellow-200 disabled:opacity-50"
-              title="Save changes"
-              disabled={saving}
-              onClick={save}
-            >
-              <Save className="h-3 w-3" />
-            </button>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className={`h-5 w-5 shrink-0 ${
-              layer.wireframe ? "bg-sky-400/15 text-sky-300" : "text-white/45 hover:text-white/90"
-            }`}
-            title={layer.wireframe ? "Solid surface (session)" : "Wireframe (session)"}
-            onClick={() => patchSceneLayer(layerId, { wireframe: !layer.wireframe })}
-          >
-            <Grid3x3 className="h-3 w-3" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-5 w-5 shrink-0 text-white/45 hover:text-white/90"
-            title={hidden ? "Show (session)" : "Hide (session)"}
-            onClick={() => patchSceneLayer(layerId, { visible: hidden })}
-          >
-            {hidden ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-          </Button>
-          {onRemove && (
+      <LayerCardShell
+        icon={<Box className="h-3 w-3 text-sky-300" />}
+        tile="bg-sky-400/15"
+        title={collection ? `Mesh ${collection.id}` : "Mesh (no collection)"}
+        hidden={hidden}
+        expanded={expanded}
+        onToggle={() => onSelect(layerId, expanded)}
+        actions={
+          <>
+            {/* The one server write — same affordance as the image layer card's
+                graph save: visible only while there is something to save. */}
+            {dirty && (
+              <button
+                className="shrink-0 rounded p-0.5 text-yellow-300/90 transition-colors hover:text-yellow-200 disabled:opacity-50"
+                title="Save changes"
+                disabled={saving}
+                onClick={save}
+              >
+                <Save className="h-3 w-3" />
+              </button>
+            )}
             <Button
               variant="ghost"
               size="icon"
-              className="h-5 w-5 shrink-0 text-white/35 hover:text-red-300"
-              title="Remove layer from scene"
-              onClick={() => onRemove(layerId)}
+              className={`h-5 w-5 shrink-0 ${
+                layer.wireframe ? "bg-sky-400/15 text-sky-300" : "text-white/45 hover:text-white/90"
+              }`}
+              title={layer.wireframe ? "Solid surface (session)" : "Wireframe (session)"}
+              onClick={() => patchSceneLayer(layerId, { wireframe: !layer.wireframe })}
             >
-              <Trash2 className="h-3 w-3" />
+              <Grid3x3 className="h-3 w-3" />
             </Button>
-          )}
-        </div>
-
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5 shrink-0 text-white/45 hover:text-white/90"
+              title={hidden ? "Show (session)" : "Hide (session)"}
+              onClick={() => patchSceneLayer(layerId, { visible: hidden })}
+            >
+              {hidden ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+            </Button>
+            {onRemove && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5 shrink-0 text-white/35 hover:text-red-300"
+                title="Remove layer from scene"
+                onClick={() => onRemove(layerId)}
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            )}
+          </>
+        }
+      >
         {/* Sections hidden without a collection — options are per collection. */}
         {source && (
           <ColorBySection
@@ -555,7 +565,7 @@ export const MeshLayerCard = memo(
         <MeshRenderSection
           layerId={layerId}
           detail={layer.detail}
-          flatNormals={layer.flatNormals}
+          flatNormals={effectiveFlatNormals(layer)}
           doubleSided={layer.doubleSided}
           slabScale={layer.slabScale}
         />
@@ -563,7 +573,7 @@ export const MeshLayerCard = memo(
         <MeshInstanceSection layerId={layerId} />
 
         {collection?.store && <MeshStatsFooter store={collection.store} />}
-      </div>
+      </LayerCardShell>
     );
   },
 );

@@ -1,5 +1,6 @@
 import { resolveAxisIndices, type AxisIndices, type LayerAxisDims } from "../model/dims";
 import type { TransformLike } from "@/mikro-next/lib/coords/transformGraph";
+import { effectiveChunkShapeOf } from "@/lib/zarr/runner/get-worker";
 
 /**
  * Canonical per-layer pyramid geometry for the octree renderer. Everything in
@@ -194,7 +195,10 @@ export function buildLevelSources(
     const arr = getArrayForStoreId(dataArray.store.id);
     return {
       shape: arr.shape,
-      chunks: arr.chunks,
+      // Sharded arrays: the fetch unit is the INNER chunk (`arr.chunks` is the
+      // shard). Falls back to `arr.chunks` for unsharded arrays and for test
+      // doubles that were never opened through `openZarrArray`.
+      chunks: effectiveChunkShapeOf(arr) ?? arr.chunks,
       dtype: String(arr.dtype),
       storeId: dataArray.store.id,
       scaleFactors: factors[i] ?? undefined,

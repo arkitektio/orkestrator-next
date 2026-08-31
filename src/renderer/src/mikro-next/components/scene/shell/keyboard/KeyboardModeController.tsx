@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef } from "react";
-import { InteractionMode, useModeStore, useModeStoreApi } from "../../platform/stores/modeStore";
+import { InteractionMode, useModeStore, useModeStoreApi, type DesignToolId } from "../../platform/stores/modeStore";
+import { designToolByKey } from "../../features/meshDesign/tools/registry";
 import { isTypingTarget } from "../../platform/input/keyboardTarget";
-import { beginPathFromProbe } from "../../features/annotations/pathFromProbe";
 import { useRoiDrawingStoreApi } from "../../features/annotations/roiDrawingStore";
-import { useSceneStore } from "../../platform/stores/sceneStore";
+import { layersPlanKey } from "../../platform/model/layerPlanKey";
+import { useSceneStore, useSceneStoreApi } from "../../platform/stores/sceneStore";
 import { useViewerStore, useViewerStoreApi } from "../../platform/stores/viewerStore";
 import { stepSceneZ } from "../../platform/camera/sceneNavigation";
 import { sceneZExtent } from "../../platform/coords/worldTransform";
@@ -12,6 +13,7 @@ import { sceneZExtent } from "../../platform/coords/worldTransform";
 const HOLD_MODES: Record<string, InteractionMode> = {
   a: "ANNOTATE",
   p: "PROBE",
+  m: "DESIGN",
 };
 
 /**
@@ -24,7 +26,11 @@ export const KeyboardModeController = () => {
   const modeApi = useModeStoreApi();
   const heldKeyRef = useRef<string | null>(null);
   const restoreModeRef = useRef<InteractionMode | null>(null);
-  const layers = useSceneStore((s) => s.layers);
+  const sceneStoreApi = useSceneStoreApi();
+  // A SCALAR key, not the array (P9c/P17): `sceneZExtent` reads only fields
+  // `layerPlanSignature` captures (zAxis, lens shape, affine), so a contrast
+  // drag's per-tick layer replacement must not rebuild the listener effect.
+  const layersKey = useSceneStore((s) => layersPlanKey(s.layers));
   const viewerStoreApi = useViewerStoreApi();
   const roiDrawingApi = useRoiDrawingStoreApi();
   const setCurrentZ = useViewerStore((s) => s.setCurrentZ);
@@ -32,11 +38,22 @@ export const KeyboardModeController = () => {
   // `sceneZExtent` has no display-mode gate of its own — `currentZ` is only the
   // flat view's slice plane, so the gate belongs here.
   const zNavigation = useMemo(
-    () => (displayMode === "2D" ? sceneZExtent(layers) : null),
-    [displayMode, layers],
+    () =>
+      displayMode === "2D" ? sceneZExtent(sceneStoreApi.getState().layers) : null,
+    // The key STANDS FOR the layers array read via getState().
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [displayMode, layersKey, sceneStoreApi],
   );
 
   useEffect(() => {
+    // DESIGN's tool keys, hold-to-act, straight from the registry — the key
+    // also picks the tool, so the toolbar never needs a click. (A stays the
+    // hold-ANNOTATE key; the registry's test guards against collisions.)
+    const setDesignTool = (next: DesignToolId | null) => {
+      const mode = modeApi.getState();
+      if (mode.designTool !== next) mode.setDesignTool(next);
+    };
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.repeat) return; // Ignore auto-repeat when key is held
       // Without these, Cmd+A flips the scene into a tool mode and so does typing
@@ -48,17 +65,12 @@ export const KeyboardModeController = () => {
 
       const key = e.key.toLowerCase();
 
-      // "Draw path from probe" — same action as the probe panel button.
-      if (key === "d") {
-        const probe = viewerStoreApi.getState().probedCoordinate;
-        if (probe?.worldPos) {
-          e.preventDefault();
-          beginPathFromProbe(probe.worldPos, roiDrawingApi.getState(), setInteractionMode);
-          // The common flow is hold-P → click probe → press D: releasing P
-          // must not restore-revert the ANNOTATE switch we just made.
-          heldKeyRef.current = null;
-          restoreModeRef.current = null;
+      const designKey = designToolByKey(key);
+      if (designKey && modeApi.getState().interactionMode === "DESIGN") {
+        if (designKey.roiTool && roiDrawingApi.getState().activeTool !== designKey.roiTool) {
+          roiDrawingApi.getState().setActiveTool(designKey.roiTool);
         }
+        setDesignTool(designKey.id);
         return;
       }
 
@@ -86,13 +98,20 @@ export const KeyboardModeController = () => {
     // Keyed off the armed hold rather than the event target, because focus can
     // move mid-hold.
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (heldKeyRef.current !== e.key.toLowerCase()) return;
+      const key = e.key.toLowerCase();
+      if (designToolByKey(key) && modeApi.getState().designTool === designToolByKey(key)?.id) {
+        setDesignTool(null);
+      }
+      if (heldKeyRef.current !== key) return;
       releaseHold();
     };
 
     // Alt-tabbing mid-hold never fires keyup, which used to strand the scene in
     // the held mode.
-    const handleBlur = () => releaseHold();
+    const handleBlur = () => {
+      releaseHold();
+      setDesignTool(null);
+    };
 
     const handleWheel = (e: WheelEvent) => {
       if (!e.shiftKey || !zNavigation) return;

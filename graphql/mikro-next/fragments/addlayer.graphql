@@ -67,4 +67,11 @@ fragment AddLayerCandidate on Resident {
     id
     level
   }
+  # A konnektion collection — a traced arbor, a vessel tree, a connectome.
+  # Nameless like a MeshCollection, so the picker shows the version and the spec.
+  ... on NetworkCollection {
+    id
+    version
+    specVersion
+  }
 }

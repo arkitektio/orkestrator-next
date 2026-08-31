@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
-import { useThree, type ThreeEvent } from "@react-three/fiber";
+import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { Line } from "../../platform/draw/Line";
 import { PreviewLine, type PreviewLineHandle } from "../../platform/draw/PreviewLine";
 import { VertexHandles } from "./VertexHandles";
@@ -21,7 +21,7 @@ import {
   type TraceWaypoint,
 } from "./enhancers/paths/vectorTrace/useTraceHop";
 import { closingInsert, hopExtension } from "./enhancers/paths/vectorTrace/vectorEnhance";
-import { planarRadius, primitiveCornerVectors } from "./primitiveDraw";
+import { planarRadius, primitiveCornerVectors, spatialRadius } from "./primitiveDraw";
 import { useRoiDrawSessionStoreApi } from "./roiDrawSessionStore";
 import { useSceneStore } from "../../platform/stores/sceneStore";
 import { useViewerStore, useViewerStoreApi } from "../../platform/stores/viewerStore";
@@ -31,6 +31,7 @@ import {
   DRAG_THRESHOLD_PX,
   exceedsDragThreshold,
   intersectDrawPlane,
+  intersectFacingPlane,
   withinSlop,
   type ScreenPoint,
 } from "./drawGesture";
@@ -41,6 +42,28 @@ import type { DrawnRoi } from "./roiDrawingStore";
 
 /** Lift the border off the slice so it never z-fights the plane it sits on. */
 const PREVIEW_Z_LIFT = 0.1;
+
+/**
+ * The capture quad's size on the flat plane: the old baked 80000×80000, now
+ * expressed as a scale on a unit plane so one mesh serves both views.
+ */
+const FLAT_CAPTURE_SIZE = 80000;
+
+/**
+ * Scratch for the capture quad's fallback placement and for the volumetric
+ * sizing plane's normal. Neither escapes the call that fills it.
+ */
+const captureDirection = new THREE.Vector3();
+const sizingNormal = new THREE.Vector3();
+
+/**
+ * How many times the camera→pivot distance the quad spans in 3D. The 3D camera
+ * is a 45° perspective (`platform/camera/CameraController.tsx`), which shows
+ * ≈0.83×distance of height at the pivot, so 8× covers the frustum with room to
+ * spare — and it scales with the scene, where world units run from nanometres
+ * to pixels and no fixed size is right for both.
+ */
+const ORBIT_CAPTURE_SPAN = 8;
 
 const PREVIEW_COLOR = "#22d3ee";
 const CLOSING_COLOR = "#0e7490";
@@ -109,8 +132,6 @@ export const RoiDrawer = () => {
   const addDrawnRoi = useRoiDrawingStore((s) => s.addDrawnRoi);
   const drawnRois = useRoiDrawingStore((s) => s.drawnRois);
   const markDrawnRoiPersisted = useRoiDrawingStore((s) => s.markDrawnRoiPersisted);
-  const pendingPathSeed = useRoiDrawingStore((s) => s.pendingPathSeed);
-  const setPendingPathSeed = useRoiDrawingStore((s) => s.setPendingPathSeed);
   const pendingPrimitiveAnchor = useRoiDrawingStore((s) => s.pendingPrimitiveAnchor);
   const setPendingPrimitiveAnchor = useRoiDrawingStore((s) => s.setPendingPrimitiveAnchor);
   const setPrimitiveSessionActive = useRoiDrawingStore((s) => s.setPrimitiveSessionActive);
@@ -121,6 +142,7 @@ export const RoiDrawer = () => {
   const spatialUnit = useSceneStore((s) => s.spatialUnit);
   const currentZ = useViewerStore((s) => s.currentZ);
   const viewerStoreApi = useViewerStoreApi();
+  const camera = useThree((s) => s.camera);
   const canvas = useThree((s) => s.gl.domElement);
   const invalidate = useThree((s) => s.invalidate);
   const readoutApi = useRoiDrawSessionStoreApi();
@@ -137,6 +159,7 @@ export const RoiDrawer = () => {
   const [placedVertices, setPlacedVertices] = useState<THREE.Vector3[]>([]);
 
   const sessionRef = useRef<DrawSession>(freshSession());
+  const captureRef = useRef<THREE.Mesh | null>(null);
   const mainRef = useRef<PreviewLineHandle | null>(null);
   const closingRef = useRef<PreviewLineHandle | null>(null);
   const scratch = useRef(new THREE.Vector3());
@@ -161,6 +184,21 @@ export const RoiDrawer = () => {
    */
   const probePlaced = displayMode === "3D";
 
+  /**
+   * A volumetric primitive's radius from its anchor. The flat gesture measures
+   * across the world-XY plane it is drawn on; the volume gesture measures the
+   * true 3D distance, because its sizing plane faces the camera instead
+   * (`sizingPoint`).
+   */
+  const sizingRadius = useCallback(
+    (anchor: THREE.Vector3, cursor: { x: number; y: number; z: number }): number =>
+      (probePlaced ? spatialRadius : planarRadius)(
+        [anchor.x, anchor.y, anchor.z],
+        [cursor.x, cursor.y, cursor.z],
+      ),
+    [probePlaced],
+  );
+
   const paint = useCallback(() => {
     const session = sessionRef.current;
     if (!tool) return;
@@ -182,12 +220,7 @@ export const RoiDrawer = () => {
     // both stay single-sourced (`features/annotations/primitiveDraw.ts`).
     if (isPrimitiveTool(tool) && session.vertices.length === 1) {
       const anchor = session.vertices[0];
-      const radius = session.cursor
-        ? planarRadius(
-            [anchor.x, anchor.y, anchor.z],
-            [session.cursor.x, session.cursor.y, session.cursor.z],
-          )
-        : 0;
+      const radius = session.cursor ? sizingRadius(anchor, session.cursor) : 0;
       const [low, high] = primitiveCornerVectors(
         [anchor.x, anchor.y, anchor.z],
         radius,
@@ -246,7 +279,7 @@ export const RoiDrawer = () => {
     );
 
     invalidate(); // the Canvas is frameloop="demand"
-  }, [tool, unit, readoutApi, invalidate]);
+  }, [tool, unit, readoutApi, invalidate, sizingRadius]);
 
   // Pointer-move storms coalesce to ≤1 repaint per frame (same idiom as the
   // brick layers): the ray math runs synchronously in the handler so the session
@@ -370,44 +403,11 @@ export const RoiDrawer = () => {
     return () => canvas.removeEventListener("pointermove", onMove);
   }, [probePlaced, interactionMode, tool, canvas]);
 
-  // "Draw path from probe": consume the seeded first vertex. Declared AFTER
-  // the reset effect above — within one commit React runs cleanups first, then
-  // effect bodies in declaration order, so the mode/tool flip's reset lands
-  // before the seed instead of wiping it. With phase "anchored" and one vertex
-  // the normal PATH gestures take over (click extends, double-click commits,
-  // Escape cancels).
-  useEffect(() => {
-    if (!pendingPathSeed) return;
-    if (interactionMode !== "ANNOTATE" || tool !== "PATH") return;
-    const session = sessionRef.current;
-    const seed = new THREE.Vector3(...pendingPathSeed);
-    session.planeZ = pendingPathSeed[2];
-    session.vertices = [seed];
-    // The seed is an anchor like any click, so the first enhanced edge can
-    // trace FROM it. A seed off every layer just makes that edge straight.
-    session.anchors = [
-      { world: seed, waypoint: enhanceOn ? traceWaypoints.fromWorld(seed) : null },
-    ];
-    session.phase = "anchored";
-    session.cursor = null;
-    session.lastClickPx = null;
-    setPlacedVertices([...session.vertices]);
-    paintCoalescer.schedule(paint);
-    setPendingPathSeed(null);
-  }, [
-    pendingPathSeed,
-    interactionMode,
-    tool,
-    enhanceOn,
-    traceWaypoints,
-    paint,
-    paintCoalescer,
-    setPendingPathSeed,
-  ]);
-
   // Probe-derived volumetric anchor: a click on the volume seeded the center
-  // (see BrickVolumeLayer). Same declaration-order invariant as the path seed
-  // above. From "anchored", pointer moves rubber-band the radius on the world
+  // (see BrickVolumeLayer). Declared AFTER the reset effect above — within one
+  // commit React runs cleanups first, then effect bodies in declaration order,
+  // so the mode/tool flip's reset lands before the seed instead of wiping it.
+  // From "anchored", pointer moves rubber-band the radius on the world
   // XY plane through the anchor, and a click commits. Raising
   // `primitiveSessionActive` here is what lets the commit click's same-event
   // hit on the volume be ignored instead of re-anchoring.
@@ -462,6 +462,52 @@ export const RoiDrawer = () => {
     };
   }, [resetSession]);
 
+  /**
+   * Keep the capture quad under the pointer.
+   *
+   * It is a pure EVENT SURFACE — every consumer re-derives its geometry from
+   * `event.ray` (`pointOnPlane`) or from the probe (`pointOnData`), never from
+   * `event.point` — so where it sits changes no placement math, only whether
+   * the click is seen at all.
+   *
+   * And in 3D a fixed quad on the world XY plane is genuinely missable: the
+   * view ray crosses z≈0 wherever the tilted camera happens to point it, which
+   * for an orbited camera is routinely far outside any finite quad. That is
+   * what silently killed every 3D click-placed tool — the volume published its
+   * probe and no drawer handler ever ran. So in 3D the quad faces the camera at
+   * the orbit pivot instead, where the ray cannot miss it.
+   *
+   * Per-frame rather than per-render: orbiting moves the camera without
+   * re-rendering this component. Cheap (a copy and two scalars) and the Canvas
+   * is `frameloop="demand"`, so it only runs on frames that were drawn anyway.
+   */
+  useFrame(({ camera, controls }) => {
+    const mesh = captureRef.current;
+    if (!mesh) return;
+    if (!probePlaced) {
+      // The flat view, exactly as before: the XY plane just above the slice.
+      mesh.position.set(0, 0, 0.01);
+      mesh.quaternion.identity();
+      mesh.scale.setScalar(FLAT_CAPTURE_SIZE);
+      return;
+    }
+    const pivot = (controls as { target?: THREE.Vector3 } | null)?.target;
+    mesh.quaternion.copy(camera.quaternion);
+    if (pivot) {
+      mesh.position.copy(pivot);
+      mesh.scale.setScalar(
+        Math.max(FLAT_CAPTURE_SIZE, camera.position.distanceTo(pivot) * ORBIT_CAPTURE_SPAN),
+      );
+    } else {
+      // No controls yet: hang it just in front of the camera, which covers the
+      // frustum by construction.
+      mesh.position
+        .copy(camera.position)
+        .add(camera.getWorldDirection(captureDirection));
+      mesh.scale.setScalar(FLAT_CAPTURE_SIZE);
+    }
+  });
+
   // ANNOTATE mode + a *shape* tool is the whole condition. The Select tool arms
   // `RectangleDrawer` instead, so the two are mutually exclusive by
   // construction. Arming a layer is not part of it either: shapes land in the
@@ -471,6 +517,22 @@ export const RoiDrawer = () => {
   /** The live pointer position on the slice being drawn — never `event.point`. */
   const pointOnPlane = (event: ThreeEvent<PointerEvent | MouseEvent>) => {
     const session = sessionRef.current;
+    /**
+     * An anchored primitive in the volume sizes on the plane through its
+     * anchor FACING THE CAMERA, not on world XY. Orbit the view shallow
+     * against that plane and the ray meets it far from the anchor, so a click
+     * beside the centre asks for an enormous sphere — which is exactly what
+     * this branch removes. The flat view is unaffected: there the camera looks
+     * straight down the world-XY normal, so the two planes coincide.
+     */
+    if (probePlaced && isPrimitive && session.vertices.length > 0) {
+      return intersectFacingPlane(
+        event.ray,
+        session.vertices[0],
+        camera.getWorldDirection(sizingNormal),
+        scratch.current,
+      );
+    }
     const planeZ = session.phase === "idle" && session.vertices.length === 0
       ? currentZ
       : session.planeZ;
@@ -550,9 +612,15 @@ export const RoiDrawer = () => {
   return (
     <group>
       {/* Invisible interaction plane. It still raycasts — Mesh.raycast never
-          reads material.visible — while the renderer skips drawing it. */}
+          reads material.visible — while the renderer skips drawing it. A UNIT
+          plane: the transform above sizes and places it per view (the flat XY
+          slab in 2D, camera-facing at the pivot in 3D), and scaling a unit quad
+          keeps its vertices at ±0.5 instead of baking huge coordinates into the
+          geometry. The values here are the pre-first-frame defaults. */}
       <mesh
+        ref={captureRef}
         position={[0, 0, 0.01]}
+        scale={FLAT_CAPTURE_SIZE}
         onPointerDown={(e) => {
           // Click tools opt out entirely, so R3F's post-drag click can't
           // interfere with them. Primitives are click tools too — and their
@@ -667,10 +735,7 @@ export const RoiDrawer = () => {
             const hit = pointOnPlane(e);
             if (!hit) return;
             const anchor = session.vertices[0];
-            const radius = planarRadius(
-              [anchor.x, anchor.y, anchor.z],
-              [hit.x, hit.y, hit.z],
-            );
+            const radius = sizingRadius(anchor, hit);
             if (radius <= 0) return;
             // Suppress this click on the volume behind the plane. Combined
             // with the volume's `primitiveSessionActive` guard this is
@@ -790,7 +855,7 @@ export const RoiDrawer = () => {
           paintCoalescer.schedule(paint);
         }}
       >
-        <planeGeometry args={[80000, 80000]} />
+        <planeGeometry args={[1, 1]} />
         <meshBasicMaterial visible={false} />
       </mesh>
 

@@ -90,3 +90,41 @@ export function intersectDrawPlane(
   );
   return target;
 }
+
+/**
+ * Where the pointer ray meets the plane through `origin` whose normal is
+ * `normal` (assumed unit length), or null when the ray runs parallel to it or
+ * points away. Writes into `target` and allocates nothing.
+ *
+ * The general form of `intersectDrawPlane`, and the one the volumetric sizing
+ * gesture needs in 3D. Sizing a sphere against the world-XY plane through its
+ * anchor is right only while the camera looks down that plane's normal, which
+ * is exactly the flat view; orbit until the view direction is shallow against
+ * it and the ray meets that plane far away from the anchor, so a click a few
+ * pixels from the centre asks for an enormous radius. Facing the plane at the
+ * camera keeps the radius the world distance the cursor actually moved, at
+ * every orbit angle.
+ */
+export function intersectFacingPlane(
+  ray: THREE.Ray,
+  origin: THREE.Vector3,
+  normal: THREE.Vector3,
+  target: THREE.Vector3,
+): THREE.Vector3 | null {
+  const denominator = normal.dot(ray.direction);
+  if (Math.abs(denominator) < PARALLEL_EPSILON) return null;
+
+  const t =
+    (normal.x * (origin.x - ray.origin.x) +
+      normal.y * (origin.y - ray.origin.y) +
+      normal.z * (origin.z - ray.origin.z)) /
+    denominator;
+  if (t < 0) return null;
+
+  target.set(
+    ray.origin.x + ray.direction.x * t,
+    ray.origin.y + ray.direction.y * t,
+    ray.origin.z + ray.direction.z * t,
+  );
+  return target;
+}

@@ -17,7 +17,7 @@ import type {
  *
  * Two implementations behind one interface (the `repackDispatcher` pattern):
  * - worker-backed (production) — the span structured-clones IN (it is owned
- *   by the FabriksStore byte cache and must never be transferred/detached);
+ *   by the S3ParquetStore byte cache and must never be transferred/detached);
  *   the decoded typed arrays transfer OUT zero-copy;
  * - synchronous — used when `Worker` is unavailable (vitest/node) and as a
  *   construction-failure safety net; behaviorally identical because both call

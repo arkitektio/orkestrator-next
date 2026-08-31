@@ -5,6 +5,7 @@ import {
   exceedsDragThreshold,
   intersectDrawPlane,
   withinSlop,
+  intersectFacingPlane,
 } from "./drawGesture";
 
 /**
@@ -121,5 +122,50 @@ describe("intersectDrawPlane", () => {
 
     expect(a.x).toBeCloseTo(b.x);
     expect(a.y).toBeCloseTo(b.y);
+  });
+});
+
+describe("intersectFacingPlane", () => {
+  const anchor = new THREE.Vector3(10, 20, 30);
+
+  it("meets the plane at the anchor when the ray points straight at it", () => {
+    const normal = new THREE.Vector3(0, 0, -1); // a camera looking down -z
+    const ray = new THREE.Ray(new THREE.Vector3(10, 20, 130), new THREE.Vector3(0, 0, -1));
+    const hit = intersectFacingPlane(ray, anchor, normal, new THREE.Vector3());
+
+    expect(hit).not.toBeNull();
+    expect(hit!.x).toBeCloseTo(10);
+    expect(hit!.y).toBeCloseTo(20);
+    expect(hit!.z).toBeCloseTo(30);
+  });
+
+  it("keeps the radius bounded where the world-XY plane blows it up", () => {
+    // A camera orbited nearly level with the anchor's z plane, aimed a couple
+    // of pixels OFF the anchor — a ray straight through it meets both planes
+    // at the same point, which is why the gesture looks fine until you move.
+    // The ray is shallow against world XY, so `intersectDrawPlane` lands far
+    // away (the massive-sphere bug) while the camera-facing plane stays beside
+    // the anchor, where the cursor actually is.
+    const origin = new THREE.Vector3(10, -80, 32);
+    const viewDirection = anchor.clone().sub(origin).normalize();
+    const offAxis = new THREE.Ray(origin, new THREE.Vector3(0, 100, -1).normalize());
+
+    const flat = intersectDrawPlane(offAxis, anchor.z, new THREE.Vector3());
+    const facing = intersectFacingPlane(offAxis, anchor, viewDirection, new THREE.Vector3());
+
+    expect(flat).not.toBeNull();
+    expect(facing).not.toBeNull();
+    // Same pointer, two planes: one reports a radius orders of magnitude
+    // larger than the gesture the user made.
+    expect(facing!.distanceTo(anchor)).toBeLessThan(flat!.distanceTo(anchor) / 20);
+  });
+
+  it("returns null for a ray parallel to the plane, and for one pointing away", () => {
+    const normal = new THREE.Vector3(0, 0, 1);
+    const parallel = new THREE.Ray(new THREE.Vector3(0, 0, 30), new THREE.Vector3(1, 0, 0));
+    const behind = new THREE.Ray(new THREE.Vector3(0, 0, 40), new THREE.Vector3(0, 0, 1));
+
+    expect(intersectFacingPlane(parallel, anchor, normal, new THREE.Vector3())).toBeNull();
+    expect(intersectFacingPlane(behind, anchor, normal, new THREE.Vector3())).toBeNull();
   });
 });

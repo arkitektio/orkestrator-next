@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { ClippingGroup } from "three/webgpu";
-import { LruByteCache } from "./lruByteCache";
+import { LruByteCache } from "@/mikro-next/components/scene/platform/parquet/lruByteCache";
 import { FabriksBatchRenderer, type FabriksBatchStats } from "./fabriksBatch";
 import {
   createFabriksMaterial,

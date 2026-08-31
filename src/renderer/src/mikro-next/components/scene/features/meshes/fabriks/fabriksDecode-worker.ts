@@ -15,7 +15,7 @@ import type { MeshoptDecoderLike } from "./fabriksDecode";
  * and no three.js scene types, only bytes in and typed arrays out.
  *
  * The request's `spanBytes` arrives as a structured-clone copy (the original
- * belongs to the main thread's FabriksStore byte cache). The decoded cells'
+ * belongs to the main thread's S3ParquetStore byte cache). The decoded cells'
  * position/index/ordinal buffers are freshly allocated here and returned in
  * the TRANSFER list — zero-copy back to the main thread, where they are
  * wrapped in BufferAttributes.

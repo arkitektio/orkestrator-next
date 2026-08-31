@@ -3,10 +3,8 @@ import { AttributeRowsSection } from "../../platform/layerui/AttributeRowsSectio
 import type { ProbeResult } from "../../platform/probe/probeTypes";
 import { formatProbeValue } from "../../platform/probe/valueFormat";
 import { effectiveProbeLayerId } from "../../platform/probe/probeTargeting";
-import { beginPathFromProbe } from "../annotations/pathFromProbe";
 import { useCreateSceneAnnotation } from "../annotations/useCreateSceneAnnotation";
 import { useModeStore } from "../../platform/stores/modeStore";
-import { useRoiDrawingStore } from "../annotations/roiDrawingStore";
 import { useSceneStore } from "../../platform/stores/sceneStore";
 import { useViewerStore } from "../../platform/stores/viewerStore";
 import { perfMonitor } from "../../platform/perf/perfMonitor";
@@ -114,15 +112,12 @@ export const SelectedPointPanel = () => {
   perfMonitor.countRender("SelectedPointPanel"); // no-op unless a perf recording is armed
   const interactionMode = useModeStore((s) => s.interactionMode);
   const probeFollowsCursor = useModeStore((s) => s.probeFollowsCursor);
-  const setInteractionMode = useModeStore((s) => s.setInteractionMode);
   // The SETTLED snapshot, never the hot `probedCoordinate`: that changes once
   // per voxel crossing (≈ once per frame while sweeping) and this is a React
   // subtree — P17. `ProbeReadoutSettler` publishes this once the cursor rests,
   // flushing immediately for clicks, retractions and target changes.
   const probedCoordinate = useViewerStore((s) => s.probeReadout);
   const setProbedCoordinate = useViewerStore((s) => s.setProbedCoordinate);
-  const setActiveTool = useRoiDrawingStore((s) => s.setActiveTool);
-  const setPendingPathSeed = useRoiDrawingStore((s) => s.setPendingPathSeed);
   const { createPointAnnotation } = useCreateSceneAnnotation();
   const probeLayerId = useViewerStore((s) => s.probeLayerId);
   const layers = useSceneStore((s) => s.layers);
@@ -169,21 +164,6 @@ export const SelectedPointPanel = () => {
                 }
               >
                 Mark point
-              </button>
-              <button
-                className={`${smallButton} disabled:cursor-not-allowed disabled:opacity-40`}
-                disabled={!probedCoordinate.worldPos}
-                title="Draw a path starting at this probe (D)"
-                onClick={() =>
-                  probedCoordinate.worldPos &&
-                  beginPathFromProbe(
-                    probedCoordinate.worldPos,
-                    { setPendingPathSeed, setActiveTool },
-                    setInteractionMode,
-                  )
-                }
-              >
-                Draw path
               </button>
               <button className={smallButton} onClick={() => setProbedCoordinate(null)}>
                 Clear

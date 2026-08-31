@@ -1,10 +1,11 @@
 /**
  * Parquet row values → JS numbers, and the one place bigints are dealt with.
  *
- * INT64 columns (`cell`, `object_id`) arrive as `bigint`. Converting is safe
- * here and only here: `fabriks/octree.py` caps Morton codes at 17 bits per axis
- * precisely so a code stays under 2^53, and the writer refuses anything larger,
- * so `Number()` is exact rather than lossy-but-probably-fine.
+ * INT64 columns (`cell`, `object_id`, konnektion's `root_node_id`) arrive as
+ * `bigint`. Converting is safe here and only here: both formats' `octree.py`
+ * caps Morton codes at 17 bits per axis precisely so a code stays under 2^53,
+ * and both writers refuse anything larger, so `Number()` is exact rather than
+ * lossy-but-probably-fine.
  */
 
 export const toNumber = (value: unknown, what: string): number => {

@@ -1,0 +1,57 @@
+{
+  "specVersion": "1",
+  "grid": {
+    "cellSize": [
+      64,
+      64,
+      64
+    ],
+    "levels": 1,
+    "sortKey": "MORTON"
+  },
+  "encoding": {
+    "positions": "UINT16_QUANTIZED_PER_CELL",
+    "edges": "UINT32_PAIRS",
+    "nodeIds": "UINT64",
+    "radii": "NONE",
+    "ghosts": "TRAILING_PER_OWNER_CELL",
+    "codec": "NONE",
+    "compression": "NONE",
+    "pruning": "NONE",
+    "simplification": "NONE"
+  },
+  "shape": [
+    52,
+    45,
+    38
+  ],
+  "axes": [
+    "x",
+    "y",
+    "z"
+  ],
+  "counts": {
+    "cells": 1,
+    "levels": 1,
+    "objects": 2
+  },
+  "files": {
+    "cells": {
+      "path": "catalog/cells.parquet",
+      "bytes": 5243
+    },
+    "levels": {
+      "0": [
+        {
+          "path": "level0/part-00000.parquet",
+          "bytes": 13344,
+          "rowGroups": 1
+        }
+      ]
+    },
+    "objects": {
+      "path": "catalog/objects.parquet",
+      "bytes": 4251
+    }
+  }
+}

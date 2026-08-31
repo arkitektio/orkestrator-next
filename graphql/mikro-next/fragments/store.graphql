@@ -5,7 +5,11 @@ fragment ZarrStore on ZarrStore {
   path
   shape
   dtype
+  # Effective inner chunk shape — for a sharded array this is the sharding
+  # codec's inner chunk_shape (the brick/fetch unit), not the shard.
   chunks
+  # Shard (outer storage object) shape; null when unsharded.
+  shards
   version
 }
 
@@ -38,6 +42,29 @@ fragment MediaStore on MediaStore {
 # registration and mirrors it here, so a client has the grid, the encoding and
 # every file's length before it touches S3.
 fragment FabriksStore on FabriksStore {
+  id
+  key
+  bucket
+  path
+  specVersion
+  grid
+  encoding
+  axes
+  counts
+  files
+}
+
+
+# A konnektion store is a PREFIX, exactly as a fabriks store is: one tree
+# holding `konnektion.json`, both catalogs and every octree level. Separate
+# from FabriksStore because it is a separate format -- a graph, not a surface --
+# and its `encoding` speaks of edges, ghosts and coarsening rather than indices
+# and decimation.
+#
+# The same mirroring rule applies and matters more here: the server read the
+# manifest at registration, so `grid`, `encoding`, `counts` and `files` are
+# already in hand and the client opens a collection with ZERO S3 round trips.
+fragment KonnektionStore on KonnektionStore {
   id
   key
   bucket

@@ -45,11 +45,6 @@ export function outlinePoints(
 
   if (annotation.kind === AnnotationKind.Point) return null;
 
-  // A legacy painted SURFACE's vectors are mesh vertices in no meaningful
-  // order — a polyline through them is spaghetti. Defence in depth: the
-  // query filters them out too, but a row that arrives anyway draws nothing.
-  if (annotation.kind === AnnotationKind.Surface) return null;
-
   if (annotation.kind === AnnotationKind.Line && vectors.length >= 2) {
     return vectors.map((vector) => getVectorPoint(vector, flattenToPlane));
   }

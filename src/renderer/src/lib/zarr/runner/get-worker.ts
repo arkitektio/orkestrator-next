@@ -363,20 +363,35 @@ export function chunkCacheKeyFor<D extends DataType, Store extends Readable>(
   return `${getStoreId(arr.store)}:${arr.path}:${shardKey}/${linear}`
 }
 
+/**
+ * Storage-object path for a chunk coordinate, SYNCHRONOUS for both layouts
+ * (the shard object's path needs no index — only the byte range inside it
+ * does). Sharded: the shard's path; unsharded: the chunk's own path.
+ */
+export function chunkStoragePathFor<D extends DataType, Store extends Readable>(
+  arr: ZarrArray<D, Store>,
+  meta: ArrayMetadata,
+  chunkCoords: readonly number[],
+): `/${string}` {
+  const { sharding, encodeChunkKey } = meta
+  const key = sharding
+    ? encodeChunkKey(shardCoordOf(chunkCoords, sharding))
+    : encodeChunkKey([...chunkCoords])
+  return arr.resolve(key).path
+}
+
 export async function resolveChunkLocation<D extends DataType, Store extends Readable>(
   arr: ZarrArray<D, Store>,
   meta: ArrayMetadata,
   chunkCoords: readonly number[],
   storeOpts?: Parameters<Store["get"]>[1],
 ): Promise<ChunkLocation> {
-  const { sharding, encodeChunkKey } = meta
+  const { sharding } = meta
   const cacheKey = chunkCacheKeyFor(arr, meta, chunkCoords)
   if (!sharding) {
-    const chunkKey = encodeChunkKey([...chunkCoords])
-    return { chunkPath: arr.resolve(chunkKey).path, cacheKey, missing: false }
+    return { chunkPath: chunkStoragePathFor(arr, meta, chunkCoords), cacheKey, missing: false }
   }
-  const shardKey = encodeChunkKey(shardCoordOf(chunkCoords, sharding))
-  const shardPath = arr.resolve(shardKey).path
+  const shardPath = chunkStoragePathFor(arr, meta, chunkCoords)
   const linear = innerLinearIndex(chunkCoords, sharding)
   const storeId = getStoreId(arr.store)
   const store = arr.store
@@ -618,17 +633,30 @@ export function getChunkGroupWorker<D extends DataType, Store extends Readable>(
       const textureFidelity = opts.textureFidelity ?? "default"
       const OutputCtr = getTextureOutputConstructor(meta.codecMeta.data_type, textureFidelity)
       const chunkShape = meta.codecMeta.chunk_shape
-      const locations = await Promise.all(
-        coordsList.map((coords) => resolveChunkLocation(arr, meta, coords, storeOpts)),
-      )
-      const byShard = new Map<string, { offset: number; length: number; item: number }[]>()
+      // Cache FIRST, synchronously: the decoded-chunk key needs no shard index
+      // (`chunkCacheKeyFor`), so hits resolve before any index read and a
+      // fully-cached group costs zero store round trips.
+      const missIndices: number[] = []
       for (let i = 0; i < coordsList.length; i++) {
-        const location = locations[i]
-        const cached = cache.get(location.cacheKey)
+        const cached = cache.get(chunkCacheKeyFor(arr, meta, coordsList[i]))
         if (cached) {
           deferreds[i].resolve(cached as Chunk<D>)
-          continue
+        } else {
+          missIndices.push(i)
         }
+      }
+      if (missIndices.length === 0) return
+      // Index reads only for the misses — parallel, deduped per shard by the
+      // index cache's single-flight promises.
+      const locations = new Map<number, ChunkLocation>()
+      await Promise.all(
+        missIndices.map(async (i) => {
+          locations.set(i, await resolveChunkLocation(arr, meta, coordsList[i], storeOpts))
+        }),
+      )
+      const byShard = new Map<string, { offset: number; length: number; item: number }[]>()
+      for (const i of missIndices) {
+        const location = locations.get(i)!
         if (location.missing) {
           const fill = fillChunkOf<D>(edgeShapeOf(arr, chunkShape, coordsList[i]), OutputCtr, meta.fillValue)
           cache.set(location.cacheKey, fill)
@@ -691,7 +719,7 @@ export function getChunkGroupWorker<D extends DataType, Store extends Readable>(
                 const settled: Chunk<D> =
                   chunk ??
                   fillChunkOf<D>(edgeShapeOf(arr, chunkShape, coordsList[index]), OutputCtr, meta.fillValue)
-                cache.set(locations[index].cacheKey, settled)
+                cache.set(locations.get(index)!.cacheKey, settled)
                 deferreds[index].resolve(settled)
               })
             },
@@ -761,24 +789,55 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
   const OutputCtr = getTextureOutputConstructor(correctedCodecMeta.data_type, textureFidelity)
   const metaId = getMetaId(correctedCodecMeta)
 
+  // Cache FIRST: the decoded-chunk key is synchronous for both layouts (see
+  // `chunkCacheKeyFor`), so a hit skips the store config await AND — for a
+  // sharded array — the shard-index read entirely.
+  const cacheKey = chunkCacheKeyFor(arr, arrayMeta, chunkCoords)
+  const cacheLookupStartedAt = performance.now()
+  const cachedChunk = cache.get(cacheKey)
+  const cacheLookupMs = performance.now() - cacheLookupStartedAt
+
+  if (cachedChunk) {
+    logChunkTiming("[zarr chunk timing]", {
+      chunkPath: chunkStoragePathFor(arr, arrayMeta, chunkCoords),
+      chunkCoords: [...chunkCoords],
+      cacheStatus: "hit",
+      metadataReadMs: roundTiming(metadataReadMs),
+      cacheLookupMs: roundTiming(cacheLookupMs),
+      queueWaitMs: 0,
+      workerMetaInitMs: 0,
+      workerRoundTripMs: 0,
+      workerFetchMs: 0,
+      workerDecodeMs: 0,
+      workerReshapeMs: 0,
+      workerPromoteMs: 0,
+      workerTotalMs: 0,
+      fillChunkMs: 0,
+      mainThreadWriteMs: 0,
+      totalMs: roundTiming(performance.now() - startedAt),
+    })
+    logChunkTiming("[zarr get timing]", {
+      selectionShape: [...cachedChunk.shape],
+      chunkCount: 1,
+      metadataReadMs: roundTiming(metadataReadMs),
+      totalMs: roundTiming(performance.now() - startedAt),
+    })
+    return cachedChunk as Chunk<D>
+  }
+
   if (!isWorkerFetchCapableStore(arr.store)) {
     throw new Error("Worker chunk loading requires a worker-fetch-capable store")
   }
 
   const workerStore = await workerFetchConfigFor(arr.store)
-  // Sharded: one deduped index read per shard, then a Range inside it. The
-  // index lookup happens BEFORE the cache probe only because it also decides
-  // the cache key's shard half; the index itself is main-thread cached.
+  // Sharded: one deduped index read per shard, then a Range inside it. Reached
+  // only on a cache miss — the key above did not need the index.
   const location = await resolveChunkLocation(arr, arrayMeta, chunkCoords, storeOptsWithSignal)
-  const { chunkPath, cacheKey } = location
+  const { chunkPath } = location
   const edgeChunkShape = chunkCoords.map((coord, dim) =>
     Math.min(actualChunkShape[dim], arr.shape[dim] - coord * actualChunkShape[dim]),
   )
   const isEdgeChunk = edgeChunkShape.some((size, index) => size !== actualChunkShape[index])
-
-  const cacheLookupStartedAt = performance.now()
-  const cachedChunk = cache.get(cacheKey)
-  const cacheLookupMs = performance.now() - cacheLookupStartedAt
 
   const makeFillChunk = (): Chunk<D> => {
     const fillChunkStrides = get_strides(edgeChunkShape)
@@ -797,7 +856,7 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
     }
   }
 
-  if (!cachedChunk && location.missing) {
+  if (location.missing) {
     // The shard index says this inner chunk was never written: fill without
     // a worker round trip (and without the "object missing" warning — absence
     // inside a shard is the normal encoding of an all-fill chunk).
@@ -823,34 +882,6 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
       totalMs: roundTiming(performance.now() - startedAt),
     })
     return fillChunk
-  }
-
-  if (cachedChunk) {
-    logChunkTiming("[zarr chunk timing]", {
-      chunkPath,
-      chunkCoords: [...chunkCoords],
-      cacheStatus: "hit",
-      metadataReadMs: roundTiming(metadataReadMs),
-      cacheLookupMs: roundTiming(cacheLookupMs),
-      queueWaitMs: 0,
-      workerMetaInitMs: 0,
-      workerRoundTripMs: 0,
-      workerFetchMs: 0,
-      workerDecodeMs: 0,
-      workerReshapeMs: 0,
-      workerPromoteMs: 0,
-      workerTotalMs: 0,
-      fillChunkMs: 0,
-      mainThreadWriteMs: 0,
-      totalMs: roundTiming(performance.now() - startedAt),
-    })
-    logChunkTiming("[zarr get timing]", {
-      selectionShape: [...cachedChunk.shape],
-      chunkCount: 1,
-      metadataReadMs: roundTiming(metadataReadMs),
-      totalMs: roundTiming(performance.now() - startedAt),
-    })
-    return cachedChunk as Chunk<D>
   }
 
   const enqueuedAt = performance.now()
@@ -1037,16 +1068,21 @@ export async function getWorker<
   const tasks: Array<WorkerPoolTaskHandle<void>> = []
   const taskPriority = opts.priority ?? 0
 
+  // Sync pass first: cache hits copy straight into the output (the key needs
+  // no shard index — `chunkCacheKeyFor`); misses are collected and their
+  // locations resolved in ONE parallel batch below, so a selection spanning N
+  // cold shards costs one round of index reads instead of N serial ones.
+  const pending: Array<{
+    chunk_coords: number[]
+    mapping: Parameters<typeof setter.set_from_chunk>[2]
+    cacheKey: string
+    chunkStartedAt: number
+    cacheLookupMs: number
+  }> = []
+
   for (const { chunk_coords, mapping } of indexer) {
     const chunkStartedAt = performance.now()
-    const location = await resolveChunkLocation(arr, arrayMeta, chunk_coords, storeOptsWithSignal)
-    const { chunkPath, cacheKey } = location
-
-    // Compute edge chunk shape: min(chunk_shape[d], array_shape[d] - coord * chunk_shape[d])
-    const edgeChunkShape = chunk_coords.map((coord, dim) =>
-      Math.min(chunkShape[dim], arr.shape[dim] - coord * chunkShape[dim]),
-    )
-    const isEdgeChunk = edgeChunkShape.some((s, i) => s !== chunkShape[i])
+    const cacheKey = chunkCacheKeyFor(arr, arrayMeta, chunk_coords)
 
     // Check cache before building the task — cache hits skip the worker entirely
     const cacheLookupStartedAt = performance.now()
@@ -1060,7 +1096,7 @@ export async function getWorker<
       setter.set_from_chunk(out, cachedChunk as Chunk<D>, mapping)
       const mainThreadWriteMs = performance.now() - writeStartedAt
       logChunkTiming("[zarr chunk timing]", {
-        chunkPath,
+        chunkPath: chunkStoragePathFor(arr, arrayMeta, chunk_coords),
         chunkCoords: [...chunk_coords],
         cacheStatus: "hit",
         metadataReadMs: roundTiming(metadataReadMs),
@@ -1079,6 +1115,26 @@ export async function getWorker<
       })
       continue
     }
+
+    pending.push({ chunk_coords, mapping, cacheKey, chunkStartedAt, cacheLookupMs })
+  }
+
+  const pendingLocations = await Promise.all(
+    pending.map((entry) =>
+      resolveChunkLocation(arr, arrayMeta, entry.chunk_coords, storeOptsWithSignal),
+    ),
+  )
+
+  for (let p = 0; p < pending.length; p++) {
+    const { chunk_coords, mapping, cacheKey, chunkStartedAt, cacheLookupMs } = pending[p]
+    const location = pendingLocations[p]
+    const { chunkPath } = location
+
+    // Compute edge chunk shape: min(chunk_shape[d], array_shape[d] - coord * chunk_shape[d])
+    const edgeChunkShape = chunk_coords.map((coord, dim) =>
+      Math.min(chunkShape[dim], arr.shape[dim] - coord * chunkShape[dim]),
+    )
+    const isEdgeChunk = edgeChunkShape.some((s, i) => s !== chunkShape[i])
 
     if (location.missing) {
       // Sharded array, inner chunk absent from the shard index: fill on the

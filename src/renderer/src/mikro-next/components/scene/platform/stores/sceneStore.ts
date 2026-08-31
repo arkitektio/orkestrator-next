@@ -40,8 +40,28 @@ export type MeshLayerSessionState = {
   slabScale?: number;
 };
 
+/**
+ * Session-local render state a NETWORK layer carries beyond its fragment.
+ *
+ * `detail` and `slabScale` mean exactly what they mean for a mesh. The two
+ * `*Override` fields exist because `showNodes` and `directed` ARE stored on the
+ * layer — the override is what lets the card toggle them instantly and keep the
+ * server write behind Save, so a glance at the graph never costs a round trip.
+ * A null override means "use the stored value".
+ */
+export type NetworkLayerSessionState = {
+  /** Per-layer LOD preset: the planner's pixel-error budget. */
+  detail?: "fine" | "balanced" | "fast";
+  /** 2D cross-section thickness multiplier over the scene's z-step (1/3/5). */
+  slabScale?: number;
+  /** Session override of the stored `showNodes`. */
+  showNodesOverride?: boolean;
+  /** Session override of the stored `directed`. */
+  directedOverride?: boolean;
+};
+
 /** A polymorphic scene layer plus its session-local render state. */
-export type SceneLayer = SceneLayerFragment & MeshLayerSessionState;
+export type SceneLayer = SceneLayerFragment & MeshLayerSessionState & NetworkLayerSessionState;
 
 export interface SceneState {
   /**
@@ -232,6 +252,10 @@ export const createSceneStore = ({ scene }: { scene: SceneFragment }) => {
             defaultVolumeLOD: previous.defaultVolumeLOD,
             visible: previous.visible,
           }),
+          // EVERY session field must be listed here. One that is omitted
+          // silently resets on each scene re-emission, and nothing type-checks
+          // it — the type is an intersection, so an unlisted field is merely
+          // absent rather than wrong.
           carryRawSession: (previous, next) => ({
             ...next,
             instanceColormap: previous.instanceColormap,
@@ -240,6 +264,8 @@ export const createSceneStore = ({ scene }: { scene: SceneFragment }) => {
             flatNormals: previous.flatNormals,
             doubleSided: previous.doubleSided,
             slabScale: previous.slabScale,
+            showNodesOverride: previous.showNodesOverride,
+            directedOverride: previous.directedOverride,
           }),
         });
 

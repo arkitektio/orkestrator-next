@@ -132,12 +132,6 @@ describe("buildOutlineBatches", () => {
     expect(none[2 * 6]).toBeCloseTo(idle.r);
   });
 
-  it("legacy SURFACE rows draw nothing — belt over the query's filter", () => {
-    expect(
-      outlinePoints(annotation(AnnotationKind.Surface, [[0, 0, 0], [1, 1, 0], [0, 1, 0]]), true),
-    ).toBeNull();
-  });
-
   it("sectioned ellipsoids stay OUT of the batch — their ring moves with the plane", () => {
     // Depth-bearing ellipse in the flat view: per-shape Line, not batched.
     expect(

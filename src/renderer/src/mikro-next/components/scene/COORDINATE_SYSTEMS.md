@@ -346,9 +346,15 @@ One asymmetry that looks like an oversight and is not: the 3D volume
 hover-probes in ANNOTATE mode and the 2D plane does not. Inside a volume there
 is no draw plane, so the probe IS the placement — every 3D annotation vertex
 comes from it, and the `RoiDrawer`'s own interaction plane deliberately stands
-down for non-primitive tools there. In 2D that plane drives the rubber band
-itself, and a second hover probe would only compete with it for the pointer
-event. `platform/probe/probeGating.ts` makes this explicit with its
+down for non-primitive tools there — it stays mounted purely to CAPTURE the
+click, which is why in 3D it is camera-facing at the orbit pivot rather than
+lying on the world XY plane: a fixed quad at z≈0 is crossed by the view ray
+wherever a tilted camera happens to point it, routinely far outside any finite
+quad, and a missed quad means no drawer handler runs at all. Nothing about
+placement depends on where it sits — every consumer re-derives its geometry
+from `event.ray` or from the probe, never from `event.point`. In 2D that plane
+drives the rubber band itself, and a second hover probe would only compete with
+it for the pointer event. `platform/probe/probeGating.ts` makes this explicit with its
 `annotateProbes` flag rather than leaving each layer to re-derive it.
 
 **Which space answers which question** (the world-metric LOD contract —

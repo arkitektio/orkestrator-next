@@ -2,11 +2,15 @@ import type { AbsolutePath } from "@zarrita/storage";
 import { CredentialRotation, type S3FetchConfigRefresher } from "@/lib/zarr/store/credentialRotation";
 import { fetchS3Path, type S3FetchConfig } from "@/lib/zarr/runner/s3-request";
 import { LruByteCache } from "./lruByteCache";
-import type { FabriksTransport, FabriksTransportStats } from "./fabriksCollection";
+import type { ParquetTransport, ParquetTransportStats } from "./transport";
 
 /**
- * Authenticated reads of a fabriks prefix: whole objects for the manifest and
+ * Authenticated reads of a level-of-detail Parquet prefix — a fabriks tree of
+ * surfaces, a konnektion tree of graphs: whole objects for the manifest and
  * catalogs, byte RANGES for Parquet footers and row groups.
+ *
+ * Format-agnostic. What differs between the two formats is the blob contract
+ * inside a row, which is decoded far above this; the bytes here are just bytes.
  *
  * Built directly on `fetchS3Path` rather than on `ConfiguredS3Store`, for two
  * reasons that are not stylistic:
@@ -29,14 +33,14 @@ import type { FabriksTransport, FabriksTransportStats } from "./fabriksCollectio
 /** Bytes of range/whole-object responses held per collection. */
 const DEFAULT_CACHE_BYTES = 64 * 1024 * 1024;
 
-export type FabriksStoreOptions = {
+export type S3ParquetStoreOptions = {
   config: S3FetchConfig;
   refreshConfig?: S3FetchConfigRefresher;
   maxCacheBytes?: number;
 };
 
-export class FabriksStore implements FabriksTransport {
-  readonly stats: FabriksTransportStats = {
+export class S3ParquetStore implements ParquetTransport {
+  readonly stats: ParquetTransportStats = {
     gets: 0,
     rangeGets: 0,
     bytesFetched: 0,
@@ -49,7 +53,7 @@ export class FabriksStore implements FabriksTransport {
   private readonly cache: LruByteCache<Uint8Array>;
   private readonly inFlight = new Map<string, Promise<Uint8Array>>();
 
-  constructor(options: FabriksStoreOptions) {
+  constructor(options: S3ParquetStoreOptions) {
     this.rotation = new CredentialRotation(options.config, options.refreshConfig ?? null);
     this.cache = new LruByteCache<Uint8Array>(options.maxCacheBytes ?? DEFAULT_CACHE_BYTES, () => {
       /* plain bytes: nothing to dispose */
@@ -122,7 +126,7 @@ export class FabriksStore implements FabriksTransport {
     }
 
     if (!response.ok) {
-      throw new Error(`fabriks read of ${path} failed: ${response.status} ${response.statusText}`);
+      throw new Error(`parquet read of ${path} failed: ${response.status} ${response.statusText}`);
     }
 
     const body = new Uint8Array(await response.arrayBuffer());

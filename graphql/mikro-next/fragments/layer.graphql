@@ -492,4 +492,40 @@ fragment SceneLayer on Layer {
     }
     activeFilterBys
   }
+  # A node/edge graph from a konnektion collection: a traced arbor, a vessel
+  # tree, a connectome. Distinct from TrackLayer, which draws trajectories from
+  # a table and can only express a PATH — a network has branch points.
+  #
+  # Note what is NOT here: unlike MeshLayer this type publishes no
+  # `colorBys`/`filterBys`, so there is no picker to select and no LUT to build.
+  # (The schema's own docs on `NetworkCollection.colorByOptions` claim
+  # `createNetworkLayer(colorBys:)` accepts them; the input type has no such
+  # field. Do not add an arm here until it does.)
+  ... on NetworkLayer {
+    collection {
+      ...NetworkCollection
+    }
+    materialColor
+    # The flat width of every segment, in SCENE units. Segments are drawn as
+    # camera-facing quads rather than GL lines, which is the only reason a width
+    # in scene units means anything — and it means it only from SIMILARITY up,
+    # which is what `placementInvariance` below reports.
+    lineWidth
+    # Two declared width overrides that name PARQUET ATTRIBUTE COLUMNS, reached
+    # through the join/attribute-plan machinery this layer type has no pickers
+    # for. Selected so the card can say they are set and unimplemented rather
+    # than ignore them silently; the renderer uses `lineWidth` plus the format's
+    # own `radii` blob instead.
+    nodeSizeColumn
+    edgeWidthColumn
+    # Both are RENDER settings, never facts about the graph: an edge is always
+    # stored source-to-target whether or not its direction is drawn.
+    directed
+    showNodes
+    # A budget capping octree depth, not a choice of level — which level is
+    # fetched still follows from the zoom. Commonly moot: konnektion picks its
+    # depth from the data and a traced arbor is usually single-level.
+    maxLevel
+    placementInvariance
+  }
 }

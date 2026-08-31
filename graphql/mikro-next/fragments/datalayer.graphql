@@ -154,3 +154,16 @@ fragment FabriksUploadGrant on FabriksUploadGrant {
   # and the `FabriksLike` value `createMeshCollection` wants.
   store
 }
+
+
+# Konnektion prefixes get their OWN credentials. A fabriks grant does not read
+# a konnektion prefix -- see lib/zarr/access.ts, where the kinds are separate
+# mutations with separate caches precisely so one cannot clobber the other.
+fragment GeneralKonnektionAccessGrant on GeneralKonnektionAccessGrant {
+  accessKey
+  secretKey
+  sessionToken
+  expiresIn
+  region
+  bucket
+}

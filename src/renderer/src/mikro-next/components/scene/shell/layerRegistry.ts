@@ -7,6 +7,7 @@ import { AnnotationLayerRenderer } from "../features/annotations/layer/Annotatio
 import { LabelPlaneLayer, LabelVolumeLayer } from "../features/labels/LabelPlaneLayer";
 import { TrackLayerRenderer } from "../features/tracks/TracksLayer";
 import { PointLayerRenderer } from "../features/points/PointsLayer";
+import { NetworkCollectionLayer } from "../features/network/NetworkCollectionLayer";
 
 export type LayerRendererProps = { layerId: string };
 
@@ -40,4 +41,9 @@ export const LAYER_RENDERERS: Record<SceneLayerFragment["__typename"], LayerRend
   // One component for both modes: in 2D it clips itself to a slab around
   // currentZ (see FabriksCollectionLayer's slab effect).
   MeshLayer: { Layer2D: FabriksCollectionLayer, Layer3D: FabriksCollectionLayer },
+  // A konnektion node/edge graph. Same one-component-both-modes shape as the
+  // mesh layer, and the same reason. Its segments are camera-facing QUADS
+  // rather than GL lines — the only way a width in scene units means anything,
+  // since `lineWidth > 1` on a line primitive has been a no-op for years.
+  NetworkLayer: { Layer2D: NetworkCollectionLayer, Layer3D: NetworkCollectionLayer },
 };

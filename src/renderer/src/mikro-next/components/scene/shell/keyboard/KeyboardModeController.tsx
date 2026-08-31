@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef } from "react";
 import { InteractionMode, useModeStore, useModeStoreApi, type DesignToolId } from "../../platform/stores/modeStore";
 import { designToolByKey } from "../../features/meshDesign/tools/registry";
 import { isTypingTarget } from "../../platform/input/keyboardTarget";
-import { beginPathFromProbe } from "../../features/annotations/pathFromProbe";
 import { useRoiDrawingStoreApi } from "../../features/annotations/roiDrawingStore";
 import { useSceneStore } from "../../platform/stores/sceneStore";
 import { useViewerStore, useViewerStoreApi } from "../../platform/stores/viewerStore";
@@ -64,20 +63,6 @@ export const KeyboardModeController = () => {
           roiDrawingApi.getState().setActiveTool(designKey.roiTool);
         }
         setDesignTool(designKey.id);
-        return;
-      }
-
-      // "Draw path from probe" — same action as the probe panel button.
-      if (key === "d") {
-        const probe = viewerStoreApi.getState().probedCoordinate;
-        if (probe?.worldPos) {
-          e.preventDefault();
-          beginPathFromProbe(probe.worldPos, roiDrawingApi.getState(), setInteractionMode);
-          // The common flow is hold-P → click probe → press D: releasing P
-          // must not restore-revert the ANNOTATE switch we just made.
-          heldKeyRef.current = null;
-          restoreModeRef.current = null;
-        }
         return;
       }
 

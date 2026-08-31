@@ -1,6 +1,12 @@
 import { parquetMetadataAsync, parquetRead } from "hyparquet";
 import type { AsyncBuffer, FileMetaData, RowGroup } from "hyparquet";
 import { decompress as zstdDecompress } from "fzstd";
+// A range reader is the TRANSPORT's contract, not a Parquet concept, so it has
+// one definition next door. Re-exported because every caller of this module
+// needs it.
+import type { RangeReader } from "./transport";
+
+export type { RangeReader };
 
 /**
  * One open Parquet object: its footer, parsed once, and the row groups a
@@ -10,8 +16,8 @@ import { decompress as zstdDecompress } from "fzstd";
  * `(part, rowGroup)` holding a cell, so a frame costs one footer per part
  * touched — cached for the life of the reader — plus ONE ranged read per row
  * group it actually needs. Not the level, not the part, and not a read per
- * column chunk: hyparquet slices per column chunk, and a fabriks geometry row
- * group has ten columns, so handing it the raw ranged reader would turn one
+ * column chunk: hyparquet slices per column chunk, and a geometry row group has
+ * ten to seventeen columns, so handing it the raw ranged reader would turn one
  * 512 KiB row group into ten small authenticated round trips. `readRowGroup`
  * therefore prefetches the group's whole byte span — column chunks of one row
  * group are contiguous by construction — and serves hyparquet's slices from
@@ -28,8 +34,6 @@ export const PARQUET_COMPRESSORS = {
   ZSTD: (input: Uint8Array) => zstdDecompress(input),
 };
 
-/** Reads a byte span of one object. `end` is exclusive. */
-export type RangeReader = (path: string, start: number, end: number) => Promise<Uint8Array>;
 
 /**
  * hyparquet's file abstraction over a ranged reader.
@@ -132,8 +136,9 @@ export class ParquetPart {
    *
    * `utf8: false` is NOT optional. hyparquet defaults it to true, and its
    * conversion treats any bare BYTE_ARRAY as a string — which is exactly what
-   * fabriks's `positions` and `indices` are. Leaving the default on turns every
-   * geometry blob into mojibake with no error anywhere.
+   * every geometry blob is — fabriks's `positions`/`indices`, konnektion's
+   * `positions`/`edges`/`ghost_positions`. Leaving the default on turns every
+   * one of them into mojibake with no error anywhere.
    */
   async readRows(
     columns: string[],
@@ -146,7 +151,8 @@ export class ParquetPart {
    * Everything a decoder on ANY thread needs to read one row group: the
    * parsed footer, the group's row range, and its whole byte span in ONE
    * ranged read (through the transport's cache and credential rotation, which
-   * is why this half stays on the main thread — see `fabriksDecodeCore.ts`).
+   * is why this half stays on the main thread — see each format's
+   * `*DecodeCore.ts`).
    */
   async rowGroupPayload(rowGroup: number): Promise<{
     metadata: FileMetaData;

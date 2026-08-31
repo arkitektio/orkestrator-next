@@ -1,0 +1,25 @@
+# A NetworkCollection is a DATASET, not a graph: the API node carries version,
+# coordinate system and the konnektion STORE -- one prefix holding
+# `konnektion.json`, both catalogs and every octree level. The individual nodes
+# and edges are ROWS in the Parquet files under that prefix, reached
+# client-side by row group. There is deliberately no `nodes(...)` field to
+# paginate, for the same reason MeshCollection has no `meshes(...)`.
+#
+# `grid` and `encoding` are mirrored from the store's own manifest rather than
+# declared through the API, so they describe what was actually written. Read
+# them through the strict parser in features/network/konnektion/
+# konnektionManifest.ts -- both scalars arrive as `any`, so that parser is the
+# only validation they get.
+fragment NetworkCollection on NetworkCollection {
+  id
+  version
+  specVersion
+  coordinateSystem {
+    ...CoordinateSystem
+  }
+  store {
+    ...KonnektionStore
+  }
+  grid
+  encoding
+}

@@ -1,0 +1,315 @@
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { Circle, Eye, EyeOff, MoveRight, Share2, Trash2 } from "lucide-react";
+import { memo, useCallback } from "react";
+import {
+  useUpdateNetworkLayerMutation,
+  type SceneLayerFragment,
+  type UpdateNetworkLayerInput,
+} from "@/mikro-next/api/graphql";
+import {
+  useSceneStore,
+  type NetworkLayerSessionState,
+} from "../../platform/stores/sceneStore";
+import {
+  Badge,
+  CardSection,
+  IconToggle,
+  OpacityRow,
+  Segment,
+  SegmentGroup,
+  formatCount,
+} from "../../platform/layerui/cardControls";
+
+/**
+ * A compact card for a `NetworkLayer` in the Layers panel.
+ *
+ * ## Three kinds of control, as on the track and mesh cards
+ *
+ *  - **STORED** (`updateNetworkLayer`): line width, `showNodes`, `directed`,
+ *    `maxLevel`, opacity, visibility.
+ *  - **SESSION** (`patchSceneLayer` only): the detail preset and the 2D slab
+ *    scale. Neither has a field on the mutation, and neither should: how
+ *    aggressively you are willing to coarsen, and how thick a cross-section you
+ *    read, are properties of how you are looking rather than of the graph.
+ *  - **FACTS** (`Badge`): what the store's mirrored manifest already says —
+ *    the spec version, the level count, and whether the collection was pruned
+ *    or straightened at all. `pruning: NONE` on a single-level collection is a
+ *    real, checkable statement about the data (nothing was dropped, every node
+ *    is where the tracer put it), so it is worth showing rather than hiding.
+ *
+ * The write cadence is the track card's: edits fold into the store immediately
+ * so the canvas previews them, and the mutation fires on COMMIT (slider
+ * release) rather than per tick.
+ *
+ * ## `nodeSizeColumn` / `edgeWidthColumn` are shown, not offered
+ *
+ * They name PARQUET ATTRIBUTE COLUMNS, reached through the join/attribute-plan
+ * machinery that a `colorBys` picker would have brought — and `NetworkLayer`
+ * publishes no pickers, so the client cannot resolve one. The renderer uses
+ * `lineWidth` plus the format's own `radii` blob instead. A layer that has one
+ * set says so here rather than appearing to honour it.
+ */
+
+type NetworkLayerVariant = Extract<SceneLayerFragment, { __typename: "NetworkLayer" }>;
+type NetworkLayerView = NetworkLayerVariant & NetworkLayerSessionState;
+
+/**
+ * What `persist` may be handed: the mutation's OWN field set, minus the id.
+ *
+ * Not `Partial<NetworkLayerVariant>` — that admits `__typename`, `collection`,
+ * `asAffine` and `pathToWorld`, none of which the input has, and GraphQL
+ * rejects the WHOLE mutation on one unknown input field.
+ */
+type NetworkPatch = Omit<UpdateNetworkLayerInput, "id">;
+
+const DETAIL_LABELS = {
+  fine: "fine",
+  balanced: "balanced",
+  fast: "fast",
+} as const;
+
+/** Read the mirrored manifest without asserting a shape on an `any` scalar. */
+const readEncoding = (encoding: unknown): Record<string, unknown> =>
+  typeof encoding === "object" && encoding !== null ? (encoding as Record<string, unknown>) : {};
+
+export const NetworkLayerCard = memo(
+  ({ layer, onRemove }: { layer: NetworkLayerView; onRemove?: (id: string) => void }) => {
+    const patchSceneLayer = useSceneStore((s) => s.patchSceneLayer);
+    const [updateNetworkLayer] = useUpdateNetworkLayerMutation();
+
+    const hidden = layer.visible === false;
+    const collection = layer.collection;
+    const store = collection?.store;
+    const encoding = readEncoding(store?.encoding ?? collection?.encoding);
+    const grid = readEncoding(store?.grid ?? collection?.grid);
+    const levels = typeof grid.levels === "number" ? grid.levels : null;
+    const counts = readEncoding(store?.counts);
+
+    /**
+     * Preview locally, persist on commit. The fold is not optional: the scene
+     * provider reconciles layers by STRUCTURE, so a `GetScene` re-emission that
+     * changed only this layer's content keeps the stored object as it was.
+     */
+    const persist = useCallback(
+      (patch: NetworkPatch) => {
+        patchSceneLayer(layer.id, patch as Parameters<typeof patchSceneLayer>[1]);
+        void updateNetworkLayer({ variables: { input: { id: layer.id, ...patch } } }).catch(
+          (error: unknown) => {
+            console.warn("[konnektion] could not save layer settings", error);
+          },
+        );
+      },
+      [layer.id, patchSceneLayer, updateNetworkLayer],
+    );
+
+    const lineWidth = layer.lineWidth ?? 1;
+    const showNodes = layer.showNodesOverride ?? layer.showNodes;
+    const directed = layer.directedOverride ?? layer.directed;
+    const detail = layer.detail ?? "balanced";
+    const slabScale = layer.slabScale ?? 1;
+    const hasRadii = typeof encoding.radii === "string" && encoding.radii !== "NONE";
+
+    return (
+      <div
+        className={`@container/card rounded-lg border border-white/10 bg-black/40 backdrop-blur-md transition-opacity ${
+          hidden ? "opacity-50" : ""
+        }`}
+      >
+        {/* ------------------------------------------------ header --------- */}
+        <div className="flex items-center gap-1.5 px-2 py-1.5">
+          <span className="grid h-5 w-5 shrink-0 place-items-center rounded bg-emerald-400/15">
+            <Share2 className="h-3 w-3 text-emerald-300" />
+          </span>
+          <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-white/90">
+            {layer.name?.trim() || `Network ${collection?.version ?? layer.id}`}
+          </span>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-5 w-5 shrink-0 text-white/45 hover:text-white/90"
+            title={hidden ? "Show" : "Hide"}
+            onClick={() => persist({ visible: hidden })}
+          >
+            {hidden ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+          </Button>
+          {onRemove && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5 shrink-0 text-white/35 hover:text-red-300"
+              title="Remove layer from scene"
+              onClick={() => onRemove(layer.id)}
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          )}
+        </div>
+
+        {/* ------------------------------------------------ width ---------- */}
+        <CardSection title="line width">
+          <div className="flex items-center gap-1.5">
+            <Slider
+              min={0.1}
+              max={20}
+              step={0.1}
+              value={[lineWidth]}
+              onValueChange={([value]) => patchSceneLayer(layer.id, { lineWidth: value })}
+              onValueCommit={([value]) => persist({ lineWidth: value })}
+              className="flex-1 py-1"
+              // The honest caveat, in the tooltip rather than as a disabled
+              // control: the number is still the fallback where the collection
+              // carries no radii, so the slider is useful either way.
+              title={
+                hasRadii
+                  ? "The flat width, in scene units. This collection carries per-node radii, which override it — segments taper between their endpoints."
+                  : "The width of every segment, in scene units. A well-defined length only where the layer's placement is a similarity or better."
+              }
+            />
+            <span className="w-8 shrink-0 text-right font-mono text-[9px] text-white/40">
+              {lineWidth}
+            </span>
+          </div>
+          {hasRadii && (
+            <div className="mt-1 text-[9px] text-white/35">
+              per-node radii from the collection override this
+            </div>
+          )}
+        </CardSection>
+
+        {/* ------------------------------------------------ glyphs --------- */}
+        <CardSection title="draw">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <IconToggle
+              icon={<Circle className="h-3 w-3" />}
+              label="nodes"
+              active={showNodes}
+              title="Draw a glyph at each node as well as the segments between them"
+              // Session override for the instant preview, stored on commit —
+              // one click, one mutation, no lag between them.
+              onClick={() => {
+                patchSceneLayer(layer.id, { showNodesOverride: !showNodes });
+                persist({ showNodes: !showNodes });
+              }}
+            />
+            <IconToggle
+              icon={<MoveRight className="h-3 w-3" />}
+              label="direction"
+              active={directed}
+              title="Draw each edge's direction as an arrowhead. A render setting, never a fact about the graph: an edge is always stored source-to-target."
+              onClick={() => {
+                patchSceneLayer(layer.id, { directedOverride: !directed });
+                persist({ directed: !directed });
+              }}
+            />
+          </div>
+        </CardSection>
+
+        {/* ------------------------------------------------ detail --------- */}
+        <CardSection title="detail">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <SegmentGroup>
+              {(["fine", "balanced", "fast"] as const).map((preset) => (
+                <Segment
+                  key={preset}
+                  active={detail === preset}
+                  title={`Screen-space error budget: ${DETAIL_LABELS[preset]}. Session-local — how hard you are willing to coarsen is a property of how you are looking.`}
+                  onClick={() => patchSceneLayer(layer.id, { detail: preset })}
+                >
+                  {DETAIL_LABELS[preset]}
+                </Segment>
+              ))}
+            </SegmentGroup>
+            {levels !== null && levels <= 1 && (
+              <Badge title="This collection has a single level — konnektion picks its depth from the data, and a traced arbor rarely earns a ladder. There is nothing to coarsen to, so the preset has no effect here.">
+                single level
+              </Badge>
+            )}
+          </div>
+        </CardSection>
+
+        {/* ------------------------------------------------ slab ----------- */}
+        <CardSection title="2d slab">
+          <SegmentGroup>
+            {[1, 3, 5].map((scale) => (
+              <Segment
+                key={scale}
+                active={slabScale === scale}
+                title={`Draw the part of the network within ${scale}× the scene's z-step of the displayed slice`}
+                onClick={() => patchSceneLayer(layer.id, { slabScale: scale })}
+              >
+                ×{scale}
+              </Segment>
+            ))}
+          </SegmentGroup>
+        </CardSection>
+
+        {/* ------------------------------------------------ opacity -------- */}
+        <OpacityRow
+          opacity={layer.opacity ?? 1}
+          onChange={(opacity) => patchSceneLayer(layer.id, { opacity })}
+          onCommit={(opacity) => persist({ opacity })}
+        />
+
+        {/* ------------------------------------------------ facts ---------- */}
+        <CardSection title="collection">
+          <div className="flex flex-wrap items-center gap-1">
+            {collection?.specVersion && <Badge title="konnektion spec version">spec {collection.specVersion}</Badge>}
+            {levels !== null && (
+              <Badge title="Octree levels the manifest declares; 0 is the finest">
+                {levels} level{levels === 1 ? "" : "s"}
+              </Badge>
+            )}
+            {typeof counts.nodes === "number" && (
+              <Badge title="Nodes across the whole collection. Ghosts are not counted — they are copies of an endpoint another cell owns.">
+                {formatCount(counts.nodes)} nodes
+              </Badge>
+            )}
+            {typeof counts.edges === "number" && (
+              <Badge title="Edges across the whole collection">
+                {formatCount(counts.edges)} edges
+              </Badge>
+            )}
+            {typeof encoding.pruning === "string" && (
+              <Badge
+                title={
+                  encoding.pruning === "NONE"
+                    ? "Nothing was pruned: every branch the tracer drew is present at every level."
+                    : "Strahler pruning: coarse levels drop whole twigs rather than approximating them, so a coarse level has genuinely fewer branches."
+                }
+              >
+                pruning {String(encoding.pruning).toLowerCase()}
+              </Badge>
+            )}
+            {typeof encoding.simplification === "string" && (
+              <Badge
+                title={
+                  encoding.simplification === "NONE"
+                    ? "Nothing was straightened: every node sits exactly where the tracer put it."
+                    : "Douglas–Peucker: long runs were straightened, bounded by the level's lod_error. No node ever moved — survivors are re-linked."
+                }
+              >
+                {String(encoding.simplification).toLowerCase().replace(/_/g, "–")}
+              </Badge>
+            )}
+          </div>
+
+          {/* Declared-but-unimplemented: shown so a set field is not silently
+              ignored. See the module docblock. */}
+          {(layer.nodeSizeColumn || layer.edgeWidthColumn) && (
+            <div className="mt-1 text-[9px] text-amber-300/60">
+              {layer.nodeSizeColumn
+                ? `nodeSizeColumn "${layer.nodeSizeColumn}"`
+                : `edgeWidthColumn "${layer.edgeWidthColumn}"`}{" "}
+              is set but not yet applied — this layer publishes no column pickers,
+              so the client cannot resolve the join.
+            </div>
+          )}
+        </CardSection>
+      </div>
+    );
+  },
+);
+
+NetworkLayerCard.displayName = "NetworkLayerCard";

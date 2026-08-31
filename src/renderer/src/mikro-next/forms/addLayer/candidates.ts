@@ -48,6 +48,7 @@ export type Candidate = AddLayerCandidateFragment;
 export type LensCandidate = Extract<Candidate, { __typename: "Lens" }>;
 export type TableCandidate = Extract<Candidate, { __typename: "TableDataset" }>;
 export type MeshCandidate = Extract<Candidate, { __typename: "MeshCollection" }>;
+export type NetworkCandidate = Extract<Candidate, { __typename: "NetworkCollection" }>;
 export type AnnotationCandidate = Extract<
   Candidate,
   { __typename: "AnnotationCollection" }
@@ -171,6 +172,15 @@ export type MeshEntry = {
   space: SpaceRef;
 };
 
+export type NetworkEntry = {
+  kind: "network";
+  key: string;
+  network: NetworkCandidate;
+  name: string;
+  secondary?: string;
+  space: SpaceRef;
+};
+
 export type AnnotationEntry = {
   kind: "annotation";
   key: string;
@@ -180,9 +190,9 @@ export type AnnotationEntry = {
   space: SpaceRef;
 };
 
-export type Entry = DatasetEntry | TableEntry | MeshEntry | AnnotationEntry;
+export type Entry = DatasetEntry | TableEntry | MeshEntry | NetworkEntry | AnnotationEntry;
 
-export type SectionId = "datasets" | "meshes" | "tables" | "annotations";
+export type SectionId = "datasets" | "meshes" | "networks" | "tables" | "annotations";
 
 export type Section = {
   id: SectionId;
@@ -195,6 +205,7 @@ export type Source =
   | { kind: "lens"; dataset: DatasetEntry; option: LensOption }
   | { kind: "table"; entry: TableEntry }
   | { kind: "mesh"; entry: MeshEntry }
+  | { kind: "network"; entry: NetworkEntry }
   | { kind: "annotation"; entry: AnnotationEntry };
 
 // ---------------------------------------------------------------------------
@@ -310,6 +321,7 @@ export const buildSections = (input: {
   const datasets = new Map<string, DatasetEntry>();
   const tables: TableEntry[] = [];
   const meshes: MeshEntry[] = [];
+  const networks: NetworkEntry[] = [];
   const annotations: AnnotationEntry[] = [];
 
   const datasetEntry = (
@@ -384,6 +396,19 @@ export const buildSections = (input: {
             space: spaceRef,
           });
           break;
+        // A konnektion collection. Nameless like a mesh collection, so the row
+        // shows the version and the spec — which is what `residentName` already
+        // assumes for both.
+        case "NetworkCollection":
+          networks.push({
+            kind: "network",
+            key: `NetworkCollection:${resident.id}`,
+            network: resident,
+            name: residentName(resident),
+            secondary: `spec ${resident.specVersion}`,
+            space: spaceRef,
+          });
+          break;
         case "AnnotationCollection":
           annotations.push({
             kind: "annotation",
@@ -426,6 +451,7 @@ export const buildSections = (input: {
       entries: datasetEntries.sort(byName),
     },
     { id: "meshes", title: "Meshes", entries: meshes.sort(byName) },
+    { id: "networks", title: "Networks", entries: networks.sort(byName) },
     { id: "tables", title: "Measurements", entries: tables.sort(byName) },
     { id: "annotations", title: "Annotations", entries: annotations.sort(byName) },
   ];

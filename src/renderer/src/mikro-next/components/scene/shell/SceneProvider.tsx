@@ -51,6 +51,7 @@ import { ViewStoreContext, createViewStore } from "../platform/stores/viewStore"
 import { ViewerStoreContext, createViewerStore } from "../platform/stores/viewerStore";
 import { createBrickSlice } from "../features/bricks/store/brickSlice";
 import { createMeshSlice } from "../features/meshes/store/meshSlice";
+import { createNetworkSlice } from "../features/network/store/networkSlice";
 import { SceneBrandTheme } from "./theme/SceneBrandTheme";
 import { coldOpenTimeline } from "../platform/perf/coldOpenTimeline";
 import {
@@ -218,6 +219,7 @@ export const SceneProvider = (props: {
           viewerStore: createViewerStore(arraysByStoreId, [
             createBrickSlice,
             createMeshSlice,
+            createNetworkSlice,
           ]),
           selectionStore: createSelectionStore(),
           sceneStore,

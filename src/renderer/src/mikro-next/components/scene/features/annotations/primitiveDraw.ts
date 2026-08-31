@@ -32,6 +32,16 @@ export const planarRadius = (anchor: Vec3, cursor: Vec3): number =>
   Math.hypot(cursor[0] - anchor[0], cursor[1] - anchor[1]);
 
 /**
+ * The same radius for the VOLUME gesture: the full 3D distance from the
+ * anchor. There the sizing plane faces the camera rather than lying on world
+ * XY (`intersectFacingPlane`), so the cursor legitimately leaves the anchor's
+ * z — dropping that component would under-report the radius by the view's
+ * tilt, shrinking the sphere the further the camera is orbited from top-down.
+ */
+export const spatialRadius = (anchor: Vec3, cursor: Vec3): number =>
+  Math.hypot(cursor[0] - anchor[0], cursor[1] - anchor[1], cursor[2] - anchor[2]);
+
+/**
  * How much an axis-aligned ellipsoid has shrunk where a z plane cuts it: the
  * circle-of-latitude factor `sqrt(1 − ((z − cz)/rz)²)`, to be applied to BOTH
  * planar radii. 1 at the equator, 0 at the poles.

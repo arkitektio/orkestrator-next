@@ -5,23 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import { createRoiDrawingStore } from "./roiDrawingStore";
 
-// RoiDrawer consumes the seed in an effect and clears it afterwards; this pins
-// the set/clear contract that "draw path from probe" relies on.
-describe("pendingPathSeed", () => {
-  it("starts empty, holds a seed, and clears back to null", () => {
-    const store = createRoiDrawingStore();
-    expect(store.getState().pendingPathSeed).toBeNull();
-
-    store.getState().setPendingPathSeed([1, 2, 3]);
-    expect(store.getState().pendingPathSeed).toEqual([1, 2, 3]);
-
-    store.getState().setPendingPathSeed(null);
-    expect(store.getState().pendingPathSeed).toBeNull();
-  });
-});
-
-// Same contract for the volumetric anchor: a probe click seeds it, RoiDrawer
-// consumes+clears it and raises `primitiveSessionActive` while sizing — the
+// The volumetric anchor: a probe click seeds it, RoiDrawer consumes+clears it and raises `primitiveSessionActive` while sizing — the
 // flag is what stops the commit click (which may also hit the volume mesh)
 // from re-anchoring.
 describe("pendingPrimitiveAnchor / primitiveSessionActive", () => {

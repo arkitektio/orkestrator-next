@@ -702,6 +702,7 @@ Keep the two in sync when touching either.
 | Pure core | `features/bricks/octree/{brickSpec, nodeAddress, pageTableLayout, brickPoolState, nodePlanning, brickRepack, brickSampling}.ts` (each with a `.test.ts`). `levelGeometry.ts` sits in `platform/coords/` — level scale/shape is a coordinate fact the probe and the transform graph need too |
 | Coordinate graph | `@/mikro-next/lib/coords/transformGraph.ts` (+ `.test.ts`) — client-side edge composition into `LayerState.affineMatrix` / mesh & ROI transforms; see COORDINATE_SYSTEMS.md |
 | Mesh layers | `features/meshes/fabriks/` (fabriks prefix, row-group streaming, own README + `fabriksCore.test.ts`) |
+| Network layers | `features/network/konnektion/` (konnektion prefix, ONE level at a time — the format makes no boundary claim, so a seam between levels is a missing branch rather than a crack; own README + `konnektionCore.test.ts`) |
 | Drivers | `features/bricks/residency/nodePlanTracker.ts`, `features/bricks/residency/brickResidency.ts`, `features/bricks/residency/BrickSystemProvider.tsx`, started from `shell/VisibilityManager.tsx` |
 | GPU | `features/bricks/gpu/{texSubImage3d, brickAtlas, pageTableTexture}.ts` |
 | Shaders | `features/bricks/gpu/{brickNodeMaterials, channelUniforms}.ts` (TSL → WGSL) |

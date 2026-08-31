@@ -9,7 +9,7 @@ import { buildFabriksCellIndex } from "../fabriksCatalogs";
 import { FabriksCollection, type FabriksTransport } from "../fabriksCollection";
 import { parseFabriksManifest, rootLevel } from "../fabriksManifest";
 import { groupByRowGroup, planFabriksCells } from "../fabriksPlanner";
-import { decodeMorton3 } from "../mortonCell";
+import { decodeMorton3 } from "@/mikro-next/components/scene/platform/parquet/mortonCell";
 import { bakeFabriksCollection, type BakeMesh } from "./fabriksBake";
 import { buildFabriksPrefix } from "./fabriksPrefix";
 

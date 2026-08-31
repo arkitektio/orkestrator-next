@@ -1,0 +1,13 @@
+# Temporary S3 read credentials for the organization's konnektion stores.
+# Its own mutation rather than a parameter on the fabriks one: the KINDS issue
+# separate credentials, and a konnektion prefix cannot be read with a fabriks
+# grant (lib/zarr/access.ts).
+#
+# The upload half (requestKonnektionUpload / finishKonnektionUpload) is not
+# wired client-side -- orkestrator reads konnektion collections, it does not
+# write them.
+mutation RequestGeneralKonnektionAccess($input: RequestGeneralKonnektionAccessInput!) {
+  requestGeneralKonnektionAccess(input: $input) {
+    ...GeneralKonnektionAccessGrant
+  }
+}

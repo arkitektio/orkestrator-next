@@ -1,5 +1,5 @@
 /**
- * Byte-bounded LRU with a protected-key set — the mesh cells' analog of
+ * Byte-bounded LRU with a protected-key set — the octree cells' analog of
  * `BrickPoolState` (Map insertion order as recency, protected keys never
  * evicted, eviction callback so owners release GPU resources). Kept generic
  * and three-free so it is trivially unit-testable.

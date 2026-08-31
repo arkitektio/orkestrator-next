@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
-import { computeWorldUnitsPerPixel } from "../../platform/probe/probeWorld";
+import { worldUnitsPerPixelAt } from "../../platform/camera/sceneNavigation";
 import type { OutlinePoint } from "./roiOutline";
 
 /**
@@ -16,6 +16,14 @@ import type { OutlinePoint } from "./roiOutline";
  * subscribing would re-render this component on every camera move (P17). Same
  * shape as `shell/SceneProbedPoint.tsx`, including the `scale={0}`
  * mount so nothing draws at the wrong size for one frame.
+ *
+ * Measured at EACH handle's own distance from the camera. Under perspective,
+ * world-units-per-pixel is a function of depth, so the one number that makes a
+ * marker constant on screen is the one taken where the marker is. The probe
+ * marker survives using the origin-based figure only because
+ * `probeMarkerRadius` clamps it to a fraction of the layer; a handle has no
+ * such clamp, so in a scene that does not sit on the world origin the
+ * origin-based figure drew a dot the size of the data.
  */
 
 const HANDLE_PX = 4;
@@ -39,8 +47,19 @@ export const VertexHandles = ({
 
   useFrame(({ camera, size }) => {
     if (groups.current.size === 0) return;
-    const wupp = computeWorldUnitsPerPixel(camera, size.height);
+    // Orthographic ignores the distance (its scale is pure zoom), so the flat
+    // view keeps exactly the size it had.
+    const navigationCamera = camera as {
+      isOrthographicCamera?: boolean;
+      zoom?: number;
+      fov?: number;
+    };
     for (const [index, group] of groups.current) {
+      const wupp = worldUnitsPerPixelAt(
+        navigationCamera,
+        camera.position.distanceTo(group.position),
+        size.height,
+      );
       group.scale.setScalar(
         wupp * pxRadius * (index === 0 ? FIRST_VERTEX_SCALE : 1),
       );

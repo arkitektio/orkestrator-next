@@ -8,6 +8,7 @@ import {
   Table2,
   Tags,
   type LucideIcon,
+  Share2,
 } from "lucide-react";
 import { ResidentFragment } from "../../api/graphql";
 import { residentName } from "./residents";
@@ -34,6 +35,7 @@ export const RESIDENT_ICON: Record<Kind, LucideIcon> = {
   Lens: Aperture,
   DataArray: Grid2x2,
   SparseDataset: Grid3x3,
+  NetworkCollection: Share2,
 };
 
 /** What to call the kind itself, in place of the raw `__typename`. */
@@ -45,6 +47,7 @@ export const RESIDENT_KIND_LABEL: Record<Kind, string> = {
   Lens: "lens",
   DataArray: "pyramid level",
   SparseDataset: "sparse dataset",
+  NetworkCollection: "network collection",
 };
 
 /**

@@ -774,6 +774,19 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
           return;
         }
         if (e.buttons !== 0) return;
+        // A primitive being SIZED owns the pointer: the drawer rubber-bands
+        // the radius on the world plane through its anchor and never reads the
+        // hover probe for it. Claiming the move here would swallow the sizing
+        // event whenever this box raycasts nearer than the drawer's capture
+        // quad — which its `side` and the camera's pivot decide. Declined
+        // WITHOUT stopPropagation, so the drawer sees the move either way;
+        // the same flag already makes the COMMIT click order-independent.
+        if (
+          interactionMode === "ANNOTATE" &&
+          roiDrawingApi.getState().primitiveSessionActive
+        ) {
+          return;
+        }
         // Declined BEFORE stopPropagation, so the event falls through to the
         // target layer behind this one instead of being swallowed here.
         if (!answersProbe()) return;

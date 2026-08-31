@@ -11,7 +11,7 @@ import {
   rootLevel,
 } from "./fabriksManifest";
 import { cellExtent, cellGridBox, maskedChildren, mortonChildren, mortonParent } from "./fabriksGrid";
-import { encodeMorton3, decodeMorton3, meshCellKey } from "./mortonCell";
+import { encodeMorton3, decodeMorton3, meshCellKey } from "@/mikro-next/components/scene/platform/parquet/mortonCell";
 import { buildFabriksCellIndex, maxAxisScale, parseCellRow, type FabriksCellRow } from "./fabriksCatalogs";
 import { groupByRowGroup, planFabriksCells, screenError } from "./fabriksPlanner";
 import { computeSmoothNormals, objectRange, positionStride, indexStride } from "./fabriksDecode";
@@ -26,7 +26,7 @@ import {
 import { FabriksCollectionManager } from "./fabriksManager";
 import { createFabriksMaterial, setInstanceColoring } from "./fabriksMaterial";
 import { INSTANCE_COLORMAPS } from "../../../platform/gpu/instanceColormaps";
-import { LruByteCache } from "./lruByteCache";
+import { LruByteCache } from "@/mikro-next/components/scene/platform/parquet/lruByteCache";
 
 const FIXTURES = join(dirname(fileURLToPath(import.meta.url)), "__fixtures__");
 

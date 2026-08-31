@@ -2,13 +2,19 @@ import { memo, useState } from "react";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import {
+  ProjectionMode,
   useUpdateIntensityLayerMutation,
   useUpdatePhasorLayerMutation,
   useUpdateRgbLayerMutation,
 } from "@/mikro-next/api/graphql";
 
 import { perfMonitor } from "../../platform/perf/perfMonitor";
-import { CardSection, RowLabel } from "../../platform/layerui/cardControls";
+import {
+  CardSection,
+  RowLabel,
+  Segment,
+  SegmentGroup,
+} from "../../platform/layerui/cardControls";
 import type { LayerState } from "../../platform/stores/sceneStore";
 import { useSceneStore } from "../../platform/stores/sceneStore";
 import type { ChannelRenderNode, PhasorRenderNode, TransferFn } from "../../platform/model/renderGraph";
@@ -20,7 +26,57 @@ import {
 import { LayerGraphFlyout } from "./LayerGraphFlyout";
 import { LayerRow } from "./LayerRow";
 import { UnplannableNotice } from "./UnplannableNotice";
-import { CARD_SHELL_CLASSES, type LayerCardProps } from "./cardShell";
+import { type LayerCardProps } from "./cardShell";
+
+/**
+ * The card surface, matching the collection-backed cards (annotation, label,
+ * mesh) rather than `CARD_SHELL_CLASSES`: same `border-white/10 bg-black/40
+ * backdrop-blur-md`, same `opacity-50` for a hidden layer. Expansion is the
+ * one thing those cards have nothing to say about, so it shows as a slightly
+ * firmer border instead of a different fill.
+ *
+ * `ImageLayerCard` still wears the old shell — aligning it is the same edit,
+ * left alone because it was not what was asked for.
+ */
+const shellClasses = (expanded: boolean, hidden: boolean): string =>
+  `@container/card overflow-hidden rounded-lg border bg-black/40 backdrop-blur-md transition-colors ${
+    expanded ? "border-white/25" : "border-white/10 hover:border-white/20"
+  } ${hidden ? "opacity-50" : ""}`;
+
+/**
+ * The projection choices, in the order they escalate: two ways of taking the
+ * brightest sample along z, then the two that actually integrate the volume.
+ *
+ * Short labels on purpose — `ATTENUATED_MIP` does not fit a 9px pill, and the
+ * enum's spelling is not what a user calls it. The full meaning is the title.
+ */
+const PROJECTIONS: ReadonlyArray<{
+  mode: ProjectionMode;
+  label: string;
+  title: string;
+}> = [
+  {
+    mode: ProjectionMode.Mip,
+    label: "MIP",
+    title: "Maximum intensity: each pixel takes the brightest sample along z",
+  },
+  {
+    mode: ProjectionMode.AttenuatedMip,
+    label: "att. MIP",
+    title:
+      "Attenuated maximum intensity: samples are weighted by depth, so nearer structure dominates",
+  },
+  {
+    mode: ProjectionMode.Volume,
+    label: "volume",
+    title: "Alpha volume rendering: samples along z are composited front-to-back",
+  },
+  {
+    mode: ProjectionMode.Isosurface,
+    label: "iso",
+    title: "Isosurface: a surface is extracted at a threshold value",
+  },
+];
 
 /**
  * The card for a FIXED-SHAPE lens layer — `IntensityLayer`, `RgbLayer`,
@@ -55,6 +111,11 @@ export const FixedShapeLayerCard = memo(function FixedShapeLayerCard({
   perfMonitor.countRender("FixedShapeLayerCard"); // no-op unless a perf recording is armed
   const updateStoreLayer = useSceneStore((s) => s.updateLayer);
   const [dirty, setDirty] = useState(false);
+  // Tracked apart from `dirty` so an unrelated edit (a gamma nudge) does not
+  // write a projection: `layer.projection` READS as MIP when the server holds
+  // null (layerModel), so sending it unconditionally would silently turn
+  // "unset" into "explicitly MIP" on every save.
+  const [projectionEdited, setProjectionEdited] = useState(false);
   const [saveIntensity, { loading: savingIntensity }] = useUpdateIntensityLayerMutation();
   const [saveRgb, { loading: savingRgb }] = useUpdateRgbLayerMutation();
   const [savePhasor, { loading: savingPhasor }] = useUpdatePhasorLayerMutation();
@@ -81,6 +142,19 @@ export const FixedShapeLayerCard = memo(function FixedShapeLayerCard({
       gamma: primary?.gamma ?? layer.gamma,
       intensityAxis: channels[0]?.intensityAxis ?? layer.intensityAxis,
     });
+  };
+
+  /**
+   * The projection is a FIELD on the layer, not part of its transfer — which
+   * is why it is a store write of its own rather than another `pushChannels`
+   * fold. The renderer reads `layer.projection` (`BrickVolumeLayer`), so the
+   * store write IS the live preview; `projectionMode` in `save()` is what
+   * makes it outlive the session.
+   */
+  const setProjection = (mode: ProjectionMode) => {
+    setDirty(true);
+    setProjectionEdited(true);
+    updateStoreLayer({ ...layer, projection: mode });
   };
 
   const setIntensityTransfer = (transfer: TransferFn) =>
@@ -136,6 +210,12 @@ export const FixedShapeLayerCard = memo(function FixedShapeLayerCard({
             // rather than inside a serialized render graph.
             color: transfer?.color ?? null,
             intensityIndex: layer.channels[0]?.intensityIndex ?? null,
+            // Only `UpdateIntensityLayerInput` carries this — the RGB and
+            // phasor inputs have no `projectionMode`, which is why the control
+            // below is gated on the typename rather than shown for all three.
+            // Omitted unless picked: the input is a patch, so not sending it
+            // leaves the server's value (null included) exactly as it was.
+            ...(projectionEdited ? { projectionMode: layer.projection } : {}),
           },
         },
       });
@@ -170,14 +250,19 @@ export const FixedShapeLayerCard = memo(function FixedShapeLayerCard({
       });
     }
     setDirty(false);
+    setProjectionEdited(false);
   };
 
   const saving = savingIntensity || savingRgb || savingPhasor;
 
   return (
-    <Collapsible open={expanded} className={CARD_SHELL_CLASSES(expanded)}>
+    <Collapsible
+      open={expanded}
+      className={shellClasses(expanded, layer.visible === false)}
+    >
       <LayerRow
         embedded
+        compact
         layer={layer}
         isSelected={expanded}
         graphDirty={dirty}
@@ -192,6 +277,29 @@ export const FixedShapeLayerCard = memo(function FixedShapeLayerCard({
       {/* Snap open, no height animation — same reason as the image card. */}
       <CollapsibleContent className="overflow-hidden">
         <div className="flex flex-col border-t border-white/10">
+          {layer.__typename === "IntensityLayer" && (
+            <CardSection
+              title="projection"
+              hint={
+                layer.projection === ProjectionMode.Isosurface
+                  ? "3D only — the surface's threshold is scene-wide, in Scene settings"
+                  : "3D only — a 2D slice shows one plane whatever the mode"
+              }
+            >
+              <SegmentGroup>
+                {PROJECTIONS.map(({ mode, label, title }) => (
+                  <Segment
+                    key={mode}
+                    active={layer.projection === mode}
+                    title={title}
+                    onClick={() => setProjection(mode)}
+                  >
+                    {label}
+                  </Segment>
+                ))}
+              </SegmentGroup>
+            </CardSection>
+          )}
           <CardSection title="Rendering">
             {layer.__typename === "IntensityLayer" && layer.channels[0] && (
               <TransferEditor

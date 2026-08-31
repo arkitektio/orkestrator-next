@@ -1,7 +1,13 @@
 /**
- * Morton (Z-order) cell addressing for mesh-collection octrees.
+ * Morton (Z-order) cell addressing for the octree formats in the datalayer.
  *
- * CONTRACT (the client half of `fabriks/octree.py`): a cell's `cell` column is
+ * Shared by fabriks (surfaces) and konnektion (graphs) because it is genuinely
+ * one contract, not two that happen to agree: konnektion's `octree.py` says its
+ * addressing is "deliberately identical to fabriks's", restated there only
+ * because konnektion does not depend on fabriks. Two copies here would be two
+ * chances to drift.
+ *
+ * CONTRACT (the client half of both `octree.py`s): a cell's `cell` column is
  * the Morton interleave of its (x, y, z) cell-grid coordinates ON ITS OWN
  * LEVEL's grid, with x in the least-significant bit position:
  * bit 0 = x₀, bit 1 = y₀, bit 2 = z₀, bit 3 = x₁, …
@@ -56,4 +62,8 @@ export function decodeMorton3(code: number): [number, number, number] {
 }
 
 /** Stable string key of one octree node: `level:morton`. */
-export const meshCellKey = (level: number, cell: number): string => `${level}:${cell}`;
+export const octreeCellKey = (level: number, cell: number): string => `${level}:${cell}`;
+
+/** @deprecated Historical name for {@link octreeCellKey}; the key is not
+ *  mesh-specific. Kept so the fabriks path reads unchanged. */
+export const meshCellKey = octreeCellKey;

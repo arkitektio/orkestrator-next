@@ -122,12 +122,6 @@ export const AnnotationShape = memo(function AnnotationShape({
   const vectors = annotation.vectors; // Array of [x, y, z]
   if (!vectors || vectors.length === 0) return null;
 
-  // A legacy painted SURFACE's vectors are unordered mesh vertices — nothing
-  // here can draw them meaningfully. The query filters them out; a row that
-  // arrives anyway (another cache entry, an old server) draws nothing rather
-  // than a clickable zigzag across the scene.
-  if (annotation.kind === AnnotationKind.Surface) return null;
-
   const style = resolveStyle(annotation, isActive);
 
   // `undefined` when the shape is not selectable, NOT a handler that returns

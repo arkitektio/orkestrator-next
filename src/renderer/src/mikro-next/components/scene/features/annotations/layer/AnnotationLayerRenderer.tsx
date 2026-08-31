@@ -1,10 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
-import {
-  AnnotationKindChoices,
-  useGetSceneAnnotationsQuery,
-} from "@/mikro-next/api/graphql";
+import { useGetSceneAnnotationsQuery } from "@/mikro-next/api/graphql";
 
 import { perfMonitor } from "../../../platform/perf/perfMonitor";
 import { finestLayerZStep } from "../../../platform/coords/worldTransform";
@@ -95,12 +92,8 @@ const AnnotationCollectionGroup = ({
 
   const viewApi = useViewStoreApi();
   const { data } = useGetSceneAnnotationsQuery({
-    // Painted surfaces are no longer annotations (the mesh designer commits
-    // them as fabriks collections) — and a LEGACY SURFACE row's vectors are
-    // unordered mesh vertices no branch can draw. The filter keeps old
-    // servers' rows out; `AnnotationShape` and `outlinePoints` also guard.
     variables: {
-      filters: { collection: collection.id, NOT: { kind: AnnotationKindChoices.Surface } },
+      filters: { collection: collection.id },
     },
     pollInterval: 5000,
     // A poll landing mid-gesture re-renders and re-diffs the whole annotation

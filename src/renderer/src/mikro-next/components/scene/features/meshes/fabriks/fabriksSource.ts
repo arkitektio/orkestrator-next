@@ -2,7 +2,7 @@ import type { MikroClient } from "@/lib/zarr/store/types";
 import type { FabriksStoreFragment } from "@/mikro-next/api/graphql";
 import { buildS3FetchConfig, getGeneralAccess } from "@/mikro-next/lib/zarr/access";
 import { FabriksCollection } from "./fabriksCollection";
-import { FabriksStore } from "./fabriksStore";
+import { S3ParquetStore } from "@/mikro-next/components/scene/platform/parquet/s3ParquetStore";
 
 /**
  * From an API `MeshCollection` node to an open fabriks collection.
@@ -45,7 +45,7 @@ export async function openFabriksCollection(
   const grant = await getGeneralAccess(client, { kind: "fabriks" });
 
   const descriptor = { key: node.key, storeId: node.id };
-  const store = new FabriksStore({
+  const store = new S3ParquetStore({
     config: buildS3FetchConfig(grant, descriptor, datalayer),
     // A viewer left open outlives its credentials; rotation goes through the
     // shared provider, so every fabriks store re-credentials on ONE mutation.

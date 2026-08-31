@@ -1,4 +1,4 @@
-import { decodeMorton3 } from "./mortonCell";
+import { decodeMorton3 } from "@/mikro-next/components/scene/platform/parquet/mortonCell";
 import type { FabriksGrid } from "./fabriksManifest";
 
 /**

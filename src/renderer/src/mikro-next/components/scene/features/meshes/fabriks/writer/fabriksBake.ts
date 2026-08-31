@@ -1,5 +1,5 @@
 import { cellGridBox, type VoxelBox } from "../fabriksGrid";
-import { encodeMorton3, MAX_MORTON_BITS_PER_AXIS } from "../mortonCell";
+import { encodeMorton3, MAX_MORTON_BITS_PER_AXIS } from "@/mikro-next/components/scene/platform/parquet/mortonCell";
 import type { FabriksEncoding, FabriksGrid } from "../fabriksManifest";
 
 /**

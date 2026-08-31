@@ -63,6 +63,13 @@ fragment Resident on Resident {
     id
     name
   }
+  # Same story as SparseDataset above, and the same failure mode if it is
+  # omitted. A NetworkCollection has no name of its own, so `version` is all it
+  # can honestly show — exactly as MeshCollection does.
+  ... on NetworkCollection {
+    id
+    version
+  }
 }
 
 fragment CoordinateSystem on CoordinateSystem {

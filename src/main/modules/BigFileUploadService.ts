@@ -2,9 +2,23 @@ import { IpcTransport } from './IpcTransport';
 import { AppModule } from './AppModule';
 import { ipcMain } from 'electron';
 import fs from 'fs';
+import https from 'https';
 import { S3Client } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 import { BigFileUploadGrant } from '../schemas/mikro'; // or whatever the type is, I can use any here
+
+// The AWS SDK talks over Node's TLS stack, which is NOT covered by the app-wide
+// `ignore-certificate-errors` switch / `certificate-error` handler in
+// src/main/index.ts — those only apply to Chromium's net stack. Datalayer
+// deployments routinely use self-signed or expired certs, so without this a
+// big-file transfer fails with `certificate has expired` while every other
+// request in the app succeeds. keepAlive mirrors the SDK's default agent;
+// dropping it would force a fresh TLS handshake per multipart part.
+const datalayerHttpsAgent = new https.Agent({
+    keepAlive: true,
+    maxSockets: 50,
+    rejectUnauthorized: false,
+});
 
 export class BigFileUploadService implements AppModule {
     private ipcTransport: IpcTransport;
@@ -42,6 +56,7 @@ export class BigFileUploadService implements AppModule {
                 sessionToken: grant.sessionToken,
             },
             forcePathStyle: true,
+            requestHandler: { httpsAgent: datalayerHttpsAgent },
         });
 
         const fileStream = fs.createReadStream(path);

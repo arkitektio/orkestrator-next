@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Circle, Eye, EyeOff, MoveRight, Share2, Trash2 } from "lucide-react";
-import { memo, useCallback } from "react";
+import { memo, useCallback, useMemo, useRef } from "react";
 import {
   useUpdateNetworkLayerMutation,
   type SceneLayerFragment,
@@ -20,6 +20,14 @@ import {
   SegmentGroup,
   formatCount,
 } from "../../platform/layerui/cardControls";
+import type { ColumnOptionSource } from "../../platform/layerui/ColumnOptionPicker";
+import {
+  ColorBySection,
+  FilterBySection,
+  type DefaultColorRow,
+  type EntriesPatch,
+  type PickPatch,
+} from "../../platform/layerui/entrySections";
 
 /**
  * A compact card for a `NetworkLayer` in the Layers panel.
@@ -42,13 +50,19 @@ import {
  * so the canvas previews them, and the mutation fires on COMMIT (slider
  * release) rather than per tick.
  *
+ * ## The pickers
+ *
+ * `colorBys`/`filterBys` land as the shared `ColorBySection`/`FilterBySection`
+ * over the network options root, with the GRAPH arm this layer kind alone has:
+ * per-node values the collection itself carries. Their write cadence is this
+ * card's own — fold locally, mutate on the spot — not the mesh card's
+ * dirty/save pair.
+ *
  * ## `nodeSizeColumn` / `edgeWidthColumn` are shown, not offered
  *
- * They name PARQUET ATTRIBUTE COLUMNS, reached through the join/attribute-plan
- * machinery that a `colorBys` picker would have brought — and `NetworkLayer`
- * publishes no pickers, so the client cannot resolve one. The renderer uses
- * `lineWidth` plus the format's own `radii` blob instead. A layer that has one
- * set says so here rather than appearing to honour it.
+ * They name PARQUET ATTRIBUTE COLUMNS; the renderer uses `lineWidth` plus the
+ * format's own `radii` blob instead. A layer that has one set says so here
+ * rather than appearing to honour it.
  */
 
 type NetworkLayerVariant = Extract<SceneLayerFragment, { __typename: "NetworkLayer" }>;
@@ -109,6 +123,48 @@ export const NetworkLayerCard = memo(
     const detail = layer.detail ?? "balanced";
     const slabScale = layer.slabScale ?? 1;
     const hasRadii = typeof encoding.radii === "string" && encoding.radii !== "NONE";
+
+    // ---- the pickers -----------------------------------------------------
+    // Same drop-in sections the mesh card uses, over the network options root.
+    // The write cadence here is the card's own (fold locally, mutate at once)
+    // rather than the mesh card's dirty/save pair — this card has no Save
+    // button, and its every other control already persists per commit.
+    const colorBys = layer.colorBys ?? [];
+    const filterBys = layer.filterBys ?? [];
+    const activeColorBy = layer.activeColorBy ?? null;
+    const activeFilterBys = useMemo(
+      () => layer.activeFilterBys ?? [],
+      [layer.activeFilterBys],
+    );
+
+    const source = useMemo<ColumnOptionSource | null>(
+      () => (collection ? { kind: "network", networkCollection: collection.id } : null),
+      [collection],
+    );
+
+    // Ref-backed so the section handlers stay identity-stable — the sections'
+    // memo depends on it (the mesh card's contract, kept here).
+    const pickerRef = useRef({ persist });
+    pickerRef.current = { persist };
+
+    const persistEntries = useCallback((patch: EntriesPatch) => {
+      pickerRef.current.persist(patch as NetworkPatch);
+    }, []);
+    const persistPick = useCallback((patch: PickPatch) => {
+      pickerRef.current.persist(patch as NetworkPatch);
+    }, []);
+
+    const defaultRow = useMemo<DefaultColorRow>(
+      () => ({
+        title: "The flat material colour — click to draw no colouring",
+        label: "uniform",
+        detail: "one colour for the whole network",
+        swatchCSS: Array.isArray(layer.materialColor)
+          ? `rgb(${layer.materialColor.slice(0, 3).join(",")})`
+          : "rgb(255,255,255)",
+      }),
+      [layer.materialColor],
+    );
 
     return (
       <div
@@ -177,6 +233,31 @@ export const NetworkLayerCard = memo(
             </div>
           )}
         </CardSection>
+
+        {/* ------------------------------------------------ pickers -------- */}
+        {/* The GRAPH entries are this layer kind's own: a per-node value the
+            collection itself carries (strahler, degree, depth, component, a
+            writer's column, radius), beside the mesh-style table columns its
+            object ids reach. */}
+        {source && (
+          <ColorBySection
+            source={source}
+            colorBys={colorBys}
+            activeColorBy={activeColorBy}
+            persistEntries={persistEntries}
+            persistPick={persistPick}
+            defaultRow={defaultRow}
+          />
+        )}
+        {source && (
+          <FilterBySection
+            source={source}
+            filterBys={filterBys}
+            activeFilterBys={activeFilterBys}
+            persistEntries={persistEntries}
+            persistPick={persistPick}
+          />
+        )}
 
         {/* ------------------------------------------------ glyphs --------- */}
         <CardSection title="draw">
@@ -302,8 +383,8 @@ export const NetworkLayerCard = memo(
               {layer.nodeSizeColumn
                 ? `nodeSizeColumn "${layer.nodeSizeColumn}"`
                 : `edgeWidthColumn "${layer.edgeWidthColumn}"`}{" "}
-              is set but not yet applied — this layer publishes no column pickers,
-              so the client cannot resolve the join.
+              is set but not yet applied — the renderer widths come from
+              lineWidth and the collection&apos;s own radii.
             </div>
           )}
         </CardSection>

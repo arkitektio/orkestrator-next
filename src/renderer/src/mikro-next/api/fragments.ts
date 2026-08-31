@@ -75,7 +75,8 @@
     ],
     "SampleStep": [
       "ArraySample",
-      "MeshSample"
+      "MeshSample",
+      "NetworkSample"
     ],
     "Transformation": [
       "AffineTransformation",

@@ -4118,6 +4118,11 @@ type KonnektionStore {
   Get temporary S3 read credentials covering this store's whole prefix -- the manifest, both catalogs and every level, in one grant.
   """
   accessGrant(host: String = null): KonnektionAccessGrant!
+
+  """
+  The per-node value columns the manifest declares, each {name, encoding, semantics} -- the vocabulary a network layer's GRAPH picker entries are validated against, `radius` joining off `encoding.radii`. Null on a store filled before attributes existed, which reads the same as declaring none
+  """
+  attributes: JSON
   axes: [String!]
   bucket: String!
   counts: JSON
@@ -6263,6 +6268,36 @@ type NetworkLayer implements Layer {
   """
   showNodes: Boolean!
   visible: Boolean!
+}
+
+"""
+A network collection whose geometry carries the ids -- `MeshSample`'s sentence over a wireframe. **Nothing is sampled at a coordinate here**: an OBJECT id (one per traced filament or arbor, never per node) rides on the geometry rows and the object catalog, so a client that picked a segment is already holding one and goes straight to the lookup. The store is named for a headless worker that did not do the picking and must read the object catalog itself
+"""
+type NetworkSample implements SampleStep {
+  """
+  The axes the point is resolved against, in the field system's axis order, e.g. ['y', 'x'] -- what you index an array with, or what your pick resolved for a collection
+  """
+  consumes: [String!]!
+
+  """
+  The axes the edge did not consume, e.g. ['t']: their coordinates pass through by name and join the produced values as lookup keys
+  """
+  passthrough: [String!]!
+
+  """
+  The axis names the resulting id produces, per-edge: two sibling edges off one mask may name their produced axis differently (`i`, `label_id`), so always zip the value against THIS edge's names, never a shared key set
+  """
+  produces: [String!]!
+
+  """
+  The konnektion store holding the collection -- its manifest, both catalogs and every octree level. Ask it for an accessGrant; one grant covers the whole prefix
+  """
+  store: KonnektionStore!
+
+  """
+  The coordinate system whose contents are the map. Equal to the queried system when the thing's own contents are the map (a label mask, a mesh collection); a different, array-backed system when the map is a separate field. `consumes` is stated in this system's axis order
+  """
+  system: CoordinateSystem!
 }
 
 enum ObjectiveCorrectionKind {

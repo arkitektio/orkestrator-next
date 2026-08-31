@@ -75,4 +75,8 @@ fragment KonnektionStore on KonnektionStore {
   axes
   counts
   files
+  # The declared per-node attributes — what a GRAPH picker entry's name is
+  # resolved against, and part of the mirrored manifest: opening off the
+  # mirror without them would silently declare none and skip every decode.
+  attributes
 }

@@ -86,6 +86,9 @@ function mirroredManifest(node: KonnektionStoreFragment): Record<string, unknown
     specVersion: node.specVersion,
     grid: node.grid,
     encoding: node.encoding,
+    // Absent mirrors as none, exactly as an absent manifest key does — a store
+    // filled before attributes existed declares the same thing either way.
+    attributes: node.attributes ?? [],
     counts: node.counts ?? {},
     files: node.files,
   };

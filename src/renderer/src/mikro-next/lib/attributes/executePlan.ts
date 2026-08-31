@@ -1,6 +1,7 @@
 import { applyPathToCoords, type AxisCoords } from "../coords/axisPath";
 import {
   isMeshSample,
+  isNetworkSample,
   planIdentity,
   type AttributePlanLike,
   type PlanRowsState,
@@ -57,10 +58,11 @@ export async function executePlanAt(
     return { status: "unreachable", rows: [] };
   };
 
-  // A MeshSample carries no array to index: the id rides on geometry rows,
-  // so only a PICK (the value-known path below) can execute such a plan.
-  if (isMeshSample(plan.sample)) {
-    return unreachable("a mesh-sampled plan needs a picked instance id", {
+  // A MeshSample or NetworkSample carries no array to index: the id rides on
+  // geometry rows, so only a PICK (the value-known path below) can execute
+  // such a plan.
+  if (isMeshSample(plan.sample) || isNetworkSample(plan.sample)) {
+    return unreachable("a geometry-sampled plan needs a picked instance id", {
       table: plan.table.name,
     });
   }

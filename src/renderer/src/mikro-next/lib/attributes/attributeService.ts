@@ -2,6 +2,7 @@ import type { MikroClient } from "@/lib/zarr/store/types";
 import type { AxisCoords } from "../coords/axisPath";
 import {
   isMeshSample,
+  isNetworkSample,
   planIdentity,
   type AttributeColumnLike,
   type AttributePlanLike,
@@ -142,9 +143,9 @@ export function createAttributeService(
   const execDeps = {
     engine,
     sampleExact: (plan: AttributePlanLike, index: readonly number[]) =>
-      // Mesh samples have no array; executePlanAt guards earlier, this is
-      // type-narrowing plus defense in depth.
-      isMeshSample(plan.sample)
+      // Mesh and network samples have no array; executePlanAt guards earlier,
+      // this is type-narrowing plus defense in depth.
+      isMeshSample(plan.sample) || isNetworkSample(plan.sample)
         ? Promise.resolve(null)
         : sampler.readExact(plan.sample.store, index).catch(() => null),
   };

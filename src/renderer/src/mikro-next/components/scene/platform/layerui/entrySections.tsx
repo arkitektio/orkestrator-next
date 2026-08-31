@@ -23,8 +23,12 @@ import {
   isColumnColorBy,
   isColumnFilterBy,
   isColumnOption,
+  isGraphOption,
+  toGraphColorByInput,
+  toGraphFilterByInput,
   toSparseColorByInput,
   toSparseFilterByInput,
+  type GraphOption,
   type SparseOption,
   isJoinedEntry,
   isMeasure,
@@ -223,18 +227,23 @@ export const ColorBySection = memo(function ColorBySection({
    * map, which the server derives when `classColors` is null.
    */
   const addColorBy = useCallback(
-    (option: ColumnOption | SparseOption) => {
+    (option: ColumnOption | SparseOption | GraphOption) => {
       // A sparse option is a MATRIX, and a colouring needs a position along
       // every axis it identifies itself by. Position 0 is the opening move —
       // a real slice, drawn immediately — and the entry editor is where a gene
       // is chosen. Adding it "unpositioned" is not an option: the mutation
       // refuses an `at` that does not name every axis.
+      //
+      // A GRAPH option needs neither position nor colormap choice: the
+      // attribute IS the value source, per node, and it is always measured.
       const entry = isColumnOption(option)
         ? toColorByInput(option, { colormap: isMeasure(option) ? ColorMap.Viridis : null })
-        : toSparseColorByInput(
-            option,
-            option.axes.map((axis) => ({ axis, value: 0 })),
-          );
+        : isGraphOption(option)
+          ? toGraphColorByInput(option)
+          : toSparseColorByInput(
+              option,
+              option.axes.map((axis) => ({ axis, value: 0 })),
+            );
       const next = [...stateRef.current.colorBys.map(colorByEntryToInput), entry];
       void persistEntries({ colorBys: next, activeColorBy: next.length - 1 });
     },
@@ -471,7 +480,23 @@ export const FilterBySection = memo(function FilterBySection({
    * intent, and the wide seed means applying it hides nothing yet.
    */
   const addFilterBy = useCallback(
-    (option: ColumnOption | SparseOption) => {
+    (option: ColumnOption | SparseOption | GraphOption) => {
+      // A GRAPH rule has no parquet or matrix to read a seed range from, and
+      // needs none: every intrinsic metric — and a radius — is non-negative,
+      // so `min: 0` is the wide seed that hides nothing yet, and the editor
+      // is where "trunk only" gets its real bound. (A writer's own column
+      // could in principle go negative; the packer keeps NaN nodes either
+      // way, and the editor shows the real values.)
+      if (isGraphOption(option)) {
+        setRuleError(null);
+        const { filterBys: entries, activeFilterBys: active } = stateRef.current;
+        const next = [...entries.map(filterByEntryToInput), toGraphFilterByInput(option, { min: 0 })];
+        void persistEntries({
+          filterBys: next,
+          activeFilterBys: [...active, next.length - 1].sort((a, b) => a - b),
+        });
+        return;
+      }
       // A SPARSE rule bounds one slice of a matrix. Same opening move as a
       // sparse colouring — position 0 along every identified axis, the gene
       // chosen afterwards in the entry editor — and the same reason the bounds

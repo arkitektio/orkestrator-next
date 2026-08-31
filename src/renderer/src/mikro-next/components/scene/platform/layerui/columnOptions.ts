@@ -108,7 +108,7 @@ export const isGraphOption = (option: OfferedOption): option is GraphOption =>
  * `joinPath`, same caption — so every consumer takes the union rather than
  * being written twice.
  */
-export type ColorByEntry = MeshColorByFragment | LabelColorByFragment;
+export type ColorByEntry = MeshColorByFragment | LabelColorByFragment | NetworkColorByFragment;
 
 /**
  * A stored colouring the renderers can execute: the COLUMN arm of the same
@@ -121,8 +121,8 @@ export type ColumnColorByEntry = ColorByEntry & { table: string; column: string 
 export const isColumnColorBy = (entry: ColorByEntry): entry is ColumnColorByEntry =>
   entry.table != null && entry.column != null;
 
-/** A stored filter rule, either layer kind. See `ColorByEntry`. */
-export type FilterByEntry = MeshFilterByFragment | LabelFilterByFragment;
+/** A stored filter rule, any picker-bearing layer kind. See `ColorByEntry`. */
+export type FilterByEntry = MeshFilterByFragment | LabelFilterByFragment | NetworkFilterByFragment;
 
 /**
  * A stored rule's COLUMN arm — the same either/or a colouring has. A `SPARSE`
@@ -517,6 +517,15 @@ export const colorByEntryToInput = (entry: ColorByEntry): ColorByInputLike => ({
     axis: position.axis,
     value: position.value,
   })),
+  // The GRAPH arm, network entries only — and only WHEN CARRIED, both ways:
+  // a network entry re-sent without them comes back a COLUMN entry naming
+  // nothing (the joinPath hazard, one arm further out), while a mesh or label
+  // mutation handed variables carrying unknown keys is refused whole by
+  // GraphQL validation. Mesh and label fragments have no such fields, so the
+  // spread is empty exactly where the keys would be refused.
+  ...("attribute" in entry && (entry.attribute != null || entry.target != null)
+    ? { attribute: entry.attribute ?? null, target: entry.target ?? null }
+    : {}),
   joinPath: entryJoinPath(entry),
   colormap: entry.colormap ?? null,
   label: entry.label ?? null,
@@ -539,56 +548,10 @@ export const filterByEntryToInput = (entry: FilterByEntry): FilterByInputLike =>
     axis: position.axis,
     value: position.value,
   })),
-  joinPath: entryJoinPath(entry),
-  min: entry.min ?? null,
-  max: entry.max ?? null,
-  values: entry.values ?? null,
-  exclude: entry.exclude,
-  label: entry.label ?? null,
-});
-
-/**
- * The NETWORK entry mappers. Separate from the shared pair above, not folded
- * in, because the extra keys cut the other way on the wire: `attribute` and
- * `target` are fields only `NetworkColorByInput` declares, and a mesh or label
- * mutation handed a variables object carrying them is refused by GraphQL
- * validation — so the shared mappers must never emit them, and these must
- * always emit them (the whole-array-replace hazard, one arm further out: a
- * GRAPH entry read back and re-sent without its `attribute` comes back a
- * COLUMN entry naming nothing).
- */
-export type NetworkColorByEntry = NetworkColorByFragment;
-export type NetworkFilterByEntry = NetworkFilterByFragment;
-
-export const networkColorByEntryToInput = (entry: NetworkColorByEntry): NetworkColorByInput => ({
-  kind: entry.kind,
-  table: entry.table ?? null,
-  column: entry.column ?? null,
-  dataset: entry.dataset ?? null,
-  at: (entry.at ?? []).map((position) => ({
-    axis: position.axis,
-    value: position.value,
-  })),
-  attribute: entry.attribute ?? null,
-  target: entry.target ?? null,
-  joinPath: entryJoinPath(entry),
-  colormap: entry.colormap ?? null,
-  label: entry.label ?? null,
-  min: entry.min ?? null,
-  max: entry.max ?? null,
-});
-
-export const networkFilterByEntryToInput = (entry: NetworkFilterByEntry): NetworkFilterByInput => ({
-  kind: entry.kind,
-  table: entry.table ?? null,
-  column: entry.column ?? null,
-  dataset: entry.dataset ?? null,
-  at: (entry.at ?? []).map((position) => ({
-    axis: position.axis,
-    value: position.value,
-  })),
-  attribute: entry.attribute ?? null,
-  target: entry.target ?? null,
+  // Conditional for `colorByEntryToInput`'s reason exactly.
+  ...("attribute" in entry && (entry.attribute != null || entry.target != null)
+    ? { attribute: entry.attribute ?? null, target: entry.target ?? null }
+    : {}),
   joinPath: entryJoinPath(entry),
   min: entry.min ?? null,
   max: entry.max ?? null,

@@ -221,7 +221,7 @@ describe("mesh-sampled plans", () => {
       { onUnreachable: (_planKey, reason) => reasons.push(reason) },
     );
     expect(state?.status).toBe("unreachable");
-    expect(reasons).toEqual(["a mesh-sampled plan needs a picked instance id"]);
+    expect(reasons).toEqual(["a geometry-sampled plan needs a picked instance id"]);
     expect(lookups).toHaveLength(0);
   });
 

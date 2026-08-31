@@ -52,6 +52,11 @@ fragment ColorByOption on ColorByOption {
   # are all null. Always MEASURE, and resolved from the decoded attribute blobs
   # rather than any parquet lookup — the one option kind with no store behind it.
   graphAttribute
+  # (network) Which row set the values belong to: null per-object; NODE/EDGE on
+  # a GRAPH attribute or on a column of a per-node/per-edge table. Stamped by
+  # the server from the table's shape — the picker shows it as a badge and
+  # NEVER sends it back on a COLUMN entry.
+  target
   sparseDataset {
     ...SparseColouringSource
   }
@@ -86,6 +91,8 @@ fragment FilterByOption on FilterByOption {
   # The GRAPH arm — see `ColorByOption`. A GRAPH rule is bounds over a per-node
   # value, and hides individual nodes and segments rather than whole objects.
   graphAttribute
+  # See `ColorByOption.target` — a NODE/EDGE rule hides parts of an object.
+  target
   sparseDataset {
     ...SparseColouringSource
   }

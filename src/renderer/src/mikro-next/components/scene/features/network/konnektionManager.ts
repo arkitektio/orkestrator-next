@@ -115,6 +115,11 @@ export type NetworkValueAppearance = {
   climMax: number | null;
   colorize: boolean;
   applyToGlyphs: boolean;
+  /** Which buffer a segment's value is pulled from: "node" (the start node's
+   *  slot — graph, object-level and per-node colourings) or "edge" (the packed
+   *  edge's own slot — a per-EDGE-table colouring). Optional so pre-existing
+   *  appearances read as "node". */
+  valueSource?: "node" | "edge";
 };
 
 const IDENTITY_APPEARANCE: NetworkValueAppearance = {
@@ -123,6 +128,7 @@ const IDENTITY_APPEARANCE: NetworkValueAppearance = {
   climMax: null,
   colorize: false,
   applyToGlyphs: true,
+  valueSource: "node",
 };
 
 const DEFAULT_PIXEL_BUDGET = 4;
@@ -351,6 +357,7 @@ export class KonnektionCollectionManager {
     this.uniforms.uClimMin.value = this.appearance.climMin ?? range.min ?? 0;
     this.uniforms.uClimMax.value = this.appearance.climMax ?? range.max ?? 1;
     this.uniforms.uApplyToGlyphs.value = this.appearance.applyToGlyphs ? 1 : 0;
+    this.uniforms.uValueSource.value = this.appearance.valueSource === "edge" ? 1 : 0;
     this.bundle?.setPalette(this.appearance.palette);
     this.onInvalidate();
   }
@@ -528,6 +535,7 @@ export class KonnektionCollectionManager {
           positions: bundle.positions.array as Float32Array,
           aux: bundle.aux.array as Float32Array,
           values: bundle.values.array as Float32Array,
+          edgeValues: bundle.edgeValues.array as Float32Array,
           edges: bundle.edges.array as Uint32Array,
         },
         this.styling,

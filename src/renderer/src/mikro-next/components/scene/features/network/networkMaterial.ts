@@ -106,6 +106,13 @@ export type NetworkUniforms = {
   /** 1 = the colouring paints node glyphs too (target NODE); 0 = segments and
    *  arrows only (target EDGE), glyphs staying at the material colour. */
   uApplyToGlyphs: any;
+  /** Which buffer a segment's (and arrow's) value comes from: 0 = the node
+   *  buffer via the START node (graph attributes, object-level and per-node
+   *  colourings), 1 = the edge buffer via `instanceIndex` (a per-EDGE-table
+   *  colouring, whose rows key (source, target) pairs and cannot be a node's).
+   *  Glyphs never read the edge buffer — an edge colouring always ships
+   *  `applyToGlyphs: false`. */
+  uValueSource: any;
 };
 
 /** Created by the manager at construction, BEFORE any bundle exists, so
@@ -118,6 +125,7 @@ export const createNetworkUniforms = (): NetworkUniforms => ({
   uClimMin: uniform(0, "float"),
   uClimMax: uniform(1, "float"),
   uApplyToGlyphs: uniform(1, "float"),
+  uValueSource: uniform(0, "float"),
 });
 
 /** A 1x1 white palette, bound from the start so a real row is a texture swap
@@ -139,6 +147,9 @@ export type NetworkGpuBundle = {
   aux: StorageBufferAttribute;
   /** `capacity.nodes` floats — the active colouring's value per node slot. */
   values: StorageBufferAttribute;
+  /** `capacity.edges` floats — a per-EDGE colouring's value per packed edge,
+   *  read only when `uValueSource` selects the edge buffer. */
+  edgeValues: StorageBufferAttribute;
   /** `capacity.edges * 2` uint32 node indices. */
   edges: StorageBufferAttribute;
   segmentMaterial: MeshBasicNodeMaterial;
@@ -192,6 +203,9 @@ export function createNetworkGpuBundle(
   // Fresh slots default fully visible (the pack writes 3 = node bit + edge
   // bit), so an unstyled layer discards nothing.
   const values = new StorageBufferAttribute(new Float32Array(capNodes).fill(Number.NaN), 1);
+  // NaN-filled like `values`: a slot the pack never wrote reads as "no value"
+  // and keeps the base colour rather than sampling the palette's bottom.
+  const edgeValues = new StorageBufferAttribute(new Float32Array(capEdges).fill(Number.NaN), 1);
   const edges = new StorageBufferAttribute(new Uint32Array(capEdges * 2), 1);
 
   // Storage nodes created ONCE and shared by every material: read-only in
@@ -200,6 +214,7 @@ export function createNetworkGpuBundle(
   const positionsNode = storage(positions, "vec3", capNodes);
   const auxNode = storage(aux, "vec4", capNodes);
   const valuesNode = storage(values, "float", capNodes);
+  const edgeValuesNode = storage(edgeValues, "float", capEdges);
   // Flat "uint" pairs rather than "uvec2": the flat read is the in-repo
   // precedent (`pointsCompute.ts`), and two element() loads cost nothing next
   // to the matrix multiplies.
@@ -298,7 +313,17 @@ export function createNetworkGpuBundle(
     // edge's (segments and arrows). Legal values 0, 1 and 3 — a hidden node
     // takes its outgoing segments with it, so 2 never occurs.
     const visibility = varying(auxRow.w);
-    const value = varying(valuesNode.element(startIndex));
+    // Where the value comes from is `uValueSource`: the node buffer via the
+    // start node (every per-node source), or the edge buffer via this
+    // instance's own index (a per-edge-table colouring — its rows key
+    // (source, target) pairs, which no single node owns).
+    const value = varying(
+      select(
+        float(uniforms.uValueSource).greaterThan(0.5),
+        edgeValuesNode.element(instanceIndex),
+        valuesNode.element(startIndex),
+      ),
+    );
     TSL.Discard(visibility.lessThan(1.5));
     // Float equality is exact here: ordinals are integers well under 2^24.
     const selected = ordinal.equal(float(uniforms.selectedOrdinal));
@@ -323,10 +348,13 @@ export function createNetworkGpuBundle(
   // depth cue, not lighting. `nodeIndex` is which node table row this instance
   // stands on: the instance itself for a sphere, the edge's START node for an
   // arrow — the same derivation rule the segments use.
-  const glyphColour = (nodeIndex: any, applies: any, edgeBit: boolean): any => {
+  // `valueOverride`, when given, replaces the node-buffer read — the arrows
+  // pass the same source select the segments use, so an edge colouring paints
+  // its arrowheads from the edge buffer too.
+  const glyphColour = (nodeIndex: any, applies: any, edgeBit: boolean, valueOverride?: any): any => {
     const auxRow = auxNode.element(nodeIndex);
     const visibility = varying(auxRow.w);
-    const value = varying(valuesNode.element(nodeIndex));
+    const value = varying(valueOverride ?? valuesNode.element(nodeIndex));
     // Node glyphs test the NODE bit (+1); arrows ride their segment and test
     // the EDGE bit (+2), exactly as the segment program does.
     TSL.Discard(
@@ -400,10 +428,20 @@ export function createNetworkGpuBundle(
       .add(w.mul(local.z.mul(r)));
     return cameraProjectionMatrix.mul(modelViewMatrix.mul(vec4(placed, 1.0)));
   })();
-  // An arrow is part of its segment, so it takes the START node's value and
-  // the EDGE visibility bit — painted under either target.
+  // An arrow is part of its segment, so it takes its segment's value — the
+  // same `uValueSource` select — and the EDGE visibility bit; painted under
+  // either target.
   arrowMaterial.colorNode = Fn(() =>
-    glyphColour(edgesNode.element(instanceIndex.mul(2)), float(1), true),
+    glyphColour(
+      edgesNode.element(instanceIndex.mul(2)),
+      float(1),
+      true,
+      select(
+        float(uniforms.uValueSource).greaterThan(0.5),
+        edgeValuesNode.element(instanceIndex),
+        valuesNode.element(edgesNode.element(instanceIndex.mul(2))),
+      ),
+    ),
   )();
 
   const arrowGlyphs = new THREE.Mesh(
@@ -427,6 +465,7 @@ export function createNetworkGpuBundle(
     positions,
     aux,
     values,
+    edgeValues,
     edges,
     segmentMaterial,
     glyphMaterial,
@@ -448,6 +487,7 @@ export function createNetworkGpuBundle(
       positions.needsUpdate = true;
       aux.needsUpdate = true;
       values.needsUpdate = true;
+      edgeValues.needsUpdate = true;
       edges.needsUpdate = true;
     },
     dispose: () => {

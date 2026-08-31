@@ -24,6 +24,8 @@ import {
   isSparseOption,
   optionKey,
   optionLabel,
+  PER_EDGE_NOTE,
+  PER_NODE_NOTE,
   type ColumnOption,
   type GraphOption,
   type SparseOption,
@@ -342,6 +344,18 @@ export const ColumnOptionPicker = ({
                         >
                           <ChevronRight className="h-2.5 w-2.5" />
                           joined
+                        </span>
+                      )}
+                      {/* The server's stamped granularity: this column's table
+                          is keyed by the collection's NODE ids, so its values
+                          vary within an object — the badge is what separates
+                          it from the object-level columns beside it. */}
+                      {option.target && (
+                        <span
+                          className="shrink-0 rounded bg-white/5 px-1 text-[9px] text-muted-foreground"
+                          title={(option.target === "EDGE" ? PER_EDGE_NOTE : PER_NODE_NOTE).slice(3)}
+                        >
+                          {option.target === "EDGE" ? "per edge" : "per node"}
                         </span>
                       )}
                       <span className="shrink-0 rounded bg-white/5 px-1 text-[9px] text-muted-foreground">

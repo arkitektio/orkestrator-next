@@ -86,6 +86,11 @@ export type PackTarget = {
   values: Float32Array;
   /** `capacity.edges * 2` uint32 indices into the packed node slots. */
   edges: Uint32Array;
+  /** `capacity.edges` floats — the active PER-EDGE colouring's value per
+   *  PACKED edge, index-aligned with `edges` (compaction included). Only read
+   *  when the material's `uValueSource` selects the edge buffer, so it may
+   *  hold stale floats whenever no edge colouring is active. */
+  edgeValues: Float32Array;
 };
 
 /** One active GRAPH filter rule, already reduced to what a node test needs.
@@ -119,6 +124,29 @@ export type NetworkStyling = {
   /** Ordinals the active object-level rules hide — both bits, glyphs and
    *  segments alike: hiding an object is the mesh semantics. */
   hiddenOrdinals: ReadonlySet<number> | null;
+  /**
+   * The per-NODE-table half (a colouring over a table identified by the
+   * collection's node ids): value per `"${ordinal}:${nodeId}"` composite key,
+   * already rekeyed objectId → ordinal by the styling — the packer holds only
+   * ordinals and stays pure. A node with no row packs NaN and keeps its base
+   * colour, the identity-fill rule. Optional so pre-existing stylings (and
+   * every test literal) read as "none".
+   */
+  nodeValues?: ReadonlyMap<string, number> | null;
+  /** The per-EDGE-table colouring: value per `"${ordinal}:${srcId}:${dstId}"`,
+   *  the ordinal being the START node's (the format's own edge convention).
+   *  Scattered index-aligned into `target.edgeValues`. */
+  edgeValues?: ReadonlyMap<string, number> | null;
+  /** Node keys (`"${ordinal}:${nodeId}"`) the active per-node-table rules
+   *  hide. Both bits — a per-node rule's stamped target is NODE, so a hidden
+   *  node takes its outgoing segments with it. Only keys a table actually
+   *  mentioned can be in here: a column rule never tests what it has no row
+   *  for. */
+  hiddenNodeKeys?: ReadonlySet<string> | null;
+  /** Edge keys (`"${ordinal}:${srcId}:${dstId}"`) the active per-edge-table
+   *  rules hide. Filtering per edge IS compaction: a hidden edge's index pair
+   *  is simply not emitted, so nothing per-fragment tests it. */
+  hiddenEdgeKeys?: ReadonlySet<string> | null;
 };
 
 export const IDENTITY_STYLING: NetworkStyling = {
@@ -126,6 +154,10 @@ export const IDENTITY_STYLING: NetworkStyling = {
   ordinalValues: null,
   rules: [],
   hiddenOrdinals: null,
+  nodeValues: null,
+  edgeValues: null,
+  hiddenNodeKeys: null,
+  hiddenEdgeKeys: null,
 };
 
 /** A cell's per-node values for one vocabulary name. `radius` reads the radii
@@ -219,6 +251,12 @@ export function packNetworkCells(
       return source;
     });
 
+    // The composite node key is only built when something node-table-keyed is
+    // active — a string concat per node is real cost on a million-node level.
+    const nodeValues = styling.nodeValues ?? null;
+    const hiddenNodeKeys = styling.hiddenNodeKeys ?? null;
+    const needsNodeKey = nodeValues !== null || hiddenNodeKeys !== null;
+
     for (let i = 0; i < total; i++) {
       const slot = (nodeOffset + i) * 4;
       const ordinal = cell.nodeOrdinals[i];
@@ -226,11 +264,16 @@ export function packNetworkCells(
       target.aux[slot + 1] = ordinal;
       target.aux[slot + 2] = i < cell.nodeCount ? 1 : 0;
 
+      const nodeKey = needsNodeKey ? `${ordinal}:${cell.nodeIds[i]}` : null;
+
       // Two visibility bits — +1 the node's own (glyphs), +2 the edge's
       // (this node's outgoing segments). A NODE rule clears both (a hidden
       // node takes its segments with it); an EDGE rule clears only the edge
-      // bit; a hidden OBJECT clears both, the mesh semantics.
-      let nodeVisible = !styling.hiddenOrdinals?.has(ordinal);
+      // bit; a hidden OBJECT clears both, the mesh semantics — and so does a
+      // hidden node KEY, since a per-node-table rule's stamped target is NODE.
+      let nodeVisible =
+        !styling.hiddenOrdinals?.has(ordinal) &&
+        !(nodeKey !== null && hiddenNodeKeys?.has(nodeKey));
       let edgeVisible = nodeVisible;
       // Stops early only once the node bit is gone (both are then cleared);
       // a failed EDGE rule must not stop a later NODE rule from evaluating.
@@ -243,9 +286,15 @@ export function packNetworkCells(
       }
       target.aux[slot + 3] = (nodeVisible ? 1 : 0) + (edgeVisible ? 2 : 0);
 
+      // At most one of the three node-value sources is active (one colouring);
+      // the chain is precedence, not fallback between live sources.
       const value = valueSource
         ? valueSource[i]
-        : (styling.ordinalValues?.[ordinal] ?? Number.NaN);
+        : styling.ordinalValues
+          ? (styling.ordinalValues[ordinal] ?? Number.NaN)
+          : nodeKey !== null && nodeValues
+            ? (nodeValues.get(nodeKey) ?? Number.NaN)
+            : Number.NaN;
       target.values[nodeOffset + i] = value;
       if (Number.isFinite(value)) {
         if (value < valueMin) valueMin = value;
@@ -253,13 +302,36 @@ export function packNetworkCells(
       }
     }
 
-    const edgeBase = edgeOffset * 2;
-    for (let j = 0; j < cell.edgeCount * 2; j++) {
-      target.edges[edgeBase + j] = cell.edges[j] + nodeOffset;
+    // Emit-or-skip: filtering per edge IS compaction — a hidden edge's index
+    // pair never lands in the buffer, so `instanceCount` (the packed count)
+    // already excludes it and nothing per-fragment tests it. `edgeValues` is
+    // scattered index-aligned with the emitted pairs; both keys read the START
+    // node's ordinal, the format's own convention for everything per-edge.
+    const edgeColour = styling.edgeValues ?? null;
+    const hiddenEdgeKeys = styling.hiddenEdgeKeys ?? null;
+    const needsEdgeKey = edgeColour !== null || hiddenEdgeKeys !== null;
+    for (let j = 0; j < cell.edgeCount; j++) {
+      const a = cell.edges[j * 2];
+      const b = cell.edges[j * 2 + 1];
+      let edgeKey: string | null = null;
+      if (needsEdgeKey) {
+        edgeKey = `${cell.nodeOrdinals[a]}:${cell.nodeIds[a]}:${cell.nodeIds[b]}`;
+        if (hiddenEdgeKeys?.has(edgeKey)) continue;
+      }
+      target.edges[edgeOffset * 2] = a + nodeOffset;
+      target.edges[edgeOffset * 2 + 1] = b + nodeOffset;
+      if (edgeColour) {
+        const value = edgeColour.get(edgeKey as string) ?? Number.NaN;
+        target.edgeValues[edgeOffset] = value;
+        if (Number.isFinite(value)) {
+          if (value < valueMin) valueMin = value;
+          if (value > valueMax) valueMax = value;
+        }
+      }
+      edgeOffset++;
     }
 
     nodeOffset += total;
-    edgeOffset += cell.edgeCount;
     packed++;
   }
 

@@ -9,6 +9,18 @@ fragment TableDatasetColumn on Column {
   axisType
   unit
   order
+  # The two no-edge identifications a column can carry. `nodeReferences` is
+  # what makes a table per-node or per-edge: an INDEX coordinate column whose
+  # values are that network collection's NODE ids. One such column per
+  # collection is a node table, two are an edge table — (source, target), in
+  # column `order` — and the network styling reads the composite key columns
+  # off exactly this.
+  references {
+    id
+  }
+  nodeReferences {
+    id
+  }
 }
 
 fragment ListTableDataset on TableDataset {

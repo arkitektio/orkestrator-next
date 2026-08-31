@@ -4,7 +4,12 @@ import {
   readColumnValues,
   type ColumnValues,
 } from "@/mikro-next/lib/attributes/columnarReads";
-import { readColumnByObjectId, type TableAccess } from "./columnLut";
+import {
+  readColumnByCompositeKey,
+  readColumnByObjectId,
+  type CompositeTableAccess,
+  type TableAccess,
+} from "./columnLut";
 
 /**
  * A per-engine cache of `objectId → value` column maps, sitting ABOVE
@@ -61,6 +66,47 @@ export const readColumnByObjectIdCached = (
     // Self-evict on failure — but only if this promise is still the cached
     // one, so a retry that already replaced it is left alone.
     const current = caches.get(engine);
+    if (current && current.get(key) === promise) current.take(key);
+    throw error;
+  });
+  cache.set(key, promise);
+  return promise;
+};
+
+/**
+ * The same cache, for the COMPOSITE-keyed read (a network node/edge table's
+ * `(object, node…)` columns). Its own `LruMap` for the reason the columnar one
+ * has its own: the value type differs (`Map<string, …>` against
+ * `Map<number, …>`), and a shared cache with a union type would hand a caller
+ * the shape it did not ask for. Keyed by the ORDERED key-column list — order
+ * is meaning for a composite key, so `(a,b)` and `(b,a)` are different reads.
+ */
+const compositeCaches = new WeakMap<
+  AttributeLookupEngine,
+  LruMap<Promise<Map<string, unknown>>>
+>();
+
+export const readColumnByCompositeKeyCached = (
+  engine: AttributeLookupEngine,
+  access: CompositeTableAccess,
+  column: string,
+): Promise<Map<string, unknown>> => {
+  let cache = compositeCaches.get(engine);
+  if (!cache) {
+    cache = new LruMap(CACHE_CAPACITY);
+    compositeCaches.set(engine, cache);
+  }
+  const key = `${access.store.id}:${access.keyColumns.join(",")}:${column}`;
+  const hit = cache.get(key);
+  if (hit) return hit;
+  const promise: Promise<Map<string, unknown>> = readColumnByCompositeKey(
+    engine,
+    access,
+    column,
+  ).catch((error: unknown) => {
+    // Self-evict on failure — but only if this promise is still the cached
+    // one, so a retry that already replaced it is left alone.
+    const current = compositeCaches.get(engine);
     if (current && current.get(key) === promise) current.take(key);
     throw error;
   });

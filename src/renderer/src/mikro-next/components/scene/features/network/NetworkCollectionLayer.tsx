@@ -16,6 +16,10 @@ import {
 } from "../../platform/model/collectionPlacement";
 import { useAttributeServiceOrNull } from "@/mikro-next/lib/attributes/AttributeServiceProvider";
 import { loadSparseSource } from "@/mikro-next/lib/sparse/sparseSource";
+import {
+  GetTableDatasetDocument,
+  type GetTableDatasetQuery,
+} from "@/mikro-next/api/graphql";
 
 import type { KonnektionCollection } from "./konnektion/konnektionCollection";
 import { attributeVocabulary } from "./konnektion/konnektionManifest";
@@ -26,6 +30,7 @@ import {
   identityNetworkStyling,
   type NetworkPickerColorBy,
   type NetworkPickerFilterBy,
+  type NodeTableFetcher,
 } from "./networkStyling";
 import { useNetworkStoreApi } from "./store/networkSlice";
 
@@ -217,6 +222,34 @@ const NetworkCollectionGroup = ({
    * keeps one value path (`networkStyling.ts`).
    */
   const attributeService = useAttributeServiceOrNull();
+
+  // The access path for a per-node/per-edge table entry (a stamped `target`):
+  // such tables publish no attribute plan — an object id alone cannot address
+  // their rows — so the store and the composite key columns come off the
+  // table's own detail, one query per table, answered by Apollo's normalized
+  // cache after the first round trip.
+  const fetchTable = useMemo<NodeTableFetcher | null>(() => {
+    if (!client?.query) return null;
+    return async (tableId: string) => {
+      const result = await client.query({
+        query: GetTableDatasetDocument,
+        variables: { id: tableId },
+      });
+      const dataset = (result as { data?: GetTableDatasetQuery }).data?.tableDataset;
+      if (!dataset) return null;
+      return {
+        id: dataset.id,
+        store: dataset.store,
+        columns: dataset.columns.map((column) => ({
+          name: column.name,
+          role: column.role,
+          order: column.order,
+          nodeReferences: column.nodeReferences ?? null,
+        })),
+      };
+    };
+  }, [client]);
+
   const activeColorBy =
     layer.activeColorBy != null ? ((layer.colorBys?.[layer.activeColorBy] as NetworkPickerColorBy | undefined) ?? null) : null;
   const activeRules = useMemo(
@@ -269,6 +302,8 @@ const NetworkCollectionGroup = ({
         plans,
         engine: attributeService?.engine ?? null,
         readSparse,
+        collectionId: collection.id,
+        fetchTable,
       });
       if (cancelled) return;
       if (resolved.skipped.length > 0) {

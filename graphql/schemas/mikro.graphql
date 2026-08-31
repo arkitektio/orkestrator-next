@@ -1582,6 +1582,11 @@ type ColorByOption {
   The table the value is read from. With an empty `joinPath` this is a table the source's ids key directly
   """
   table: TableDataset
+
+  """
+  (network collections only) Which row set this option's values belong to. Null is per-object -- every option every other source offers. NODE/EDGE on a graph attribute or on a column of a table whose axes are node-identified (`NETWORK_COLLECTION_NODES`), where it is derived from the table's own shape -- one node axis is per-node, two are per-edge. Informational on the way back in: the mutation re-derives and stamps it, so a caller never sends it on a COLUMN entry
+  """
+  target: GraphTarget
 }
 
 """The color space format used to interpret color component values."""
@@ -1711,6 +1716,11 @@ type Column {
   id: ID!
   longName: String
   name: String!
+
+  """
+  The network collection whose NODE ids this INDEX coordinate column's values are, scoped by the sibling INDEX axis keyed by the same collection's object ids. One such column makes the table per-node, two make it per-edge -- (source, target), in axis declaration order -- which is what a client resolving a per-node picker entry reads the key columns from. Null for every column of every other table
+  """
+  nodeReferences: NetworkCollection
   order: Int!
 
   """
@@ -3495,6 +3505,11 @@ type FilterByOption {
   The table the value is read from. With an empty `joinPath` this is a table the source's ids key directly
   """
   table: TableDataset
+
+  """
+  (network collections only) Which row set a rule over this option hides, exactly as on `ColorByOption`: null keeps or drops whole objects, NODE hides nodes and their segments, EDGE hides segments alone. Derived from the table's shape and stamped by the mutation, never sent on a COLUMN rule
+  """
+  target: GraphTarget
 }
 
 """A filter"""
@@ -3863,7 +3878,7 @@ input IdentificationInput {
   name: String = null
 
   """
-  (NETWORK_COLLECTION) The network collection whose **object** ids are the positions along this axis -- one per traced object, never per node. Its coordinate system is both the edge's input and its field, exactly as a mesh collection's is
+  (NETWORK_COLLECTION) The network collection whose **object** ids are the positions along this axis -- one per traced object, never per node; its coordinate system is both the edge's input and its field, exactly as a mesh collection's is. (NETWORK_COLLECTION_NODES) The collection whose **node** ids they are instead -- no edge, scoped by a sibling INDEX axis keyed by the same collection's objects; two such axes over one collection are its edges' (source, target), in axis declaration order. One field for both kinds because the id names the same sort of thing and `kind` already says which claim is being made
   """
   networkCollection: ID = null
 
@@ -3879,7 +3894,7 @@ input IdentificationInput {
 }
 
 """
-How one axis is identified -- the discriminator of `IdentificationInput`, and the same question whether the axis belongs to a sparse matrix or to a table. An axis of positions means nothing until something says what those positions *are*, and there are exactly these four ways to answer. Three of them author a FIELD edge, which is also what makes the data reachable from a layer over that source; `TABLE` authors none and states a foreign key instead, because a table is already in record-land
+How one axis is identified -- the discriminator of `IdentificationInput`, and the same question whether the axis belongs to a sparse matrix or to a table. An axis of positions means nothing until something says what those positions *are*, and there are exactly these five ways to answer. Three of them author a FIELD edge, which is also what makes the data reachable from a layer over that source; `TABLE` and `NETWORK_COLLECTION_NODES` author none -- a table states a foreign key, and a node axis states which collection's nodes it enumerates, scoped by the sibling axis that collection's objects key
 """
 enum IdentificationKind {
   """
@@ -3893,9 +3908,14 @@ enum IdentificationKind {
   MESH_COLLECTION
 
   """
-  A network collection, through its coordinate system, identified by its **object** ids -- one row per traced object (a filament, an arbor, a vessel tree), never per node. The object ids ride on the geometry rows and the object catalog, so a client that picked a wireframe is already holding one. Authors a FIELD edge, exactly as MESH_COLLECTION does. A per-node identification would be a different member: a node id is unique only within its object, so it cannot key a row on its own.
+  A network collection, through its coordinate system, identified by its **object** ids -- one row per traced object (a filament, an arbor, a vessel tree), never per node. The object ids ride on the geometry rows and the object catalog, so a client that picked a wireframe is already holding one. Authors a FIELD edge, exactly as MESH_COLLECTION does. A per-node identification is the sibling member NETWORK_COLLECTION_NODES: a node id is unique only within its object, so it cannot key a row on its own.
   """
   NETWORK_COLLECTION
+
+  """
+  A network collection's **node** ids -- the values along this axis are node ids, scoped by a sibling INDEX axis keyed by the same collection's object ids (a node id is unique only within its traced object, so the pair is the row's key). Authors no edge, like TABLE, and for the same reason: the object axis' edge already supplies the one id an edge supplies, and this says what the *other* axis enumerates. One such axis makes the table per-node; two over one collection make it per-edge, (source, target) in axis declaration order. Node ids survive every octree level; edge rows resolve exactly at level 0 and on pruned levels and are void on simplified ones, where edges are re-linked chords.
+  """
+  NETWORK_COLLECTION_NODES
 
   """
   A table whose rows this axis' positions are -- the relation `Column.references` carries, said of the axis. Authors no edge and touches no coordinate system: a table is already in record-land, where the relation is a foreign key rather than a map between spaces. It is what lets a FIELD edge land beside it, because an axis identified this way is one the edge is not expected to supply. Valid on an INDEX axis only: a SPACE or TIME coordinate's values are positions, and a position in nanometres and a row id are different things.
@@ -6147,6 +6167,14 @@ input NetworkCollectionIdentifiesInput {
   name: String = null
   networkCollection: ID!
   validity: PlacementValidity = null
+}
+
+"""
+The fields a NETWORK_COLLECTION_NODES identification reads. Published for codegen; the wire type is the flat IdentificationInput
+"""
+input NetworkCollectionNodesIdentifiesInput {
+  kind: IdentificationKind! = NETWORK_COLLECTION_NODES
+  networkCollection: ID!
 }
 
 """

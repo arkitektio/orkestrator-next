@@ -157,6 +157,58 @@ export const accessForTable = (
   return { store: plan.lookup.store, keyColumn };
 };
 
+/** Where a COMPOSITE-keyed column is read from: the store and the key columns
+ *  IN ORDER. The order is meaning — for a network node table it is
+ *  (object axis, node axis…), and the map keys below join the values in
+ *  exactly that order. */
+export type CompositeTableAccess = { store: ParquetStoreLike; keyColumns: readonly string[] };
+
+/** The map key for one composite-keyed row: the key values joined with `:`.
+ *  One function rather than a convention, so the reader and every consumer
+ *  (the styling's ordinal rekey, the packer's per-slot lookup) cannot drift. */
+export const compositeKeyOf = (parts: readonly (number | string)[]): string => parts.join(":");
+
+/**
+ * `"k1:k2[:k3]" → value` for one column of a composite-keyed table — a network
+ * NODE table's `(object_id, node_id)` or an EDGE table's
+ * `(object_id, source, target)`. The single-key twin of
+ * `readColumnByObjectId`, kept separate rather than unified because the key
+ * TYPE differs (a string, since a tuple cannot be a Map key) and every
+ * single-key caller would pay the join for nothing.
+ *
+ * Keys are stringified from the RAW values (ids, so integers); a row whose key
+ * columns hold anything non-finite is dropped, the same tolerance the
+ * single-key reader shows a malformed id.
+ */
+export const readColumnByCompositeKey = async (
+  engine: AttributeLookupEngine,
+  access: CompositeTableAccess,
+  column: string,
+): Promise<Map<string, unknown>> => {
+  const keys = access.keyColumns.map(
+    (name, index) => `${escapeSqlIdentifier(name)} AS key${index}`,
+  );
+  const value = escapeSqlIdentifier(column);
+  const rows: readonly AttributeRow[] = await engine.readAcross(
+    [access.store],
+    (urlOf) =>
+      `SELECT ${keys.join(", ")}, ${value} AS value FROM read_parquet(${escapeSqlLiteral(
+        urlOf(access.store.id),
+      )})`,
+  );
+  const byKey = new Map<string, unknown>();
+  outer: for (const row of rows) {
+    const parts: number[] = [];
+    for (let index = 0; index < access.keyColumns.length; index++) {
+      const part = Number(row[`key${index}`]);
+      if (!Number.isFinite(part)) continue outer;
+      parts.push(part);
+    }
+    byKey.set(compositeKeyOf(parts), row.value);
+  }
+  return byKey;
+};
+
 /** `objectId → value` for one column of one table. */
 export const readColumnByObjectId = async (
   engine: AttributeLookupEngine,

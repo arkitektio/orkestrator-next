@@ -34,6 +34,7 @@ import {
   isMeasure,
   JOINED_NOTE,
   SPARSE_NOTE,
+  targetNote,
   toColorByInput,
   toFilterByInput,
   type ColorByEntry,
@@ -138,7 +139,9 @@ const ColorByRow = memo(function ColorByRow({
           ? `Color objects by ${entry.column} of table ${entry.table}`
           : "Color objects by a slice of a sparse matrix"
       } — click to configure (stored)${isJoinedEntry(entry) ? JOINED_NOTE : ""}${
-        isColumnColorBy(entry) ? "" : SPARSE_NOTE
+        // The stamped target's badge (per-node/per-edge table), or "" for an
+        // object-level column entry.
+        isColumnColorBy(entry) ? targetNote(entry) : SPARSE_NOTE
       }`}
       onClick={() => onRowClick(index)}
       leading={
@@ -383,7 +386,7 @@ const FilterByRow = memo(function FilterByRow({
         isColumnFilterBy(entry) ? entry.column : entryLabel(entry)
       } ${describeFilterRule(entry)} — click to apply & configure, the funnel switches it off (stored)${
         isJoinedEntry(entry) ? JOINED_NOTE : ""
-      }${isColumnFilterBy(entry) ? "" : SPARSE_NOTE}`}
+      }${isColumnFilterBy(entry) ? targetNote(entry) : SPARSE_NOTE}`}
       onClick={() => onRowClick(index)}
       leadingAction={
         <button

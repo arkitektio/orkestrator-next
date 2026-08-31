@@ -190,8 +190,12 @@ const columnKey = (
   joinPath: readonly JoinStepLike[],
   table: string,
   column: string,
+  target?: string | null,
 ): string =>
-  `${joinPath.map((step) => `${step.table}.${step.column}`).join(">")}|${table}|${column}`;
+  // `target` is a fact of the TABLE's shape (a per-node table's columns are
+  // always NODE), so it can never split one candidate into two — it rides the
+  // key to keep an option's identity honest, not to disambiguate.
+  `${joinPath.map((step) => `${step.table}.${step.column}`).join(">")}|${table}|${column}${target ? `|${target}` : ""}`;
 
 /**
  * An offered option's identity, either arm.
@@ -203,7 +207,7 @@ const columnKey = (
  */
 export const optionKey = (option: ColumnOption | SparseOption | GraphOption): string => {
   if (isColumnOption(option))
-    return columnKey(optionJoinPath(option), option.table.id, option.column.name);
+    return columnKey(optionJoinPath(option), option.table.id, option.column.name, option.target);
   if (isGraphOption(option)) return `graph|${option.graphAttribute}`;
   return `sparse|${(option as SparseOption).sparseDataset.id}`;
 };
@@ -219,10 +223,13 @@ export const entryKey = (entry: {
   dataset?: string | null;
   at?: readonly { axis: string; value: number }[] | null;
   attribute?: string | null;
+  target?: string | null;
   joinPath?: readonly JoinStepLike[] | null;
 }): string => {
+  // A COLUMN entry's `target` is the server's stamp (per-node/per-edge
+  // tables); a GRAPH entry's is an aim and deliberately NOT in its key.
   if (entry.table != null && entry.column != null)
-    return columnKey(entryJoinPath(entry), entry.table, entry.column);
+    return columnKey(entryJoinPath(entry), entry.table, entry.column, entry.target);
   // A graph entry keys on its attribute alone — like a sparse option and its
   // matrix, "already added" means "this attribute is in the picker", and the
   // target is a variation within it rather than a different candidate.
@@ -345,6 +352,40 @@ export const SPARSE_NOTE = " — one slice of a sparse matrix";
  * varies WITHIN an object — per node, off the collection's own geometry.
  */
 export const GRAPH_NOTE = " — a per-node value the collection carries";
+
+/**
+ * A COLUMN entry over a table identified by the collection's NODE ids — the
+ * post-hoc sibling of the GRAPH arm, read from parquet by (object, node) key.
+ * The stamped `target` says which; the badges tell a reader why this entry
+ * varies within an object where the other column entries cannot.
+ */
+export const PER_NODE_NOTE = " — a per-node table, keyed by (object, node)";
+
+/**
+ * The per-EDGE variant: two node axes, (source, target). Exact at level 0 and
+ * on pruned levels; a simplification RE-LINKS edges, so on such a level a
+ * drawn pair mostly has no row — it keeps its base colour, and a rule keeps
+ * what it never saw. Said here because the card badge is where a user reading
+ * a deep ladder's top level as "unmeasured" will look.
+ */
+export const PER_EDGE_NOTE =
+  " — a per-edge table, keyed by (object, source, target); void on simplified levels";
+
+/**
+ * The note a stored COLUMN entry's stamped `target` earns, or "" for an
+ * object-level entry (and for a GRAPH entry, whose target is an aim rather
+ * than a table fact — its note is `GRAPH_NOTE`, keyed off `attribute`).
+ * Structural on purpose: mesh and label fragments carry no `target` field and
+ * fall straight through to "".
+ */
+export const targetNote = (entry: { table?: string | null; target?: string | null }): string =>
+  entry.table == null
+    ? ""
+    : entry.target === "NODE"
+      ? PER_NODE_NOTE
+      : entry.target === "EDGE"
+        ? PER_EDGE_NOTE
+        : "";
 
 /** What a picker captions a graph candidate with: the attribute's own name. */
 export const graphOptionLabel = (option: GraphOption): string => option.graphAttribute;
@@ -523,8 +564,13 @@ export const colorByEntryToInput = (entry: ColorByEntry): ColorByInputLike => ({
   // mutation handed variables carrying unknown keys is refused whole by
   // GraphQL validation. Mesh and label fragments have no such fields, so the
   // spread is empty exactly where the keys would be refused.
-  ...("attribute" in entry && (entry.attribute != null || entry.target != null)
-    ? { attribute: entry.attribute ?? null, target: entry.target ?? null }
+  //
+  // Gated on `attribute`, NOT on `target`: a COLUMN entry over a per-node/
+  // per-edge table carries a target too, but that one is the server's STAMP —
+  // derived from the table's shape, refused if a caller sends it — so a
+  // whole-array re-send must strip it and let the server re-stamp.
+  ...("attribute" in entry && entry.attribute != null
+    ? { attribute: entry.attribute, target: entry.target ?? null }
     : {}),
   joinPath: entryJoinPath(entry),
   colormap: entry.colormap ?? null,
@@ -548,9 +594,10 @@ export const filterByEntryToInput = (entry: FilterByEntry): FilterByInputLike =>
     axis: position.axis,
     value: position.value,
   })),
-  // Conditional for `colorByEntryToInput`'s reason exactly.
-  ...("attribute" in entry && (entry.attribute != null || entry.target != null)
-    ? { attribute: entry.attribute ?? null, target: entry.target ?? null }
+  // Conditional for `colorByEntryToInput`'s reason exactly — the stamped
+  // COLUMN target included: stripped on re-send, re-stamped by the server.
+  ...("attribute" in entry && entry.attribute != null
+    ? { attribute: entry.attribute, target: entry.target ?? null }
     : {}),
   joinPath: entryJoinPath(entry),
   min: entry.min ?? null,

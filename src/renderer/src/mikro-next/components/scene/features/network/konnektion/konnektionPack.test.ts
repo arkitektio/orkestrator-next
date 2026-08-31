@@ -18,6 +18,7 @@ const cellOf = (options: {
   edges: number[];
   radii?: number[] | null;
   ordinals?: number[];
+  nodeIds?: number[];
   attributes?: Record<string, number[]>;
 }): DecodedNetworkCell => {
   const total = options.nodeCount + options.ghostCount;
@@ -28,7 +29,7 @@ const cellOf = (options: {
     cell: 0,
     positions,
     edges: new Uint32Array(options.edges),
-    nodeIds: new Float64Array(total),
+    nodeIds: options.nodeIds ? new Float64Array(options.nodeIds) : new Float64Array(total),
     radii: options.radii ? new Float32Array(options.radii) : null,
     attributes: Object.fromEntries(
       Object.entries(options.attributes ?? {}).map(([name, values]) => [
@@ -48,6 +49,7 @@ const targetFor = (nodes: number, edges: number): PackTarget => ({
   positions: new Float32Array(nodes * 3),
   aux: new Float32Array(nodes * 4),
   values: new Float32Array(nodes),
+  edgeValues: new Float32Array(edges).fill(Number.NaN),
   edges: new Uint32Array(edges * 2),
 });
 
@@ -220,6 +222,133 @@ describe("packNetworkCells", () => {
     });
     expect([...target.values.subarray(0, 3)]).toEqual([10, 20, 20]);
     expect([target.aux[3], target.aux[7], target.aux[11]]).toEqual([3, 0, 0]);
+  });
+
+  it("scatters per-node-table values by the (ordinal, nodeId) composite key", () => {
+    // Two objects (ordinals 5 and 6) each with node id 1 — the whole point of
+    // the composite key: a node id alone is ambiguous across objects.
+    const cell = cellOf({
+      nodeCount: 3,
+      ghostCount: 0,
+      edges: [],
+      ordinals: [5, 5, 6],
+      nodeIds: [1, 2, 1],
+    });
+    const target = targetFor(3, 1);
+    const result = packNetworkCells([cell], target, {
+      valueAttribute: null,
+      ordinalValues: null,
+      rules: [],
+      hiddenOrdinals: null,
+      nodeValues: new Map([
+        ["5:1", 10],
+        ["6:1", 30],
+      ]),
+    });
+    // (5,2) has no row → NaN → base colour, the identity-fill rule; and NaN is
+    // excluded from the stretch range.
+    expect([target.values[0], target.values[2]]).toEqual([10, 30]);
+    expect(Number.isNaN(target.values[1])).toBe(true);
+    expect(result.valueMin).toBe(10);
+    expect(result.valueMax).toBe(30);
+  });
+
+  it("hides exactly the keyed node under hiddenNodeKeys, both bits", () => {
+    const cell = cellOf({
+      nodeCount: 3,
+      ghostCount: 0,
+      edges: [],
+      ordinals: [5, 5, 6],
+      nodeIds: [1, 2, 1],
+    });
+    const target = targetFor(3, 1);
+    packNetworkCells([cell], target, {
+      valueAttribute: null,
+      ordinalValues: null,
+      rules: [],
+      hiddenOrdinals: null,
+      // Hides (5,1) — NOT (6,1), the same node id on another object.
+      hiddenNodeKeys: new Set(["5:1"]),
+    });
+    expect([target.aux[3], target.aux[7], target.aux[11]]).toEqual([0, 3, 3]);
+  });
+
+  it("compacts hidden edges out of the buffer and index-aligns edgeValues", () => {
+    // Edges (0→1), (1→2), (2→0) on one object; hide the middle pair. The
+    // hidden edge's index pair must simply not be emitted — filtering IS
+    // compaction — and the survivors' edgeValues stay aligned with their
+    // packed slots.
+    const cell = cellOf({
+      nodeCount: 3,
+      ghostCount: 0,
+      edges: [0, 1, 1, 2, 2, 0],
+      ordinals: [7, 7, 7],
+      nodeIds: [10, 11, 12],
+    });
+    const target = targetFor(3, 3);
+    const result = packNetworkCells([cell], target, {
+      valueAttribute: null,
+      ordinalValues: null,
+      rules: [],
+      hiddenOrdinals: null,
+      edgeValues: new Map([
+        ["7:10:11", 1.5],
+        ["7:12:10", 4.5],
+      ]),
+      hiddenEdgeKeys: new Set(["7:11:12"]),
+    });
+    expect(result.edges).toBe(2);
+    expect([...target.edges.subarray(0, 4)]).toEqual([0, 1, 2, 0]);
+    expect([target.edgeValues[0], target.edgeValues[1]]).toEqual([1.5, 4.5]);
+    // The per-edge range participates in the stretch answer.
+    expect(result.valueMin).toBe(1.5);
+    expect(result.valueMax).toBe(4.5);
+  });
+
+  it("keys a ghost-start edge by the ghost's own ordinal and id", () => {
+    // One owned node and one ghost; the edge STARTS at the ghost (index 1 ≥
+    // nodeCount). Its key must read the ghost's ordinal and node id — ghosts
+    // carry both, at the tail of the cell's span.
+    const cell = cellOf({
+      nodeCount: 1,
+      ghostCount: 1,
+      edges: [1, 0],
+      ordinals: [3, 4],
+      nodeIds: [20, 21],
+    });
+    const target = targetFor(2, 1);
+    const result = packNetworkCells([cell], target, {
+      valueAttribute: null,
+      ordinalValues: null,
+      rules: [],
+      hiddenOrdinals: null,
+      edgeValues: new Map([["4:21:20", 9]]),
+    });
+    expect(result.edges).toBe(1);
+    expect(target.edgeValues[0]).toBe(9);
+  });
+
+  it("keeps edges no rule mentioned when an edge table filters", () => {
+    // A column rule never tests what it has no row for — an edge absent from
+    // the table survives, which is also the honest reading of a simplified
+    // level whose re-linked pairs the table cannot know.
+    const cell = cellOf({
+      nodeCount: 2,
+      ghostCount: 0,
+      edges: [0, 1],
+      ordinals: [0, 0],
+      nodeIds: [1, 2],
+    });
+    const target = targetFor(2, 1);
+    const result = packNetworkCells([cell], target, {
+      valueAttribute: null,
+      ordinalValues: null,
+      rules: [],
+      hiddenOrdinals: null,
+      hiddenEdgeKeys: new Set(["0:9:9"]),
+    });
+    expect(result.edges).toBe(1);
+    expect([...target.edges.subarray(0, 2)]).toEqual([0, 1]);
   });
 
   it("skips and surfaces a rule over an attribute the cells do not carry", () => {

@@ -13,8 +13,24 @@
  *    attribute plans, one full-column DuckDB scan per column, keyed by this
  *    collection's OBJECT ids. The per-object values are scattered per ordinal
  *    so the shader keeps exactly one value path.
+ *  - a COLUMN entry with a stamped `target` (NODE or EDGE) is over a table
+ *    identified by this collection's NODE ids — the post-hoc per-node/per-edge
+ *    metadata path. Such tables publish NO attribute plan (an object id alone
+ *    cannot address their rows), so the store and the composite key columns
+ *    come from the table's own detail (`fetchTable`, one cached query per
+ *    table): the key is (object axis, node axis…) with the node axes read off
+ *    `Column.nodeReferences` in column order. Values are read by
+ *    `readColumnByCompositeKey` and REKEYED objectId → ordinal here — the
+ *    packer holds only ordinals and stays pure (S11).
  *  - a SPARSE entry reads one slice of a matrix, exactly as the mesh builder
  *    does.
+ *
+ * LEVEL HONESTY for the target entries: node ids survive every konnektion
+ * level, so a per-NODE entry is exact everywhere. Edge identity survives
+ * pruning but NOT simplification — on a Douglas-Peucker'd level the drawn
+ * (source, target) pairs are re-linked and mostly absent from an edge table,
+ * which renders as "no row": NaN → base colour for a colouring, and a rule
+ * keeps what it never saw. Honest, and stated on the card rather than hidden.
  *
  * The semantics restated from `columnLut.ts`, which must not drift per layer
  * kind: rules AND together; `exclude` inverts the TEST; an unreadable entry is
@@ -24,7 +40,7 @@
  * for.
  */
 
-import type { AttributePlanLike } from "@/mikro-next/lib/attributes/attributeTypes";
+import type { AttributePlanLike, ParquetStoreLike } from "@/mikro-next/lib/attributes/attributeTypes";
 import type { AttributeLookupEngine } from "@/mikro-next/lib/attributes/lookupEngine";
 
 import {
@@ -33,7 +49,10 @@ import {
   looksNumeric,
   type ColumnLutEntryFilterBy,
 } from "../../platform/attributes/columnLut";
-import { readColumnByObjectIdCached } from "../../platform/attributes/columnValueCache";
+import {
+  readColumnByCompositeKeyCached,
+  readColumnByObjectIdCached,
+} from "../../platform/attributes/columnValueCache";
 import { DEFAULT_MEASURE_COLORMAP, paletteRowFor } from "../../platform/attributes/valueLut";
 import { qualitativePalette } from "../../platform/layerui/colormap-utils";
 import type { KonnektionObjectEntry } from "./konnektion/konnektionCatalogs";
@@ -71,6 +90,66 @@ export type SparseSliceReader = (
   at: readonly { axis: string; value: number }[],
 ) => Promise<{ values: Map<number, unknown> }>;
 
+/** What a target entry needs to know about its table — the structural shape of
+ *  the `GetTableDataset` detail, mapped by the caller so this module keeps its
+ *  no-generated-API rule. */
+export type NodeTableColumn = {
+  name: string;
+  role?: string | null;
+  order: number;
+  /** The collection whose NODE ids this column's values are, or null. */
+  nodeReferences?: { id: string } | null;
+};
+
+export type NodeTableDetail = {
+  id: string;
+  store: ParquetStoreLike;
+  columns: readonly NodeTableColumn[];
+};
+
+/** One cached table-detail fetch, injected by the layer (Apollo answers it
+ *  from the normalized cache after the first round trip per table). */
+export type NodeTableFetcher = (tableId: string) => Promise<NodeTableDetail | null>;
+
+/**
+ * The composite key columns of a node/edge table, from its column shape.
+ *
+ * The node axes are the COORDINATE columns whose `nodeReferences` is THIS
+ * collection, in column order — for two that order IS (source, target), the
+ * declaration-order-as-meaning rule the identification states. The object
+ * axis is the remaining coordinate column; the server guarantees exactly one
+ * sibling is keyed by the collection's objects, so more than one remainder
+ * means the shape predates that guarantee and is refused here with a reason
+ * rather than guessed at.
+ */
+export const nodeTableKeyColumns = (
+  detail: NodeTableDetail,
+  collectionId: string,
+): { keyColumns: string[]; target: "NODE" | "EDGE" } | { reason: string } => {
+  const coordinates = detail.columns
+    .filter((column) => (column.role ?? "") === "COORDINATE")
+    .sort((a, b) => a.order - b.order);
+  const nodeColumns = coordinates.filter((column) => column.nodeReferences?.id === collectionId);
+  const objectColumns = coordinates.filter((column) => column.nodeReferences == null);
+  if (nodeColumns.length === 0) {
+    return { reason: "no axis of the table names this collection's nodes" };
+  }
+  if (nodeColumns.length > 2) {
+    // Server-refused at creation ("a hyperedge"); reachable only against data
+    // from before that refusal existed.
+    return { reason: "more than two node axes — a hyperedge this renderer cannot draw" };
+  }
+  if (objectColumns.length !== 1) {
+    return {
+      reason: `expected exactly one object axis beside the node ax${nodeColumns.length === 1 ? "is" : "es"}, found ${objectColumns.length}`,
+    };
+  }
+  return {
+    keyColumns: [objectColumns[0].name, ...nodeColumns.map((column) => column.name)],
+    target: nodeColumns.length === 2 ? "EDGE" : "NODE",
+  };
+};
+
 export type NetworkStylingResult = {
   styling: NetworkStyling;
   appearance: NetworkValueAppearance;
@@ -80,10 +159,24 @@ export type NetworkStylingResult = {
 
 const isGraph = (entry: { kind?: string | null }): boolean => entry.kind === "GRAPH";
 const isSparse = (entry: { dataset?: string | null }): boolean => entry.dataset != null;
+/** A COLUMN entry the server stamped a target onto — over a per-node or
+ *  per-edge table. The stamp is the routing: no second query needed. */
+const isNodeTargeted = (entry: {
+  kind?: string | null;
+  target?: string | null;
+  table?: string | null;
+}): boolean => !isGraph(entry) && entry.target != null && entry.table != null;
 
 const IDENTITY_RESULT: NetworkStylingResult = {
   styling: IDENTITY_STYLING,
-  appearance: { palette: null, climMin: null, climMax: null, colorize: false, applyToGlyphs: true },
+  appearance: {
+    palette: null,
+    climMin: null,
+    climMax: null,
+    colorize: false,
+    applyToGlyphs: true,
+    valueSource: "node",
+  },
   skipped: [],
 };
 
@@ -99,6 +192,8 @@ export const buildNetworkStyling = async ({
   plans,
   engine,
   readSparse,
+  collectionId = null,
+  fetchTable = null,
 }: {
   /** The active colouring, or null when `activeColorBy` selects nothing. */
   colorBy: NetworkPickerColorBy | null;
@@ -113,6 +208,12 @@ export const buildNetworkStyling = async ({
   plans: readonly AttributePlanLike[] | null;
   engine: AttributeLookupEngine | null;
   readSparse: SparseSliceReader | null;
+  /** This collection's API id — what a table's `nodeReferences` is matched
+   *  against. Only needed when a target entry is active. */
+  collectionId?: string | null;
+  /** The cached table-detail fetch (see `NodeTableFetcher`). Null renders
+   *  target entries as skipped, never wrongly. */
+  fetchTable?: NodeTableFetcher | null;
 }): Promise<NetworkStylingResult> => {
   const skipped: string[] = [];
 
@@ -156,8 +257,11 @@ export const buildNetworkStyling = async ({
   }
 
   // ---- the object half: DuckDB and sparse reads, scattered per ordinal ----
-  const objectColorBy = colorBy && !isGraph(colorBy) ? colorBy : null;
-  const objectRules = rules.filter((rule) => !isGraph(rule));
+  // Target entries are NOT object entries: their tables publish no attribute
+  // plan (deliberately — an object id alone cannot address their rows), so
+  // routing them here would "skip" every one with a misleading reason.
+  const objectColorBy = colorBy && !isGraph(colorBy) && !isNodeTargeted(colorBy) ? colorBy : null;
+  const objectRules = rules.filter((rule) => !isGraph(rule) && !isNodeTargeted(rule));
 
   let ordinalValues: Float32Array | null = null;
   let hiddenOrdinals: Set<number> | null = null;
@@ -308,12 +412,161 @@ export const buildNetworkStyling = async ({
     }
   }
 
+  // ---- the target half: per-node/per-edge tables, composite-keyed ---------
+  const targetColorBy = colorBy && isNodeTargeted(colorBy) ? colorBy : null;
+  const targetRules = rules.filter(isNodeTargeted);
+
+  let nodeValues: Map<string, number> | null = null;
+  let edgeValues: Map<string, number> | null = null;
+  let hiddenNodeKeys: Set<string> | null = null;
+  let hiddenEdgeKeys: Set<string> | null = null;
+
+  if (targetColorBy || targetRules.length > 0) {
+    if (!objects || !engine || !fetchTable || !collectionId) {
+      skipped.push(
+        "per-node/per-edge entries: the attribute service, table detail or object catalog are not available yet",
+      );
+    } else {
+      const ordinalOf = new Map(objects.map((object) => [object.objectId, object.ordinal]));
+      // One detail promise per table within this build; across builds Apollo's
+      // cache makes the fetch itself cheap.
+      const details = new Map<string, Promise<NodeTableDetail | null>>();
+      const detailOf = (tableId: string): Promise<NodeTableDetail | null> => {
+        let hit = details.get(tableId);
+        if (!hit) {
+          hit = fetchTable(tableId).catch(() => null);
+          details.set(tableId, hit);
+        }
+        return hit;
+      };
+
+      /** Read one target entry's column, rekeyed objectId → ordinal. */
+      const resolveTarget = async (
+        entry: NetworkPickerColorBy,
+        what: string,
+      ): Promise<{ values: Map<string, unknown>; target: "NODE" | "EDGE" } | null> => {
+        if ((entry.joinPath?.length ?? 0) > 0) {
+          // The server refuses authoring these; reachable only against a
+          // stored dump that predates the refusal.
+          skipped.push(`${what} ${entry.column}: a join out of a node table is not rendered`);
+          return null;
+        }
+        const detail = entry.table ? await detailOf(entry.table) : null;
+        if (!detail) {
+          skipped.push(`${what} ${entry.column}: the table's detail could not be read`);
+          return null;
+        }
+        const shape = nodeTableKeyColumns(detail, collectionId);
+        if ("reason" in shape) {
+          skipped.push(`${what} ${entry.column}: ${shape.reason}`);
+          return null;
+        }
+        const raw = await readColumnByCompositeKeyCached(
+          engine,
+          { store: detail.store, keyColumns: shape.keyColumns },
+          entry.column as string,
+        ).catch((error: unknown) => {
+          skipped.push(
+            `${what} ${entry.column}: ${error instanceof Error ? error.message : String(error)}`,
+          );
+          return null;
+        });
+        if (!raw) return null;
+        // objectId → ordinal, so the packer never sees an object id (S11). A
+        // row whose object the catalog does not know addresses nothing drawn.
+        const rekeyed = new Map<string, unknown>();
+        for (const [key, value] of raw) {
+          const cut = key.indexOf(":");
+          const ordinal = ordinalOf.get(Number(key.slice(0, cut)));
+          if (ordinal === undefined) continue;
+          rekeyed.set(`${ordinal}${key.slice(cut)}`, value);
+        }
+        return { values: rekeyed, target: shape.target };
+      };
+
+      if (targetColorBy) {
+        const resolved = await resolveTarget(targetColorBy, "colouring");
+        if (resolved) {
+          // The same measure-vs-qualitative split the ordinal branch makes,
+          // over composite keys instead of ordinals.
+          const qualitative =
+            qualitativePalette((targetColorBy.colormap ?? "") as never) !== null ||
+            !looksNumeric(resolved.values.values());
+          const folded = new Map<string, number>();
+          if (qualitative) {
+            const ranks = new Map(
+              [...new Set([...resolved.values.values()].map((value) => String(value)))]
+                .sort()
+                .map((value, rank) => [value, rank] as const),
+            );
+            for (const [key, raw] of resolved.values) {
+              if (raw === undefined || raw === null) continue;
+              folded.set(key, (ranks.get(String(raw)) ?? 0) + 0.5);
+            }
+            appearance = {
+              palette: paletteRowFor((targetColorBy.colormap ?? "HUES") as never),
+              climMin: 0,
+              climMax: 256,
+              colorize: true,
+              applyToGlyphs: resolved.target === "NODE",
+              valueSource: resolved.target === "EDGE" ? "edge" : "node",
+            };
+          } else {
+            for (const [key, raw] of resolved.values) {
+              const value = Number(raw);
+              if (Number.isFinite(value)) folded.set(key, value);
+            }
+            appearance = {
+              palette: paletteRowFor((targetColorBy.colormap ?? DEFAULT_MEASURE_COLORMAP) as never),
+              climMin: targetColorBy.min ?? null,
+              climMax: targetColorBy.max ?? null,
+              colorize: true,
+              // An edge colouring cannot paint node glyphs — no node owns an
+              // edge row — so the spheres keep the material colour.
+              applyToGlyphs: resolved.target === "NODE",
+              valueSource: resolved.target === "EDGE" ? "edge" : "node",
+            };
+          }
+          if (resolved.target === "EDGE") edgeValues = folded;
+          else nodeValues = folded;
+        }
+      }
+
+      // Rules: only keys a table MENTIONS can be hidden — a column rule never
+      // tests what it has no row for, per node and per edge exactly as per
+      // object. Across rules the union of rejections is the AND of keeps.
+      for (const rule of targetRules) {
+        const resolved = await resolveTarget(rule, "rule over");
+        if (!resolved) continue;
+        const lutRule: ColumnLutEntryFilterBy = {
+          table: rule.table,
+          column: rule.column,
+          min: rule.min,
+          max: rule.max,
+          values: rule.values,
+          exclude: rule.exclude === true,
+        };
+        const hidden =
+          resolved.target === "EDGE"
+            ? (hiddenEdgeKeys ??= new Set<string>())
+            : (hiddenNodeKeys ??= new Set<string>());
+        for (const [key, raw] of resolved.values) {
+          if (!ruleKeeps(lutRule, raw)) hidden.add(key);
+        }
+      }
+    }
+  }
+
   return {
     styling: {
       valueAttribute,
       ordinalValues,
       rules: graphRules,
       hiddenOrdinals,
+      nodeValues,
+      edgeValues,
+      hiddenNodeKeys,
+      hiddenEdgeKeys,
     },
     appearance,
     skipped,

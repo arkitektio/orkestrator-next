@@ -33,6 +33,7 @@ import {
   useCreateAnnotationLayerMutation,
   useCreateIntensityLayerMutation,
   useCreateLabelLayerMutation,
+  useCreateVectorLayerMutation,
   useCreateMeshLayerMutation,
   useCreateNetworkLayerMutation,
   useCreatePointLayerMutation,
@@ -366,11 +367,13 @@ const LensLayerForm = (props: {
   const [createRgb] = useCreateRgbLayerMutation();
   const [createVolume] = useCreateVolumeLayerMutation();
   const [createLabel] = useCreateLabelLayerMutation();
+  const [createVector] = useCreateVectorLayerMutation();
 
   const submitIntensity = useGraphQLDialog(createIntensity, DIALOG_OPTIONS);
   const submitRgb = useGraphQLDialog(createRgb, DIALOG_OPTIONS);
   const submitVolume = useGraphQLDialog(createVolume, DIALOG_OPTIONS);
   const submitLabel = useGraphQLDialog(createLabel, DIALOG_OPTIONS);
+  const submitVector = useGraphQLDialog(createVector, DIALOG_OPTIONS);
 
   const form = useForm({
     defaultValues: { mode: ProjectionMode.Mip as string },
@@ -390,6 +393,11 @@ const LensLayerForm = (props: {
         });
       case "LABEL":
         return submitLabel({ variables: { input: base }, ...REFETCH_SCENE });
+      case "VECTOR":
+        // Which axis carries the components is not asked: the server derives it
+        // from the lens' DISPLACEMENT axis, the way point coordinates come from
+        // the table's declared roles.
+        return submitVector({ variables: { input: base }, ...REFETCH_SCENE });
     }
   });
 

@@ -460,6 +460,33 @@ fragment SceneLayer on Layer {
       ...PhasorRender
     }
   }
+  # The sixth lens-backed kind, and the fourth fixed-shape recipe: a DISPLACEMENT
+  # value axis read as geometry (glyphs), not composited as channels. `vectorAxis`
+  # is DERIVED server-side from the axis types — never stored, never sent — and its
+  # description fixes the component ORDER: position i displaces along the i-th
+  # spatial axis in array order, so the last component displaces along x.
+  ... on VectorLayer {
+    lens {
+      ...SceneLens
+    }
+    vectorAxis
+    glyph
+    glyphStride
+    # Scene units per unit of magnitude; null auto-normalizes. A world-space
+    # length, so meaningful only from SIMILARITY up (placementInvariance below).
+    glyphScale
+    # Aliased for IntensityLayer's reason: `ColorMap!` here, nullable on
+    # Point/Track — same response key, different nullability, GraphQL rejects
+    # the merge.
+    vectorColormap: colormap
+    color
+    # MAGNITUDE window, not an intensity window: a vector length in the
+    # component axis's unit. The columns are shared with intensity; the meaning
+    # is not.
+    climMin
+    climMax
+    placementInvariance
+  }
   # Shares ImageLayer's source (a Lens over an array) and none of its render
   # settings: clim, gamma, colormaps and projections are all meaningless over
   # object ids. `labelRender` carries what replaces them. `levelPaths` is

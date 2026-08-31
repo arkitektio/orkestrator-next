@@ -8,6 +8,7 @@ import { MeshLayerCard } from "../../features/meshes/MeshLayerCard";
 import { NetworkLayerCard } from "../../features/network/NetworkLayerCard";
 import { PointLayerCard } from "../../features/points/PointLayerCard";
 import { TrackLayerCard } from "../../features/tracks/TrackLayerCard";
+import { VectorLayerCard } from "../../features/vectors/VectorLayerCard";
 import { FixedShapeLayerCard } from "./FixedShapeLayerCard";
 import { ImageLayerCard } from "./ImageLayerCard";
 import type { LayerCardProps } from "./cardShell";
@@ -88,6 +89,10 @@ export const LAYER_CARDS: LayerCardRegistry = {
   // Its own block after the table-backed kinds: a network is read alongside a
   // picture but is neither a mask nor a trajectory, and a scene grows it last.
   NetworkLayer: { source: "fragment", rank: 6, Card: NetworkLayerCard },
+  // Off `sceneLayers`, not `layers`: lens-backed but never normalized — it
+  // skips the brick path (see layerGuards' carve-out), so the raw fragment is
+  // what its renderer reads too.
+  VectorLayer: { source: "fragment", rank: 2, Card: VectorLayerCard },
 };
 
 /**

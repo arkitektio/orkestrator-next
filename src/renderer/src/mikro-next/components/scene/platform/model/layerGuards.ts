@@ -61,6 +61,26 @@ export const isPhasorLayer = (
 ): layer is PhasorLayerFragment => layer.__typename === "PhasorLayer";
 
 /**
+ * The sixth lens-backed kind — and deliberately NOT a brick layer, which makes
+ * it the first member of a new category this file must name rather than imply.
+ *
+ * A vector layer is a Lens over an array exactly as the five brick kinds are,
+ * but it does not ride the brick engine: the brick path samples a resident
+ * atlas and emits COLOUR, where a vector layer reads a strided region once and
+ * emits GEOMETRY (instanced glyphs). Sending it through `zarrSources` /
+ * `lodPlanning` would open stores the octree planner then plans raster bricks
+ * for, and nothing would ever draw them.
+ */
+export type VectorLayerFragment = Extract<
+  SceneLayerFragment,
+  { __typename: "VectorLayer" }
+>;
+
+export const isVectorLayer = (
+  layer: SceneLayerFragment,
+): layer is VectorLayerFragment => layer.__typename === "VectorLayer";
+
+/**
  * Layers backed by a BRICK POOL: every layer that is a Lens over an array.
  *
  * This — not `isImageLayer` — is the guard the data path wants. All five of
@@ -119,13 +139,26 @@ type LensBackedTypename = Extract<
   { lens: unknown }
 >["__typename"];
 
+/**
+ * Lens-backed typenames EXCLUDED from the brick path, each by name and with
+ * its reason — a TYPED carve-out, never an omission. A typename listed here is
+ * this file asserting "this layer has a lens and its renderer owns its own
+ * data path"; a typename in neither place is still the error below.
+ *
+ * - `VectorLayer`: emits geometry, not samples — see `isVectorLayer` above.
+ *   Its renderer (`features/vectors/VectorsLayer.tsx`) opens its own store and
+ *   does one strided CPU read; there is no atlas residency to plan.
+ */
+type NonBrickLensTypename = "VectorLayer";
+
 type MissingFromBrickLayers = Exclude<
   LensBackedTypename,
-  BrickLayerFragment["__typename"]
+  BrickLayerFragment["__typename"] | NonBrickLensTypename
 >;
 
-// If this errors, the named typename has a `lens` but is not in
-// `BrickLayerFragment` / `isBrickLayer`. Add it to both.
+// If this errors, the named typename has a `lens` but is in neither
+// `BrickLayerFragment` / `isBrickLayer` nor the named `NonBrickLensTypename`
+// carve-out. Add it to one of them — deliberately, with a reason.
 const _assertEveryLensLayerIsABrickLayer: MissingFromBrickLayers extends never
   ? true
   : never = true;

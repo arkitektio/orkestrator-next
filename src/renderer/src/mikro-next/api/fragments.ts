@@ -36,7 +36,8 @@
       "PhasorLayer",
       "PointLayer",
       "RgbLayer",
-      "TrackLayer"
+      "TrackLayer",
+      "VectorLayer"
     ],
     "LayerRenderNode": [
       "BlendNode",
@@ -150,6 +151,7 @@
       "UnmappableTransformation",
       "User",
       "ValueHistogram",
+      "VectorLayer",
       "ZarrStore"
     ]
   }

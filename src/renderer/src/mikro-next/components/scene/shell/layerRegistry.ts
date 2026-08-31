@@ -8,6 +8,7 @@ import { LabelPlaneLayer, LabelVolumeLayer } from "../features/labels/LabelPlane
 import { TrackLayerRenderer } from "../features/tracks/TracksLayer";
 import { PointLayerRenderer } from "../features/points/PointsLayer";
 import { NetworkCollectionLayer } from "../features/network/NetworkCollectionLayer";
+import { VectorLayerRenderer } from "../features/vectors/VectorsLayer";
 
 export type LayerRendererProps = { layerId: string };
 
@@ -46,4 +47,7 @@ export const LAYER_RENDERERS: Record<SceneLayerFragment["__typename"], LayerRend
   // rather than GL lines — the only way a width in scene units means anything,
   // since `lineWidth > 1` on a line primitive has been a no-op for years.
   NetworkLayer: { Layer2D: NetworkCollectionLayer, Layer3D: NetworkCollectionLayer },
+  // Lens-backed but NOT on the brick path (the layerGuards carve-out): one
+  // strided CPU read into instanced glyphs, one component for both modes.
+  VectorLayer: { Layer2D: VectorLayerRenderer, Layer3D: VectorLayerRenderer },
 };

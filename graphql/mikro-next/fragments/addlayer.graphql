@@ -30,6 +30,7 @@ fragment AddLayerCandidate on Resident {
       y
       z
       intensity
+      vector
     }
     dataset {
       id

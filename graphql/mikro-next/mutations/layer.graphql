@@ -156,3 +156,20 @@ mutation UpdatePhasorLayer($input: UpdatePhasorLayerInput!) {
     ...SceneLayer
   }
 }
+
+# Creates a vector layer over a vector-valued lens. Which axis carries the
+# components is NOT here: it is the lens' DISPLACEMENT axis, derived server-side
+# (`vectorAxis`), and a per-layer copy could disagree with the axes themselves.
+mutation CreateVectorLayer($input: CreateVectorLayerInput!) {
+  createVectorLayer(input: $input) {
+    ...SceneLayer
+  }
+}
+
+# Retunes a vector layer's display choices: the glyph, the sampling stride, the
+# magnitude scale and the magnitude colormap window.
+mutation UpdateVectorLayer($input: UpdateVectorLayerInput!) {
+  updateVectorLayer(input: $input) {
+    ...SceneLayer
+  }
+}

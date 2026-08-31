@@ -284,6 +284,9 @@ export const readColumnValues = async (
   access: { store: ParquetStoreLike; keyColumn: string },
   column: string,
 ): Promise<ColumnValues | null> => {
+  // An engine without the typed path (a minimal injected stand-in) cannot
+  // answer columnwise — null is the contract for that, not a TypeError.
+  if (typeof engine.readColumnsTyped !== "function") return null;
   const key = escapeSqlIdentifier(access.keyColumn);
   const value = escapeSqlIdentifier(column);
   const read = await engine.readColumnsTyped(

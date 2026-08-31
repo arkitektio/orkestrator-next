@@ -6,6 +6,11 @@ import {
   GOLDEN_RATIO_CONJUGATE,
   INSTANCE_COLORMAP_SPECS,
 } from "../../platform/gpu/instanceColormaps";
+import {
+  disposeMeasurePalette,
+  identityPaletteTexture,
+  setMeasurePalette,
+} from "../../platform/gpu/measurePalette";
 
 // Same escape hatch as `brickNodeMaterials.ts` and `pointsMaterial.ts`: three's
 // TSL TypeScript surface lags the runtime API (node method chaining is typed
@@ -153,17 +158,6 @@ export const createNetworkUniforms = (): NetworkUniforms => {
   };
 };
 
-/** A 1x1 white palette, bound from the start so a real row is a texture swap
- *  and never a recompile — `pointsMaterial.ts`'s move. */
-const identityPalette = (): THREE.DataTexture => {
-  const tex = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1, THREE.RGBAFormat);
-  tex.magFilter = THREE.LinearFilter;
-  tex.minFilter = THREE.LinearFilter;
-  tex.generateMipmaps = false;
-  tex.needsUpdate = true;
-  return tex;
-};
-
 export type NetworkGpuBundle = {
   capacity: { nodes: number; edges: number };
   /** `capacity.nodes * 3` floats; write `.array`, flip `needsUpdate`. */
@@ -247,7 +241,7 @@ export function createNetworkGpuBundle(
 
   // One shared texture NODE, three programs: swapping `.value` re-binds, it
   // does not recompile.
-  const paletteIdentity = identityPalette();
+  const paletteIdentity = identityPaletteTexture();
   const paletteNode = texture(paletteIdentity);
 
   /** A node's drawn half-width: its stored radius, or the layer's flat width
@@ -535,11 +529,7 @@ export function createNetworkGpuBundle(
     segments,
     nodeGlyphs,
     arrowGlyphs,
-    setPalette: (row) => {
-      const previous = paletteNode.value as THREE.Texture;
-      paletteNode.value = row ?? paletteIdentity;
-      if (previous !== paletteIdentity && previous !== paletteNode.value) previous.dispose();
-    },
+    setPalette: (row) => setMeasurePalette(paletteNode, paletteIdentity, row),
     setCounts: (nodes, edgeCount) => {
       geometries[0].instanceCount = edgeCount;
       geometries[1].instanceCount = nodes;
@@ -557,9 +547,7 @@ export function createNetworkGpuBundle(
       segmentMaterial.dispose();
       glyphMaterial.dispose();
       arrowMaterial.dispose();
-      const bound = paletteNode.value as THREE.Texture;
-      if (bound !== paletteIdentity) bound.dispose();
-      paletteIdentity.dispose();
+      disposeMeasurePalette(paletteNode, paletteIdentity);
     },
   };
 }

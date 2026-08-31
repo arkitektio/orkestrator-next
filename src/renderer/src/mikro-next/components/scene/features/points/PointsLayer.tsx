@@ -17,7 +17,7 @@ import { useThree } from "@react-three/fiber";
 import { useDatalayerEndpoint, useMikro } from "@/app/Arkitekt";
 import { useAttributeServiceOrNull } from "@/mikro-next/lib/attributes/AttributeServiceProvider";
 import { loadSparseSource } from "@/mikro-next/lib/sparse/sparseSource";
-import { readColumnByObjectIdCached } from "../../platform/attributes/columnValueCache";
+import { readColumnByObjectIdBatchedCached } from "../../platform/attributes/columnValueCache";
 import { accessForTable } from "../../platform/attributes/columnLut";
 import { paletteRowFor, DEFAULT_MEASURE_COLORMAP } from "../../platform/attributes/valueLut";
 import { isColumnColorBy } from "../../platform/layerui/columnOptions";
@@ -38,6 +38,8 @@ import {
   type PointCull,
   type PointScatter,
 } from "./pointsCompute";
+import { fillPointFilterMask } from "./pointsFilterMask";
+import type { ColumnLutEntryFilterBy } from "../../platform/attributes/columnLut";
 import { loadPointGeometry, scatterPointValues, type PointGeometry } from "./pointsSource";
 import { valueWindowOf } from "../../platform/attributes/valueWindow";
 
@@ -81,6 +83,8 @@ const PointCloud = ({ layer }: { layer: PointLayerView }) => {
     opacity?: number | null;
     activeColorBy?: number | null;
     colorBys?: readonly Record<string, unknown>[] | null;
+    activeFilterBys?: readonly number[] | null;
+    filterBys?: readonly Record<string, unknown>[] | null;
     asAffine?: { matrix: number[][]; inputAxes: string[]; outputAxes: string[] } | null;
     placementInvariance?: string | null;
   };
@@ -119,6 +123,14 @@ const PointCloud = ({ layer }: { layer: PointLayerView }) => {
     if (index == null) return null;
     return (entity.colorBys?.[index] ?? null) as never;
   }, [entity.activeColorBy, entity.colorBys]);
+
+  const activeRules = useMemo(
+    () =>
+      (entity.activeFilterBys ?? [])
+        .map((index) => entity.filterBys?.[index] as ColumnLutEntryFilterBy | undefined)
+        .filter((rule): rule is ColumnLutEntryFilterBy => Boolean(rule)),
+    [entity.activeFilterBys, entity.filterBys],
+  );
 
   // ------------------------------------------------------------------ positions
   // Read ONCE per table. Positions do not change with a colouring, and re-reading them on every
@@ -171,10 +183,13 @@ const PointCloud = ({ layer }: { layer: PointLayerView }) => {
       geometry.stride,
       geometry.times ? new StorageInstancedBufferAttribute(geometry.times, 1) : null,
     );
-    const made = createPointMaterial(geometry.positions, new Float32Array(geometry.count), geometry.stride, {
-      attribute: culling.visible,
-      count: geometry.count,
-    });
+    const made = createPointMaterial(
+      geometry.positions,
+      new Float32Array(geometry.count),
+      geometry.stride,
+      { attribute: culling.visible, count: geometry.count },
+      culling.mask,
+    );
     // Capacity is the point count: the worst slice a dataset can produce mentions every object,
     // and a buffer sized for the common case would refuse exactly the dense genes.
     const scattering = createScatterPass(made.values, geometry.count, geometry.count);
@@ -231,7 +246,7 @@ const PointCloud = ({ layer }: { layer: PointLayerView }) => {
             ? { store: entity.tableDataset.store as never, keyColumn: entity.idColumn as string }
             : accessForTable([], (colorBy as { table: string }).table, { kind: "mesh" });
         if (!access) return;
-        byId = await readColumnByObjectIdCached(engine, access, (colorBy as { column: string }).column);
+        byId = await readColumnByObjectIdBatchedCached(engine, access, (colorBy as { column: string }).column);
       } else if (datalayer) {
         const sparse = await loadSparseSource(client, datalayer, (colorBy as { dataset: string }).dataset);
         const read = await sparse.read(
@@ -292,9 +307,7 @@ const PointCloud = ({ layer }: { layer: PointLayerView }) => {
     const colormap = ((colorBy as { colormap?: string } | null)?.colormap ??
       entity.colormap ??
       DEFAULT_MEASURE_COLORMAP) as never;
-    const row = paletteRowFor(colormap);
-    const handle = current.material as unknown as { userData: Record<string, unknown> };
-    handle.userData.palette = row;
+    current.setPalette(paletteRowFor(colormap));
     current.nodes.uClimMin.value =
       (colorBy as { min?: number | null } | null)?.min ?? Number.NEGATIVE_INFINITY;
     current.nodes.uClimMax.value =
@@ -319,6 +332,99 @@ const PointCloud = ({ layer }: { layer: PointLayerView }) => {
     culling.bounds.max.value = new THREE.Vector3(Infinity, Infinity, Infinity);
     void renderer.computeAsync(culling.node as never).then(() => invalidate());
   }, [renderer, invalidate]);
+
+  // ------------------------------------------------------------------ filters
+  // The stored `filterBys`, applied at last: resolved to a per-point uint mask
+  // (`pointsFilterMask.ts`) the cull pass ANDs into its predicate. A rule
+  // change is one O(N) CPU refill, a buffer update and one cull dispatch — no
+  // geometry rebuild, no re-scatter; the columns ride the same batched cache
+  // the colouring reads through. A CONTENT key, for the reason `dataKey` is.
+  const filterKey = useMemo(() => JSON.stringify(activeRules), [activeRules]);
+
+  useEffect(() => {
+    const culling = cullRef.current;
+    if (!geometry || !culling) return;
+    const mask = culling.mask.array as Uint32Array;
+    if (activeRules.length === 0) {
+      mask.fill(1);
+      culling.mask.needsUpdate = true;
+      runCull();
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const notApplied: string[] = [];
+      const ruleValues = await Promise.all(
+        activeRules.map(async (rule): Promise<Map<number, unknown> | null> => {
+          // A SPARSE rule reads one slice of a matrix — no SQL in that path.
+          if (rule.dataset != null) {
+            if (!datalayer) {
+              notApplied.push(`rule over matrix ${rule.dataset}: no datalayer connection`);
+              return null;
+            }
+            try {
+              const source = await loadSparseSource(client, datalayer, rule.dataset);
+              const read = await source.read(
+                source.source,
+                (rule.at ?? []).map((position) => ({ axis: position.axis, value: position.value })),
+              );
+              return read.values as Map<number, unknown>;
+            } catch (error) {
+              notApplied.push(
+                `rule over matrix ${rule.dataset}: ${error instanceof Error ? error.message : String(error)}`,
+              );
+              return null;
+            }
+          }
+          // A point layer's objects ARE rows of its own table — the same
+          // direct access the colouring takes, and the same limitation: a
+          // rule over another table or through a join has no plan to reach it.
+          const engine = service?.engine;
+          if (
+            !engine ||
+            !rule.column ||
+            rule.table !== entity.tableDataset.id ||
+            (rule.joinPath?.length ?? 0) > 0
+          ) {
+            notApplied.push(
+              `rule over ${rule.column ?? "?"}: only this table's own columns are readable here`,
+            );
+            return null;
+          }
+          try {
+            return await readColumnByObjectIdBatchedCached(
+              engine,
+              { store: entity.tableDataset.store as never, keyColumn: entity.idColumn as string },
+              rule.column,
+            );
+          } catch (error) {
+            notApplied.push(
+              `rule over ${rule.column}: ${error instanceof Error ? error.message : String(error)}`,
+            );
+            return null;
+          }
+        }),
+      );
+      // The cancel check comes BEFORE the mask write: a superseded build must
+      // not overwrite the bytes the live dispatch reads.
+      if (cancelled) return;
+      if (notApplied.length > 0) {
+        console.warn("[points] rules that do not apply yet:", notApplied);
+      }
+      fillPointFilterMask(mask, geometry.count, activeRules, ruleValues, geometry.slotOf);
+      culling.mask.needsUpdate = true;
+      runCull();
+      invalidate();
+    })().catch((error: unknown) => {
+      if (!cancelled) console.warn("[points] could not resolve the filters:", error);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // `activeRules` is read inside; `filterKey` decides re-runs. `client` and
+    // `datalayer` are infrastructure, per the colouring effect's note.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [service, geometry, bundle, filterKey, runCull, invalidate]);
 
   // Re-run when the view moves, not every frame: the survivor list is only wrong once the
   // camera has actually changed what is on screen, and a dispatch per frame would spend more

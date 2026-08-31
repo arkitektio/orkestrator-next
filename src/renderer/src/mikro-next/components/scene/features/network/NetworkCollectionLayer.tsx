@@ -27,11 +27,15 @@ import { openNetworkCollection } from "./konnektion/konnektionSource";
 import { KonnektionCollectionManager } from "./konnektionManager";
 import {
   buildNetworkStyling,
+  composeNetworkAppearance,
   identityNetworkStyling,
+  networkAppearanceKeyOf,
+  networkDataKeyOf,
   type NetworkPickerColorBy,
   type NetworkPickerFilterBy,
   type NodeTableFetcher,
 } from "./networkStyling";
+import type { NetworkValueAppearance } from "./konnektionManager";
 import { useNetworkStoreApi } from "./store/networkSlice";
 
 /**
@@ -264,18 +268,37 @@ const NetworkCollectionGroup = ({
     [layer.activeFilterBys, layer.filterBys],
   );
   const systemId = collection.coordinateSystem?.id ?? null;
-  // A CONTENT key, for the reason the mesh layer's `lutKey` gives: the fold
+  // CONTENT keys, for the reason the mesh layer's `lutKey` gives: the fold
   // after a picker mutation writes arrays back into an immer draft, and
-  // identity is structural sharing's call, not ours.
-  const stylingKey = useMemo(
-    () => JSON.stringify([activeColorBy, activeRules]),
+  // identity is structural sharing's call, not ours. TWO of them, because the
+  // costs differ by orders of magnitude: the DATA key re-runs the whole
+  // build and re-packs every resident cell, the APPEARANCE key is two
+  // uniform writes and a palette refill (`networkStyling.ts` says what goes
+  // where and why the colormap's qualitative CLASS is data).
+  const dataKey = useMemo(
+    () => networkDataKeyOf(activeColorBy, activeRules),
     [activeColorBy, activeRules],
   );
+  const appearanceKey = useMemo(() => networkAppearanceKeyOf(activeColorBy), [activeColorBy]);
+
+  /** What the last completed build derived, so an appearance edit can be
+   *  recomposed without it. `dataKey` stamps which build it belongs to — the
+   *  appearance effect must never recompose over a stale data half. */
+  const resolvedStylingRef = useRef<{
+    dataKey: string;
+    appearance: NetworkValueAppearance;
+    qualitative: boolean;
+  } | null>(null);
 
   useEffect(() => {
     if (!manager || !opened) return;
     if (!activeColorBy && activeRules.length === 0) {
       const identity = identityNetworkStyling();
+      resolvedStylingRef.current = {
+        dataKey,
+        appearance: identity.appearance,
+        qualitative: false,
+      };
       manager.setStyling(identity.styling);
       manager.setValueAppearance(identity.appearance);
       return;
@@ -313,6 +336,11 @@ const NetworkCollectionGroup = ({
       if (resolved.skipped.length > 0) {
         console.warn("[konnektion] picker entries that do not render yet:", resolved.skipped);
       }
+      resolvedStylingRef.current = {
+        dataKey,
+        appearance: resolved.appearance,
+        qualitative: resolved.qualitative,
+      };
       manager.setStyling(resolved.styling);
       manager.setValueAppearance(resolved.appearance);
       invalidate();
@@ -323,10 +351,28 @@ const NetworkCollectionGroup = ({
     return () => {
       cancelled = true;
     };
-    // `activeColorBy`/`activeRules` are read inside; `stylingKey` decides
-    // whether it re-runs — see the note on the key itself.
+    // `activeColorBy`/`activeRules` are read inside; `dataKey` decides
+    // whether it re-runs — see the note on the keys. An appearance-only edit
+    // must NOT land here: that is the whole point of the split.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [manager, opened, stylingKey, attributeService, systemId, datalayer, client, invalidate]);
+  }, [manager, opened, dataKey, attributeService, systemId, datalayer, client, invalidate]);
+
+  // The appearance half: colormap and clim edits recompose over the LAST
+  // COMPLETED build — two uniform writes and a palette refill, no rebuild, no
+  // re-pack. A stale stamp means the data effect is (re)running and will
+  // apply the fresh appearance itself when it lands.
+  useEffect(() => {
+    if (!manager) return;
+    const resolved = resolvedStylingRef.current;
+    if (!resolved || resolved.dataKey !== dataKey) return;
+    const next = composeNetworkAppearance(resolved.appearance, resolved.qualitative, activeColorBy);
+    if (next === resolved.appearance) return;
+    resolved.appearance = next;
+    manager.setValueAppearance(next);
+    invalidate();
+    // `activeColorBy` is read inside; `appearanceKey` decides re-runs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [manager, appearanceKey, dataKey, invalidate]);
 
   // Planning cadence: once the cell index is in, plan on mount and on every
   // camera SETTLE — never per camera tick.

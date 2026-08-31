@@ -34,7 +34,7 @@ import * as THREE from "three";
 import { ColorMap } from "@/mikro-next/api/graphql";
 import { buildColormapAtlas } from "../gpu/colormaps";
 import { qualitativePalette } from "../layerui/colormap-utils";
-import { classColorFor } from "./columnLut";
+import { classColorFor, looksNumeric } from "./columnLut";
 import {
   absentValueOf,
   LUT_WIDTH,
@@ -295,10 +295,18 @@ export const paintValueLut = ({
 
   // ------------------------------------------------------------------ value
   if (colorBy && colorValues) {
+    // Branch on the ENTRY where it says anything — a named colormap is
+    // authoritative (the server enforces which sort a column admits). An entry
+    // naming NO colormap is the one case the entry cannot answer, and there
+    // the values are the only signal there is — the RGBA painter's rule
+    // (`paintColumnLut`), which this table must not drift from.
     const named = colorBy.colormap ?? null;
-    const palette = named !== null ? qualitativePalette(named) : null;
+    const qualitative =
+      named !== null
+        ? qualitativePalette(named) !== null
+        : !looksNumeric(columnsOf(colorValues).values as unknown as Iterable<unknown>);
 
-    if (palette !== null) {
+    if (qualitative) {
       // Categorical: the code IS the rank, normalised onto the same 0..1 the
       // measure path uses, so the shader keeps exactly one path and the
       // difference lives entirely in what the palette row holds.

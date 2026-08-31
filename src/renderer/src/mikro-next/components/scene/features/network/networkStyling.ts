@@ -49,9 +49,10 @@ import {
   looksNumeric,
   type ColumnLutEntryFilterBy,
 } from "../../platform/attributes/columnLut";
+import { entryAppearanceKeyOf, entryDataKeyOf } from "../../platform/attributes/entryKeys";
 import {
   readColumnByCompositeKeyCached,
-  readColumnByObjectIdCached,
+  readColumnByObjectIdBatchedCached,
 } from "../../platform/attributes/columnValueCache";
 import { DEFAULT_MEASURE_COLORMAP, paletteRowFor } from "../../platform/attributes/valueLut";
 import { qualitativePalette } from "../../platform/layerui/colormap-utils";
@@ -153,8 +154,57 @@ export const nodeTableKeyColumns = (
 export type NetworkStylingResult = {
   styling: NetworkStyling;
   appearance: NetworkValueAppearance;
+  /** True when the colouring resolved through the RANK branch (qualitative
+   *  palette, or non-numeric values): the packed values are ranks and the
+   *  clims are pinned 0..256, so an appearance recompose must keep that
+   *  window rather than the entry's. */
+  qualitative: boolean;
   /** Entries that do not render, each with why — badged, never silently applied. */
   skipped: string[];
+};
+
+/**
+ * The DATA/APPEARANCE key split, shared across layer kinds — see
+ * `platform/attributes/entryKeys.ts` for what goes where and why the
+ * colormap's qualitative CLASS is data. A change of the data key is a rebuild
+ * + re-pack; a change of only the appearance key is two uniform writes and a
+ * palette refill (`composeNetworkAppearance`).
+ */
+export const networkDataKeyOf = (
+  colorBy: NetworkPickerColorBy | null,
+  rules: readonly NetworkPickerFilterBy[],
+): string => entryDataKeyOf(colorBy, rules);
+
+/** The APPEARANCE key: the fields a recompose alone can honour. */
+export const networkAppearanceKeyOf = (colorBy: NetworkPickerColorBy | null): string =>
+  entryAppearanceKeyOf(colorBy);
+
+/**
+ * Re-derive the appearance for an appearance-only edit — the same palette and
+ * clim assembly the build's branches make, minus the build. `previous` keeps
+ * the data-derived facts (colorize, applyToGlyphs, valueSource); a
+ * non-colorizing appearance (identity, or a skipped colouring) has nothing to
+ * recompose and comes back unchanged.
+ */
+export const composeNetworkAppearance = (
+  previous: NetworkValueAppearance,
+  qualitative: boolean,
+  colorBy: NetworkPickerColorBy | null,
+): NetworkValueAppearance => {
+  if (!previous.colorize || !colorBy) return previous;
+  return qualitative
+    ? {
+        ...previous,
+        palette: paletteRowFor((colorBy.colormap ?? "HUES") as never),
+        climMin: 0,
+        climMax: 256,
+      }
+    : {
+        ...previous,
+        palette: paletteRowFor((colorBy.colormap ?? DEFAULT_MEASURE_COLORMAP) as never),
+        climMin: colorBy.min ?? null,
+        climMax: colorBy.max ?? null,
+      };
 };
 
 const isGraph = (entry: { kind?: string | null }): boolean => entry.kind === "GRAPH";
@@ -169,6 +219,7 @@ const isNodeTargeted = (entry: {
 
 const IDENTITY_RESULT: NetworkStylingResult = {
   styling: IDENTITY_STYLING,
+  qualitative: false,
   appearance: {
     palette: null,
     climMin: null,
@@ -239,6 +290,7 @@ export const buildNetworkStyling = async ({
 
   let valueAttribute: string | null = null;
   let appearance: NetworkValueAppearance = { ...IDENTITY_RESULT.appearance };
+  let qualitativeResult = false;
   if (colorBy && isGraph(colorBy)) {
     if (colorBy.attribute && vocabulary.includes(colorBy.attribute)) {
       valueAttribute = colorBy.attribute;
@@ -299,7 +351,9 @@ export const buildNetworkStyling = async ({
         plans,
         engine,
         want: { kind: "network" },
-        readColumn: readColumnByObjectIdCached,
+        // Batched: the colouring and every same-tick rule over one table
+        // share ONE multi-column SELECT (`columnReadBatch.ts`).
+        readColumn: readColumnByObjectIdBatchedCached,
       });
       skipped.push(...resolved.skipped);
 
@@ -353,6 +407,7 @@ export const buildNetworkStyling = async ({
         const qualitative =
           qualitativePalette((objectColorBy.colormap ?? "") as never) !== null ||
           !looksNumeric(colorValues.values());
+        qualitativeResult = qualitative;
         if (qualitative) {
           const ranks = new Map(
             [...new Set([...colorValues.values()].map((value) => String(value)))]
@@ -440,8 +495,29 @@ export const buildNetworkStyling = async ({
         return hit;
       };
 
+      /** One rekey per (table, column) within a build: the colouring and a
+       *  rule naming the same column share the cached READ already, and this
+       *  memo makes them share the objectId → ordinal walk too — which at a
+       *  million rows is the walk that shows up. */
+      const rekeyed = new Map<
+        string,
+        Promise<{ values: Map<string, unknown>; target: "NODE" | "EDGE" } | null>
+      >();
+
       /** Read one target entry's column, rekeyed objectId → ordinal. */
-      const resolveTarget = async (
+      const resolveTarget = (
+        entry: NetworkPickerColorBy,
+        what: string,
+      ): Promise<{ values: Map<string, unknown>; target: "NODE" | "EDGE" } | null> => {
+        const memoKey = `${entry.table}:${entry.column}`;
+        const hit = rekeyed.get(memoKey);
+        if (hit) return hit;
+        const promise = resolveTargetUncached(entry, what);
+        rekeyed.set(memoKey, promise);
+        return promise;
+      };
+
+      const resolveTargetUncached = async (
         entry: NetworkPickerColorBy,
         what: string,
       ): Promise<{ values: Map<string, unknown>; target: "NODE" | "EDGE" } | null> => {
@@ -492,6 +568,7 @@ export const buildNetworkStyling = async ({
           const qualitative =
             qualitativePalette((targetColorBy.colormap ?? "") as never) !== null ||
             !looksNumeric(resolved.values.values());
+          qualitativeResult = qualitative;
           const folded = new Map<string, number>();
           if (qualitative) {
             const ranks = new Map(
@@ -535,8 +612,16 @@ export const buildNetworkStyling = async ({
       // Rules: only keys a table MENTIONS can be hidden — a column rule never
       // tests what it has no row for, per node and per edge exactly as per
       // object. Across rules the union of rejections is the AND of keeps.
-      for (const rule of targetRules) {
-        const resolved = await resolveTarget(rule, "rule over");
+      // Resolved in PARALLEL: N rules over uncached columns used to be N
+      // serialized full-table scans. The engine still serializes SQL on its
+      // chain, but the detail fetches and cache lookups overlap, and the
+      // fold below stays in rule order.
+      const resolvedRules = await Promise.all(
+        targetRules.map((rule) => resolveTarget(rule, "rule over")),
+      );
+      for (let index = 0; index < targetRules.length; index += 1) {
+        const rule = targetRules[index];
+        const resolved = resolvedRules[index];
         if (!resolved) continue;
         const lutRule: ColumnLutEntryFilterBy = {
           table: rule.table,
@@ -569,6 +654,7 @@ export const buildNetworkStyling = async ({
       hiddenEdgeKeys,
     },
     appearance,
+    qualitative: qualitativeResult,
     skipped,
   };
 };

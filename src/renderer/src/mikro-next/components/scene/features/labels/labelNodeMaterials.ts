@@ -4,6 +4,7 @@ import * as TSLTyped from "three/tsl";
 
 import type { LayerBrickPool } from "../bricks/residency/brickResidency";
 import { GOLDEN_RATIO_CONJUGATE } from "../../platform/gpu/instanceColormaps";
+import { emitValueLutColor, identityValueLutTexture } from "../../platform/gpu/valueLutNodes";
 import {
   emitResolveBrickResidency,
   makeTraversalNodes,
@@ -35,7 +36,6 @@ const {
   If,
   Loop,
   bool,
-  clamp,
   float,
   floor,
   fract,
@@ -44,13 +44,10 @@ const {
   ivec3,
   length,
   max,
-  mix,
-  step,
   texture,
   textureLoad,
   uniform,
   uv,
-  vec2,
   vec3,
   vec4,
 } = TSL;
@@ -152,71 +149,9 @@ const createIdentityPalette = (): THREE.DataTexture => {
   return texture;
 };
 
-const createIdentityLut = (): THREE.DataTexture => {
-  const texture = new THREE.DataTexture(
-    // CODE_NO_VALUE = 65534 = 0xFFFE, little-endian: R = 0xFE, G = 0xFF.
-    new Uint8Array([0xfe, 0xff]),
-    1,
-    1,
-    THREE.RGFormat,
-  );
-  texture.magFilter = THREE.NearestFilter;
-  texture.minFilter = THREE.NearestFilter;
-  texture.generateMipmaps = false;
-  texture.needsUpdate = true;
-  return texture;
-};
-
-/**
- * Decode a value LUT texel into a colour, and say whether the fragment survives.
- *
- * The table holds a 16-bit code per slot, `code = G * 256 + R`, split across the
- * two bytes of an RG8 texel:
- *
- *     0 … 65533   a value, quantised over [uLutValueMin, uLutValueMax]
- *     65534       visible, no value  -> keep the hue hash
- *     65535       hidden
- *
- * The window is applied HERE rather than at build time, which is the whole point
- * of the encoding: `uLutClimMin`/`uLutClimMax` move without the table changing,
- * so dragging a contrast slider is a uniform write instead of a rebuild and a
- * multi-megabyte re-upload. See `valueLut.ts`.
- *
- * The float comparisons are exact — an RG8 texel decodes to `k/255` in f32 and
- * `round(x * 255)` recovers `k` exactly for those — and the half-unit
- * tolerances make them robust regardless.
- */
-const emitLutColor = (
-  lutTexel: any,
-  palette: any,
-  hashed: any,
-  // `any` for the same reason `emitHueColor` takes it: a TSL uniform node
-  // carries the whole operator surface at runtime, and `UniformNodeLike` only
-  // ever described the `.value` a setter writes.
-  uniforms: {
-    uLutColorize: any;
-    uLutValueMin: any;
-    uLutValueMax: any;
-    uLutClimMin: any;
-    uLutClimMax: any;
-  },
-): { code: any; rgb: any } => {
-  const code = lutTexel.g
-    .mul(255)
-    .round()
-    .mul(256)
-    .add(lutTexel.r.mul(255).round())
-    .toVar("lblCode");
-  // 1 while the code carries a value, 0 for the two sentinels — so a slot no
-  // read covered keeps its hash instead of decoding a sentinel as data.
-  const hasValue = step(code, float(65533.5));
-  const raw = mix(uniforms.uLutValueMin, uniforms.uLutValueMax, code.div(float(65533.0)));
-  const span = max(uniforms.uLutClimMax.sub(uniforms.uLutClimMin), float(1e-9));
-  const t = clamp(raw.sub(uniforms.uLutClimMin).div(span), 0.0, 1.0);
-  // A 256-entry row; the sample lands on a texel centre.
-  const mapped = palette.sample(vec2(t, 0.5)).rgb;
-  return { code, rgb: mix(hashed, mapped, uniforms.uLutColorize.mul(hasValue)) };
-};
+/** The shared RG8 decode — one implementation for masks and meshes; see
+ *  `platform/gpu/valueLutNodes.ts` for the contract it enforces. */
+const emitLutColor = emitValueLutColor;
 
 /**
  * The raw object id at a RESOLVED position, or −1 where nothing is resident.
@@ -353,7 +288,7 @@ export function createLabelPlaneNodeMaterial(
   const uLutClimMax = uniform(1, "float");
   const identityPalette = createIdentityPalette();
   const lutPalette = texture(identityPalette);
-  const identityLut = createIdentityLut();
+  const identityLut = identityValueLutTexture();
   const lut = texture(identityLut);
 
   const material = new NodeMaterial();
@@ -708,7 +643,7 @@ export function createLabelVolumeNodeMaterial(
   const uLutClimMax = uniform(1, "float");
   const identityPalette = createIdentityPalette();
   const lutPalette = texture(identityPalette);
-  const identityLut = createIdentityLut();
+  const identityLut = identityValueLutTexture();
   const lut = texture(identityLut);
 
   const material = new NodeMaterial();

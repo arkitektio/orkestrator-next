@@ -32,6 +32,14 @@
 import * as THREE from "three";
 import { MeshBasicNodeMaterial, StorageInstancedBufferAttribute } from "three/webgpu";
 import * as TSLTyped from "three/tsl";
+import {
+  createMeasureAppearance,
+  disposeMeasurePalette,
+  identityPaletteTexture,
+  measureRampColor,
+  setMeasurePalette,
+  type MeasureAppearanceNodes,
+} from "../../platform/gpu/measurePalette";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const TSL = TSLTyped as any;
@@ -39,7 +47,6 @@ const {
   Fn,
   abs,
   cameraProjectionMatrix,
-  clamp,
   cross,
   float,
   instanceIndex,
@@ -53,25 +60,19 @@ const {
   storage,
   texture,
   uniform,
-  vec2,
   vec3,
   vec4,
 } = TSL;
 
 export type VectorGlyphKind = "arrow" | "line" | "cone";
 
-export type VectorMaterialNodes = {
+export type VectorMaterialNodes = MeasureAppearanceNodes & {
   /** Drawn length per unit of magnitude, in the DATA's voxel units (the layer affine maps to world). */
   uGlyphScale: any;
   /** Radial width as a fraction of the drawn length. */
   uThickness: any;
   uOpacity: any;
-  /** 1 = palette over magnitude, 0 = the flat colour. */
-  uColorize: any;
   uFlatColor: any;
-  /** The magnitude window the palette maps, in the component axis's unit. */
-  uClimMin: any;
-  uClimMax: any;
 };
 
 export type VectorMaterialBundle = {
@@ -86,24 +87,9 @@ export type VectorMaterialBundle = {
   meshes: THREE.Mesh[];
   setGlyph: (glyph: VectorGlyphKind) => void;
   setCount: (count: number) => void;
-  setPalette: (row: THREE.Texture | null) => void;
+  setPalette: (row: THREE.DataTexture | null) => void;
   markUploaded: () => void;
   dispose: () => void;
-};
-
-/** A 1x1 white palette, bound from the start so a real one is a swap and not a recompile. */
-const identityPalette = (): THREE.DataTexture => {
-  const paletteTexture = new THREE.DataTexture(
-    new Uint8Array([255, 255, 255, 255]),
-    1,
-    1,
-    THREE.RGBAFormat,
-  );
-  paletteTexture.magFilter = THREE.LinearFilter;
-  paletteTexture.minFilter = THREE.LinearFilter;
-  paletteTexture.generateMipmaps = false;
-  paletteTexture.needsUpdate = true;
-  return paletteTexture;
 };
 
 /** A template geometry re-hosted as instanced, sans attributes nothing reads. */
@@ -128,13 +114,11 @@ export const createVectorMaterial = (capacity: number): VectorMaterialBundle => 
     uGlyphScale: uniform(1, "float"),
     uThickness: uniform(0.16, "float"),
     uOpacity: uniform(1, "float"),
-    uColorize: uniform(1, "float"),
     uFlatColor: uniform(new THREE.Color(1, 1, 1)),
-    uClimMin: uniform(0, "float"),
-    uClimMax: uniform(1, "float"),
+    ...createMeasureAppearance(1),
   };
 
-  const paletteIdentity = identityPalette();
+  const paletteIdentity = identityPaletteTexture();
   const paletteNode = texture(paletteIdentity);
 
   const positionsNode = storage(positions, "vec3", slots);
@@ -172,9 +156,7 @@ export const createVectorMaterial = (capacity: number): VectorMaterialBundle => 
 
   material.colorNode = Fn(() => {
     const len = vec3(vectorsNode.element(instanceIndex)).length();
-    const span = max(nodes.uClimMax.sub(nodes.uClimMin), float(1e-9));
-    const t = clamp(len.sub(nodes.uClimMin).div(span), 0.0, 1.0);
-    const mapped = paletteNode.sample(vec2(t, 0.5)).rgb;
+    const mapped = measureRampColor(len, nodes, paletteNode);
     const rgb = mix(vec3(nodes.uFlatColor), mapped, nodes.uColorize);
     // The network glyphs' cheap depth cue: the geometry normal is not rotated by
     // the per-instance basis, so this is approximate — and worth exactly what it
@@ -231,11 +213,7 @@ export const createVectorMaterial = (capacity: number): VectorMaterialBundle => 
       const bounded = Math.min(count, slots);
       for (const geometry of geometries) geometry.instanceCount = bounded;
     },
-    setPalette: (row) => {
-      const previous = paletteNode.value as THREE.Texture;
-      paletteNode.value = row ?? paletteIdentity;
-      if (previous !== paletteIdentity && previous !== paletteNode.value) previous.dispose();
-    },
+    setPalette: (row) => setMeasurePalette(paletteNode, paletteIdentity, row),
     markUploaded: () => {
       positions.needsUpdate = true;
       vectors.needsUpdate = true;
@@ -243,9 +221,7 @@ export const createVectorMaterial = (capacity: number): VectorMaterialBundle => 
     dispose: () => {
       for (const geometry of geometries) geometry.dispose();
       material.dispose();
-      const bound = paletteNode.value as THREE.Texture;
-      if (bound !== paletteIdentity) bound.dispose();
-      paletteIdentity.dispose();
+      disposeMeasurePalette(paletteNode, paletteIdentity);
     },
   };
 };

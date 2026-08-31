@@ -233,9 +233,9 @@ export const PointLayerCard = memo(
               size {layer.sizeColumn}
             </Badge>
           )}
-          {(layer.filterBys?.length ?? 0) > 0 && (
-            <Badge title="Filters are stored on this layer but are not applied by the renderer yet">
-              {layer.filterBys?.length} filter(s), not applied
+          {(layer.activeFilterBys?.length ?? 0) > 0 && (
+            <Badge title="Active rules combine with AND; a point is drawn when every one keeps it. Rules over this table's own columns and sparse slices apply; others are skipped and logged.">
+              {layer.activeFilterBys?.length} filter(s)
             </Badge>
           )}
         </div>

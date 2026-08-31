@@ -207,7 +207,7 @@ const VectorField = ({ layer }: { layer: VectorLayerFragment }) => {
     } else {
       const colormap = ((layer.vectorColormap as unknown as string) ??
         DEFAULT_MEASURE_COLORMAP) as never;
-      current.setPalette(paletteRowFor(colormap) as unknown as THREE.Texture);
+      current.setPalette(paletteRowFor(colormap));
       current.nodes.uColorize.value = 1;
     }
 

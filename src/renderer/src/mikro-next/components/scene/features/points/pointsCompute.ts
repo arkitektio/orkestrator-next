@@ -121,6 +121,9 @@ export type PointCull = {
    * keeps an untimed layer on exactly the path it was on before time existed.
    */
   time: { min: { value: number }; max: { value: number } };
+  /** One uint per point, 1 = visible — the `filterBys` mask
+   *  (`pointsFilterMask.ts`). Refill `.array`, flip `needsUpdate`, re-dispatch. */
+  mask: StorageBufferAttribute;
 };
 
 /**
@@ -150,6 +153,8 @@ export const createCullPass = (
 ): PointCull => {
   const indirect = new IndirectStorageBufferAttribute(new Uint32Array([VERTICES_PER_POINT, 0, 0, 0]), 4);
   const visible = new StorageBufferAttribute(new Uint32Array(pointCount), 1);
+  // Every point visible until a rule says otherwise — the filter identity.
+  const mask = new StorageBufferAttribute(new Uint32Array(pointCount).fill(1), 1);
 
   const boundsMin = uniform(TSL.vec3(-Infinity, -Infinity, -Infinity));
   const boundsMax = uniform(TSL.vec3(Infinity, Infinity, Infinity));
@@ -161,6 +166,7 @@ export const createCullPass = (
   const positionNode = storage(positions, stride === 3 ? "vec3" : "vec2", pointCount);
   const timeNode = times ? storage(times, "float", pointCount) : null;
   const visibleNode = storage(visible, "uint", pointCount);
+  const maskNode = storage(mask, "uint", pointCount);
   // `toAtomic()` is what makes the append safe: without it every invocation would read the same
   // cursor and the survivors would overwrite each other.
   const indirectNode = storage(indirect, "uint", 4).toAtomic();
@@ -187,6 +193,9 @@ export const createCullPass = (
       const time = timeNode.element(instanceIndex);
       inside = inside.and(time.greaterThanEqual(timeMin)).and(time.lessThanEqual(timeMax));
     }
+    // The `filterBys` mask, one storage read — the whole draw-side cost of a
+    // rule, because everything a rule drops never reaches the vertex stage.
+    inside = inside.and(maskNode.element(instanceIndex).notEqual(uint(0)));
     If(inside, () => {
       const slot = atomicAdd(indirectNode.element(uint(1)), uint(1));
       visibleNode.element(slot).assign(uint(instanceIndex));
@@ -199,5 +208,6 @@ export const createCullPass = (
     node: [reset, cull],
     bounds: { min: boundsMin, max: boundsMax },
     time: { min: timeMin, max: timeMax },
+    mask,
   };
 };

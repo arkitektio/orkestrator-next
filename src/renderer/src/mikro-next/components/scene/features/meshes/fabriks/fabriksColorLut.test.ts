@@ -6,8 +6,25 @@ import { describe, expect, it } from "vitest";
 import { ColorMap } from "@/mikro-next/api/graphql";
 import type { AttributePlanLike } from "@/mikro-next/lib/attributes/attributeTypes";
 import type { AttributeLookupEngine } from "@/mikro-next/lib/attributes/lookupEngine";
-import { accessForTable, buildColorLut, isDirectEntry } from "./fabriksColorLut";
+import {
+  accessForTable,
+  buildColorLut,
+  composeMeshLutAppearance,
+  isDirectEntry,
+  type ColorLutPaint,
+  type ColorLutRequest,
+} from "./fabriksColorLut";
+import { CODE_HIDDEN, CODE_NO_VALUE, VALUE_CODE_MAX } from "../../../platform/attributes/valueLut";
 import type { FabriksObjectEntry } from "./fabriksCatalogs";
+
+/** Build and paint in one step — what most assertions want. */
+const paintColorLut = async (request: ColorLutRequest) => {
+  const prepared = await buildColorLut(request);
+  return { ...prepared.paint(), skipped: prepared.skipped };
+};
+
+const codeAt = ({ arena }: Pick<ColorLutPaint, "arena">, ordinal: number): number =>
+  arena.lut.view[ordinal];
 
 const object = (objectId: number, ordinal: number): FabriksObjectEntry => ({
   objectId,
@@ -65,9 +82,7 @@ const fakeEngine = (byColumn: Record<string, Record<number, unknown>>) => {
   return { engine, reads };
 };
 
-const alphaAt = (data: Uint8Array, ordinal: number) => data[ordinal * 4 + 3];
-const rgbAt = (data: Uint8Array, ordinal: number) =>
-  [data[ordinal * 4], data[ordinal * 4 + 1], data[ordinal * 4 + 2]] as const;
+
 
 describe("accessForTable", () => {
   it("takes the store and key column off the MESH-sampled plan for that table", () => {
@@ -99,58 +114,69 @@ describe("isDirectEntry", () => {
 describe("buildColorLut", () => {
   const plans = [meshPlan("t1", "label_id")];
 
-  it("ramps a numeric column across the colormap and leaves everything visible", async () => {
+  it("quantises a numeric column over its own range and leaves everything visible", async () => {
     const { engine } = fakeEngine({ area: { 10: 0, 20: 5, 30: 10 } });
-    const lut = await buildColorLut({
+    const paint = await paintColorLut({
       objects: OBJECTS,
       colorBy: { table: "t1", column: "area", colormap: ColorMap.Viridis, joinPath: [] },
       filterBys: [],
       plans,
       engine,
     });
-    const data = lut.texture.image.data as Uint8Array;
-    expect(lut.skipped).toEqual([]);
-    // Ends of the ramp differ; every object stays opaque with no rule active.
-    expect(rgbAt(data, 0)).not.toEqual(rgbAt(data, 2));
-    expect([0, 1, 2].map((ordinal) => alphaAt(data, ordinal))).toEqual([255, 255, 255]);
+    expect(paint.skipped).toEqual([]);
+    // Codes run the data's own range; the window rides with them.
+    expect(codeAt(paint, 0)).toBe(0);
+    expect(codeAt(paint, 2)).toBe(VALUE_CODE_MAX);
+    expect(paint.window).toEqual({ valueMin: 0, valueMax: 10 });
+    expect(paint.qualitative).toBe(false);
+    // No rule active: no slot carries the HIDDEN sentinel.
+    expect([0, 1, 2].map((ordinal) => codeAt(paint, ordinal) === CODE_HIDDEN)).toEqual([
+      false,
+      false,
+      false,
+    ]);
   });
 
-  it("gives every object sharing a categorical value the same colour", async () => {
+  it("gives every object sharing a categorical value the same code", async () => {
     const { engine } = fakeEngine({ phenotype: { 10: "a", 20: "b", 30: "a" } });
-    const lut = await buildColorLut({
+    const paint = await paintColorLut({
       objects: OBJECTS,
       colorBy: { table: "t1", column: "phenotype", joinPath: [] },
       filterBys: [],
       plans,
       engine,
     });
-    const data = lut.texture.image.data as Uint8Array;
-    expect(rgbAt(data, 0)).toEqual(rgbAt(data, 2));
-    expect(rgbAt(data, 0)).not.toEqual(rgbAt(data, 1));
+    expect(paint.qualitative).toBe(true);
+    expect(codeAt(paint, 0)).toBe(codeAt(paint, 2));
+    expect(codeAt(paint, 0)).not.toBe(codeAt(paint, 1));
   });
 
   it("drops objects outside a bound, and inverts them under exclude", async () => {
     const values = { area: { 10: 1, 20: 5, 30: 9 } };
-    const keep = await buildColorLut({
+    const keep = await paintColorLut({
       objects: OBJECTS,
       colorBy: null,
       filterBys: [{ table: "t1", column: "area", min: 4, max: 6, exclude: false, joinPath: [] }],
       plans,
       engine: fakeEngine(values).engine,
     });
-    expect([0, 1, 2].map((o) => alphaAt(keep.texture.image.data as Uint8Array, o))).toEqual([
-      0, 255, 0,
+    expect([0, 1, 2].map((o) => codeAt(keep, o))).toEqual([
+      CODE_HIDDEN,
+      CODE_NO_VALUE,
+      CODE_HIDDEN,
     ]);
 
-    const drop = await buildColorLut({
+    const drop = await paintColorLut({
       objects: OBJECTS,
       colorBy: null,
       filterBys: [{ table: "t1", column: "area", min: 4, max: 6, exclude: true, joinPath: [] }],
       plans,
       engine: fakeEngine(values).engine,
     });
-    expect([0, 1, 2].map((o) => alphaAt(drop.texture.image.data as Uint8Array, o))).toEqual([
-      255, 0, 255,
+    expect([0, 1, 2].map((o) => codeAt(drop, o))).toEqual([
+      CODE_NO_VALUE,
+      CODE_HIDDEN,
+      CODE_NO_VALUE,
     ]);
   });
 
@@ -159,7 +185,7 @@ describe("buildColorLut", () => {
       area: { 10: 1, 20: 5, 30: 9 },
       phenotype: { 10: "a", 20: "a", 30: "b" },
     });
-    const lut = await buildColorLut({
+    const paint = await paintColorLut({
       objects: OBJECTS,
       colorBy: null,
       filterBys: [
@@ -170,48 +196,86 @@ describe("buildColorLut", () => {
       engine,
     });
     // Object 10 passes both, 20 passes both, 30 fails both — only 30 is dropped.
-    expect([0, 1, 2].map((o) => alphaAt(lut.texture.image.data as Uint8Array, o))).toEqual([
-      255, 255, 0,
-    ]);
+    expect([0, 1, 2].map((o) => codeAt(paint, o) === CODE_HIDDEN)).toEqual([false, false, true]);
   });
 
   it("keeps everything for a rule that states nothing", async () => {
     const { engine } = fakeEngine({ area: { 10: 1, 20: 5, 30: 9 } });
-    const lut = await buildColorLut({
+    const paint = await paintColorLut({
       objects: OBJECTS,
       colorBy: null,
       filterBys: [{ table: "t1", column: "area", exclude: false, joinPath: [] }],
       plans,
       engine,
     });
-    expect([0, 1, 2].map((o) => alphaAt(lut.texture.image.data as Uint8Array, o))).toEqual([
-      255, 255, 255,
+    expect([0, 1, 2].map((o) => codeAt(paint, o))).toEqual([
+      CODE_NO_VALUE,
+      CODE_NO_VALUE,
+      CODE_NO_VALUE,
     ]);
   });
 
-  it("re-reads nothing when only the colormap changes — the column values are cached", async () => {
+  it("a colormap change repaints nothing and re-reads nothing — it is appearance", async () => {
     const { engine, reads } = fakeEngine({ area: { 10: 0, 20: 5, 30: 10 } });
-    const request = (colormap: ColorMap) => ({
+    const request = (colormap: ColorMap): ColorLutRequest => ({
       objects: OBJECTS,
       colorBy: { table: "t1", column: "area", colormap, joinPath: [] },
       filterBys: [],
       plans,
       engine,
     });
-    const first = await buildColorLut(request(ColorMap.Viridis));
+    const first = await paintColorLut(request(ColorMap.Viridis));
     expect(reads).toHaveLength(1);
-    // A knob change is a REPAINT, not a rescan: same engine, same column, no
-    // second full-table SELECT.
-    const second = await buildColorLut(request(ColorMap.Inferno));
+    // Same class of colormap: identical codes (the whole point of the value
+    // encoding), no second full-table SELECT — the palette row alone differs.
+    const second = await paintColorLut(request(ColorMap.Inferno));
     expect(reads).toHaveLength(1);
-    expect(rgbAt(second.texture.image.data as Uint8Array, 0)).not.toEqual(
-      rgbAt(first.texture.image.data as Uint8Array, 0),
-    );
+    expect([...second.arena.lut.view]).toEqual([...first.arena.lut.view]);
+    const a = composeMeshLutAppearance({ table: "t1", column: "area", colormap: ColorMap.Viridis }, first);
+    const b = composeMeshLutAppearance({ table: "t1", column: "area", colormap: ColorMap.Inferno }, second);
+    expect(a.palette!.image.data).not.toEqual(b.palette!.image.data);
+  });
+
+  it("crossing to a qualitative colormap re-ranks the codes but still re-reads nothing", async () => {
+    const { engine, reads } = fakeEngine({ area: { 10: 0, 20: 5, 30: 10 } });
+    const measure = await paintColorLut({
+      objects: OBJECTS,
+      colorBy: { table: "t1", column: "area", colormap: ColorMap.Viridis, joinPath: [] },
+      filterBys: [],
+      plans,
+      engine,
+    });
+    const ranked = await paintColorLut({
+      objects: OBJECTS,
+      colorBy: { table: "t1", column: "area", colormap: ColorMap.Hues, joinPath: [] },
+      filterBys: [],
+      plans,
+      engine,
+    });
+    expect(reads).toHaveLength(1);
+    expect(measure.qualitative).toBe(false);
+    expect(ranked.qualitative).toBe(true);
+    expect([...ranked.arena.lut.view]).not.toEqual([...measure.arena.lut.view]);
+  });
+
+  it("reuses the arena across paints of the same size — the texture object survives", async () => {
+    const { engine } = fakeEngine({ area: { 10: 0, 20: 5, 30: 10 } });
+    const request: ColorLutRequest = {
+      objects: OBJECTS,
+      colorBy: { table: "t1", column: "area", colormap: ColorMap.Viridis, joinPath: [] },
+      filterBys: [],
+      plans,
+      engine,
+    };
+    const first = (await buildColorLut(request)).paint();
+    const second = (await buildColorLut(request)).paint(first.arena);
+    expect(second.arena).toBe(first.arena);
+    expect(second.arena.texture).toBe(first.arena.texture);
   });
 
   it("skips a joined entry rather than guessing its join, and reads nothing for it", async () => {
     const { engine, reads } = fakeEngine({ area: { 10: 1 } });
-    const lut = await buildColorLut({
+    const paint = await paintColorLut({
       objects: OBJECTS,
       colorBy: {
         table: "t2",
@@ -223,15 +287,15 @@ describe("buildColorLut", () => {
       engine,
     });
     expect(reads).toEqual([]);
-    expect(lut.skipped).toHaveLength(1);
-    expect(lut.skipped[0]).toContain("join");
-    // Untouched is white and opaque — exactly today's rendering.
-    expect(rgbAt(lut.texture.image.data as Uint8Array, 0)).toEqual([255, 255, 255]);
+    expect(paint.skipped).toHaveLength(1);
+    expect(paint.skipped[0]).toContain("join");
+    // Untouched is "visible, no value" — exactly today's rendering.
+    expect(codeAt(paint, 0)).toBe(CODE_NO_VALUE);
   });
 
   it("skips an entry whose table no plan reaches", async () => {
     const { engine } = fakeEngine({ area: { 10: 1 } });
-    const lut = await buildColorLut({
+    const paint = await paintColorLut({
       objects: OBJECTS,
       colorBy: null,
       filterBys: [{ table: "nope", column: "area", min: 0, exclude: false, joinPath: [] }],
@@ -240,22 +304,55 @@ describe("buildColorLut", () => {
     });
     // An unreadable rule applies to NOTHING: blanking the layer because a read
     // failed is the worst possible reading of "filter".
-    expect([0, 1, 2].map((o) => alphaAt(lut.texture.image.data as Uint8Array, o))).toEqual([
-      255, 255, 255,
+    expect([0, 1, 2].map((o) => codeAt(paint, o))).toEqual([
+      CODE_NO_VALUE,
+      CODE_NO_VALUE,
+      CODE_NO_VALUE,
     ]);
-    expect(lut.skipped[0]).toContain("no attribute plan");
+    expect(paint.skipped[0]).toContain("no attribute plan");
   });
 
   it("sizes the texture by the ordinal ceiling, wrapping past the strip width", async () => {
     const { engine } = fakeEngine({});
-    const lut = await buildColorLut({
+    const paint = await paintColorLut({
       objects: [object(1, 0), object(2, 4095)],
       colorBy: null,
       filterBys: [],
       plans,
       engine,
     });
-    expect(lut.width).toBe(2048);
-    expect(lut.height).toBe(2);
+    expect(paint.arena.lut.width).toBe(2048);
+    expect(paint.arena.lut.height).toBe(2);
+  });
+});
+
+describe("composeMeshLutAppearance", () => {
+  const window = { valueMin: 2, valueMax: 8 };
+
+  it("a measure colouring runs the ramp between the entry's bounds, else the data's range", () => {
+    const entry = { table: "t1", column: "area", colormap: ColorMap.Viridis };
+    expect(composeMeshLutAppearance(entry, { window, qualitative: false })).toMatchObject({
+      climMin: 2,
+      climMax: 8,
+    });
+    expect(
+      composeMeshLutAppearance({ ...entry, min: 3, max: 5 }, { window, qualitative: false }),
+    ).toMatchObject({ climMin: 3, climMax: 5 });
+  });
+
+  it("a rank colouring pins the unit window regardless of the entry's bounds", () => {
+    const entry = { table: "t1", column: "phenotype", colormap: ColorMap.Hues, min: 3, max: 5 };
+    expect(composeMeshLutAppearance(entry, { window, qualitative: true })).toMatchObject({
+      climMin: 0,
+      climMax: 1,
+    });
+  });
+
+  it("no colouring means no palette", () => {
+    expect(composeMeshLutAppearance(null, { window, qualitative: false })).toEqual({
+      palette: null,
+      climMin: 0,
+      climMax: 1,
+    });
   });
 });

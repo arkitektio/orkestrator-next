@@ -51,6 +51,7 @@ import {
 import { LevelsEditor } from "../LevelsEditor";
 import { getLayerDtypeRange } from "../../../platform/layerui/contrast-utils";
 import { LayerState, useSceneStore } from "../../../platform/stores/sceneStore";
+import { useViewStoreApi } from "../../../platform/stores/viewStore";
 
 import {
   BLEND_KIND,
@@ -1154,6 +1155,7 @@ export const useRenderGraphEditor = (layer: LayerState): RenderGraphEditor => {
   const [dirty, setDirty] = useState(false);
   const [updateLater, { loading }] = useUpdateLaterMutation();
   const updateStoreLayer = useSceneStore((s) => s.updateLayer);
+  const viewApi = useViewStoreApi();
 
   // Re-seed from the persisted graph when it changes externally and there are no
   // unsaved edits. The editor no longer remounts on expand (it lives in the
@@ -1169,6 +1171,9 @@ export const useRenderGraphEditor = (layer: LayerState): RenderGraphEditor => {
   // the single-channel 3D shader path and display chrome, and are never
   // written directly by any panel.
   const pushPreview = (nextRoot: BlendRenderNode) => {
+    // Live-preview tick: pulse the interaction flag so the volume renders
+    // degraded during a window drag and refines on release (viewStore).
+    viewApi.getState().markInteraction();
     const channels = flattenChannels(nextRoot);
     const phasors = flattenPhasors(nextRoot);
     const primary = channels[0]?.transfer;

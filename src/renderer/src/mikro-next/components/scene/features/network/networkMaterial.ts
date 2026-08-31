@@ -1,6 +1,11 @@
 import * as THREE from "three";
 import { MeshBasicNodeMaterial, StorageBufferAttribute } from "three/webgpu";
 import * as TSLTyped from "three/tsl";
+import {
+  DEFAULT_INSTANCE_COLORMAP,
+  GOLDEN_RATIO_CONJUGATE,
+  INSTANCE_COLORMAP_SPECS,
+} from "../../platform/gpu/instanceColormaps";
 
 // Same escape hatch as `brickNodeMaterials.ts` and `pointsMaterial.ts`: three's
 // TSL TypeScript surface lags the runtime API (node method chaining is typed
@@ -14,6 +19,7 @@ const {
   clamp,
   cross,
   float,
+  fract,
   instanceIndex,
   max,
   mix,
@@ -104,7 +110,7 @@ export type NetworkUniforms = {
   uClimMin: any;
   uClimMax: any;
   /** 1 = the colouring paints node glyphs too (target NODE); 0 = segments and
-   *  arrows only (target EDGE), glyphs staying at the material colour. */
+   *  arrows only (target EDGE), glyphs staying at the base colour. */
   uApplyToGlyphs: any;
   /** Which buffer a segment's (and arrow's) value comes from: 0 = the node
    *  buffer via the START node (graph attributes, object-level and per-node
@@ -113,20 +119,39 @@ export type NetworkUniforms = {
    *  Glyphs never read the edge buffer — an edge colouring always ships
    *  `applyToGlyphs: false`. */
   uValueSource: any;
+  /** 1 = the BASE colour is the instance-id hue (the mesh path's default,
+   *  computed from `aux.y`'s object ordinal); 0 = the flat material colour.
+   *  The base is what shows wherever no colouring paints — no active entry,
+   *  or a node with no answer. */
+  uInstanceColorize: any;
+  /** The active instance palette's spec (`instanceColormaps.ts`), as uniforms
+   *  so a palette switch is three writes and never a recompile. */
+  uInstanceSaturation: any;
+  uInstanceValue: any;
+  uInstanceTiered: any;
 };
 
 /** Created by the manager at construction, BEFORE any bundle exists, so
- *  selection and width writes are always safe. */
-export const createNetworkUniforms = (): NetworkUniforms => ({
-  selectedOrdinal: uniform(-1),
-  isolate: uniform(0),
-  uHalfWidth: uniform(0.5, "float"),
-  uColorize: uniform(0, "float"),
-  uClimMin: uniform(0, "float"),
-  uClimMax: uniform(1, "float"),
-  uApplyToGlyphs: uniform(1, "float"),
-  uValueSource: uniform(0, "float"),
-});
+ *  selection and width writes are always safe. Instance colouring is ON by
+ *  default — a network layer colours by instance id until told otherwise,
+ *  exactly as a mesh layer does. */
+export const createNetworkUniforms = (): NetworkUniforms => {
+  const spec = INSTANCE_COLORMAP_SPECS[DEFAULT_INSTANCE_COLORMAP];
+  return {
+    selectedOrdinal: uniform(-1),
+    isolate: uniform(0),
+    uHalfWidth: uniform(0.5, "float"),
+    uColorize: uniform(0, "float"),
+    uClimMin: uniform(0, "float"),
+    uClimMax: uniform(1, "float"),
+    uApplyToGlyphs: uniform(1, "float"),
+    uValueSource: uniform(0, "float"),
+    uInstanceColorize: uniform(1, "float"),
+    uInstanceSaturation: uniform(spec.saturation, "float"),
+    uInstanceValue: uniform(spec.value, "float"),
+    uInstanceTiered: uniform(spec.tiered ? 1 : 0, "float"),
+  };
+};
 
 /** A 1x1 white palette, bound from the start so a real row is a texture swap
  *  and never a recompile — `pointsMaterial.ts`'s move. */
@@ -234,14 +259,50 @@ export function createNetworkGpuBundle(
   };
 
   /**
+   * The instance-id hue for one object ordinal — `fabriksMaterial.ts`'s
+   * `buildInstanceColorNode`, verbatim math, with the palette spec as uniforms
+   * rather than baked constants so a palette switch never recompiles. Golden-
+   * ratio hue scatter: consecutive ordinals land far apart on the wheel, and
+   * an object keeps its colour across cells, LOD levels and sessions — and
+   * across LAYER KINDS: the same object drawn as a mesh and as a network
+   * lands on the same hue.
+   */
+  const instanceColour = (ordinal: any): any => {
+    const hue = fract(ordinal.mul(float(GOLDEN_RATIO_CONJUGATE)));
+    // Standard hue→rgb ramp: clamp(|fract(h + (1, 2/3, 1/3))·6 − 3| − 1, 0, 1).
+    const ramp = clamp(
+      fract(hue.add(vec3(1.0, 2.0 / 3.0, 1.0 / 3.0))).mul(6.0).sub(3.0).abs().sub(1.0),
+      0.0,
+      1.0,
+    );
+    const tiered = float(uniforms.uInstanceTiered);
+    const saturation = float(uniforms.uInstanceSaturation).mul(
+      mix(float(1.0), ordinal.mod(3.0).mul(0.15).add(0.7), tiered),
+    );
+    const value = float(uniforms.uInstanceValue).mul(
+      mix(float(1.0), ordinal.mod(2.0).mul(0.22).add(0.78), tiered),
+    );
+    return mix(vec3(1.0), ramp, saturation).mul(value);
+  };
+
+  /** What shows where no colouring paints: the instance-id hue (the default)
+   *  or the flat material colour, by uniform. */
+  const baseColour = (ordinal: any): any =>
+    select(
+      float(uniforms.uInstanceColorize).greaterThan(0.5),
+      vec3(instanceColour(ordinal)),
+      vec3(TSL.materialColor),
+    );
+
+  /**
    * The packed value mapped through the palette, or the base colour where no
    * colouring is active or the node has no answer. `value.equal(value)` is the
    * NaN test: comparisons with NaN are false on the GPU as on the CPU, and NaN
-   * is the pack's spelling for "no value" — such a node keeps the material
+   * is the pack's spelling for "no value" — such a node keeps the base
    * colour rather than sampling the palette's bottom, the identity-fill rule
    * every other picker keeps.
    */
-  const colourFor = (value: any, applies: any): any => {
+  const colourFor = (value: any, applies: any, ordinal: any): any => {
     const span = max(uniforms.uClimMax.sub(uniforms.uClimMin), float(1e-9));
     const t = clamp(value.sub(uniforms.uClimMin).div(span), 0.0, 1.0);
     const mapped = paletteNode.sample(vec2(t, 0.5)).rgb;
@@ -249,7 +310,7 @@ export function createNetworkGpuBundle(
       .greaterThan(0.5)
       .and(float(applies).greaterThan(0.5))
       .and(value.equal(value));
-    return select(painted, vec3(mapped), vec3(TSL.materialColor));
+    return select(painted, vec3(mapped), baseColour(ordinal));
   };
 
   // --- segments -------------------------------------------------------------
@@ -328,7 +389,7 @@ export function createNetworkGpuBundle(
     // Float equality is exact here: ordinals are integers well under 2^24.
     const selected = ordinal.equal(float(uniforms.selectedOrdinal));
     TSL.Discard(float(uniforms.isolate).greaterThan(0.5).and(selected.not()));
-    const base = colourFor(value, float(1));
+    const base = colourFor(value, float(1), ordinal);
     // ~35% toward white: the identified object pops without a recompile.
     return select(selected, mix(vec3(base), vec3(1.0), 0.35), vec3(base));
   })();
@@ -353,6 +414,7 @@ export function createNetworkGpuBundle(
   // its arrowheads from the edge buffer too.
   const glyphColour = (nodeIndex: any, applies: any, edgeBit: boolean, valueOverride?: any): any => {
     const auxRow = auxNode.element(nodeIndex);
+    const ordinal = varying(auxRow.y);
     const visibility = varying(auxRow.w);
     const value = varying(valueOverride ?? valuesNode.element(nodeIndex));
     // Node glyphs test the NODE bit (+1); arrows ride their segment and test
@@ -361,7 +423,7 @@ export function createNetworkGpuBundle(
       edgeBit ? visibility.lessThan(1.5) : visibility.mod(2.0).lessThan(0.5),
     );
     const shade = max(normalView.z, float(0)).mul(0.45).add(0.55);
-    return vec3(colourFor(value, applies)).mul(shade);
+    return vec3(colourFor(value, applies, ordinal)).mul(shade);
   };
 
   // --- node glyphs (spheres) ------------------------------------------------

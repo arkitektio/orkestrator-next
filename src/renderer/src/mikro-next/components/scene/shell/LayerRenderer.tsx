@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react";
-import { useSceneStore } from "../platform/stores/sceneStore";
+import { useSceneStore, useSceneStoreApi } from "../platform/stores/sceneStore";
 import { useViewerStore } from "../platform/stores/viewerStore";
 import { getInitialVolumeTextureBudgetBytes } from "../platform/quality/lodPlanning";
 import { selectLayersWithinBudget } from "../platform/quality/renderCost";
@@ -19,11 +19,24 @@ const MAX_DISPLAYABLE_LAYERS = 64;
  * reason). So this budget only culls non-image layer types.
  */
 export const LayerRenderer = ({ mode }: { mode: "2D" | "3D" }) => {
-  const sceneLayers = useSceneStore((s) => s.sceneLayers);
-  const imageLayers = useSceneStore((s) => s.layers);
+  const sceneStoreApi = useSceneStoreApi();
+  // SCALAR keys over exactly what the dispatch reads (P9c/P17): subscribing
+  // to the ARRAYS re-rendered this component — and with it the whole layer
+  // dispatch subtree below — on every store write, sixty times a second
+  // during a contrast drag. The keys change only when a layer arrives,
+  // leaves, changes kind, moves, or flips visibility; the memo then reads
+  // the arrays via `getState()`. Children take only the stable `layerId`, so
+  // a momentarily-stale read inside the memo is safe.
+  const dispatchKey = useSceneStore((s) =>
+    s.sceneLayers.map((layer) => `${layer.id}:${layer.__typename}`).join("|"),
+  );
+  const visibilityKey = useSceneStore((s) =>
+    s.layers.map((layer) => (layer.visible === false ? "" : layer.id)).join("|"),
+  );
   const setRenderBudget = useViewerStore((s) => s.setRenderBudget);
 
   const selection = useMemo(() => {
+    const { sceneLayers, layers: imageLayers } = sceneStoreApi.getState();
     // Hidden image layers neither render nor consume budget (visibility
     // lives on the normalized image LayerState).
     const imageLayerById = new Map(imageLayers.map((layer) => [layer.id, layer]));
@@ -38,7 +51,9 @@ export const LayerRenderer = ({ mode }: { mode: "2D" | "3D" }) => {
       budgetBytes,
       ...selectLayersWithinBudget(entries, budgetBytes, MAX_DISPLAYABLE_LAYERS),
     };
-  }, [sceneLayers, imageLayers, mode]);
+    // The two keys STAND FOR the arrays the getState() read returns.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatchKey, visibilityKey, mode, sceneStoreApi]);
 
   // Surface culling decisions so layers don't silently vanish.
   useEffect(() => {

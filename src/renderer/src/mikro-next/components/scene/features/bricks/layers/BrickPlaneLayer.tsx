@@ -1,5 +1,5 @@
 import { useThree } from "@react-three/fiber";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
 import {
@@ -19,7 +19,7 @@ import {
   updateRgbNodes,
 } from "../gpu/intensityNodeMaterials";
 import { buildRgbUniformData } from "../gpu/rgbUniforms";
-import { buildIntensityUniformData } from "../gpu/intensityUniforms";
+import { buildIntensityUniformData, buildIntensityWindow } from "../gpu/intensityUniforms";
 import { isFixedShapeFastPathEnabled } from "../gpu/shaderFlags";
 import { buildAffineMatrix } from "../../../platform/coords/worldTransform";
 import { useViewerStore } from "../../../platform/stores/viewerStore";
@@ -61,16 +61,25 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
   useBrickStore((s) => s.poolsVersion);
   const brickSystem = useBrickStore((s) => s.brickSystem);
   const isDebug = useViewerStore((s) => s.debug);
+  const invalidate = useThree((state) => state.invalidate);
   const gl = useThree((state) => state.gl);
   const scene = useThree((state) => state.scene);
   const camera = useThree((state) => state.camera);
 
   const layer = useBrickLayer(layerId);
 
-  const affineMatrix = useMemo(
-    () => (layer ? buildAffineMatrix(layer) : new THREE.Matrix4().identity()),
-    [layer],
-  );
+  // VALUE-stable (the NetworkCollectionLayer idiom): a per-tick layer
+  // replacement recomputes, but an unchanged placement returns the SAME
+  // Matrix4 — R3F's matrix apply and every effect keyed on it stay quiet.
+  // `buildAffineMatrix` reads ONLY `layer.affineMatrix` (worldTransform.ts).
+  const affineRef = useRef<THREE.Matrix4 | null>(null);
+  const affineMatrix = useMemo(() => {
+    const next = layer ? buildAffineMatrix(layer) : new THREE.Matrix4().identity();
+    if (affineRef.current?.equals(next)) return affineRef.current;
+    affineRef.current = next;
+    return next;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [layer?.affineMatrix]);
 
   const pool = brickSystem?.getLayerPool(layerId) ?? null;
 
@@ -121,6 +130,11 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
   // the fast path also skips two RGBA32F allocations per transfer edit. Built
   // only when the variant takes it — `null` otherwise, so the general path pays
   // nothing for its existence.
+  // STRUCTURE-keyed like `channelData` above: the structure signature already
+  // covers colormap/color/slab/visibility/renderKind, and the window scalars
+  // this leaves stale are re-written by the window fast path below — so a
+  // clim drag no longer rebuilds the colormap atlas `buildIntensityUniformData`
+  // allocates, nor re-uploads it (updateIntensityNodes memcpy + needsUpdate).
   const intensityData = useMemo(
     () =>
       variant === "intensity"
@@ -132,16 +146,7 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
           )
         : null,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      variant,
-      layer?.channels,
-      layer?.sources,
-      layer?.colormap,
-      layer?.color,
-      pool?.geometry,
-      pool?.minValue,
-      pool?.maxValue,
-    ],
+    [variant, channelStructureKey, pool?.geometry, pool?.minValue, pool?.maxValue],
   );
 
   // The rgb counterpart: five scalars, no textures of its own at all.
@@ -156,7 +161,7 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
           )
         : null,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [variant, layer?.channels, layer?.sources, pool?.geometry, pool?.minValue, pool?.maxValue],
+    [variant, channelStructureKey, pool?.geometry, pool?.minValue, pool?.maxValue],
   );
 
   // NOTE: the colormap atlas is NOT disposed per channelData change — the
@@ -282,18 +287,39 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bundle, channelData, intensityData, rgbData, planTargetLevel, slabBaseZ, isDebug]);
 
-  // WINDOW fast path (graph variant): a clim/gamma/opacity drag moved only
-  // the window signature, so the structure-keyed rebuild above stayed put —
-  // write the fresh scalars into the existing uniform nodes instead. The
-  // intensity/rgb variants rebuild their slim scalar data per edit anyway
-  // (no textures), so they need no counterpart. Runs redundantly after a
-  // structural rebuild — a harmless double write of identical values.
+  // WINDOW fast path, ALL variants: a clim/gamma/opacity drag moved only the
+  // window signature, so the structure-keyed rebuilds above stayed put —
+  // write the fresh scalars into the existing uniform nodes instead. Runs
+  // redundantly after a structural rebuild — a harmless double write of
+  // identical values. The explicit `invalidate()` matters: the frameloop is
+  // "demand" (SceneViewport), and with the bridges isolated a drag tick may
+  // cause NO React commit near the canvas to carry the redraw.
   useEffect(() => {
-    if (!bundle || bundle.variant !== "graph") return;
-    updateChannelWindows(
-      bundle.nodes,
-      buildChannelWindows(layer, pool?.minValue ?? 0, pool?.maxValue ?? 1),
-    );
+    if (!bundle) return;
+    if (bundle.variant === "graph") {
+      updateChannelWindows(
+        bundle.nodes,
+        buildChannelWindows(layer, pool?.minValue ?? 0, pool?.maxValue ?? 1),
+      );
+    } else if (bundle.variant === "intensity") {
+      const window = buildIntensityWindow(layer, pool?.minValue ?? 0, pool?.maxValue ?? 1);
+      bundle.nodes.uClimMin.value = window.climMin;
+      bundle.nodes.uClimMax.value = window.climMax;
+      bundle.nodes.uGamma.value = window.gamma;
+    } else {
+      // rgb owns no textures, so re-deriving the whole scalar set is the
+      // window write (slabs land on their current values during a drag).
+      updateRgbNodes(
+        bundle.nodes,
+        buildRgbUniformData(
+          layer,
+          Math.max(0, (pool?.geometry.channelSlabCount ?? 1) - 1),
+          pool?.minValue ?? 0,
+          pool?.maxValue ?? 1,
+        ),
+      );
+    }
+    invalidate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bundle, channelWindowKey, pool?.minValue, pool?.maxValue]);
 

@@ -5,7 +5,7 @@ import { formatProbeValue } from "../../platform/probe/valueFormat";
 import { effectiveProbeLayerId } from "../../platform/probe/probeTargeting";
 import { useCreateSceneAnnotation } from "../annotations/useCreateSceneAnnotation";
 import { useModeStore } from "../../platform/stores/modeStore";
-import { useSceneStore } from "../../platform/stores/sceneStore";
+import { useSceneStore, useSceneStoreApi } from "../../platform/stores/sceneStore";
 import { useViewerStore } from "../../platform/stores/viewerStore";
 import { perfMonitor } from "../../platform/perf/perfMonitor";
 import type { LayerState } from "../../platform/model/layerModel";
@@ -120,18 +120,42 @@ export const SelectedPointPanel = () => {
   const setProbedCoordinate = useViewerStore((s) => s.setProbedCoordinate);
   const { createPointAnnotation } = useCreateSceneAnnotation();
   const probeLayerId = useViewerStore((s) => s.probeLayerId);
-  const layers = useSceneStore((s) => s.layers);
-  const layer = probedCoordinate
-    ? layers.find((candidate) => candidate.id === probedCoordinate.layerId)
-    : null;
+  const sceneStoreApi = useSceneStoreApi();
+  const probedLayerId = probedCoordinate?.layerId ?? null;
+  // A SCALAR key over what the readout reads from the probed layer — its
+  // channel labels (P9c/P17). The layer OBJECT is replaced on every per-tick
+  // window edit while the labels stay put, and handing the readout a fresh
+  // identity per tick would defeat `ProbeReadoutBody`'s memo.
+  const layerLabelsKey = useSceneStore((s) => {
+    if (probedLayerId === null) return "";
+    const probed = s.layers.find((candidate) => candidate.id === probedLayerId);
+    if (!probed) return "";
+    return `#${probed.channels
+      .map((node) => `${node.intensityIndex ?? ""}:${node.label ?? ""}`)
+      .join("|")}`;
+  });
+  const layer = useMemo(
+    () =>
+      probedLayerId !== null
+        ? (sceneStoreApi
+            .getState()
+            .layers.find((candidate) => candidate.id === probedLayerId) ?? null)
+        : null,
+    // The key STANDS FOR the layer read via getState().
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [probedLayerId, layerLabelsKey, sceneStoreApi],
+  );
 
   // Reconcile a stale reading with a moved target. All NEW probes come from
   // the effective target (the brick layers gate on it), so a mismatch can only
   // mean the target shifted underneath an old reading — unpin, first layer
   // hidden, probed layer hidden — and one layer's values must not sit under
   // another layer's name. `probeAfterPinChange` cannot catch these: it has no
-  // layer list, so it cannot compute the default target.
-  const effectiveTargetId = effectiveProbeLayerId(probeLayerId, layers);
+  // layer list, so it cannot compute the default target. A SCALAR selector —
+  // the id string is all the reconciliation needs.
+  const effectiveTargetId = useSceneStore((s) =>
+    effectiveProbeLayerId(probeLayerId, s.layers),
+  );
   const staleProbe =
     probedCoordinate !== null &&
     // Mesh probes are owned by their mesh layer (never the image target).

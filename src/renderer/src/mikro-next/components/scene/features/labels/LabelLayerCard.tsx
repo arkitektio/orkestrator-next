@@ -7,7 +7,13 @@ import {
 } from "@/mikro-next/api/graphql";
 import { perfMonitor } from "../../platform/perf/perfMonitor";
 import { useSceneStore, type LayerState } from "../../platform/stores/sceneStore";
-import { Badge, CardSection, IconToggle, OpacityRow } from "../../platform/layerui/cardControls";
+import {
+  Badge,
+  CardSection,
+  IconToggle,
+  LayerCardShell,
+  OpacityRow,
+} from "../../platform/layerui/cardControls";
 import { type ColumnOptionSource } from "../../platform/layerui/ColumnOptionPicker";
 import {
   ColorBySection,
@@ -149,8 +155,14 @@ const OutlineSection = memo(function OutlineSection({
 export const LabelLayerCard = memo(
   ({
     layer,
+    expanded,
+    onSelect,
     onRemove,
   }: {
+    /** Whether the card's controls are unfolded (`LayerCardShell`). */
+    expanded: boolean;
+    /** The panel's toggle — handed the current state, see `cardShell.tsx`. */
+    onSelect: (id: string, currentlyExpanded: boolean) => void;
     /**
      * The NORMALIZED label layer, off `sceneStore.layers` — deliberately not
      * the raw fragment off `sceneLayers`.
@@ -320,55 +332,51 @@ export const LabelLayerCard = memo(
     );
 
     return (
-      <div
-        className={`@container/card rounded-lg border border-white/10 bg-black/40 backdrop-blur-md transition-opacity ${
-          hidden ? "opacity-50" : ""
-        }`}
-      >
-        {/* ------------------------------------------------ header --------- */}
-        <div className="flex items-center gap-1.5 px-2 py-1.5">
-          <span className="grid h-5 w-5 shrink-0 place-items-center rounded bg-emerald-400/15">
-            <Shapes className="h-3 w-3 text-emerald-300" />
-          </span>
-          <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-white/90">
-            {lens.dataset?.name?.trim() || `Labels ${layerId}`}
-          </span>
-
-          <Badge>labels</Badge>
-          {/* The one server write — same affordance as the image layer card's
-              graph save: visible only while there is something to save. */}
-          {dirty && (
-            <button
-              className="shrink-0 rounded p-0.5 text-yellow-300/90 transition-colors hover:text-yellow-200 disabled:opacity-50"
-              title="Save changes"
-              disabled={saving}
-              onClick={save}
-            >
-              <Save className="h-3 w-3" />
-            </button>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-5 w-5 shrink-0 text-white/45 hover:text-white/90"
-            title={hidden ? "Show" : "Hide"}
-            onClick={() => persistLayer({ visible: hidden })}
-          >
-            {hidden ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-          </Button>
-          {onRemove && (
+      <LayerCardShell
+        icon={<Shapes className="h-3 w-3 text-emerald-300" />}
+        tile="bg-emerald-400/15"
+        title={lens.dataset?.name?.trim() || `Labels ${layerId}`}
+        hidden={hidden}
+        expanded={expanded}
+        onToggle={() => onSelect(layerId, expanded)}
+        badges={<Badge>labels</Badge>}
+        actions={
+          <>
+            {/* The one server write — same affordance as the image layer card's
+                graph save: visible only while there is something to save. */}
+            {dirty && (
+              <button
+                className="shrink-0 rounded p-0.5 text-yellow-300/90 transition-colors hover:text-yellow-200 disabled:opacity-50"
+                title="Save changes"
+                disabled={saving}
+                onClick={save}
+              >
+                <Save className="h-3 w-3" />
+              </button>
+            )}
             <Button
               variant="ghost"
               size="icon"
-              className="h-5 w-5 shrink-0 text-white/35 hover:text-red-300"
-              title="Remove layer from scene"
-              onClick={() => onRemove(layerId)}
+              className="h-5 w-5 shrink-0 text-white/45 hover:text-white/90"
+              title={hidden ? "Show" : "Hide"}
+              onClick={() => persistLayer({ visible: hidden })}
             >
-              <Trash2 className="h-3 w-3" />
+              {hidden ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
             </Button>
-          )}
-        </div>
-
+            {onRemove && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5 shrink-0 text-white/35 hover:text-red-300"
+                title="Remove layer from scene"
+                onClick={() => onRemove(layerId)}
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            )}
+          </>
+        }
+      >
         <OutlineSection
           contour={contour}
           contourWidth={contourWidth}
@@ -397,7 +405,7 @@ export const LabelLayerCard = memo(
           onChange={setOpacity}
           onCommit={commitOpacity}
         />
-      </div>
+      </LayerCardShell>
     );
   },
 );

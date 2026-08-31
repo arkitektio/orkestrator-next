@@ -188,6 +188,8 @@ const NetworkCollectionGroup = ({
       // card is immediate and costs no round trip.
       showNodes: layer.showNodesOverride ?? layer.showNodes,
       directed: layer.directedOverride ?? layer.directed,
+      colorByInstance: layer.colorByInstance,
+      instanceColormap: layer.instanceColormap,
     });
   }, [
     manager,
@@ -198,6 +200,8 @@ const NetworkCollectionGroup = ({
     layer.showNodesOverride,
     layer.directed,
     layer.directedOverride,
+    layer.colorByInstance,
+    layer.instanceColormap,
   ]);
 
   useEffect(() => {

@@ -397,28 +397,37 @@ export const AnchorMetadata = ({
  * thin `SceneLens` projection already in the scene stands in, so the section
  * never flashes empty and then fills.
  */
-export const MetadataSection = ({ layer }: { layer: LayerState }) => {
-  const { data, loading } = useGetLensAnchorsQuery({
-    variables: { id: layer.lens.id },
-    fetchPolicy: "cache-first",
-  });
+export const MetadataSection = memo(
+  ({ layer }: { layer: LayerState }) => {
+    const { data, loading } = useGetLensAnchorsQuery({
+      variables: { id: layer.lens.id },
+      fetchPolicy: "cache-first",
+    });
 
-  const anchors: readonly PanelAnchor[] =
-    data?.lens.activeAnchors ?? layer.lens.activeAnchors;
+    const anchors: readonly PanelAnchor[] =
+      data?.lens.activeAnchors ?? layer.lens.activeAnchors;
 
-  if (anchors.length === 0) return null;
+    if (anchors.length === 0) return null;
 
-  return (
-    <div className="flex min-w-0 flex-col gap-1 px-1 py-1">
-      <Header>
-        <span className="flex items-center gap-1">
-          <Tags className="h-2.5 w-2.5" />
-          Metadata
-        </span>
-      </Header>
-      <AnchorMetadata layer={layer} anchors={anchors} loading={loading} />
-    </div>
-  );
-};
+    return (
+      <div className="flex min-w-0 flex-col gap-1 px-1 py-1">
+        <Header>
+          <span className="flex items-center gap-1">
+            <Tags className="h-2.5 w-2.5" />
+            Metadata
+          </span>
+        </Header>
+        <AnchorMetadata layer={layer} anchors={anchors} loading={loading} />
+      </div>
+    );
+  },
+  // The section reads only `lens` (anchors, dataset axes) and `phasorAxis`
+  // (anchorVisibility's coverage) — both spread-preserved by the cards' live
+  // preview folds, so a contrast drag must not re-render the anchor table
+  // per tick inside an unfolded card.
+  (prev, next) =>
+    prev.layer.lens === next.layer.lens && prev.layer.phasorAxis === next.layer.phasorAxis,
+);
+MetadataSection.displayName = "MetadataSection";
 
 export default MetadataSection;

@@ -8,13 +8,21 @@ import {
   type UpdateNetworkLayerInput,
 } from "@/mikro-next/api/graphql";
 import {
+  DEFAULT_INSTANCE_COLORMAP,
+  INSTANCE_COLORMAPS,
+  type FabriksInstanceColormap,
+} from "../../platform/gpu/instanceColormaps";
+import {
   useSceneStore,
   type NetworkLayerSessionState,
 } from "../../platform/stores/sceneStore";
+import { instancePaletteCSS } from "../../platform/layerui/colormap-utils";
+import { ColormapSelect, type ColormapChoice } from "../../platform/layerui/ColormapSelect";
 import {
   Badge,
   CardSection,
   IconToggle,
+  LayerCardShell,
   OpacityRow,
   Segment,
   SegmentGroup,
@@ -88,7 +96,19 @@ const readEncoding = (encoding: unknown): Record<string, unknown> =>
   typeof encoding === "object" && encoding !== null ? (encoding as Record<string, unknown>) : {};
 
 export const NetworkLayerCard = memo(
-  ({ layer, onRemove }: { layer: NetworkLayerView; onRemove?: (id: string) => void }) => {
+  ({
+    layer,
+    expanded,
+    onSelect,
+    onRemove,
+  }: {
+    layer: NetworkLayerView;
+    /** Whether the card's controls are unfolded (`LayerCardShell`). */
+    expanded: boolean;
+    /** The panel's toggle — handed the current state, see `cardShell.tsx`. */
+    onSelect: (id: string, currentlyExpanded: boolean) => void;
+    onRemove?: (id: string) => void;
+  }) => {
     const patchSceneLayer = useSceneStore((s) => s.patchSceneLayer);
     const [updateNetworkLayer] = useUpdateNetworkLayerMutation();
 
@@ -154,55 +174,92 @@ export const NetworkLayerCard = memo(
       pickerRef.current.persist(patch as NetworkPatch);
     }, []);
 
+    // The mesh card's default row, verbatim semantics: instance-id colouring
+    // is the DEFAULT, the uniform material colour the opt-out — session-local
+    // on both layer kinds, so patchSceneLayer alone, never `persist`.
+    const byInstance = layer.colorByInstance !== false;
+    const activePalette = layer.instanceColormap ?? DEFAULT_INSTANCE_COLORMAP;
+    const uniformCSS = Array.isArray(layer.materialColor)
+      ? `rgb(${layer.materialColor.slice(0, 3).join(",")})`
+      : "rgb(217, 219, 230)";
+
+    const paletteChoices: ColormapChoice[] = useMemo(
+      () => [
+        ...INSTANCE_COLORMAPS.map((name) => ({
+          value: name,
+          label: name,
+          css: instancePaletteCSS(name),
+        })),
+        { value: "uniform", label: "uniform", css: uniformCSS },
+      ],
+      [uniformCSS],
+    );
+
     const defaultRow = useMemo<DefaultColorRow>(
       () => ({
-        title: "The flat material colour — click to draw no colouring",
-        label: "uniform",
-        detail: "one colour for the whole network",
-        swatchCSS: Array.isArray(layer.materialColor)
-          ? `rgb(${layer.materialColor.slice(0, 3).join(",")})`
-          : "rgb(255,255,255)",
+        title: "Color by instance id — click to pick a palette (session)",
+        label: byInstance ? "instance id" : "uniform",
+        detail: byInstance
+          ? `a hue per object — "${activePalette}" palette`
+          : "one colour for the whole network",
+        swatchCSS: byInstance ? instancePaletteCSS(activePalette) : uniformCSS,
+        settings: (
+          <div className="space-y-1.5">
+            <div className="text-[9px] uppercase tracking-[0.08em] text-white/35">
+              palette
+            </div>
+            <ColormapSelect
+              value={byInstance ? activePalette : "uniform"}
+              choices={paletteChoices}
+              onChange={(value) =>
+                value === "uniform"
+                  ? patchSceneLayer(layer.id, { colorByInstance: false })
+                  : patchSceneLayer(layer.id, {
+                      colorByInstance: true,
+                      instanceColormap: value as FabriksInstanceColormap,
+                    })
+              }
+              title="How each object's hue is chosen (session)"
+            />
+          </div>
+        ),
       }),
-      [layer.materialColor],
+      [byInstance, activePalette, uniformCSS, paletteChoices, layer.id, patchSceneLayer],
     );
 
     return (
-      <div
-        className={`@container/card rounded-lg border border-white/10 bg-black/40 backdrop-blur-md transition-opacity ${
-          hidden ? "opacity-50" : ""
-        }`}
-      >
-        {/* ------------------------------------------------ header --------- */}
-        <div className="flex items-center gap-1.5 px-2 py-1.5">
-          <span className="grid h-5 w-5 shrink-0 place-items-center rounded bg-emerald-400/15">
-            <Share2 className="h-3 w-3 text-emerald-300" />
-          </span>
-          <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-white/90">
-            {layer.name?.trim() || `Network ${collection?.version ?? layer.id}`}
-          </span>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-5 w-5 shrink-0 text-white/45 hover:text-white/90"
-            title={hidden ? "Show" : "Hide"}
-            onClick={() => persist({ visible: hidden })}
-          >
-            {hidden ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-          </Button>
-          {onRemove && (
+      <LayerCardShell
+        icon={<Share2 className="h-3 w-3 text-emerald-300" />}
+        tile="bg-emerald-400/15"
+        title={layer.name?.trim() || `Network ${collection?.version ?? layer.id}`}
+        hidden={hidden}
+        expanded={expanded}
+        onToggle={() => onSelect(layer.id, expanded)}
+        actions={
+          <>
             <Button
               variant="ghost"
               size="icon"
-              className="h-5 w-5 shrink-0 text-white/35 hover:text-red-300"
-              title="Remove layer from scene"
-              onClick={() => onRemove(layer.id)}
+              className="h-5 w-5 shrink-0 text-white/45 hover:text-white/90"
+              title={hidden ? "Show" : "Hide"}
+              onClick={() => persist({ visible: hidden })}
             >
-              <Trash2 className="h-3 w-3" />
+              {hidden ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
             </Button>
-          )}
-        </div>
-
+            {onRemove && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5 shrink-0 text-white/35 hover:text-red-300"
+                title="Remove layer from scene"
+                onClick={() => onRemove(layer.id)}
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            )}
+          </>
+        }
+      >
         {/* ------------------------------------------------ width ---------- */}
         <CardSection title="line width">
           <div className="flex items-center gap-1.5">
@@ -388,7 +445,7 @@ export const NetworkLayerCard = memo(
             </div>
           )}
         </CardSection>
-      </div>
+      </LayerCardShell>
     );
   },
 );

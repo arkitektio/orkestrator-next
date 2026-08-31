@@ -48,19 +48,45 @@ export const INTENSITY_ATLAS_ROW = 0.5;
  * of `buildChannelUniformData` for the same layer, and it can only stay equal if
  * neither reimplements the other's arithmetic.
  */
-export function buildIntensityUniformData(
+export type IntensityWindow = {
+  climMin: number;
+  climMax: number;
+  gamma: number;
+};
+
+/**
+ * The WINDOW half alone — what a clim/gamma drag moves at 60 Hz. Split out so
+ * the plane layer's window fast path can write these three scalars into the
+ * existing uniform nodes without rebuilding the atlas (`buildIntensityUniformData`
+ * spreads this, so the two cannot drift).
+ */
+export function buildIntensityWindow(
   layer: LayerState | undefined,
-  maxChannelIndex: number,
   // Base-native data range (pool.minValue/maxValue). Clim is stored in absolute
   // base-native units and normalized into the shader's [0,1] space here.
   minValue: number = 0,
   maxValue: number = 1,
-): IntensityUniformData {
+): IntensityWindow {
   const source = layer?.sources?.[0] ?? layer?.channels?.[0];
   const transfer = source?.type === "channel" ? source.transfer : undefined;
   const scalar = effectiveScalarTransfer(
     transfer ?? { climMin: null, climMax: null, gamma: null, stops: null },
   );
+  return {
+    climMin: climToUnit(scalar.climMin, minValue, maxValue, 0),
+    climMax: climToUnit(scalar.climMax, minValue, maxValue, 1),
+    gamma: scalar.gamma,
+  };
+}
+
+export function buildIntensityUniformData(
+  layer: LayerState | undefined,
+  maxChannelIndex: number,
+  minValue: number = 0,
+  maxValue: number = 1,
+): IntensityUniformData {
+  const source = layer?.sources?.[0] ?? layer?.channels?.[0];
+  const transfer = source?.type === "channel" ? source.transfer : undefined;
   return {
     atlas: buildColormapAtlas([
       {
@@ -72,8 +98,6 @@ export function buildIntensityUniformData(
       source?.type === "channel"
         ? Math.min(maxChannelIndex, Math.max(0, source.intensityIndex ?? 0))
         : 0,
-    climMin: climToUnit(scalar.climMin, minValue, maxValue, 0),
-    climMax: climToUnit(scalar.climMax, minValue, maxValue, 1),
-    gamma: scalar.gamma,
+    ...buildIntensityWindow(layer, minValue, maxValue),
   };
 }

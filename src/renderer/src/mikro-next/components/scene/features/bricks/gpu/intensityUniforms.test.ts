@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 
 import { Blending, ColorMap } from "@/mikro-next/api/graphql";
 import { buildChannelUniformData } from "./channelUniforms";
-import { buildIntensityUniformData, INTENSITY_ATLAS_ROW } from "./intensityUniforms";
+import { buildIntensityUniformData, buildIntensityWindow, INTENSITY_ATLAS_ROW } from "./intensityUniforms";
 import type { LayerState } from "../../../platform/model/layerModel";
 import type { ChannelRenderNode, TransferFn } from "../../../platform/model/renderGraph";
 import { CHANNEL_KIND } from "../../../platform/model/renderGraph";
@@ -133,5 +133,28 @@ describe("buildIntensityUniformData ≡ slot 0 of buildChannelUniformData", () =
     const empty = { channels: [], sources: [] } as unknown as LayerState;
     expect(() => buildIntensityUniformData(empty, MAX_SLAB)).not.toThrow();
     expect(buildIntensityUniformData(empty, MAX_SLAB).slab).toBe(0);
+  });
+});
+
+describe("buildIntensityWindow ≡ the window half of buildIntensityUniformData", () => {
+  // The plane layer's window fast path writes these three scalars alone
+  // (BrickPlaneLayer's window effect) while the structure-keyed rebuild
+  // stays put — so the split function must agree with the full builder for
+  // every transfer, or a drag would paint a different window than a rebuild.
+  it.each([
+    ["a plain window + gamma", channel()],
+    ["a null window (full range)", channel({ transfer: transfer({ climMin: null, climMax: null }) })],
+    ["no gamma (defaults to 1)", channel({ transfer: transfer({ gamma: null }) })],
+    ["a transfer CURVE (window derives from the stops)", channel({
+      transfer: transfer({ stops: [
+        { position: 100, value: 0 },
+        { position: 2000, value: 1 },
+      ] }),
+    })],
+  ])("agrees for %s", (_label, source) => {
+    const layer = layerWith(source);
+    const full = buildIntensityUniformData(layer, MAX_SLAB, RANGE[0], RANGE[1]);
+    const window = buildIntensityWindow(layer, RANGE[0], RANGE[1]);
+    expect(window).toEqual({ climMin: full.climMin, climMax: full.climMax, gamma: full.gamma });
   });
 });

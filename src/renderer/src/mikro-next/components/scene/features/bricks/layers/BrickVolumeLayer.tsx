@@ -8,6 +8,8 @@ import { marchResidentBricks } from "../octree/brickSampling";
 import { perfMonitor } from "../../../platform/perf/perfMonitor";
 import { coldOpenTimeline } from "../../../platform/perf/coldOpenTimeline";
 import { climToUnit } from "../../../platform/model/dataRange";
+import { identityOf } from "../../../platform/model/objectIdentity";
+import { layerPlanSignature } from "../../../platform/model/layerPlanKey";
 import { intersectLocalVolumeBox } from "../probeMath";
 import { resolveProbeStrategy } from "../../../platform/probe/probeModes";
 import {
@@ -116,23 +118,10 @@ const probeScratch = {
   world: new THREE.Vector3(),
 };
 
-/**
- * Stable integer per layer-object IDENTITY (layers are replaced immutably on
- * edit, so identity IS the edit signal). Lets a zustand selector express
- * "re-render only when one of THESE layers changed" as a scalar key — the
- * P9c/P17 idiom — without an equality-function variant of the store hook.
- */
-let nextLayerIdentity = 1;
-const layerIdentityIds = new WeakMap<object, number>();
-const layerIdentityOf = (layer: object | undefined): number => {
-  if (!layer) return 0;
-  let id = layerIdentityIds.get(layer);
-  if (id === undefined) {
-    id = nextLayerIdentity++;
-    layerIdentityIds.set(layer, id);
-  }
-  return id;
-};
+// Stable integer per layer-object IDENTITY (layers are replaced immutably on
+// edit, so identity IS the edit signal): `identityOf`, promoted to
+// `platform/model/objectIdentity.ts` — the P9c/P17 scalar-key idiom this
+// component pioneered, now shared by every bridge that needs it.
 
 export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   perfMonitor.countRender("BrickVolumeLayer"); // no-op unless a perf recording is armed
@@ -210,11 +199,11 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     let key = "";
     for (const id of memberIds) {
       const index = s.layers.findIndex((l) => l.id === id);
-      key += `${index}:${layerIdentityOf(index >= 0 ? s.layers[index] : undefined)},`;
+      key += `${index}:${identityOf(index >= 0 ? s.layers[index] : undefined)},`;
     }
     if (!memberIds.includes(layerId)) {
       const index = s.layers.findIndex((l) => l.id === layerId);
-      key += `${index}:${layerIdentityOf(index >= 0 ? s.layers[index] : undefined)}`;
+      key += `${index}:${identityOf(index >= 0 ? s.layers[index] : undefined)}`;
     }
     return key;
   });
@@ -270,10 +259,19 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     return () => unregister(refProxy);
   }, [layerId, register, unregister]);
 
-  const affineMatrix = useMemo(
-    () => (layer ? buildAffineMatrix(layer) : new THREE.Matrix4().identity()),
-    [layer],
-  );
+  // VALUE-stable (the NetworkCollectionLayer idiom): a per-tick layer
+  // replacement recomputes, but an unchanged placement returns the SAME
+  // Matrix4 — the ray-uniform and cinematic effects keyed on it, and R3F's
+  // group-matrix apply, all stay quiet during a contrast drag.
+  // `buildAffineMatrix` reads ONLY `layer.affineMatrix` (worldTransform.ts).
+  const affineRef = useRef<THREE.Matrix4 | null>(null);
+  const affineMatrix = useMemo(() => {
+    const next = layer ? buildAffineMatrix(layer) : new THREE.Matrix4().identity();
+    if (affineRef.current?.equals(next)) return affineRef.current;
+    affineRef.current = next;
+    return next;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [layer?.affineMatrix]);
 
   // --- Merged pass ------------------------------------------------------
   //
@@ -290,6 +288,22 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     memberIds.map((id) => s.nodePlans[id]?.targetLevel ?? -1).join(","),
   );
 
+  // STRUCTURAL member key: `buildMergeMembers` reads each member's scene
+  // order, typename (label guard), visibility, placement and target level —
+  // never a window field — so grouping must not re-derive on a contrast
+  // drag's per-tick layer replacement. `layerPlanSignature` covers exactly
+  // those reads (WeakMap-cached per layer object).
+  const memberStructureKey = useMemo(
+    () =>
+      memberIds
+        .map((id) => {
+          const index = layers.findIndex((l) => l.id === id);
+          return `${index}:${index >= 0 ? layerPlanSignature(layers[index]) : ""}`;
+        })
+        .join("|"),
+    [memberIds, layers],
+  );
+
   const mergeGroup = useMemo(() => {
     if (!pool || !isVolumeMergeEnabled()) return null;
     const members = buildMergeMembers({
@@ -298,8 +312,9 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
       targetLevelOf: (id) => viewerStoreApi.getState().nodePlans[id]?.targetLevel,
     });
     return findMergeGroup(planVolumeMergeGroups(members), layerId);
+    // `memberStructureKey` stands for every layer field the grouping reads.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pool, memberIds, layers, memberLevelsKey, layerId, viewerStoreApi]);
+  }, [pool, memberIds, memberStructureKey, memberLevelsKey, layerId, viewerStoreApi]);
 
   /** Non-primary members of a merged group draw nothing — the primary does. */
   const isPrimary = mergeGroup === null || mergeGroup.primaryId === layerId;

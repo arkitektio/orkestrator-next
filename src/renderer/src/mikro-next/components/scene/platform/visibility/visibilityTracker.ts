@@ -5,6 +5,7 @@ import {
   sameViewRanges,
   sameVisibleIds,
 } from "./visibility";
+import { layersPlanKey, sameLayerElements } from "../model/layerPlanKey";
 import type { SceneState } from "../stores/sceneStore";
 import type { ViewerState } from "../stores/viewerStore";
 import type { ViewState } from "../stores/viewStore";
@@ -114,9 +115,23 @@ export function startVisibilityTracking({
   });
 
   let lastLayers = sceneStore.getState().layers;
+  let lastLayersKey = layersPlanKey(lastLayers);
   const unsubscribeScene = sceneStore.subscribe((state) => {
-    if (state.layers !== lastLayers) {
-      lastLayers = state.layers;
+    if (state.layers === lastLayers) return;
+    const previous = lastLayers;
+    lastLayers = state.layers;
+    // Same guard as nodePlanTracker's, same reasons: an identical-elements
+    // republish is `touchImageLayers` asking for a recompute; a real element
+    // replacement recomputes only when a field the visibility walk reads
+    // moved (placement, axis mapping, lens — see layerPlanKey.ts). A clim
+    // drag moves none of them.
+    if (sameLayerElements(previous, state.layers)) {
+      schedule();
+      return;
+    }
+    const key = layersPlanKey(state.layers);
+    if (key !== lastLayersKey) {
+      lastLayersKey = key;
       schedule();
     }
   });

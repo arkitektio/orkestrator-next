@@ -16,19 +16,27 @@
  * (`componentTargets` below), the way the neuron generator confines its (x,y,z)
  * reversal to `_ball`.
  *
+ * ## Time, and every other collapsed dim
+ *
+ * Every axis that is neither the vector axis nor spatial is pinned to ONE index, chosen
+ * by `resolveFixedDimIndex` — the same function the brick residency pins its pools with
+ * (`brickResidency.computeFixedIndices`). That shared call is the whole reason a vector
+ * field and the image it overlays land on the same frame when one `t` slider moves them
+ * both: a selection wins when present, and the lens slice's collapsed default stands in
+ * when it is absent. The caller re-reads on a change; see `VectorsLayer`.
+ *
  * ## What is deliberately not here yet
  *
- * Time is read at frame 0 — the scene has no time cursor state yet (`dimsSlice` holds
- * only `currentZ`); when one lands, re-reading on its change is this file's only
- * change. Pyramid levels are ignored: whether spatial levels are even built over a
- * DISPLACEMENT store is an open server question, and a strided level-0 read is
- * correct at every answer.
+ * Pyramid levels are ignored: whether spatial levels are even built over a DISPLACEMENT
+ * store is an open server question, and a strided level-0 read is correct at every
+ * answer.
  */
 import { get, slice } from "zarrita";
 
 import { ConfiguredS3Store } from "@/lib/zarr/store/s3Store";
 import type { MikroClient } from "@/lib/zarr/store/types";
 import { buildS3FetchConfig, getGeneralAccess } from "@/mikro-next/lib/zarr/access";
+import { buildSliceMap, resolveFixedDimIndex } from "../../platform/coords/selection";
 import { openZarrArray } from "../../platform/sources/arrayRegistry";
 import type { VectorLayerFragment } from "../../platform/model/layerGuards";
 
@@ -65,6 +73,13 @@ export async function loadVectorField(
   client: MikroClient,
   datalayer: string,
   layer: VectorLayerFragment,
+  /**
+   * The scene-wide scrubber selections (`viewerStore.dimSelections`), by dim name.
+   * Only the layer's own collapsed dims are consulted; an absent entry falls back to
+   * the lens slice's default, so a scene that has never touched a slider reads the
+   * same frame it always did.
+   */
+  dimSelections: Readonly<Record<string, number>> = {},
 ): Promise<VectorField | { error: string }> {
   const lens = layer.lens;
   const dataset = lens.dataset;
@@ -113,14 +128,17 @@ export async function loadVectorField(
   const array = await openZarrArray(store);
 
   // Selection in axis order: every component of the vector axis, a strided slice of
-  // each spatial axis, frame 0 of anything else (time, a channel beside the field).
+  // each spatial axis, and the SELECTED index of anything else (time, a channel beside
+  // the field). Clamped against the store's own shape, matching how the brick path
+  // resolves the same slider against `levels[0].shape`.
+  const sliceMap = buildSliceMap(lens.slices);
   const selection = axisNames.map((name) => {
     if (name === vectorAxis) return null;
+    const size = shape[axisNames.indexOf(name)];
     if (spatialArrayOrder.includes(name)) {
-      const size = shape[axisNames.indexOf(name)];
       return slice(Math.min(offset, size - 1), size, stride);
     }
-    return 0;
+    return resolveFixedDimIndex(sliceMap[name], dimSelections[name], size);
   });
 
   const chunk = (await get(array as never, selection as never)) as unknown as {

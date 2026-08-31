@@ -5,8 +5,9 @@ import { useGetSceneAnnotationsQuery } from "@/mikro-next/api/graphql";
 
 import { perfMonitor } from "../../../platform/perf/perfMonitor";
 import { finestLayerZStep } from "../../../platform/coords/worldTransform";
+import { layersPlanKey } from "../../../platform/model/layerPlanKey";
 import { useModeStore } from "../../../platform/stores/modeStore";
-import { useSceneStore } from "../../../platform/stores/sceneStore";
+import { useSceneStore, useSceneStoreApi } from "../../../platform/stores/sceneStore";
 import { useViewerStore } from "../../../platform/stores/viewerStore";
 import { useViewStoreApi } from "../../../platform/stores/viewStore";
 import {
@@ -78,7 +79,18 @@ const AnnotationCollectionGroup = ({
 }) => {
   perfMonitor.countRender("AnnotationCollectionGroup"); // no-op unless a recording is armed
   const transformContext = useSceneStore((s) => s.transformContext);
-  const imageLayers = useSceneStore((s) => s.layers);
+  const sceneStoreApi = useSceneStoreApi();
+  // A SCALAR key, not the array (P9c/P17): the coverage/plane math below reads
+  // only fields `layerPlanSignature` captures (visible, zAxis/axis mapping,
+  // lens shape, placement — see annotationVisibility.ts / finestLayerZStep),
+  // so a contrast drag's per-tick layer replacement must not re-filter every
+  // annotation. The memos read the array via `getState()` under this key.
+  const imageLayersKey = useSceneStore((s) => layersPlanKey(s.layers));
+  const imageLayers = useMemo(
+    () => sceneStoreApi.getState().layers,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [imageLayersKey, sceneStoreApi],
+  );
   const dimSelections = useViewerStore((s) => s.dimSelections);
   const currentZ = useViewerStore((s) => s.currentZ);
   const displayMode = useModeStore((s) => s.displayMode);

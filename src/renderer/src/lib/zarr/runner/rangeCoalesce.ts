@@ -40,6 +40,29 @@ export const DEFAULT_COALESCE: CoalesceOptions = {
   maxBytes: 8 * 1024 * 1024,
 }
 
+export interface DenseCoalesceOptions extends CoalesceOptions {
+  /**
+   * Whole-shard rule: when union(needed bytes) / span(min..max) reaches this,
+   * ALL items merge into one run regardless of `maxGap`. A `maxGap`-sized span
+   * is already bridged by the gap rule, so no separate small-span knob exists.
+   */
+  denseMergeDensity: number
+  /** Dense merge applies only when the whole span fits under this cap. */
+  denseMergeMaxBytes: number
+}
+
+/**
+ * At density ≥ 0.5 the discarded gap bytes are at most the needed bytes while
+ * one request replaces at least two — the same requests-over-bytes trade as
+ * `DEFAULT_COALESCE`. The span cap reuses `maxBytes` so the worst-case bytes
+ * per worker task (and per request) stay one story.
+ */
+export const DEFAULT_DENSE_COALESCE: DenseCoalesceOptions = {
+  ...DEFAULT_COALESCE,
+  denseMergeDensity: 0.5,
+  denseMergeMaxBytes: DEFAULT_COALESCE.maxBytes,
+}
+
 export function coalesceRanges<T>(
   items: readonly RangeItem<T>[],
   options: CoalesceOptions = DEFAULT_COALESCE,
@@ -68,4 +91,35 @@ export function coalesceRanges<T>(
   }
   out.push(current)
   return out
+}
+
+/**
+ * `coalesceRanges` plus the whole-shard density rule: if the items cover at
+ * least `denseMergeDensity` of their min..max span (union of intervals, so
+ * overlaps don't inflate the ratio) and that span fits `denseMergeMaxBytes`,
+ * fetch the whole span as ONE run. Otherwise identical to `coalesceRanges`.
+ */
+export function coalesceRangesDense<T>(
+  items: readonly RangeItem<T>[],
+  options: DenseCoalesceOptions = DEFAULT_DENSE_COALESCE,
+): CoalescedRange<T>[] {
+  if (items.length <= 1) return coalesceRanges(items, options)
+  const sorted = [...items].sort((a, b) => a.offset - b.offset)
+  const spanStart = sorted[0].offset
+  let spanEnd = 0
+  let needed = 0
+  let coveredEnd = spanStart
+  for (const range of sorted) {
+    const end = range.offset + range.length
+    if (end > spanEnd) spanEnd = end
+    if (end > coveredEnd) {
+      needed += end - Math.max(range.offset, coveredEnd)
+      coveredEnd = end
+    }
+  }
+  const span = spanEnd - spanStart
+  if (span <= options.denseMergeMaxBytes && needed / span >= options.denseMergeDensity) {
+    return [{ offset: spanStart, length: span, items: sorted }]
+  }
+  return coalesceRanges(sorted, options)
 }

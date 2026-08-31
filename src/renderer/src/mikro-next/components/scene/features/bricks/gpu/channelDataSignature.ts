@@ -54,8 +54,23 @@ const structuralTransfer = (transfer: Record<string, unknown>) => {
   return rest;
 };
 
+// Cached per layer OBJECT: layers are replaced immutably (the module's own
+// premise — identity IS the edit signal), so every call after the first per
+// layer object is a WeakMap hit. During a drag the ~60 Hz key rebuilds in the
+// brick layers then restringify only the ONE edited layer.
+const structureCache = new WeakMap<LayerState, string>();
+const windowCache = new WeakMap<LayerState, string>();
+
 export function buildChannelDataSignature(layer: LayerState | undefined): string {
   if (!layer) return "∅";
+  const hit = structureCache.get(layer);
+  if (hit !== undefined) return hit;
+  const signature = computeChannelDataSignature(layer);
+  structureCache.set(layer, signature);
+  return signature;
+}
+
+function computeChannelDataSignature(layer: LayerState): string {
   try {
     return JSON.stringify({
       kind: layer.renderKind ?? null,
@@ -94,11 +109,16 @@ export function buildChannelDataSignature(layer: LayerState | undefined): string
 
 export function buildChannelWindowSignature(layer: LayerState | undefined): string {
   if (!layer) return "∅";
+  const hit = windowCache.get(layer);
+  if (hit !== undefined) return hit;
+  let signature: string;
   try {
-    return JSON.stringify(sourcesOf(layer).map(windowOf));
+    signature = JSON.stringify(sourcesOf(layer).map(windowOf));
   } catch {
-    return `unserializable:${++unserializableCounter}`;
+    signature = `unserializable:${++unserializableCounter}`;
   }
+  windowCache.set(layer, signature);
+  return signature;
 }
 
 let unserializableCounter = 0;

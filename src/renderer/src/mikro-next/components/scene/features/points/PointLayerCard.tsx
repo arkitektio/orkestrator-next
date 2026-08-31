@@ -12,6 +12,7 @@ import { useSceneStore } from "../../platform/stores/sceneStore";
 import {
   Badge,
   CardSection,
+  LayerCardShell,
   OpacityRow,
   RowLabel,
   Segment,
@@ -56,9 +57,15 @@ type PointPatch = Omit<UpdatePointLayerInput, "id">;
 export const PointLayerCard = memo(
   ({
     layer,
+    expanded,
+    onSelect,
     onRemove,
   }: {
     layer: PointLayerVariant;
+    /** Whether the card's controls are unfolded (`LayerCardShell`). */
+    expanded: boolean;
+    /** The panel's toggle — handed the current state, see `cardShell.tsx`. */
+    onSelect: (id: string, currentlyExpanded: boolean) => void;
     onRemove?: (id: string) => void;
   }) => {
     const patchSceneLayer = useSceneStore((s) => s.patchSceneLayer);
@@ -114,42 +121,38 @@ export const PointLayerCard = memo(
       entry.label?.trim() || entry.column?.trim() || `colouring ${index + 1}`;
 
     return (
-      <div
-        className={`@container/card rounded-lg border border-white/10 bg-black/40 backdrop-blur-md transition-opacity ${
-          hidden ? "opacity-50" : ""
-        }`}
-      >
-        {/* ------------------------------------------------ header --------- */}
-        <div className="flex items-center gap-1.5 px-2 py-1.5">
-          <span className="grid h-5 w-5 shrink-0 place-items-center rounded bg-violet-400/15">
-            <CircleDot className="h-3 w-3 text-violet-300" />
-          </span>
-          <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-white/90">
-            {layer.tableDataset?.name?.trim() || `Points ${layer.id}`}
-          </span>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-5 w-5 shrink-0 text-white/45 hover:text-white/90"
-            title={hidden ? "Show" : "Hide"}
-            onClick={() => persist({ visible: hidden })}
-          >
-            {hidden ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-          </Button>
-          {onRemove && (
+      <LayerCardShell
+        icon={<CircleDot className="h-3 w-3 text-violet-300" />}
+        tile="bg-violet-400/15"
+        title={layer.tableDataset?.name?.trim() || `Points ${layer.id}`}
+        hidden={hidden}
+        expanded={expanded}
+        onToggle={() => onSelect(layer.id, expanded)}
+        actions={
+          <>
             <Button
               variant="ghost"
               size="icon"
-              className="h-5 w-5 shrink-0 text-white/35 hover:text-red-300"
-              title="Remove layer from scene"
-              onClick={() => onRemove(layer.id)}
+              className="h-5 w-5 shrink-0 text-white/45 hover:text-white/90"
+              title={hidden ? "Show" : "Hide"}
+              onClick={() => persist({ visible: hidden })}
             >
-              <Trash2 className="h-3 w-3" />
+              {hidden ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
             </Button>
-          )}
-        </div>
-
+            {onRemove && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5 shrink-0 text-white/35 hover:text-red-300"
+                title="Remove layer from scene"
+                onClick={() => onRemove(layer.id)}
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            )}
+          </>
+        }
+      >
         {/* ------------------------------------------------ size ----------- */}
         <CardSection title="size">
           <div className="flex items-center gap-1.5">
@@ -216,6 +219,15 @@ export const PointLayerCard = memo(
           <Badge title="The coordinate columns, resolved from the dataset's declared axes">
             {[layer.xColumn, layer.yColumn, layer.zColumn].filter(Boolean).join(" · ")}
           </Badge>
+          {layer.tColumn ? (
+            <Badge title="The time column the scene's T slider scrubs over — one timepoint is drawn at a time">
+              t {layer.tColumn}
+            </Badge>
+          ) : (
+            <Badge title="This table declares no time column, so every point is always drawn">
+              untimed
+            </Badge>
+          )}
           {layer.sizeColumn && (
             <Badge title="The measure column mapped to per-point size">
               size {layer.sizeColumn}
@@ -227,7 +239,7 @@ export const PointLayerCard = memo(
             </Badge>
           )}
         </div>
-      </div>
+      </LayerCardShell>
     );
   },
 );

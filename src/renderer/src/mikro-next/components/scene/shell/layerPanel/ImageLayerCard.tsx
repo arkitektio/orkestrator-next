@@ -5,9 +5,10 @@ import { perfMonitor } from "../../platform/perf/perfMonitor";
 import type { LayerState } from "../../platform/stores/sceneStore";
 import { useRenderGraphEditor } from "../../features/volume/rendergraph/RenderNodeEditor";
 import { LayerGraphFlyout } from "./LayerGraphFlyout";
+import { layerCardShellClasses } from "../../platform/layerui/cardControls";
 import { LayerRow } from "./LayerRow";
 import { UnplannableNotice } from "./UnplannableNotice";
-import { CARD_SHELL_CLASSES, type LayerCardProps } from "./cardShell";
+import { type LayerCardProps } from "./cardShell";
 
 /**
  * The card for a layer whose rendering IS a render graph — an `ImageLayer`.
@@ -35,7 +36,10 @@ export const ImageLayerCard = memo(function ImageLayerCard({
   const handleSelect = () => onSelect(layer.id, expanded);
   const handleRemove = () => onRemove(layer.id);
   return (
-    <Collapsible open={expanded} className={CARD_SHELL_CLASSES(expanded)}>
+    <Collapsible
+      open={expanded}
+      className={layerCardShellClasses(expanded, layer.visible === false)}
+    >
       <LayerRow
         embedded
         layer={layer}

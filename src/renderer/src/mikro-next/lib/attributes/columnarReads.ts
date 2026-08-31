@@ -60,6 +60,13 @@ export type PositionColumns = {
   y: string;
   /** Optional third dimension; a 2D table simply omits it. */
   z?: string | null;
+  /**
+   * The time column. Optional, and read in the SAME scan as the coordinates —
+   * a second scan could only be aligned to this one by trusting two `ORDER BY`s
+   * to have matched, the coincidence `readColumnValues` says a caller cannot
+   * check cheaply.
+   */
+  t?: string | null;
 };
 
 export type PointPositions = {
@@ -68,6 +75,8 @@ export type PointPositions = {
   x: ArrayLike<number>;
   y: ArrayLike<number>;
   z: ArrayLike<number> | null;
+  /** Raw time per row, parallel to the coordinates. Null with no t column. */
+  t: ArrayLike<number> | null;
   count: number;
 };
 
@@ -83,12 +92,19 @@ export const readPointPositions = async (
   store: ParquetStoreLike,
   columns: PositionColumns,
 ): Promise<PointPositions | null> => {
-  const wanted = ["object_id", "px", "py", ...(columns.z ? ["pz"] : [])];
+  const wanted = [
+    "object_id",
+    "px",
+    "py",
+    ...(columns.z ? ["pz"] : []),
+    ...(columns.t ? ["pt"] : []),
+  ];
   const projection = [
     `${escapeSqlIdentifier(columns.key)} AS object_id`,
     `${escapeSqlIdentifier(columns.x)} AS px`,
     `${escapeSqlIdentifier(columns.y)} AS py`,
     ...(columns.z ? [`${escapeSqlIdentifier(columns.z)} AS pz`] : []),
+    ...(columns.t ? [`${escapeSqlIdentifier(columns.t)} AS pt`] : []),
   ].join(", ");
 
   const read = await engine.readColumnsTyped(
@@ -102,12 +118,15 @@ export const readPointPositions = async (
   const x = asNumeric(read.px);
   const y = asNumeric(read.py);
   const z = columns.z ? asNumeric(read.pz) : null;
+  const t = columns.t ? asNumeric(read.pt) : null;
   // Coordinates that did not come back as numbers are not coordinates. Null,
   // for the same reason a result that cannot answer columnwise is null: the
   // caller refuses rather than falling back to the path this exists to avoid.
   if (!ids || !x || !y || (columns.z && !z)) return null;
 
-  return { ids, x, y, z, count: ids.length };
+  // A non-numeric TIME column is not fatal the way a coordinate is: the layer
+  // draws untimed rather than not at all.
+  return { ids, x, y, z, t, count: ids.length };
 };
 
 /** Which columns a track layer's trajectories are read from. */

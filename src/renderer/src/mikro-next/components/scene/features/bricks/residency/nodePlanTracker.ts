@@ -17,6 +17,11 @@ import { assessPoolViability } from "../octree/poolViability";
 import { buildPlanInputSignature } from "../octree/planInputSignature";
 import { buildPoolKey, poolValueSemantics } from "../octree/poolKey";
 import { buildSliceSignature } from "../../../platform/model/sliceSignature";
+import {
+  layerPlanSignature,
+  layersPlanKey,
+  sameLayerElements,
+} from "../../../platform/model/layerPlanKey";
 import { resolveLayerDataRange } from "../../../platform/model/dataRange";
 import {
   buildLayerLevelGeometry,
@@ -203,9 +208,13 @@ export function startNodePlanTracking({
       let entry: DerivationEntry;
       if (
         cached &&
-        cached.layer === layer &&
         cached.dataArrays === layer.lens.dataset.dataArrays &&
-        cached.mode === mode
+        cached.mode === mode &&
+        // Identity first (free), else the plan signature: a window-only layer
+        // replacement (clim drag) must not re-derive geometry on a replan some
+        // OTHER input (camera, z) triggered mid-drag.
+        (cached.layer === layer ||
+          layerPlanSignature(cached.layer as typeof layer) === layerPlanSignature(layer))
       ) {
         entry = cached;
       } else {
@@ -554,9 +563,23 @@ export function startNodePlanTracking({
   });
 
   let lastLayers = sceneStore.getState().layers;
+  let lastLayersKey = layersPlanKey(lastLayers);
   const unsubscribeScene = sceneStore.subscribe((state) => {
-    if (state.layers !== lastLayers) {
-      lastLayers = state.layers;
+    if (state.layers === lastLayers) return;
+    const previous = lastLayers;
+    lastLayers = state.layers;
+    // `touchImageLayers` republishes IDENTICAL elements in a fresh array
+    // precisely to request a replan (a zarr store opened late) — that touch
+    // must schedule unconditionally. A real element replacement schedules
+    // only when a PLANNING input moved: a clim/gamma drag replaces the layer
+    // sixty times a second and none of that is a planner read (layerPlanKey).
+    if (sameLayerElements(previous, state.layers)) {
+      schedule();
+      return;
+    }
+    const key = layersPlanKey(state.layers);
+    if (key !== lastLayersKey) {
+      lastLayersKey = key;
       schedule();
     }
   });

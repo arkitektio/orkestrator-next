@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createStore, type StoreApi } from "zustand/vanilla";
 import { startNodePlanTracking } from "./nodePlanTracker";
 import type { LayerNodePlan } from "../octree/nodePlanning";
@@ -182,6 +182,45 @@ describe("startNodePlanTracking", () => {
     expect(notifications).toBe(1); // only the input write itself
     expect(stores.viewerStore.getState().nodePlans[LAYER_ID]).toBe(planBefore);
     unsubscribe();
+    stop();
+  });
+
+  it("ignores a window-only layer replacement, but replans on a touch republish", async () => {
+    const stores = makeStores();
+    const stop = startNodePlanTracking(stores);
+    stores.viewerStore.setState({ layerViewRanges: { [LAYER_ID]: FULL_VIEW } });
+    await settle();
+    const planBefore = stores.viewerStore.getState().nodePlans[LAYER_ID];
+
+    // `schedule()` (and a recompute) read the view store; a quiet spy after
+    // the initial settle is therefore "no replan was even scheduled".
+    const viewReads = vi.spyOn(stores.viewStore, "getState");
+
+    // The exact pushChannels shape: fresh channels/sources arrays and moved
+    // window fields, every planning input spread through unchanged. Sixty of
+    // these a second is a contrast drag, and none may cost a replan.
+    stores.sceneStore.setState({
+      layers: [
+        {
+          ...layer,
+          channels: [{ transfer: { climMin: 5, climMax: 60 } }],
+          sources: [{ transfer: { climMin: 5, climMax: 60 } }],
+          climMin: 5,
+          climMax: 60,
+        } as unknown as LayerState,
+      ],
+    });
+    await settle();
+    expect(viewReads).not.toHaveBeenCalled();
+    expect(stores.viewerStore.getState().nodePlans[LAYER_ID]).toBe(planBefore);
+
+    // `touchImageLayers`: IDENTICAL elements in a fresh array — the explicit
+    // replan request for a zarr store that opened late. Must schedule.
+    stores.sceneStore.setState({ layers: [...stores.sceneStore.getState().layers] });
+    await settle();
+    expect(viewReads).toHaveBeenCalled();
+
+    viewReads.mockRestore();
     stop();
   });
 

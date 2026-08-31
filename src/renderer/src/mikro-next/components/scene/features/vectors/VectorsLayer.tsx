@@ -22,7 +22,10 @@ import * as THREE from "three";
 import { useThree } from "@react-three/fiber";
 
 import { useDatalayerEndpoint, useMikro } from "@/app/Arkitekt";
+import { collapsibleLensDims } from "../../platform/model/dimExtents";
+import { createSettler } from "../../platform/probe/settle";
 import { useSceneStore } from "../../platform/stores/sceneStore";
+import { useViewerStoreApi } from "../../platform/stores/viewerStore";
 import { composeLayerAffine } from "@/mikro-next/lib/coords/transformGraph";
 import { affineToMatrix4 } from "../../platform/coords/worldTransform";
 import { paletteRowFor, DEFAULT_MEASURE_COLORMAP } from "../../platform/attributes/valueLut";
@@ -35,6 +38,15 @@ export const VectorLayerRenderer = ({ layerId }: { layerId: string }) => {
   if (!layer || !isVectorLayer(layer)) return null;
   return <VectorField layer={layer} />;
 };
+
+/**
+ * How long a dim scrubber must rest before the field is re-read.
+ *
+ * Equal to `MIN_REPLAN_INTERVAL_MS` in the brick residency's plan tracker: the
+ * same slider drives both, and matching the cadence is what makes a flow field
+ * and the image beneath it land on the new frame together.
+ */
+const VECTOR_REREAD_SETTLE_MS = 200;
 
 /** The GraphQL enum's members, lowered to the material's vocabulary. */
 const glyphKindOf = (glyph: string | null | undefined): VectorGlyphKind =>
@@ -66,31 +78,93 @@ const VectorField = ({ layer }: { layer: VectorLayerFragment }) => {
     return basis > 0 ? basis : 1;
   }, [affine]);
 
+  /**
+   * The dims a scrubber can move for THIS layer — its collapsed axes, the same
+   * set `DimSliderPanel` offers sliders for. The subscription below re-reads
+   * only when one of these changes: a `tau` scrub in a scene that also holds a
+   * FLIM stack must not refetch a flow field that has no tau, exactly as
+   * `buildSliceSignature` keeps a foreign dim out of a brick layer's identity.
+   */
+  const scrubbableDims = useMemo(
+    () =>
+      collapsibleLensDims(layer.lens, [
+        layer.lens.renderAxes.x,
+        layer.lens.renderAxes.y,
+        layer.lens.renderAxes.z,
+        layer.lens.renderAxes.intensity,
+        layer.lens.renderAxes.phasor,
+        layer.vectorAxis,
+      ]),
+    [layer.lens, layer.vectorAxis],
+  );
+
   // ------------------------------------------------------------------ the read
-  // Re-run only when what is READ changes: the lens or the stride. Scale, glyph,
-  // colormap and clims are uniforms on the far side of the buffers.
+  /**
+   * Re-runs when what is READ changes: the lens, the stride, or a scrubber on one
+   * of this layer's own collapsed dims.
+   *
+   * `dimSelections` is read IMPERATIVELY, never through a selector. P17
+   * (`ARCHITECTURE.md`): `AnimationPlayer` writes `setDimSelection` from inside
+   * `useFrame` while a camera tour plays, so a React subscription here would
+   * re-render this layer at frame rate. A vanilla subscription with an identity
+   * latch — which is what `setDimSelection`'s no-op guard and fresh-object-on-
+   * change exist to support — touches React not at all.
+   *
+   * The re-read is SETTLED rather than immediate: a slider drag would otherwise
+   * fire a ranged zarr read per pointer event. 200 ms matches
+   * `MIN_REPLAN_INTERVAL_MS`, the cadence at which the same scrub replans the
+   * brick layers, so a flow field and the image under it arrive together instead
+   * of popping in staggered.
+   */
+  const viewerApi = useViewerStoreApi();
   useEffect(() => {
     if (!datalayer) return;
     let cancelled = false;
-    void loadVectorField(client, datalayer, layer)
-      .then((read) => {
-        if (cancelled) return;
-        if ("error" in read) {
-          console.warn("[vectors] not drawn:", read.error);
-          return;
-        }
-        setField(read);
-      })
-      .catch((error: unknown) => {
-        if (!cancelled) console.warn("[vectors] could not read the field:", error);
-      });
+
+    const read = (dimSelections: Readonly<Record<string, number>>) => {
+      void loadVectorField(client, datalayer, layer, dimSelections)
+        .then((result) => {
+          if (cancelled) return;
+          if ("error" in result) {
+            console.warn("[vectors] not drawn:", result.error);
+            return;
+          }
+          setField(result);
+        })
+        .catch((error: unknown) => {
+          if (!cancelled) console.warn("[vectors] could not read the field:", error);
+        });
+    };
+
+    const settler = createSettler<Readonly<Record<string, number>>>({
+      delayMs: VECTOR_REREAD_SETTLE_MS,
+      emit: read,
+    });
+
+    // The first read is immediate — a settle here would leave the viewport empty
+    // for the window on every mount.
+    read(viewerApi.getState().dimSelections);
+
+    let last = viewerApi.getState().dimSelections;
+    const unsubscribe = viewerApi.subscribe((state) => {
+      if (state.dimSelections === last) return;
+      const previous = last;
+      last = state.dimSelections;
+      // Only OUR dims. A scrub of a dim this layer does not carry changes
+      // nothing about what it reads.
+      if (scrubbableDims.every((dim) => previous[dim] === last[dim])) return;
+      settler.push(last);
+    });
+
     return () => {
       cancelled = true;
+      settler.cancel();
+      unsubscribe();
     };
     // The layer object identity churns with scene re-emissions; the read only
-    // depends on the lens and the stride.
+    // depends on the lens, the stride and this layer's own scrubbable dims.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [client, datalayer, layer.lens.id, layer.glyphStride]);
+  }, [client, datalayer, layer.lens.id, layer.glyphStride, scrubbableDims, viewerApi]);
 
   // ------------------------------------------------------------------ the meshes
   useEffect(() => {

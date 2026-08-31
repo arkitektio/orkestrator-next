@@ -14,9 +14,11 @@ import {
   RowLabel,
   Segment,
   SegmentGroup,
+  layerCardShellClasses,
 } from "../../platform/layerui/cardControls";
 import type { LayerState } from "../../platform/stores/sceneStore";
 import { useSceneStore } from "../../platform/stores/sceneStore";
+import { useViewStoreApi } from "../../platform/stores/viewStore";
 import type { ChannelRenderNode, PhasorRenderNode, TransferFn } from "../../platform/model/renderGraph";
 import { serializePhasorTransfer } from "../../platform/model/renderGraph";
 import {
@@ -27,21 +29,6 @@ import { LayerGraphFlyout } from "./LayerGraphFlyout";
 import { LayerRow } from "./LayerRow";
 import { UnplannableNotice } from "./UnplannableNotice";
 import { type LayerCardProps } from "./cardShell";
-
-/**
- * The card surface, matching the collection-backed cards (annotation, label,
- * mesh) rather than `CARD_SHELL_CLASSES`: same `border-white/10 bg-black/40
- * backdrop-blur-md`, same `opacity-50` for a hidden layer. Expansion is the
- * one thing those cards have nothing to say about, so it shows as a slightly
- * firmer border instead of a different fill.
- *
- * `ImageLayerCard` still wears the old shell — aligning it is the same edit,
- * left alone because it was not what was asked for.
- */
-const shellClasses = (expanded: boolean, hidden: boolean): string =>
-  `@container/card overflow-hidden rounded-lg border bg-black/40 backdrop-blur-md transition-colors ${
-    expanded ? "border-white/25" : "border-white/10 hover:border-white/20"
-  } ${hidden ? "opacity-50" : ""}`;
 
 /**
  * The projection choices, in the order they escalate: two ways of taking the
@@ -110,6 +97,7 @@ export const FixedShapeLayerCard = memo(function FixedShapeLayerCard({
 }: LayerCardProps<LayerState>) {
   perfMonitor.countRender("FixedShapeLayerCard"); // no-op unless a perf recording is armed
   const updateStoreLayer = useSceneStore((s) => s.updateLayer);
+  const viewApi = useViewStoreApi();
   const [dirty, setDirty] = useState(false);
   // Tracked apart from `dirty` so an unrelated edit (a gamma nudge) does not
   // write a projection: `layer.projection` READS as MIP when the server holds
@@ -129,8 +117,11 @@ export const FixedShapeLayerCard = memo(function FixedShapeLayerCard({
    * flat fields are DERIVED, never written by a panel on their own.
    */
   const pushChannels = (channels: ChannelRenderNode[]) => {
+    // Live-preview tick: pulse the interaction flag so the volume renders
+    // degraded during the drag and refines on release (viewStore docblock).
+    viewApi.getState().markInteraction();
     const primary = channels[0]?.transfer;
-    setDirty(true);
+    if (!dirty) setDirty(true); // same-value sets bail anyway; skip the call per tick
     updateStoreLayer({
       ...layer,
       channels,
@@ -182,6 +173,7 @@ export const FixedShapeLayerCard = memo(function FixedShapeLayerCard({
     );
 
   const setPhasorNode = (node: PhasorRenderNode) => {
+    viewApi.getState().markInteraction(); // same live-preview cadence as pushChannels
     setDirty(true);
     updateStoreLayer({
       ...layer,
@@ -258,7 +250,7 @@ export const FixedShapeLayerCard = memo(function FixedShapeLayerCard({
   return (
     <Collapsible
       open={expanded}
-      className={shellClasses(expanded, layer.visible === false)}
+      className={layerCardShellClasses(expanded, layer.visible === false)}
     >
       <LayerRow
         embedded

@@ -117,6 +117,28 @@ needed: t as a brick/page-table axis (would make t-scrubbing flush-free like
 z, at a multiplied atlas/page cost), anchor labels / physical-time display on
 the slider (needs the TIME calibration edge).
 
+**The sliders are not brick-only.** Which dims exist is a scene-wide question,
+and every layer kind answers it through one protocol — `DimExtent`
+(`platform/model/dimExtents.ts`): a dim NAME, how far it runs, and where it
+starts. The split is DECLARED vs OBSERVED, not brick vs non-brick:
+
+- **Declared**, from a fragment, derived by the panel. Every lens-backed layer,
+  brick or not — a vector field is a Lens over an array exactly as an image is
+  (the `NonBrickLensTypename` carve-out), and reads its own frame through the
+  same `resolveFixedDimIndex`, settled at 200 ms so it lands with the bricks.
+  Derived rather than published because `LayerRenderer` culls by GPU budget and
+  remounts on a mode toggle: a slider tied to a renderer effect would vanish
+  under budget pressure and flicker on a 2D/3D switch.
+- **Observed**, from the data, published into `sceneStore.layerDimExtents` by
+  the renderer that read it. Table-backed layers — tracks, points — whose time
+  is a parquet COLUMN and whose timeline is unknowable until the scan returns.
+  Rows resolve to timeline INDICES (`platform/model/timeline.ts`) so a table and
+  the image it was tracked on share one slider whatever the column's units were.
+
+Ranges merge by dim name and widen to the longest contributor; per-layer clamping
+means an out-of-range step keeps a shorter layer's signature unchanged and never
+re-flushes it. Adding a layer kind means publishing extents, not editing the panel.
+
 **A brick is not a zarr chunk.** The fetch unit stays the zarr chunk (keeps
 the worker pipeline and caches untouched); `chunksTouchingBrick` maps a brick's
 fetch box to the 1–N chunks that intersect it, and repack cuts the brick out of
@@ -633,7 +655,7 @@ GET, same cache key.
 in get-worker.ts): a brick's chunk set goes through ONE grouped call
 (`fetchChunksShared` in brickResidency.ts — same per-chunk in-flight sharing
 and per-chunk abort as `fetchChunkShared`). Inner chunks of the same shard
-whose byte ranges sit within `maxGap` (64 KiB) of each other, up to `maxBytes`
+whose byte ranges sit within `maxGap` (256 KiB) of each other, up to `maxBytes`
 (8 MiB) per run, become a single ranged GET; the worker's `fetch_decode_multi`
 slices the body and decodes each part. A run's worker task is cancelled only
 when EVERY chunk in it aborted (`whenAllAborted`). `stats.rangeRequests`
@@ -643,6 +665,30 @@ path bit-for-bit. Backend contract that maximises this: write a shard's inner
 chunks in **Morton order** so a brick's 2×2×2 / 3×3×3 neighbourhood is
 contiguous (C-order writers still get pairs along x).
 
+**Cross-brick batching** (`lib/zarr/runner/shardRunBatch.ts`): range reads do
+not dispatch inside their group call — each call contributes its post-index
+`{offset, length}` items to a pending batch keyed by everything a merged
+`fetch_decode_multi` must share (pool, workerUrl, store, shard, metaId,
+fidelity, SAB, requestInit, coalesce opts), and a `setTimeout(0)` flush
+coalesces ACROSS the contributors. The dispatch loop is synchronous and
+same-shard index reads share one single-flight promise, so neighbouring
+bricks dispatched in one reconcile tick land in the same batch; a lone call
+pays at most one macrotask. Merged-run priority = `max(members)` (WorkerPool
+runs higher numbers first — a colliding halo part briefly rides its
+co-members' priority; collisions are rare since `dispatchHalos` requires an
+idle on-screen pipeline). Cancellation stays `whenAllAborted` over every
+member across bricks. `onDispatch` is additive and attributes each physical
+request once (to the run's lead item), so the scene-wide
+`chunkRequests / rangeRequests` ratio stays exact while per-call counts are
+approximate for shared runs.
+
+**Whole-shard dense merge** (`coalesceRangesDense`): when a batch's items
+cover ≥ `denseMergeDensity` (0.5) of their min..max span as a UNION of
+intervals and the span fits `denseMergeMaxBytes` (8 MiB), the whole span goes
+out as ONE GET regardless of `maxGap` — at density 0.5 the discarded gap
+bytes are at most the needed bytes while one request replaces at least two.
+Below the threshold the greedy gap rule applies unchanged.
+
 **Shard index prefetch**: `warmShardIndexes` (reconcile, after `pendingFetch`
 is built) fires `prefetchShardIndex` for the head of the queue (≤256 chunks)
 so the index round trip overlaps the queue wait instead of preceding the
@@ -651,8 +697,9 @@ first inner-chunk read of every shard.
 Backend contract that makes this pay off: brick-aligned inner chunks (64³ 3D,
 or 256×256×1 for 2D-only levels), shards written whole at ingest (zarr-python
 ≥ 3.3 / zarrs / zarr-java all read partial shards; only zarrs writes them
-partially). Follow-ups: coalesce a brick's adjacent inner-chunk ranges within a
-shard into one GET (zarr-python 3.3's 1 MiB-gap / 16 MiB-cap rule); per-shard
+partially). Follow-ups: route SINGLE-coord group calls through the batch too —
+`coordsList.length < 2` still short-circuits to the single path, so aligned
+core-phase bricks (1 chunk each) never merge with a neighbour; per-shard
 occupancy sidecar.
 
 ### 2.11b Two-phase bricks (`features/bricks/residency/twoPhase.ts`)

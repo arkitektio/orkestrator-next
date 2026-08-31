@@ -52,7 +52,9 @@ export const SceneModeControls = () => {
   const setInteractionMode = useModeStore((s) => s.setInteractionMode);
   const probeFollowsCursor = useModeStore((s) => s.probeFollowsCursor);
   const setProbeFollowsCursor = useModeStore((s) => s.setProbeFollowsCursor);
-  const layers = useSceneStore((state) => state.layers);
+  // A SCALAR subscription (P9c/P17): only the boolean gates the mode options,
+  // and the `layers` array changes identity on every per-tick layer edit.
+  const probeable = useSceneStore((state) => hasProbeableLayer(state.layers));
 
   const preferredView = useSceneStore((state) => state.preferredView);
   const { savePreferredView, saving } = useScenePreferencesEditor();
@@ -64,7 +66,7 @@ export const SceneModeControls = () => {
   // An option that would be inert is not offered — see `features/annotations/modeCompat.ts`.
   const modeContext = {
     displayMode,
-    hasProbeableLayer: hasProbeableLayer(layers),
+    hasProbeableLayer: probeable,
   };
   const availableModes = interactionModeOptions.filter((mode) =>
     isInteractionModeAvailable(mode.value, modeContext),

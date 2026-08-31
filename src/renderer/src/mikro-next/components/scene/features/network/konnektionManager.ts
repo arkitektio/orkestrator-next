@@ -1,5 +1,10 @@
 import * as THREE from "three";
 import { ClippingGroup } from "three/webgpu";
+import {
+  DEFAULT_INSTANCE_COLORMAP,
+  INSTANCE_COLORMAP_SPECS,
+  type FabriksInstanceColormap,
+} from "../../platform/gpu/instanceColormaps";
 import type { KonnektionCollection } from "./konnektion/konnektionCollection";
 import {
   buildKonnektionCellIndex,
@@ -95,6 +100,12 @@ export type NetworkMaterialConfig = {
   lineWidth?: number | null;
   showNodes?: boolean;
   directed?: boolean;
+  /** Colour by instance id (the DEFAULT, the mesh layer's convention) vs the
+   *  flat material colour. Explicit rather than inferred from `color`'s
+   *  presence — a layer with a stored colour must still be instance-colorable. */
+  colorByInstance?: boolean;
+  /** Which instance palette the id hue is drawn from (default "hues"). */
+  instanceColormap?: FabriksInstanceColormap;
 };
 
 export type NetworkPlanConfig = {
@@ -275,6 +286,15 @@ export class KonnektionCollectionManager {
     if (config.lineWidth !== undefined) {
       this.uniforms.uHalfWidth.value = (config.lineWidth ?? DEFAULT_LINE_WIDTH) / 2;
     }
+    // Instance colouring is the DEFAULT (unset means on), so it is derived
+    // from the merged config every time rather than gated on the patch: the
+    // palette spec is three uniform writes, never a recompile.
+    this.uniforms.uInstanceColorize.value = this.material.colorByInstance === false ? 0 : 1;
+    const spec =
+      INSTANCE_COLORMAP_SPECS[this.material.instanceColormap ?? DEFAULT_INSTANCE_COLORMAP];
+    this.uniforms.uInstanceSaturation.value = spec.saturation;
+    this.uniforms.uInstanceValue.value = spec.value;
+    this.uniforms.uInstanceTiered.value = spec.tiered ? 1 : 0;
     if (this.bundle) this.applyMaterialToBundle(this.bundle);
     this.onInvalidate();
   }

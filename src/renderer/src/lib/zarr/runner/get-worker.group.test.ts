@@ -83,7 +83,7 @@ describe('getChunkGroupWorker', () => {
 
     const { arr, getRange } = fakeArray({ '/c/0/0': shardObject() })
     const cache = new Map()
-    let dispatched = -1
+    let dispatched = 0
     const promises = getChunkGroupWorker(
       arr,
       [
@@ -92,7 +92,7 @@ describe('getChunkGroupWorker', () => {
         [1, 0], // inner 2 @5000 — far → single
         [1, 1], // inner 3 — missing → fill
       ],
-      { pool: fakePool, cache, useSharedArrayBuffer: true, textureFidelity: 'raw16', coalesce: { maxGap: 64, maxBytes: 1 << 20 }, onDispatch: (n) => (dispatched = n) },
+      { pool: fakePool, cache, useSharedArrayBuffer: true, textureFidelity: 'raw16', coalesce: { maxGap: 64, maxBytes: 1 << 20 }, onDispatch: (n) => (dispatched += n) },
     )
     expect(promises).toHaveLength(4)
     const chunks = await Promise.all(promises)
@@ -133,12 +133,128 @@ describe('getChunkGroupWorker', () => {
     expect(workerFetchDecodeMulti).toHaveBeenCalledTimes(1)
     workerFetchDecodeMulti.mockClear()
     workerFetchDecode.mockClear()
-    let dispatched = -1
+    let dispatched = 0
     await Promise.all(
-      getChunkGroupWorker(arr, [[0, 0], [0, 1]], { pool: fakePool, cache, useSharedArrayBuffer: true, textureFidelity: 'raw16', onDispatch: (n) => (dispatched = n) }),
+      getChunkGroupWorker(arr, [[0, 0], [0, 1]], { pool: fakePool, cache, useSharedArrayBuffer: true, textureFidelity: 'raw16', onDispatch: (n) => (dispatched += n) }),
     )
     expect(workerFetchDecodeMulti).not.toHaveBeenCalled()
     expect(workerFetchDecode).not.toHaveBeenCalled()
     expect(dispatched).toBe(0)
+  })
+
+  it('merges same-shard ranges ACROSS group calls issued in the same tick', async () => {
+    workerFetchDecodeMulti.mockReset()
+    workerFetchDecode.mockReset()
+    workerFetchDecodeMulti.mockImplementation(async (_w, _s, _p, _range, parts: unknown[]) => ({
+      chunks: parts.map((_, i) => chunkOf(i + 1)),
+      timings: { roundTripMs: 0, fetchMs: 0, totalWorkerMs: 0 },
+    }))
+    workerFetchDecode.mockImplementation(async () => ({ chunk: chunkOf(99), timings: { metaInitMs: 0, roundTripMs: 0, fetchMs: 0, decodeMs: 0, reshapeMs: 0, promoteMs: 0, totalWorkerMs: 0 } }))
+
+    const { arr } = fakeArray({ '/c/0/0': shardObject() })
+    const cache = new Map()
+    let dispatched = 0
+    const shared = { pool: fakePool, cache, useSharedArrayBuffer: true, textureFidelity: 'raw16', coalesce: { maxGap: 64, maxBytes: 1 << 20 }, onDispatch: (n: number) => (dispatched += n) } as const
+    // Call A holds inner 0 (@0) + far inner 2 (@5000); call B holds inner 1
+    // (@100, contiguous with A's inner 0) + missing inner 3. Only a
+    // cross-call merge can put 0 and 1 into one request.
+    const callA = getChunkGroupWorker(arr, [[0, 0], [1, 0]], { ...shared })
+    const callB = getChunkGroupWorker(arr, [[0, 1], [1, 1]], { ...shared })
+    const [a, b] = await Promise.all([Promise.all(callA), Promise.all(callB)])
+
+    expect(workerFetchDecodeMulti).toHaveBeenCalledTimes(1)
+    const [, , path, range, parts] = workerFetchDecodeMulti.mock.calls[0]
+    expect(path).toBe('/c/0/0')
+    expect(range).toEqual({ offset: 0, length: 200 })
+    expect(parts.map((p: { offset: number }) => p.offset)).toEqual([0, 100])
+    expect(workerFetchDecode).toHaveBeenCalledTimes(1) // far inner 2 only
+    expect(dispatched).toBe(2) // one merged request + one single, counted once across both calls
+
+    expect((a[0].data as Uint16Array)[0]).toBe(1)
+    expect((b[0].data as Uint16Array)[0]).toBe(2)
+    expect((a[1].data as Uint16Array)[0]).toBe(99)
+    expect((b[1].data as Uint16Array)[0]).toBe(0) // fill
+  })
+
+  it('does not merge calls with incompatible options (textureFidelity)', async () => {
+    workerFetchDecodeMulti.mockReset()
+    workerFetchDecode.mockReset()
+    workerFetchDecodeMulti.mockImplementation(async (_w, _s, _p, _range, parts: unknown[]) => ({
+      chunks: parts.map((_, i) => chunkOf(i + 1)),
+      timings: { roundTripMs: 0, fetchMs: 0, totalWorkerMs: 0 },
+    }))
+    workerFetchDecode.mockImplementation(async () => ({ chunk: chunkOf(99), timings: { metaInitMs: 0, roundTripMs: 0, fetchMs: 0, decodeMs: 0, reshapeMs: 0, promoteMs: 0, totalWorkerMs: 0 } }))
+
+    const { arr } = fakeArray({ '/c/0/0': shardObject() })
+    const coalesce = { maxGap: 64, maxBytes: 1 << 20 }
+    const callA = getChunkGroupWorker(arr, [[0, 0], [1, 0]], { pool: fakePool, cache: new Map(), useSharedArrayBuffer: true, textureFidelity: 'raw16', coalesce })
+    const callB = getChunkGroupWorker(arr, [[0, 1], [1, 1]], { pool: fakePool, cache: new Map(), useSharedArrayBuffer: true, textureFidelity: 'default', coalesce })
+    await Promise.all([...callA, ...callB])
+
+    // No shared run: inner 0 and inner 1 stay in separate batches, so every
+    // fetched chunk goes out as a single (0, 2 from A; 1 from B; 3 fills).
+    expect(workerFetchDecodeMulti).not.toHaveBeenCalled()
+    expect(workerFetchDecode).toHaveBeenCalledTimes(3)
+  })
+
+  it('enqueues a merged run at the max priority of its members', async () => {
+    workerFetchDecodeMulti.mockReset()
+    workerFetchDecode.mockReset()
+    workerFetchDecodeMulti.mockImplementation(async (_w, _s, _p, _range, parts: unknown[]) => ({
+      chunks: parts.map((_, i) => chunkOf(i + 1)),
+      timings: { roundTripMs: 0, fetchMs: 0, totalWorkerMs: 0 },
+    }))
+    workerFetchDecode.mockImplementation(async () => ({ chunk: chunkOf(99), timings: { metaInitMs: 0, roundTripMs: 0, fetchMs: 0, decodeMs: 0, reshapeMs: 0, promoteMs: 0, totalWorkerMs: 0 } }))
+
+    const priorities: (number | undefined)[] = []
+    const recordingPool = {
+      enqueue<T>(input: { priority?: number; task: (w: unknown) => Promise<{ worker: unknown; result: T }> }) {
+        priorities.push(input.priority)
+        const promise = input.task({ terminate() {} } as unknown as Worker).then((r) => r.result)
+        return { id: 0, promise, cancel: () => false, updatePriority: () => false }
+      },
+    } as never
+
+    const { arr } = fakeArray({ '/c/0/0': shardObject() })
+    const cache = new Map()
+    const coalesce = { maxGap: 64, maxBytes: 1 << 20 }
+    // Low-priority call A carries inner 1 (@100) + far inner 2; high-priority
+    // call B carries inner 0 (@0) + missing inner 3. The merged 0+1 run must
+    // ride at B's priority.
+    const callA = getChunkGroupWorker(arr, [[0, 1], [1, 0]], { pool: recordingPool, cache, useSharedArrayBuffer: true, textureFidelity: 'raw16', coalesce, priority: -1 })
+    const callB = getChunkGroupWorker(arr, [[0, 0], [1, 1]], { pool: recordingPool, cache, useSharedArrayBuffer: true, textureFidelity: 'raw16', coalesce, priority: 5 })
+    await Promise.all([...callA, ...callB])
+
+    expect(workerFetchDecodeMulti).toHaveBeenCalledTimes(1)
+    // Runs flush in offset order: the merged run (offset 0) at max(-1, 5),
+    // then A's far single at its own -1.
+    expect(priorities).toEqual([5, -1])
+  })
+
+  it('rejects without fetching when every member aborts before the flush', async () => {
+    workerFetchDecodeMulti.mockReset()
+    workerFetchDecode.mockReset()
+
+    const { arr, getRange } = fakeArray({ '/c/0/0': shardObject() })
+    const controllers = [new AbortController(), new AbortController()]
+    const promises = getChunkGroupWorker(arr, [[0, 0], [0, 1]], {
+      pool: fakePool,
+      cache: new Map(),
+      useSharedArrayBuffer: true,
+      textureFidelity: 'raw16',
+      coalesce: { maxGap: 64, maxBytes: 1 << 20 },
+      signals: controllers.map((c) => c.signal),
+    })
+    // Let the index read resolve and the batch form, then abort both members
+    // before the setTimeout(0) flush dispatches the run.
+    await Promise.resolve()
+    for (const c of controllers) c.abort()
+
+    const settled = await Promise.allSettled(promises)
+    expect(settled.map((s) => s.status)).toEqual(['rejected', 'rejected'])
+    expect(workerFetchDecodeMulti).not.toHaveBeenCalled()
+    expect(workerFetchDecode).not.toHaveBeenCalled()
+    // Only the shard-index suffix read went out — never the payload range.
+    expect(getRange.mock.calls.every(([, r]) => 'suffixLength' in (r as object))).toBe(true)
   })
 })

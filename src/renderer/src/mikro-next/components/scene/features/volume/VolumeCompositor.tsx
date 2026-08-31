@@ -280,7 +280,8 @@ export const VolumeCompositor = () => {
     refineTimerRef.current = setTimeout(() => {
       refineTimerRef.current = null;
       if (!isSettleRefineEnabled() || !isVolumeCacheEnabled()) return;
-      if (viewStoreApi.getState().cameraMoving || qualityGovernor.isStreaming()) return;
+      const view = viewStoreApi.getState();
+      if (view.cameraMoving || view.interacting || qualityGovernor.isStreaming()) return;
       // The emit runs the whole chain: useStepScaleUniform recomputes the
       // boosted uMaxSteps (image material only), bumps volumeInputs and
       // invalidates; the next frame re-renders the target exactly once.
@@ -346,11 +347,14 @@ export const VolumeCompositor = () => {
     }
 
     // --- Target sizing (settled-DPR anchor, live-buffer clamp) -------------
-    // Scale keys on CAMERA MOTION only — streaming keeps full resolution so
-    // progressive LOD sharpening stays visible (see resolveVolumeScale).
+    // Scale keys on LIVE INTERACTION — camera motion or a window drag
+    // (`viewStore.interacting`) — never on streaming, which keeps full
+    // resolution so progressive LOD sharpening stays visible
+    // (see resolveVolumeScale).
     const profile = qualityGovernor.getProfile();
-    const cameraMoving = viewStoreApi.getState().cameraMoving;
-    const scale = resolveVolumeScale(qualityGovernor.getTier(), cameraMoving);
+    const view = viewStoreApi.getState();
+    const interacting = view.cameraMoving || view.interacting;
+    const scale = resolveVolumeScale(qualityGovernor.getTier(), interacting);
     lastScaleRef.current = scale;
     const dpr = gl.getPixelRatio();
     const nextSize = resolveVolumeTargetSize({
@@ -460,7 +464,9 @@ export const VolumeCompositor = () => {
     // "A volume render just completed while settled at full res" is literally
     // true here; advance is deferred by the quiet timer, reset is immediate.
     const refine = decideSettleRefine({
-      cameraMoving,
+      // The OR'd interaction flag: a window drag holds the ladder down
+      // exactly as camera motion does, and its falling edge advances it.
+      cameraMoving: interacting,
       streaming: qualityGovernor.isStreaming(),
       enabled: isSettleRefineEnabled(),
       cacheEnabled: isVolumeCacheEnabled(),

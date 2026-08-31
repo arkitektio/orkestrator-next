@@ -3,7 +3,8 @@ import { InteractionMode, useModeStore, useModeStoreApi, type DesignToolId } fro
 import { designToolByKey } from "../../features/meshDesign/tools/registry";
 import { isTypingTarget } from "../../platform/input/keyboardTarget";
 import { useRoiDrawingStoreApi } from "../../features/annotations/roiDrawingStore";
-import { useSceneStore } from "../../platform/stores/sceneStore";
+import { layersPlanKey } from "../../platform/model/layerPlanKey";
+import { useSceneStore, useSceneStoreApi } from "../../platform/stores/sceneStore";
 import { useViewerStore, useViewerStoreApi } from "../../platform/stores/viewerStore";
 import { stepSceneZ } from "../../platform/camera/sceneNavigation";
 import { sceneZExtent } from "../../platform/coords/worldTransform";
@@ -25,7 +26,11 @@ export const KeyboardModeController = () => {
   const modeApi = useModeStoreApi();
   const heldKeyRef = useRef<string | null>(null);
   const restoreModeRef = useRef<InteractionMode | null>(null);
-  const layers = useSceneStore((s) => s.layers);
+  const sceneStoreApi = useSceneStoreApi();
+  // A SCALAR key, not the array (P9c/P17): `sceneZExtent` reads only fields
+  // `layerPlanSignature` captures (zAxis, lens shape, affine), so a contrast
+  // drag's per-tick layer replacement must not rebuild the listener effect.
+  const layersKey = useSceneStore((s) => layersPlanKey(s.layers));
   const viewerStoreApi = useViewerStoreApi();
   const roiDrawingApi = useRoiDrawingStoreApi();
   const setCurrentZ = useViewerStore((s) => s.setCurrentZ);
@@ -33,8 +38,11 @@ export const KeyboardModeController = () => {
   // `sceneZExtent` has no display-mode gate of its own — `currentZ` is only the
   // flat view's slice plane, so the gate belongs here.
   const zNavigation = useMemo(
-    () => (displayMode === "2D" ? sceneZExtent(layers) : null),
-    [displayMode, layers],
+    () =>
+      displayMode === "2D" ? sceneZExtent(sceneStoreApi.getState().layers) : null,
+    // The key STANDS FOR the layers array read via getState().
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [displayMode, layersKey, sceneStoreApi],
   );
 
   useEffect(() => {

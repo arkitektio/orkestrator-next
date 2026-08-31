@@ -24,6 +24,20 @@ export interface ViewState {
   /** True while the camera is in continuous motion (throttled emissions);
    * false once the trailing settle emission lands. Render-quality scaling. */
   cameraMoving: boolean;
+  /**
+   * True while a NON-CAMERA live edit is in flight — a contrast-window drag,
+   * a gamma nudge: anything that rewrites uniforms per tick. The quality
+   * consumers OR it with `cameraMoving`, so a slider drag renders degraded
+   * and refines on release exactly as an orbit does.
+   */
+  interacting: boolean;
+  /**
+   * Trailing pulse, mirroring `cameraMoving`'s settle semantics: each call
+   * (re)arms a timer, and `interacting` falls false `ttlMs` after the LAST
+   * one. Called per preview tick by the live-edit writers — no drag start/end
+   * plumbing needed, and a stuck-true state is impossible.
+   */
+  markInteraction: (ttlMs?: number) => void;
 
   updateCameraData: (
     matrix: THREE.Matrix4,
@@ -44,12 +58,28 @@ const samePose = (a: CameraPose | null, b: CameraPose | null): boolean =>
     a.position[1] === b.position[1] &&
     a.position[2] === b.position[2]);
 
-export const createViewStore = () =>
-  createStore<ViewState>((set, get) => ({
+export const createViewStore = () => {
+  // Closure-held, not state: the timer is bookkeeping, and putting it in the
+  // store would make every re-arm a subscriber notification.
+  let interactionTimer: ReturnType<typeof setTimeout> | null = null;
+
+  return createStore<ViewState>((set, get) => ({
     viewProjectionMatrix: null,
     viewportSize: { width: 0, height: 0 },
     cameraPose: null,
     cameraMoving: false,
+    interacting: false,
+
+    markInteraction: (ttlMs = 250) => {
+      // Write-if-changed: during a drag only the FIRST tick notifies
+      // subscribers; the rest merely push the falling edge out.
+      if (!get().interacting) set({ interacting: true });
+      if (interactionTimer) clearTimeout(interactionTimer);
+      interactionTimer = setTimeout(() => {
+        interactionTimer = null;
+        set({ interacting: false });
+      }, ttlMs);
+    },
 
     // Camera emissions arrive ~16/s during a drag. Keep the PREVIOUS object
     // references for viewportSize/cameraPose when their values are unchanged —
@@ -69,6 +99,7 @@ export const createViewStore = () =>
       });
     },
   }));
+};
 
 const {
   StoreContext: ViewStoreContext,

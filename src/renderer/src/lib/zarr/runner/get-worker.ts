@@ -36,13 +36,26 @@ import {
   workerFetchDecode,
   workerFetchDecodeMulti,
 } from "./worker-rpc"
-import { coalesceRanges, DEFAULT_COALESCE, type CoalesceOptions } from "./rangeCoalesce"
+import {
+  DEFAULT_DENSE_COALESCE,
+  type CoalescedRange,
+  type DenseCoalesceOptions,
+} from "./rangeCoalesce"
+import {
+  contributeShardItems,
+  shardBatchKeyFor,
+  type ShardBatchItem,
+} from "./shardRunBatch"
 import {
   isRangeReadableStore,
   isWorkerFetchCapableStore,
   workerFetchConfigFor,
 } from "@/lib/zarr/store/types"
-import { serializeRequestInit } from "./s3-request"
+import {
+  serializeRequestInit,
+  type S3FetchConfig,
+  type SerializedRequestInit,
+} from "./s3-request"
 import {
   innerLinearIndex,
   lookupInnerChunk,
@@ -528,14 +541,19 @@ export async function readArrayMetadata<
 
 export interface ChunkGroupOptions<StoreOpts = unknown> extends GetWorkerOptions<StoreOpts> {
   /** Merge rule for inner chunks of one shard (see `rangeCoalesce.ts`). */
-  coalesce?: CoalesceOptions
+  coalesce?: Partial<DenseCoalesceOptions>
   /**
    * Per-coordinate abort signals (same length as the coordinate list). A
    * coalesced worker task is cancelled only when EVERY chunk it carries has
    * aborted; `opts.signal` still aborts everything at once.
    */
   signals?: (AbortSignal | undefined)[]
-  /** Called once with the number of worker tasks actually enqueued. */
+  /**
+   * Called with the number of worker tasks enqueued — possibly MORE THAN
+   * ONCE per call (additively): range reads dispatch through the cross-call
+   * shard batch, which attributes each physical request once, to the run's
+   * lead item, when the batch flushes.
+   */
   onDispatch?: (taskCount: number) => void
 }
 
@@ -577,6 +595,71 @@ function whenAllAborted(signals: (AbortSignal | undefined)[]): AbortSignal | und
   }
   if (remaining === 0) controller.abort()
   return controller.signal
+}
+
+/** The non-per-item arguments of one `workerFetchDecodeMulti` call. Everything
+ * here is covered by `shardBatchKeyFor`, so all items of a flushed run share
+ * one context regardless of which group call contributed them. */
+interface ShardRunContext {
+  pool: GetWorkerOptions["pool"]
+  workerUrl: string | URL | undefined
+  workerStore: S3FetchConfig
+  shardPath: `/${string}`
+  metaId: number
+  codecMeta: CodecChunkMeta
+  requestInit: SerializedRequestInit | undefined
+  textureFidelity: TextureFidelity
+  useShared: boolean
+}
+
+/**
+ * Dispatch one coalesced run (possibly spanning several group calls) as one
+ * worker task + one ranged GET. Cancellation: `whenAllAborted` over every
+ * member's effective signal — the run dies only when every contributing chunk
+ * did. Priority: max of members (WorkerPool runs higher numbers first), so a
+ * merged halo part rides at its co-members' priority.
+ */
+function executeShardRun(ctx: ShardRunContext, run: CoalescedRange<ShardBatchItem>): void {
+  const members = run.items.map((entry) => entry.item)
+  const parts = run.items.map((entry) => ({
+    offset: entry.offset,
+    length: entry.length,
+    actualChunkShape: entry.item.actualChunkShape,
+  }))
+  const runSignal = whenAllAborted(members.map((member) => member.signal))
+  const handle = enqueueWorkerTask<void>(
+    ctx.pool,
+    ctx.workerUrl,
+    runSignal,
+    async (worker) => {
+      const result = await workerFetchDecodeMulti(
+        worker,
+        ctx.workerStore,
+        ctx.shardPath,
+        { offset: run.offset, length: run.length },
+        parts,
+        ctx.metaId,
+        ctx.codecMeta,
+        ctx.requestInit,
+        ctx.textureFidelity,
+        ctx.useShared,
+      )
+      result.chunks.forEach((chunk, k) => members[k].onChunk(chunk ?? undefined))
+      logChunkTiming("[zarr run timing]", {
+        shardPath: ctx.shardPath,
+        parts: run.items.length,
+        rangeBytes: run.length,
+        workerFetchMs: roundTiming(result.timings.fetchMs),
+        workerTotalMs: roundTiming(result.timings.totalWorkerMs),
+        fromHttpCache: result.timings.fromHttpCache,
+        protocol: result.timings.protocol,
+      })
+    },
+    Math.max(...members.map((member) => member.priority)),
+  )
+  handle.promise.catch((error) => {
+    for (const member of members) member.onError(error)
+  })
 }
 
 function edgeShapeOf(arr: { shape: readonly number[] }, chunkShape: number[], coords: readonly number[]): number[] {
@@ -682,62 +765,61 @@ export function getChunkGroupWorker<D extends DataType, Store extends Readable>(
       const metaId = getMetaId(meta.codecMeta)
       const requestInit = serializeRequestInit(storeOpts as RequestInit | undefined)
 
+      // Range reads route through the cross-call shard batch: same-tick group
+      // calls (neighbouring bricks) contribute to one pending set per
+      // compatible-options key, and the `setTimeout(0)` flush coalesces
+      // ACROSS them. Runs of 1 fall back to the single-chunk path there.
+      const denseOptions: DenseCoalesceOptions = { ...DEFAULT_DENSE_COALESCE, ...opts.coalesce }
+      const useShared = opts.useSharedArrayBuffer !== false
       for (const [shardPath, items] of byShard) {
-        for (const run of coalesceRanges(items, opts.coalesce ?? DEFAULT_COALESCE)) {
-          if (run.items.length === 1) {
-            single(run.items[0].item)
-            tasks += 1
-            continue
-          }
-          tasks += 1
-          const indices = run.items.map((entry) => entry.item)
-          const parts = run.items.map((entry) => {
-            const edge = edgeShapeOf(arr, chunkShape, coordsList[entry.item])
-            const isEdge = edge.some((size, dim) => size !== chunkShape[dim])
-            return { offset: entry.offset, length: entry.length, actualChunkShape: isEdge ? edge : undefined }
-          })
-          const runSignal = whenAllAborted(indices.map((i) => signals[i]))
-          const handle = enqueueWorkerTask<void>(
-            opts.pool,
-            opts.workerUrl,
-            runSignal ?? opts.signal,
-            async (worker) => {
-              const result = await workerFetchDecodeMulti<D>(
-                worker,
-                workerStore,
-                shardPath as `/${string}`,
-                { offset: run.offset, length: run.length },
-                parts,
-                metaId,
-                meta.codecMeta,
-                requestInit,
-                textureFidelity,
-                opts.useSharedArrayBuffer !== false,
-              )
-              result.chunks.forEach((chunk, k) => {
-                const index = indices[k]
-                const settled: Chunk<D> =
-                  chunk ??
-                  fillChunkOf<D>(edgeShapeOf(arr, chunkShape, coordsList[index]), OutputCtr, meta.fillValue)
-                cache.set(locations.get(index)!.cacheKey, settled)
-                deferreds[index].resolve(settled)
-              })
-              logChunkTiming("[zarr run timing]", {
-                shardPath,
-                parts: run.items.length,
-                rangeBytes: run.length,
-                workerFetchMs: roundTiming(result.timings.fetchMs),
-                workerTotalMs: roundTiming(result.timings.totalWorkerMs),
-                fromHttpCache: result.timings.fromHttpCache,
-                protocol: result.timings.protocol,
-              })
-            },
-            opts.priority ?? 0,
-          )
-          handle.promise.catch((error) => {
-            for (const index of indices) deferreds[index].reject(error)
-          })
+        const ctx: ShardRunContext = {
+          pool: opts.pool,
+          workerUrl: opts.workerUrl,
+          workerStore,
+          shardPath: shardPath as `/${string}`,
+          metaId,
+          codecMeta: meta.codecMeta,
+          requestInit,
+          textureFidelity,
+          useShared,
         }
+        const batchItems = items.map(({ offset, length, item: i }): ShardBatchItem => {
+          const edge = edgeShapeOf(arr, chunkShape, coordsList[i])
+          const isEdge = edge.some((size, dim) => size !== chunkShape[dim])
+          return {
+            offset,
+            length,
+            actualChunkShape: isEdge ? edge : undefined,
+            priority: opts.priority ?? 0,
+            signal: signals[i] ?? opts.signal,
+            dispatchSingle: () => single(i),
+            onChunk: (chunk) => {
+              const settled: Chunk<D> =
+                (chunk as Chunk<D> | undefined) ??
+                fillChunkOf<D>(edgeShapeOf(arr, chunkShape, coordsList[i]), OutputCtr, meta.fillValue)
+              cache.set(locations.get(i)!.cacheKey, settled)
+              deferreds[i].resolve(settled)
+            },
+            onError: (error) => deferreds[i].reject(error),
+            attributeTasks: (count) => opts.onDispatch?.(count),
+          }
+        })
+        contributeShardItems(
+          shardBatchKeyFor({
+            pool: opts.pool,
+            workerUrl: opts.workerUrl,
+            storeId: getStoreId(arr.store),
+            shardPath,
+            metaId,
+            textureFidelity,
+            useSharedArrayBuffer: useShared,
+            serializedRequestInit: requestInit,
+            coalesce: denseOptions,
+          }),
+          batchItems,
+          denseOptions,
+          (run) => executeShardRun(ctx, run),
+        )
       }
     } catch (error) {
       for (const deferred of deferreds) deferred.reject(error)

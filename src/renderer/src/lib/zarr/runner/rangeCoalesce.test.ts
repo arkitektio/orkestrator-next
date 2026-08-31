@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { coalesceRanges } from './rangeCoalesce'
+import { coalesceRanges, coalesceRangesDense, type DenseCoalesceOptions } from './rangeCoalesce'
 
 const r = (offset: number, length: number, item = `${offset}`) => ({ offset, length, item })
 
@@ -35,5 +35,48 @@ describe('coalesceRanges', () => {
 
   it('returns [] for no input', () => {
     expect(coalesceRanges([])).toEqual([])
+  })
+})
+
+describe('coalesceRangesDense', () => {
+  const opts = (over: Partial<DenseCoalesceOptions> = {}): DenseCoalesceOptions => ({
+    maxGap: 64,
+    maxBytes: 1 << 20,
+    denseMergeDensity: 0.5,
+    denseMergeMaxBytes: 1 << 20,
+    ...over,
+  })
+
+  it('merges across gaps larger than maxGap when density reaches the threshold', () => {
+    // Three 200-byte chunks over a 1000-byte span: density 0.6, gaps of 200 > maxGap 64.
+    const items = [r(0, 200), r(400, 200), r(800, 200)]
+    const out = coalesceRangesDense(items, opts())
+    expect(out).toEqual([{ offset: 0, length: 1000, items }])
+  })
+
+  it('falls back to coalesceRanges below the density threshold', () => {
+    const items = [r(0, 100), r(900, 100)]
+    const out = coalesceRangesDense(items, opts())
+    expect(out).toEqual(coalesceRanges(items, opts()))
+    expect(out).toHaveLength(2)
+  })
+
+  it('falls back when the span exceeds denseMergeMaxBytes, even at density 1', () => {
+    const items = [r(0, 500), r(500, 501)]
+    const out = coalesceRangesDense(items, opts({ maxGap: 0, denseMergeMaxBytes: 1000 }))
+    expect(out).toEqual(coalesceRanges(items, opts({ maxGap: 0 })))
+  })
+
+  it('measures density as the union of intervals, not the sum', () => {
+    // Two fully-overlapping 300-byte ranges + a far 100-byte one over a 1000-byte
+    // span: sum 700 (≥ 0.5·1000) but union 400 < 500 ⇒ no dense merge.
+    const items = [r(0, 300), r(0, 300, 'dup'), r(900, 100)]
+    const out = coalesceRangesDense(items, opts())
+    expect(out).toHaveLength(2)
+  })
+
+  it('passes single and empty inputs through', () => {
+    expect(coalesceRangesDense([])).toEqual([])
+    expect(coalesceRangesDense([r(10, 5)])).toEqual([{ offset: 10, length: 5, items: [r(10, 5)] }])
   })
 })

@@ -2516,8 +2516,11 @@ export class BrickResidencyManager {
    * Grouped twin of `fetchChunkShared` for a brick's chunk set: the same
    * per-chunk in-flight sharing and per-chunk abort bookkeeping, but chunks
    * not already in flight go through `getChunkGroupWorker`, which coalesces
-   * near-adjacent inner chunks of one shard into a single ranged GET. Returns
-   * one promise per coordinate, in order.
+   * near-adjacent inner chunks of one shard into a single ranged GET — also
+   * ACROSS bricks dispatched in the same tick (`shardRunBatch.ts`), which is
+   * why `rangeRequests` accumulates (`onDispatch` fires per flushed batch,
+   * each physical request attributed once scene-wide). Returns one promise
+   * per coordinate, in order.
    */
   private fetchChunksShared(
     arr: Parameters<typeof getChunkWorker>[0],

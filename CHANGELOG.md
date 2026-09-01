@@ -1,3 +1,10 @@
+## [2.0.1](https://github.com/arkitektio/orkestrator-next/compare/v2.0.0...v2.0.1) (2026-09-01)
+
+
+### Bug Fixes
+
+* blok refactor and fixes ([4552bc9](https://github.com/arkitektio/orkestrator-next/commit/4552bc9625c94b4eff8f3959d1b4ad99de797d60))
+
 # [2.0.0](https://github.com/arkitektio/orkestrator-next/compare/v1.68.0...v2.0.0) (2026-08-31)
 
 

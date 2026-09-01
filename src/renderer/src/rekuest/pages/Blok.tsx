@@ -157,6 +157,7 @@ export const BlokPage = asDetailQueryRoute(useGetBlokQuery, ({ data }) => {
             <DemoBlokRenderer
               surfaceId={`${data.blok.id}-expanded`}
               blok={data.blok}
+              debug
             />
           </div>
         </section>

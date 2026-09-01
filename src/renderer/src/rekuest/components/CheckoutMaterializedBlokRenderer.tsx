@@ -52,6 +52,4 @@ export const CheckoutMaterializedBlokRenderer = (
   );
 };
 
-export const CheckoutMzarziabedBlokRender = CheckoutMaterializedBlokRenderer;
-
 export default CheckoutMaterializedBlokRenderer;

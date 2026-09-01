@@ -7,7 +7,7 @@ export const NavigationPane = (_props: {}) => {
       <nav className="grid items-start px-1 text-sm font-medium lg:px-2">
         <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
           Explore
-        </div>̉
+        </div>
         <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground mb-4">
           <DroppableNavLink
             to="/blok"

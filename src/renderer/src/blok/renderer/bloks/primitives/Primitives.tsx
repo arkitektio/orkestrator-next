@@ -1,9 +1,6 @@
 import * as React from 'react';
 import {Badge as ShadBadge} from '@/components/ui/badge';
-import {
-  Button as ShadButton,
-  buttonVariants,
-} from '@/components/ui/button';
+import {Button as ShadButton} from '@/components/ui/button';
 import {
   Card as ShadCard,
   CardContent as ShadCardContent,
@@ -19,11 +16,13 @@ import {cva} from 'class-variance-authority';
 import * as z from 'zod';
 import {
   BlokPropSchemas,
-  ScopedBlokRuntimeProvider,
+  BlokScopeProvider,
   createBlokComponent,
   type BlokPropHandle,
   useAction,
+  useBinding,
   useBlok,
+  useChecks,
   useValidation,
   useValue,
 } from '../../runtime';
@@ -179,25 +178,44 @@ const renderContent = (
 
 const ForeachIteration = (props: {
   scopeName?: string;
+  /** Absolute path of this item, when the items came from a data binding. */
   itemPath?: string;
+  /** The item itself, for sources that have no addressable path. */
+  item: unknown;
   childIds: string[];
   buildChild: ChildBuilder;
   iterationKey: string;
 }) => {
-  const renderedChildren = props.childIds.map(childId => (
-    <React.Fragment key={`${props.iterationKey}-${childId}`}>
-      {props.buildChild(childId)}
-    </React.Fragment>
+  const {buildChild, childIds, item, itemPath, iterationKey, scopeName} = props;
+
+  // A named scope backed by a real path aliases to it, so reads *and* writes
+  // from inside the loop body hit the shared data model. Without a path we can
+  // only hand the value down, which is read-only but still correct.
+  const aliases = React.useMemo(
+    () => (scopeName && itemPath ? {[scopeName]: itemPath} : undefined),
+    [itemPath, scopeName],
+  );
+  const values = React.useMemo(
+    () => (scopeName && !itemPath ? {[scopeName]: item} : undefined),
+    [item, itemPath, scopeName],
+  );
+
+  const renderedChildren = childIds.map(childId => (
+    <React.Fragment key={`${iterationKey}-${childId}`}>{buildChild(childId)}</React.Fragment>
   ));
 
-  if (!props.scopeName || !props.itemPath) {
+  if (!aliases && !values && !itemPath) {
     return <>{renderedChildren}</>;
   }
 
   return (
-    <ScopedBlokRuntimeProvider pathAliases={{[props.scopeName]: props.itemPath}}>
+    <BlokScopeProvider
+      aliases={aliases}
+      values={values}
+      basePath={scopeName ? undefined : itemPath}
+    >
       {renderedChildren}
-    </ScopedBlokRuntimeProvider>
+    </BlokScopeProvider>
   );
 };
 
@@ -377,100 +395,49 @@ const flexSchema = z.object({
   shrink: numberSchema,
 });
 
-export const Flex = createBlokComponent(
-  {
-    name: 'Flex',
-    schema: flexSchema,
-  },
-  ({buildChild, component, schema}) => {
-    const blok = useBlok(component, schema);
-    const layoutProps = useBaseLayoutProps(blok);
-    const children = useValue(blok.children);
-    const direction = useValue(blok.direction);
-    const wrap = useValue(blok.wrap);
-    const justify = useValue(blok.justify);
-    const align = useValue(blok.align);
-    const bordered = useValue(blok.bordered);
+/**
+ * `Flex`, `Row` and `Column` are the same component over the same schema; the
+ * only difference is whether the direction is author-controlled or fixed.
+ */
+const createFlexComponent = (name: string, fixedDirection?: 'row' | 'column') =>
+  createBlokComponent(
+    {
+      name,
+      schema: flexSchema,
+    },
+    ({buildChild, component, schema}) => {
+      const blok = useBlok(component, schema);
+      const layoutProps = useBaseLayoutProps(blok);
+      const children = useValue(blok.children);
+      const direction = useValue(blok.direction);
+      const wrap = useValue(blok.wrap);
+      const justify = useValue(blok.justify);
+      const align = useValue(blok.align);
+      const bordered = useValue(blok.bordered);
 
-    return (
-      <div
-        className={cn(
-          'flex min-w-0',
-          direction === 'column' ? 'flex-col' : 'flex-row',
-          wrap && 'flex-wrap',
-          mapJustify(justify),
-          mapAlign(align),
-          bordered && 'border border-border/70',
-        )}
-        style={buildLayoutStyle(layoutProps)}
-      >
-        {renderChildList(children, buildChild)}
-      </div>
-    );
-  },
-);
+      const resolvedDirection = fixedDirection ?? (direction === 'column' ? 'column' : 'row');
 
-export const Row = createBlokComponent(
-  {
-    name: 'Row',
-    schema: flexSchema,
-  },
-  ({buildChild, component, schema}) => {
-    const blok = useBlok(component, schema);
-    const layoutProps = useBaseLayoutProps(blok);
-    const children = useValue(blok.children);
-    const wrap = useValue(blok.wrap);
-    const justify = useValue(blok.justify);
-    const align = useValue(blok.align);
-    const bordered = useValue(blok.bordered);
+      return (
+        <div
+          className={cn(
+            'flex min-w-0',
+            resolvedDirection === 'column' ? 'flex-col' : 'flex-row',
+            wrap && 'flex-wrap',
+            mapJustify(justify),
+            mapAlign(align),
+            bordered && 'border border-border/70',
+          )}
+          style={buildLayoutStyle(layoutProps)}
+        >
+          {renderChildList(children, buildChild)}
+        </div>
+      );
+    },
+  );
 
-    return (
-      <div
-        className={cn(
-          'flex min-w-0 flex-row',
-          wrap && 'flex-wrap',
-          mapJustify(justify),
-          mapAlign(align),
-          bordered && 'border border-border/70',
-        )}
-        style={buildLayoutStyle(layoutProps)}
-      >
-        {renderChildList(children, buildChild)}
-      </div>
-    );
-  },
-);
-
-export const Column = createBlokComponent(
-  {
-    name: 'Column',
-    schema: flexSchema,
-  },
-  ({buildChild, component, schema}) => {
-    const blok = useBlok(component, schema);
-    const layoutProps = useBaseLayoutProps(blok);
-    const children = useValue(blok.children);
-    const wrap = useValue(blok.wrap);
-    const justify = useValue(blok.justify);
-    const align = useValue(blok.align);
-    const bordered = useValue(blok.bordered);
-
-    return (
-      <div
-        className={cn(
-          'flex min-w-0 flex-col',
-          wrap && 'flex-wrap',
-          mapJustify(justify),
-          mapAlign(align),
-          bordered && 'border border-border/70',
-        )}
-        style={buildLayoutStyle(layoutProps)}
-      >
-        {renderChildList(children, buildChild)}
-      </div>
-    );
-  },
-);
+export const Flex = createFlexComponent('Flex');
+export const Row = createFlexComponent('Row', 'row');
+export const Column = createFlexComponent('Column', 'column');
 
 export const Grid = createBlokComponent(
   {
@@ -917,7 +884,7 @@ export const Button = createBlokComponent(
       size: buttonSizeSchema,
       fullWidth: boolSchema,
       disabled: BlokPropSchemas.DynamicBoolean.optional(),
-      checks: BlokPropSchemas.Checkable.shape.checks,
+      checks: BlokPropSchemas.Checks,
     }),
   },
   ({buildChild, component, schema}) => {
@@ -932,6 +899,7 @@ export const Button = createBlokComponent(
     const size = useValue(blok.size);
     const fullWidth = useValue(blok.fullWidth);
     const disabled = useValue(blok.disabled);
+    const checks = useChecks(useValue(blok.checks));
 
     const resolvedVariant =
       rawVariant === 'primary'
@@ -940,17 +908,21 @@ export const Button = createBlokComponent(
           ? 'ghost'
           : rawVariant;
 
+    // `checks` are the author-facing guard; validation failures are a payload
+    // bug and disable the button too, with the reason in the tooltip.
+    const blockingReason = checks.failures[0] ?? validation.validationErrors[0];
+    const isDisabled = disabled === true || Boolean(blockingReason);
+
     return (
       <ShadButton
         variant={resolvedVariant ?? 'default'}
         size={size ?? 'default'}
-        className={cn(
-          fullWidth && 'w-full',
-          buttonVariants({variant: resolvedVariant, size: size ?? 'default'}),
-          className,
-        )}
+        // `ShadButton` already applies `buttonVariants({variant, size,
+        // className})` internally, so only the extras belong here.
+        className={cn(fullWidth && 'w-full', className)}
         onClick={onClick}
-        disabled={disabled || validation.isValid === false}
+        disabled={isDisabled}
+        title={blockingReason}
       >
         {child ? buildChild(child) : renderContent(children ?? label, buildChild)}
       </ShadButton>
@@ -962,6 +934,8 @@ export const Input = createBlokComponent(
   {
     name: 'Input',
     schema: z.object({
+      /** Data-model path this input reads from and writes back to. */
+      bind: z.string().optional(),
       value: BlokPropSchemas.DynamicString.optional(),
       defaultValue: BlokPropSchemas.DynamicString.optional(),
       placeholder: BlokPropSchemas.DynamicString.nullish(),
@@ -975,6 +949,8 @@ export const Input = createBlokComponent(
   },
   ({component, schema}) => {
     const blok = useBlok(component, schema);
+    const bindPath = useValue(blok.bind);
+    const binding = useBinding(bindPath);
     const value = useValue(blok.value);
     const defaultValue = useValue(blok.defaultValue);
     const placeholder = useValue(blok.placeholder);
@@ -985,36 +961,40 @@ export const Input = createBlokComponent(
     const fullWidth = useValue(blok.fullWidth);
     const action = useAction(blok.action);
 
-    const controlledValue = typeof value === 'string' ? value : undefined;
-    const initialValue =
-      controlledValue ??
-      (typeof defaultValue === 'string' ? defaultValue : '');
-    const resolvedPlaceholder = typeof placeholder === 'string' ? placeholder : undefined;
-    const isDisabled = disabled === true;
-    const [localValue, setLocalValue] = React.useState(initialValue);
-
-    React.useEffect(() => {
-      if (controlledValue !== undefined) {
-        setLocalValue(controlledValue);
-      }
-    }, [controlledValue]);
-
+    // An explicit `value` wins over a `bind`; either makes the input
+    // controlled. Otherwise it is uncontrolled and holds its own state.
+    // (It used to receive `value` *and* `defaultValue` at once, which React
+    // warns about and leaves the ownership of the value ambiguous.)
+    const boundValue = binding
+      ? binding.value == null
+        ? ''
+        : String(binding.value)
+      : undefined;
+    const controlledValue = typeof value === 'string' ? value : boundValue;
     const isControlled = controlledValue !== undefined;
+
+    const [localValue, setLocalValue] = React.useState(() =>
+      typeof defaultValue === 'string' ? defaultValue : '',
+    );
+
+    const resolvedPlaceholder = typeof placeholder === 'string' ? placeholder : undefined;
 
     return (
       <ShadInput
         type={type ?? 'text'}
         value={isControlled ? controlledValue : localValue}
-        defaultValue={isControlled ? undefined : initialValue}
         placeholder={resolvedPlaceholder}
         className={cn(fullWidth && 'w-full', className)}
-        disabled={isDisabled}
+        disabled={disabled === true}
         readOnly={readOnly}
         onChange={event => {
+          const nextValue = event.target.value;
+
           if (!isControlled) {
-            setLocalValue(event.target.value);
+            setLocalValue(nextValue);
           }
 
+          binding?.setValue(nextValue);
           action?.();
         }}
       />
@@ -1049,8 +1029,16 @@ export const Foreach = createBlokComponent(
     const blok = useBlok(component, schema);
     const items = useValue(blok.items);
     const scopeName = useValue(blok['let']);
-    const childIds = component.children?.map(child => child.id) ?? [];
-    const itemsPath = blok.items.prop?.dynamic_value?.path?.replace(/[/.]$/, '');
+    const childIds = React.useMemo(
+      () => component.children?.map(child => child.id) ?? [],
+      [component],
+    );
+
+    // Only a data-bound `items` has an addressable path. A literal or
+    // util-call source still iterates correctly — the item is passed down by
+    // value instead of by path — where it used to silently fall through to the
+    // unscoped path and render the wrong data.
+    const itemsPath = blok.items.prop?.dynamic_value?.path?.replace(/[/.]+$/, '');
 
     if (!Array.isArray(items) || childIds.length === 0) {
       return null;
@@ -1058,18 +1046,18 @@ export const Foreach = createBlokComponent(
 
     return (
       <>
-        {items.map((_, index) => {
-          const itemPath = itemsPath ? `${itemsPath}/${index}` : undefined;
+        {items.map((item, index) => {
           const iterationKey = `${component.id}-${index}`;
 
           return (
             <ForeachIteration
               key={iterationKey}
+              iterationKey={iterationKey}
               scopeName={scopeName}
-              itemPath={itemPath}
+              itemPath={itemsPath ? `${itemsPath}/${index}` : undefined}
+              item={item}
               childIds={childIds}
               buildChild={buildChild}
-              iterationKey={iterationKey}
             />
           );
         })}

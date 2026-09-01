@@ -13,6 +13,8 @@ const splitPathSegments = (path: string): string[] => {
     .filter(Boolean);
 };
 
+const joinPathSegments = (segments: ReadonlyArray<string>): string => segments.join('/');
+
 const decodeJsonLiteralString = (value: string): unknown => {
   const trimmed = value.trim();
   if (!trimmed) {
@@ -70,5 +72,30 @@ const getValueAtPath = (dataModel: unknown, path: string): unknown => {
   return current;
 };
 
-export {decodeJsonLiteralString, getValueAtPath, isRecord, isString, normalizeLiteralValue};
-export {splitPathSegments};
+/**
+ * The backend hands us either a bare array of root nodes or an envelope object
+ * with a `uiComponents` array. Both shapes are in the wild, so every entry
+ * point normalizes through here rather than re-implementing the check.
+ */
+const extractUiComponents = (uiComponents: unknown): unknown[] => {
+  if (Array.isArray(uiComponents)) {
+    return uiComponents;
+  }
+
+  if (isRecord(uiComponents) && Array.isArray(uiComponents.uiComponents)) {
+    return uiComponents.uiComponents;
+  }
+
+  return [];
+};
+
+export {
+  decodeJsonLiteralString,
+  extractUiComponents,
+  getValueAtPath,
+  isRecord,
+  isString,
+  joinPathSegments,
+  normalizeLiteralValue,
+  splitPathSegments,
+};

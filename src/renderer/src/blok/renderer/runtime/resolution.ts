@@ -1,40 +1,20 @@
 import {z} from 'zod';
+import {isActionSchema} from './schemas';
 import type {
   BlokActionArgument,
-  BlokComponentNode,
+  BlokAgentCall,
   BlokComponentProp,
   BlokDynamicValue,
+  BlokResolutionContext,
   BlokResolvedAgentCall,
   BlokRuntimeDependencies,
-  BlokRuntimeContext,
+  BlokUtilCall,
 } from './types';
-import {getValueAtPath, normalizeLiteralValue, splitPathSegments} from './utils';
+import {normalizeLiteralValue} from './utils';
 
-const resolveRuntimePath = (
-  path: string,
-  runtimeContext: Pick<BlokRuntimeContext, 'pathAliases'>,
-): string => {
-  const normalizedPath = path.replace(/^\//, '');
-  const [head, ...tail] = splitPathSegments(normalizedPath);
-  if (!head) {
-    return normalizedPath;
-  }
-
-  const aliasedBasePath = runtimeContext.pathAliases[head];
-  if (!aliasedBasePath) {
-    return normalizedPath;
-  }
-
-  const normalizedBasePath = aliasedBasePath.replace(/^\//, '');
-  return tail.length > 0 ? `${normalizedBasePath}/${tail.join('/')}` : normalizedBasePath;
-};
-
-const getRuntimeValueAtPath = (
-  runtimeContext: BlokRuntimeContext,
-  path: string,
-): unknown => {
-  return getValueAtPath(runtimeContext.dataModel, resolveRuntimePath(path, runtimeContext));
-};
+/* -------------------------------------------------------------------------- */
+/* Dependency collection                                                      */
+/* -------------------------------------------------------------------------- */
 
 const emptyRuntimeDependencies = (): BlokRuntimeDependencies => ({
   paths: [],
@@ -93,88 +73,11 @@ const getActionArgumentsRuntimeDependencies = (
   return mergeRuntimeDependencies(...(argumentsList ?? []).map(getActionArgumentRuntimeDependencies));
 };
 
-const resolveDynamicValue = (
-  dynamicValue: BlokDynamicValue | null | undefined,
-  runtimeContext: BlokRuntimeContext,
-): unknown => {
-  if (!dynamicValue) {
-    return undefined;
-  }
-
-  const literalFallback = dynamicValue.literal != null
-    ? normalizeLiteralValue(dynamicValue.literal)
-    : undefined;
-
-  if (dynamicValue.path) {
-    const resolved = getRuntimeValueAtPath(runtimeContext, dynamicValue.path);
-    return resolved === undefined ? literalFallback : resolved;
-  }
-
-  return literalFallback;
-};
-
-const resolveActionArgumentValue = (
-  argument: BlokActionArgument,
-  runtimeContext: BlokRuntimeContext,
-): unknown => {
-  if (argument.util_call) {
-    return runtimeContext.invokeFunction(
-      argument.util_call.operation,
-      resolveActionArguments(argument.util_call.arguments, runtimeContext),
-    );
-  }
-
-  if (argument.agent_call) {
-    return {
-      dependency: argument.agent_call.dependency,
-      operation: argument.agent_call.operation,
-      arguments: resolveActionArguments(argument.agent_call.arguments, runtimeContext),
-    } satisfies BlokResolvedAgentCall;
-  }
-
-  if (Array.isArray(argument.value_list)) {
-    return argument.value_list.map(item => resolveActionArgumentValue(item, runtimeContext));
-  }
-
-  if (Array.isArray(argument.value_dict)) {
-    return Object.fromEntries(
-      argument.value_dict.flatMap((item, index) => {
-        const entryKey = item.key ?? String(index);
-        return [[entryKey, resolveActionArgumentValue(item, runtimeContext)] as const];
-      }),
-    );
-  }
-
-  if (argument.value_path) {
-    const resolved = getRuntimeValueAtPath(runtimeContext, argument.value_path);
-    if (resolved !== undefined) {
-      return resolved;
-    }
-  }
-
-  return normalizeLiteralValue(argument.value_literal);
-};
-
-const resolveActionArguments = (
-  argumentsList: BlokActionArgument[] | null | undefined,
-  runtimeContext: BlokRuntimeContext,
-): Record<string, unknown> => {
-  if (!Array.isArray(argumentsList) || argumentsList.length === 0) {
-    return {};
-  }
-
-  return Object.fromEntries(
-    argumentsList.map((argument, index) => [
-      argument.key ?? String(index),
-      resolveActionArgumentValue(argument, runtimeContext),
-    ]),
-  );
-};
-
-const isActionSchema = (schema: z.ZodTypeAny): boolean => {
-  return schema.safeParse(() => undefined).success;
-};
-
+/**
+ * The exact set of runtime reads a prop performs. `useResolvedProp` subscribes
+ * to precisely this set and then resolves against a snapshot of it, so a
+ * component can never read something it did not subscribe to.
+ */
 const getComponentPropRuntimeDependencies = (
   prop: BlokComponentProp | undefined,
   targetSchema: z.ZodTypeAny,
@@ -214,57 +117,227 @@ const getComponentPropRuntimeDependencies = (
   return emptyRuntimeDependencies();
 };
 
-const resolveComponentPropValue = (
-  prop: BlokComponentProp | undefined,
-  targetSchema: z.ZodTypeAny,
-  component: BlokComponentNode,
-  runtimeContext: BlokRuntimeContext,
+/* -------------------------------------------------------------------------- */
+/* Value resolution                                                           */
+/* -------------------------------------------------------------------------- */
+
+export type BlokResolved<T = unknown> = {ok: true; value: T} | {ok: false; error: string};
+
+const resolveDynamicValue = (
+  dynamicValue: BlokDynamicValue | null | undefined,
+  context: BlokResolutionContext,
 ): unknown => {
-  if (!prop) {
+  if (!dynamicValue) {
     return undefined;
   }
 
-  if (prop.agent_call) {
-    if (!isActionSchema(targetSchema)) {
-      return prop.agent_call;
+  const literalFallback = dynamicValue.literal != null
+    ? normalizeLiteralValue(dynamicValue.literal)
+    : undefined;
+
+  if (dynamicValue.path) {
+    const resolved = context.readPath(dynamicValue.path);
+    return resolved === undefined ? literalFallback : resolved;
+  }
+
+  return literalFallback;
+};
+
+const resolveActionArgumentValue = (
+  argument: BlokActionArgument,
+  context: BlokResolutionContext,
+  requirePure: boolean,
+): BlokResolved => {
+  if (argument.util_call) {
+    return invokeUtilCall(argument.util_call, context, requirePure);
+  }
+
+  if (argument.agent_call) {
+    const resolvedArguments = resolveActionArguments(
+      argument.agent_call.arguments,
+      context,
+      requirePure,
+    );
+    if (!resolvedArguments.ok) {
+      return resolvedArguments;
     }
 
-    const agentCall = prop.agent_call;
-    return () => {
-      runtimeContext.dispatchAction(
-        {
-          dependency: agentCall.dependency,
-          operation: agentCall.operation,
-          arguments: resolveActionArguments(agentCall.arguments, runtimeContext),
-        },
-        component,
-      );
+    return {
+      ok: true,
+      value: {
+        dependency: argument.agent_call.dependency,
+        operation: argument.agent_call.operation,
+        arguments: resolvedArguments.value,
+      } satisfies BlokResolvedAgentCall,
     };
   }
 
-  if (prop.util_call) {
-    const utilCall = prop.util_call;
-    if (isActionSchema(targetSchema)) {
-      return () => {
-        runtimeContext.invokeFunction(
-          utilCall.operation,
-          resolveActionArguments(utilCall.arguments, runtimeContext),
-        );
-      };
+  if (Array.isArray(argument.value_list)) {
+    const items: unknown[] = [];
+    for (const item of argument.value_list) {
+      const resolvedItem = resolveActionArgumentValue(item, context, requirePure);
+      if (!resolvedItem.ok) {
+        return resolvedItem;
+      }
+      items.push(resolvedItem.value);
     }
 
-    return runtimeContext.invokeFunction(
-      utilCall.operation,
-      resolveActionArguments(utilCall.arguments, runtimeContext),
-    );
+    return {ok: true, value: items};
   }
 
-  const dynamicValue = resolveDynamicValue(prop.dynamic_value, runtimeContext);
+  if (Array.isArray(argument.value_dict)) {
+    const entries: Array<[string, unknown]> = [];
+    for (const [index, item] of argument.value_dict.entries()) {
+      const resolvedItem = resolveActionArgumentValue(item, context, requirePure);
+      if (!resolvedItem.ok) {
+        return resolvedItem;
+      }
+      entries.push([item.key ?? String(index), resolvedItem.value]);
+    }
+
+    return {ok: true, value: Object.fromEntries(entries)};
+  }
+
+  if (argument.value_path) {
+    const resolved = context.readPath(argument.value_path);
+    if (resolved !== undefined) {
+      return {ok: true, value: resolved};
+    }
+  }
+
+  return {ok: true, value: normalizeLiteralValue(argument.value_literal)};
+};
+
+const resolveActionArguments = (
+  argumentsList: BlokActionArgument[] | null | undefined,
+  context: BlokResolutionContext,
+  requirePure = false,
+): BlokResolved<Record<string, unknown>> => {
+  if (!Array.isArray(argumentsList) || argumentsList.length === 0) {
+    return {ok: true, value: {}};
+  }
+
+  const entries: Array<[string, unknown]> = [];
+  for (const [index, argument] of argumentsList.entries()) {
+    const resolvedArgument = resolveActionArgumentValue(argument, context, requirePure);
+    if (!resolvedArgument.ok) {
+      return resolvedArgument;
+    }
+    entries.push([argument.key ?? String(index), resolvedArgument.value]);
+  }
+
+  return {ok: true, value: Object.fromEntries(entries)};
+};
+
+const invokeUtilCall = (
+  utilCall: BlokUtilCall,
+  context: BlokResolutionContext,
+  requirePure: boolean,
+): BlokResolved => {
+  const resolvedArguments = resolveActionArguments(utilCall.arguments, context, requirePure);
+  if (!resolvedArguments.ok) {
+    return resolvedArguments;
+  }
+
+  const result = context.invokeFunction(utilCall.operation, resolvedArguments.value, {
+    requirePure,
+  });
+  return result.ok ? {ok: true, value: result.value} : result;
+};
+
+/**
+ * Resolves a prop in *value* position. Pure by construction: it reads paths and
+ * may call catalog functions declared `pure`, but never fires an effect.
+ * An `effect` function bound to a value prop resolves to an error instead of
+ * being invoked on every render.
+ */
+const resolvePropValue = (
+  prop: BlokComponentProp | undefined,
+  targetSchema: z.ZodTypeAny,
+  context: BlokResolutionContext,
+): BlokResolved => {
+  if (!prop) {
+    return {ok: true, value: undefined};
+  }
+
+  // Action props carry a call descriptor, not a value; `useAction` builds the
+  // callback so its identity stays stable across store updates.
+  if (isActionSchema(targetSchema)) {
+    return {ok: true, value: undefined};
+  }
+
+  if (prop.util_call) {
+    return invokeUtilCall(prop.util_call, context, true);
+  }
+
+  if (prop.agent_call) {
+    // An agent call bound to a non-action prop is passed through as data.
+    return {ok: true, value: prop.agent_call};
+  }
+
+  const dynamicValue = resolveDynamicValue(prop.dynamic_value, context);
   if (dynamicValue !== undefined) {
-    return dynamicValue;
+    return {ok: true, value: dynamicValue};
   }
 
-  return normalizeLiteralValue(prop.static_value);
+  return {ok: true, value: normalizeLiteralValue(prop.static_value)};
+};
+
+/* -------------------------------------------------------------------------- */
+/* Action execution                                                           */
+/* -------------------------------------------------------------------------- */
+
+export type BlokActionCall =
+  | {type: 'agent'; call: BlokAgentCall}
+  | {type: 'util'; call: BlokUtilCall};
+
+const getPropActionCall = (
+  prop: BlokComponentProp | undefined,
+): BlokActionCall | undefined => {
+  if (prop?.agent_call) {
+    return {type: 'agent', call: prop.agent_call};
+  }
+
+  if (prop?.util_call) {
+    return {type: 'util', call: prop.util_call};
+  }
+
+  return undefined;
+};
+
+/**
+ * Runs an action. Arguments are resolved *at invoke time* against live state
+ * (not against the snapshot the last render saw), and effectful functions are
+ * allowed here — this is the only position where they are.
+ */
+const runActionCall = (
+  actionCall: BlokActionCall,
+  context: BlokResolutionContext,
+  component: Parameters<BlokResolutionContext['dispatchAction']>[1],
+): BlokResolved => {
+  const resolvedArguments = resolveActionArguments(actionCall.call.arguments, context, false);
+  if (!resolvedArguments.ok) {
+    return resolvedArguments;
+  }
+
+  if (actionCall.type === 'agent') {
+    context.dispatchAction(
+      {
+        dependency: actionCall.call.dependency,
+        operation: actionCall.call.operation,
+        arguments: resolvedArguments.value,
+      },
+      component,
+    );
+    return {ok: true, value: undefined};
+  }
+
+  // Explicitly not `requirePure`: an action is the one position where an
+  // effectful function belongs.
+  const result = context.invokeFunction(actionCall.call.operation, resolvedArguments.value, {
+    requirePure: false,
+  });
+  return result.ok ? {ok: true, value: result.value} : result;
 };
 
 const getPropMap = (
@@ -273,6 +346,15 @@ const getPropMap = (
   return new Map((props ?? []).map(prop => [prop.key, prop]));
 };
 
-export {getPropMap, resolveActionArguments, resolveComponentPropValue, resolveDynamicValue};
-export {getComponentPropRuntimeDependencies};
-export {getRuntimeValueAtPath, resolveRuntimePath};
+export {
+  getActionArgumentsRuntimeDependencies,
+  getComponentPropRuntimeDependencies,
+  getPropActionCall,
+  getPropMap,
+  invokeUtilCall,
+  mergeRuntimeDependencies,
+  resolveActionArguments,
+  resolveDynamicValue,
+  resolvePropValue,
+  runActionCall,
+};

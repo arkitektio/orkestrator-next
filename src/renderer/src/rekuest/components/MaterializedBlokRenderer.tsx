@@ -1,7 +1,13 @@
 import { buildAssignInput } from "@/rekuest/assign";
 import * as React from 'react';
 import BlokRenderer from '@/blok/renderer/BlokRenderer';
-import {useBlokRuntime, type BlokDispatchActionHandler} from '@/blok/renderer/runtime';
+import {
+  extractUiComponents,
+  isRecord,
+  splitPathSegments,
+  useBlokRuntime,
+  type BlokDispatchActionHandler,
+} from '@/blok/renderer/runtime';
 import {toast} from 'sonner';
 import {useAssignMutation} from '@/rekuest/api/graphql';
 import {useAgentLiveState} from '@/rekuest/hooks/useLiveState';
@@ -26,27 +32,6 @@ type MaterializedBlokRendererProps = Omit<
   'uiComponents' | 'initialState' | 'dispatchAction' | 'children'
 > & {
   materializedBlok: MaterializedBlokData;
-};
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null;
-
-const splitRuntimePath = (path: string): string[] =>
-  path
-    .replace(/^\//, '')
-    .split(/[/.]/)
-    .filter(Boolean);
-
-const extractUiComponents = (uiComponents: unknown): unknown[] => {
-  if (Array.isArray(uiComponents)) {
-    return uiComponents;
-  }
-
-  if (isRecord(uiComponents) && Array.isArray(uiComponents.uiComponents)) {
-    return uiComponents.uiComponents;
-  }
-
-  return [];
 };
 
 const collectArgumentDemandPaths = (
@@ -85,7 +70,7 @@ const collectDemandedStateInterfaces = (
   const demandedInterfaces = new Map<string, Set<string>>();
 
   const registerPath = (path: string) => {
-    const [dependencyKey, stateInterface] = splitRuntimePath(path);
+    const [dependencyKey, stateInterface] = splitPathSegments(path);
 
     if (!dependencyKey || !stateInterface || !dependencyKeys.has(dependencyKey)) {
       return;

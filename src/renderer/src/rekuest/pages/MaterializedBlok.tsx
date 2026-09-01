@@ -151,6 +151,7 @@ export const MaterializedBlokPage = asDetailQueryRoute(useMaterializedBlokQuery,
               key={materializedBlok.id}
               materializedBlok={materializedBlok}
               surfaceId={materializedBlok.id}
+              debug
             />
           </div>
         </section>

@@ -5,10 +5,17 @@ import {lovekitBlokComponents} from './bloks/lovekit';
 import {shadcnComposableComponents} from './bloks/primitives/Primitives';
 import {createBlokCatalog, createBlokFunction} from './runtime';
 
-const myCheckFunc = createBlokFunction(
+/*
+ * `pure` functions may be evaluated while rendering to compute a prop value.
+ * `effect` functions (the default) are only legal in action position, so they
+ * cannot fire on every render or every store update.
+ */
+
+const isAdminFunction = createBlokFunction(
   {
     name: 'is_admin',
     returnType: 'boolean',
+    purity: 'pure',
     schema: z.object({role: z.string()}),
   },
   args => args.role === 'admin',
@@ -18,6 +25,7 @@ const multiplyFunction = createBlokFunction(
   {
     name: 'math.multiply',
     returnType: 'number',
+    purity: 'pure',
     schema: z.record(z.string(), z.unknown()),
   },
   args => {
@@ -29,11 +37,11 @@ const multiplyFunction = createBlokFunction(
   },
 );
 
-
 const gtFunction = createBlokFunction(
   {
     name: 'gt',
     returnType: 'boolean',
+    purity: 'pure',
     schema: z.object({
       a: z.number(),
       b: z.number(),
@@ -42,11 +50,11 @@ const gtFunction = createBlokFunction(
   args => args.a > args.b,
 );
 
-
 const ifFunction = createBlokFunction(
   {
     name: 'if',
     returnType: 'unknown',
+    purity: 'pure',
     schema: z.object({
       condition: z.boolean(),
       trueValue: z.unknown(),
@@ -56,12 +64,11 @@ const ifFunction = createBlokFunction(
   args => (args.condition ? args.trueValue : args.falseValue),
 );
 
-
-
-
 const loggerInfoFunction = createBlokFunction(
   {
     name: 'logger.info',
+    // Toasts and logs: only valid behind an action, never as a prop value.
+    purity: 'effect',
     schema: z.record(z.string(), z.unknown()),
   },
   args => {
@@ -76,12 +83,8 @@ const loggerInfoFunction = createBlokFunction(
   },
 );
 
-export const myCatalog = createBlokCatalog(
+export const defaultBlokCatalog = createBlokCatalog(
   'https://arkitekt.live/catalogs/v1.json',
-  [
-    ...shadcnComposableComponents,
-    ...lovekitBlokComponents,
-    RawInspector,
-  ],
-  [myCheckFunc, multiplyFunction, loggerInfoFunction, gtFunction, ifFunction],
+  [...shadcnComposableComponents, ...lovekitBlokComponents, RawInspector],
+  [isAdminFunction, multiplyFunction, loggerInfoFunction, gtFunction, ifFunction],
 );

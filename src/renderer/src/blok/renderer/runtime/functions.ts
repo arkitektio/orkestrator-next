@@ -1,22 +1,36 @@
 import {z} from 'zod';
 import type {BlokComponentDefinition} from './components';
-import type {BlokRuntimeContext} from './types';
+import type {BlokInvokeOptions, BlokInvokeResult} from './types';
+
+/**
+ * `pure` functions are safe to evaluate while rendering: same args, same
+ * result, no observable side effects. `effect` functions (a toast, a log, a
+ * network call) are only legal in *action* position — a click handler — and are
+ * refused in value position rather than being fired on every render.
+ *
+ * The default is `effect` on purpose: a function must opt in to being called
+ * during render, so forgetting the annotation fails loudly instead of silently
+ * re-firing a side effect on every store update.
+ */
+export type BlokFunctionPurity = 'pure' | 'effect';
 
 export type BlokFunctionDefinition = {
   name: string;
   schema: z.ZodTypeAny;
   returnType?: string;
-  execute: (args: Record<string, unknown>, context: BlokRuntimeContext) => unknown;
+  purity: BlokFunctionPurity;
+  execute: (args: Record<string, unknown>) => unknown;
 };
 
 export const createBlokFunction = <TSchema extends z.ZodTypeAny>(
-  api: {name: string; schema: TSchema; returnType?: string},
-  execute: (args: z.infer<TSchema>, context: BlokRuntimeContext) => unknown,
+  api: {name: string; schema: TSchema; returnType?: string; purity?: BlokFunctionPurity},
+  execute: (args: z.infer<TSchema>) => unknown,
 ): BlokFunctionDefinition => ({
   name: api.name,
   schema: api.schema,
   returnType: api.returnType,
-  execute: execute as unknown as (args: Record<string, unknown>, context: BlokRuntimeContext) => unknown,
+  purity: api.purity ?? 'effect',
+  execute: execute as unknown as (args: Record<string, unknown>) => unknown,
 });
 
 export type BlokCatalog = {
@@ -26,8 +40,8 @@ export type BlokCatalog = {
   invokeFunction: (
     name: string,
     args: Record<string, unknown>,
-    context: BlokRuntimeContext,
-  ) => unknown;
+    options?: BlokInvokeOptions,
+  ) => BlokInvokeResult;
 };
 
 const isNumericKey = (value: string): boolean => /^\d+$/.test(value);
@@ -83,14 +97,48 @@ export const createBlokCatalog = (
     id,
     components: componentMap,
     functions: functionMap,
-    invokeFunction: (name, args, context) => {
+    // Never throws: a bad payload is a node-level error, not a crashed surface.
+    invokeFunction: (name, args, options) => {
       const fn = functionMap.get(name);
       if (!fn) {
-        throw new Error(`Function not found in catalog ${id}: ${name}`);
+        return {ok: false, error: `Function not found in catalog ${id}: ${name}`};
       }
 
-      const safeArgs = fn.schema.parse(normalizeFunctionArgs(fn.schema, args));
-      return fn.execute(safeArgs as Record<string, unknown>, context);
+      if (options?.requirePure && fn.purity !== 'pure') {
+        return {
+          ok: false,
+          error: `Function "${name}" has side effects and cannot be used to compute a prop value. Bind it to an action instead.`,
+        };
+      }
+
+      const parsed = fn.schema.safeParse(normalizeFunctionArgs(fn.schema, args));
+      if (!parsed.success) {
+        const detail = parsed.error.issues
+          .map(issue => `${issue.path.join('.') || '(root)'}: ${issue.message}`)
+          .join('; ');
+        return {ok: false, error: `Invalid arguments for "${name}": ${detail}`};
+      }
+
+      try {
+        return {ok: true, value: fn.execute(parsed.data as Record<string, unknown>)};
+      } catch (error) {
+        return {
+          ok: false,
+          error: error instanceof Error ? error.message : `Function "${name}" failed.`,
+        };
+      }
     },
   };
 };
+
+export const mergeBlokCatalogs = (
+  id: string,
+  catalogs: ReadonlyArray<BlokCatalog>,
+): BlokCatalog =>
+  createBlokCatalog(
+    id,
+    catalogs.flatMap(catalog => [...catalog.components.values()]),
+    catalogs.flatMap(catalog => [...catalog.functions.values()]),
+  );
+
+export {normalizeFunctionArgs};

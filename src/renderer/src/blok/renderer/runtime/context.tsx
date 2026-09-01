@@ -1,6 +1,5 @@
 import * as React from 'react';
 import {useStore} from 'zustand';
-import {useShallow} from 'zustand/react/shallow';
 import {createStore} from 'zustand/vanilla';
 import {isRecord, splitPathSegments} from './utils';
 import type {
@@ -11,7 +10,10 @@ import type {
   BlokRuntimeStore,
 } from './types';
 
-const defaultInvokeFunction: BlokInvokeFunctionHandler = () => undefined;
+const defaultInvokeFunction: BlokInvokeFunctionHandler = name => ({
+  ok: false,
+  error: `No blok function catalog is available to invoke "${name}".`,
+});
 const defaultDispatchAction: BlokDispatchActionHandler = () => undefined;
 
 const isNumericPathSegment = (segment: string): boolean => /^\d+$/.test(segment);
@@ -44,18 +46,18 @@ const applyRuntimeValueAtPath = (dataModel: unknown, path: string, value: unknow
     const key: number | string = isNumericPathSegment(segment) ? Number(segment) : segment;
 
     if (isLeaf) {
-      currentTarget[key] = value;
+      (currentTarget as Record<string | number, unknown>)[key] = value;
       return;
     }
 
     const nextSegment = segments[index + 1];
     const sourceChild =
       Array.isArray(currentSource) || isRecord(currentSource)
-        ? currentSource[key]
+        ? (currentSource as Record<string | number, unknown>)[key]
         : undefined;
     const nextTarget = clonePathContainer(sourceChild, nextSegment);
 
-    currentTarget[key] = nextTarget;
+    (currentTarget as Record<string | number, unknown>)[key] = nextTarget;
     currentTarget = nextTarget;
     currentSource = sourceChild;
   });
@@ -76,13 +78,11 @@ const composeRuntimeDataModel = (
 export const createBlokRuntimeStore = (config?: {
   initialDataModel?: unknown;
   agentMappingStateUpdates?: BlokAgentMappingStateUpdates;
-  pathAliases?: Record<string, string>;
   invokeFunction?: BlokInvokeFunctionHandler;
   dispatchAction?: BlokDispatchActionHandler;
 }): BlokRuntimeStore => {
   const initialDataModel = config?.initialDataModel;
   const initialAgentMappingStateUpdates = config?.agentMappingStateUpdates ?? {};
-  const initialPathAliases = config?.pathAliases ?? {};
   const invokeFunction = config?.invokeFunction ?? defaultInvokeFunction;
   const dispatchAction = config?.dispatchAction ?? defaultDispatchAction;
 
@@ -91,17 +91,41 @@ export const createBlokRuntimeStore = (config?: {
     dataModel: initialDataModel,
     runtimePathValues: {},
     agentMappingStateUpdates: initialAgentMappingStateUpdates,
-    pathAliases: initialPathAliases,
     invokeFunction,
     dispatchAction,
     setInitialDataModel: nextInitialDataModel => {
-      set(currentState => ({
-        initialDataModel: nextInitialDataModel,
-        dataModel: composeRuntimeDataModel(nextInitialDataModel, currentState.runtimePathValues),
-      }));
+      set(currentState => {
+        if (Object.is(currentState.initialDataModel, nextInitialDataModel)) {
+          return currentState;
+        }
+
+        return {
+          initialDataModel: nextInitialDataModel,
+          dataModel: composeRuntimeDataModel(nextInitialDataModel, currentState.runtimePathValues),
+        };
+      });
+    },
+    resetRuntimeValues: () => {
+      set(currentState => {
+        if (Object.keys(currentState.runtimePathValues).length === 0) {
+          return currentState;
+        }
+
+        return {
+          runtimePathValues: {},
+          dataModel: currentState.initialDataModel,
+        };
+      });
     },
     setRuntimeValue: (path, value) => {
       set(currentState => {
+        if (
+          path in currentState.runtimePathValues &&
+          Object.is(currentState.runtimePathValues[path], value)
+        ) {
+          return currentState;
+        }
+
         const nextRuntimePathValues = {
           ...currentState.runtimePathValues,
           [path]: value,
@@ -175,9 +199,6 @@ export const createBlokRuntimeStore = (config?: {
         };
       });
     },
-    setPathAliases: nextPathAliases => {
-      set({pathAliases: nextPathAliases});
-    },
     setInvokeFunction: nextInvokeFunction => {
       set({invokeFunction: nextInvokeFunction});
     },
@@ -208,54 +229,9 @@ export const useBlokRuntimeStoreApi = (): BlokRuntimeStore => {
   return store;
 };
 
-export const ScopedBlokRuntimeProvider = (props: {
-  pathAliases?: Record<string, string>;
-  children: React.ReactNode;
-}) => {
-  const parentStore = useBlokRuntimeStoreApi();
-  const parentState = useStore(
-    parentStore,
-    useShallow(state => ({
-      dataModel: state.dataModel,
-      agentMappingStateUpdates: state.agentMappingStateUpdates,
-      pathAliases: state.pathAliases,
-      invokeFunction: state.invokeFunction,
-      dispatchAction: state.dispatchAction,
-    })),
-  );
-  const [scopedStore] = React.useState(() =>
-    createBlokRuntimeStore({
-      initialDataModel: parentState.dataModel,
-      agentMappingStateUpdates: parentState.agentMappingStateUpdates,
-      pathAliases: {
-        ...parentState.pathAliases,
-        ...(props.pathAliases ?? {}),
-      },
-      invokeFunction: parentState.invokeFunction,
-      dispatchAction: parentState.dispatchAction,
-    }),
-  );
-
-  React.useEffect(() => {
-    const scopedState = scopedStore.getState();
-    scopedState.setInitialDataModel(parentState.dataModel);
-    scopedState.setAgentMappingStateUpdates(parentState.agentMappingStateUpdates);
-    scopedState.setPathAliases({
-      ...parentState.pathAliases,
-      ...(props.pathAliases ?? {}),
-    });
-    scopedState.setInvokeFunction(parentState.invokeFunction);
-    scopedState.setDispatchAction(parentState.dispatchAction);
-  }, [parentState, props.pathAliases, scopedStore]);
-
-  return (
-    <BlokRuntimeStoreContext.Provider value={scopedStore}>
-      {props.children}
-    </BlokRuntimeStoreContext.Provider>
-  );
-};
-
 export const useBlokRuntime = <T,>(selector: (state: BlokRuntimeContext) => T): T => {
   const store = useBlokRuntimeStoreApi();
   return useStore(store, selector);
 };
+
+export {applyRuntimeValueAtPath, composeRuntimeDataModel};

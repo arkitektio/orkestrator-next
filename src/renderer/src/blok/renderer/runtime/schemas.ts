@@ -53,13 +53,85 @@ const componentNodeInputSchema: z.ZodType<BlokComponentNode> = z.lazy(() =>
   }),
 );
 
-const actionValueSchema = z.custom<() => void>(value => typeof value === 'function', {
-  message: 'Expected action handler',
-});
+/*
+ * Action props are identified by an explicit brand, never by "does this schema
+ * happen to accept a function?". The old structural probe silently reclassified
+ * any permissive prop schema (`z.unknown()`, `z.any()`) as an action, which
+ * meant an author could turn a value prop into a click handler by accident.
+ */
+const actionSchemaRegistry = new WeakSet<object>();
+
+export const markActionSchema = <TSchema extends z.ZodTypeAny>(schema: TSchema): TSchema => {
+  actionSchemaRegistry.add(schema);
+  return schema;
+};
+
+/** Strips `.optional()` / `.nullable()` / `.default()` wrappers to reach the brand. */
+const unwrapSchema = (schema: z.ZodTypeAny): z.ZodTypeAny => {
+  let current: z.ZodTypeAny = schema;
+
+  for (let depth = 0; depth < 8; depth += 1) {
+    const inner = (current as unknown as {def?: {innerType?: z.ZodTypeAny}}).def?.innerType;
+    if (!inner) {
+      return current;
+    }
+
+    current = inner;
+  }
+
+  return current;
+};
+
+export const isActionSchema = (schema: z.ZodTypeAny | undefined): boolean => {
+  if (!schema) {
+    return false;
+  }
+
+  return actionSchemaRegistry.has(unwrapSchema(schema));
+};
+
+const actionValueSchema = markActionSchema(
+  z.custom<() => void>(value => typeof value === 'function', {
+    message: 'Expected action handler',
+  }),
+);
 
 const dynamicTextSchema = z
   .union([z.string(), z.number(), z.boolean()])
   .transform(value => String(value));
+
+/**
+ * Client-side contract for `checks` — a declarative guard list that disables an
+ * interactive blok until every entry passes. Each check is either a bare
+ * boolean, a data-model path (truthy test), or an explicit
+ * `{path | util_call, operator, value}` predicate.
+ */
+const checkOperatorSchema = z.enum([
+  'truthy',
+  'falsy',
+  'equals',
+  'notEquals',
+  'gt',
+  'gte',
+  'lt',
+  'lte',
+  'nonEmpty',
+]);
+
+const checkDescriptorSchema = z.union([
+  z.boolean(),
+  z.string(),
+  z.object({
+    path: z.string().optional(),
+    util_call: utilCallInputSchema.nullish(),
+    operator: checkOperatorSchema.optional(),
+    value: z.unknown().optional(),
+    message: z.string().optional(),
+  }),
+]);
+
+export type BlokCheckDescriptor = z.infer<typeof checkDescriptorSchema>;
+export type BlokCheckOperator = z.infer<typeof checkOperatorSchema>;
 
 export const BlokSchemas = {
   DynamicValue: dynamicValueInputSchema,
@@ -69,6 +141,7 @@ export const BlokSchemas = {
   ComponentProp: componentPropInputSchema,
   ComponentProps: z.array(componentPropInputSchema).nullish(),
   ComponentNode: componentNodeInputSchema,
+  CheckDescriptor: checkDescriptorSchema,
 };
 
 export const BlokPropSchemas = {
@@ -87,7 +160,9 @@ export const BlokPropSchemas = {
   DynamicString: dynamicTextSchema,
   DynamicBoolean: z.boolean(),
   Action: actionValueSchema,
+  Checks: z.array(checkDescriptorSchema).optional(),
+  /** @deprecated use `Checks` — kept so existing catalogs keep compiling. */
   Checkable: z.object({
-    checks: z.array(z.any()).optional(),
+    checks: z.array(checkDescriptorSchema).optional(),
   }),
 };

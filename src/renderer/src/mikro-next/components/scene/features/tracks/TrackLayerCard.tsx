@@ -1,7 +1,6 @@
-import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Eye, EyeOff, Spline, Trash2 } from "lucide-react";
-import { memo, useCallback, useMemo } from "react";
+import { Spline } from "lucide-react";
+import { memo, useMemo } from "react";
 import {
   ColorMap,
   useUpdateTrackLayerMutation,
@@ -19,8 +18,10 @@ import {
   formatCount,
 } from "../../platform/layerui/cardControls";
 import { ColormapSelect } from "../../platform/layerui/ColormapSelect";
-import { CONTINUOUS_COLORMAPS, colormapGradientCSS } from "../../platform/layerui/colormap-utils";
+import { CONTINUOUS_COLORMAP_CHOICES } from "../../platform/layerui/colormap-utils";
 import { DEFAULT_TAIL_WINDOW } from "./TracksLayer";
+import { useOptimisticLayerPatch } from "../../platform/layerui/useOptimisticLayerPatch";
+import { LayerCardActions } from "../../platform/layerui/LayerCardActions";
 
 /**
  * A compact card for a `TrackLayer` in the Layers panel.
@@ -99,33 +100,8 @@ export const TrackLayerCard = memo(
      * provider reconciles layers by STRUCTURE, so a `GetScene` re-emission that
      * changed only this layer's content keeps the stored object as it was.
      */
-    const persist = useCallback(
-      (patch: TrackPatch) => {
-        // The two sides have deliberately different nullability. The INPUT lets
-        // a field be null to mean "reset to the server's default"; the FRAGMENT
-        // types some of those same fields non-null, because that is what comes
-        // back. So the local preview takes the patch as-is and the authoritative
-        // value arrives with the mutation's own result — the cast states that,
-        // rather than widening the input type and losing the check above.
-        patchSceneLayer(layer.id, patch as Parameters<typeof patchSceneLayer>[1]);
-        void updateTrackLayer({
-          variables: { input: { id: layer.id, ...patch } },
-        }).catch((error: unknown) => {
-          console.warn("[tracks] could not save layer settings", error);
-        });
-      },
-      [layer.id, patchSceneLayer, updateTrackLayer],
-    );
+    const persist = useOptimisticLayerPatch<TrackPatch>(layer.id, updateTrackLayer, "[tracks]");
 
-    const colormapChoices = useMemo(
-      () =>
-        CONTINUOUS_COLORMAPS.map((colormap) => ({
-          value: colormap,
-          label: colormap.toLowerCase(),
-          css: colormapGradientCSS(colormap),
-        })),
-      [],
-    );
 
     /** Only the measure columns: a coordinate or the track id is not a colouring. */
     const measureColumns = useMemo(
@@ -147,28 +123,11 @@ export const TrackLayerCard = memo(
         expanded={expanded}
         onToggle={() => onSelect(layer.id, expanded)}
         actions={
-          <>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-5 w-5 shrink-0 text-white/45 hover:text-white/90"
-              title={hidden ? "Show" : "Hide"}
-              onClick={() => persist({ visible: hidden })}
-            >
-              {hidden ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-            </Button>
-            {onRemove && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-5 w-5 shrink-0 text-white/35 hover:text-red-300"
-                title="Remove layer from scene"
-                onClick={() => onRemove(layer.id)}
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            )}
-          </>
+          <LayerCardActions
+            hidden={hidden}
+            onToggleVisible={() => persist({ visible: hidden })}
+            onRemove={onRemove ? () => onRemove(layer.id) : undefined}
+          />
         }
       >
         {/* ------------------------------------------------ tail ----------- */}
@@ -238,7 +197,7 @@ export const TrackLayerCard = memo(
               <div className="w-24 shrink-0">
                 <ColormapSelect
                   value={layer.colormap ?? ColorMap.Viridis}
-                  choices={colormapChoices}
+                  choices={CONTINUOUS_COLORMAP_CHOICES}
                   onChange={(value) => persist({ colormap: value as ColorMap })}
                   title="The ramp the colouring column runs through"
                 />

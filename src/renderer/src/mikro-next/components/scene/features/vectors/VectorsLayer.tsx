@@ -23,7 +23,7 @@ import { useThree } from "@react-three/fiber";
 
 import { useDatalayerEndpoint, useMikro } from "@/app/Arkitekt";
 import { collapsibleLensDims } from "../../platform/model/dimExtents";
-import { createSettler } from "../../platform/probe/settle";
+import { createSettler } from "../../platform/perf/settle";
 import { useSceneStore } from "../../platform/stores/sceneStore";
 import { useViewerStoreApi } from "../../platform/stores/viewerStore";
 import { composeLayerAffine } from "@/mikro-next/lib/coords/transformGraph";
@@ -32,6 +32,7 @@ import { paletteRowFor, DEFAULT_MEASURE_COLORMAP } from "../../platform/attribut
 import { isVectorLayer, type VectorLayerFragment } from "../../platform/model/layerGuards";
 import { createVectorMaterial, type VectorGlyphKind, type VectorMaterialBundle } from "./vectorsMaterial";
 import { loadVectorField, type VectorField } from "./vectorsSource";
+import { bindFields } from "../../platform/stores/bindStore";
 
 export const VectorLayerRenderer = ({ layerId }: { layerId: string }) => {
   const layer = useSceneStore((s) => s.sceneLayers.find((candidate) => candidate.id === layerId));
@@ -141,20 +142,25 @@ const VectorField = ({ layer }: { layer: VectorLayerFragment }) => {
       emit: read,
     });
 
-    // The first read is immediate — a settle here would leave the viewport empty
-    // for the window on every mount.
-    read(viewerApi.getState().dimSelections);
-
-    let last = viewerApi.getState().dimSelections;
-    const unsubscribe = viewerApi.subscribe((state) => {
-      if (state.dimSelections === last) return;
-      const previous = last;
-      last = state.dimSelections;
-      // Only OUR dims. A scrub of a dim this layer does not carry changes
-      // nothing about what it reads.
-      if (scrubbableDims.every((dim) => previous[dim] === last[dim])) return;
-      settler.push(last);
-    });
+    // Only OUR dims: a scrub of a dim this layer does not carry changes nothing
+    // about what it reads. `bindFields` applies once at bind time, which is the
+    // immediate first read — a settle there would leave the viewport empty for
+    // the window on every mount.
+    let first = true;
+    const unsubscribe = bindFields(
+      viewerApi,
+      scrubbableDims.map((dim) => (state: { dimSelections: Readonly<Record<string, number>> }) =>
+        state.dimSelections[dim],
+      ),
+      (state) => {
+        if (first) {
+          first = false;
+          read(state.dimSelections);
+          return;
+        }
+        settler.push(state.dimSelections);
+      },
+    );
 
     return () => {
       cancelled = true;

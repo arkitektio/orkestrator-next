@@ -20,6 +20,7 @@ import {
   type NetworkFilterByInput,
 } from "@/mikro-next/api/graphql";
 import { qualitativePalette } from "./colormap-utils";
+import { isColumnEntry } from "../attributes/entryKeys";
 
 /**
  * The bridge between what the server OFFERS and what a MESH OR LABEL layer
@@ -119,7 +120,7 @@ export type ColorByEntry = MeshColorByFragment | LabelColorByFragment | NetworkC
 export type ColumnColorByEntry = ColorByEntry & { table: string; column: string };
 
 export const isColumnColorBy = (entry: ColorByEntry): entry is ColumnColorByEntry =>
-  entry.table != null && entry.column != null;
+  isColumnEntry(entry);
 
 /** A stored filter rule, any picker-bearing layer kind. See `ColorByEntry`. */
 export type FilterByEntry = MeshFilterByFragment | LabelFilterByFragment | NetworkFilterByFragment;

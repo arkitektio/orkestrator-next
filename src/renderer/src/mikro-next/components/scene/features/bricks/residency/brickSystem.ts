@@ -9,7 +9,7 @@ import { BrickResidencyManager } from "./brickResidency";
 import type { BrickSlice } from "../store/brickSlice";
 
 /**
- * Kill switch for starting the brick system OUTSIDE the R3F canvas
+ * Was a kill switch (settled ON (OCTREE_RENDERER.md §6.9)) for starting the brick system OUTSIDE the R3F canvas
  * (`orkestrator.earlyBricks`, default ON).
  *
  * Off reproduces the previous arrangement exactly: `BrickSystemProvider`
@@ -18,23 +18,8 @@ import type { BrickSlice } from "../store/brickSlice";
  * semantics, like `orkestrator.occObservedRange` — so toggling it takes effect
  * on the next scene open.
  */
-const EARLY_BRICKS_STORAGE_KEY = "orkestrator.earlyBricks";
 
-export const isEarlyBricksEnabled = (): boolean => {
-  try {
-    return window.localStorage.getItem(EARLY_BRICKS_STORAGE_KEY) !== "off";
-  } catch {
-    return true;
-  }
-};
 
-export const setEarlyBricksEnabled = (enabled: boolean): void => {
-  try {
-    window.localStorage.setItem(EARLY_BRICKS_STORAGE_KEY, enabled ? "on" : "off");
-  } catch {
-    /* storage unavailable: session keeps its current state */
-  }
-};
 
 export type BrickSystem = {
   manager: BrickResidencyManager;

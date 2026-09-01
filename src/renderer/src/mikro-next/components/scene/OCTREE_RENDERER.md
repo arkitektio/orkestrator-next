@@ -559,9 +559,8 @@ to coarser levels (bounded by `MAX_BRICK_LEVELS = 10`).
   `cameraMoving`, `uStepScale = 3` triples the step size (~3× fewer samples);
   the camera-settle emission restores full quality automatically.
 
-  The **shader fast path** (`orkestrator.shaderFastPath`, default ON — flag in
-  `features/bricks/gpu/shaderFlags.ts`, read at material build time) restructures the
-  ray loop; CPU mirrors of every decision live in `features/bricks/shaderspec/raymarchStep.ts`:
+  The **shader fast path** (once `orkestrator.shaderFastPath`; now
+  unconditional — §6.9) restructures the ray loop; CPU mirrors of every decision live in `features/bricks/shaderspec/raymarchStep.ts`:
   - **Skip-before-sample.** The empty-space decision is emitted BEFORE the
     per-slot sampling block: an unmapped chain hops immediately, and a uniform
     EMPTY brick's max norm is derived with pure ALU from `resolved.emptyValue`
@@ -1648,6 +1647,50 @@ every L0 brick touches all 64 chunks of the level. The real fix remains
 re-chunking L0 with tiled x/y chunks upstream.
 
 ---
+
+## 6.9 Settled flags — every kill switch is gone
+
+**2026-09-01.** The renderer used to carry 24 `orkestrator.*` flags. Every one
+of them is now settled: the optimisation each gated is unconditional, the
+alternate branch is deleted, and the DebugPanel toggles are gone. There is no
+longer a way to A/B any of these at runtime.
+
+**This was a deliberate trade.** Each flag meant two live codepaths, and the
+"off" branch of a default-ON flag was, in almost every case, code that only
+existed to be the thing we were no longer doing. Carrying it cost a branch in
+the shader emission, a second path to reason about, and — measurably — an
+accumulator (`maxSampleNorm`) computed per sample for a skip test that the fast
+path had already made before any sampling happened.
+
+**If performance or correctness regresses, this is the list to walk.** Each row
+names what is now always on and what reverting it means. Recover the deleted
+branch from git history at the commit that removed it.
+
+| Setting, now permanent | Was | Revert if |
+|---|---|---|
+| `shaderFastPath` | ON | Skippability is decided BEFORE per-slot sampling. The legacy order sampled first, then tested — revert if a skip predicate turns out to need a sampled value. |
+| `fixedShapeFastPath` | ON | Intensity/RGB layers compile specialised compositors. The general 16-slot compositor is pixel-identical by construction, so a difference here is a bug in the specialisation. |
+| `occHierarchy` | **OFF (shipped dark)** | Rays hop whole coarse cells via the RG8 aggregate sidecar. **The least-validated of the three dark flags** and the largest new shader surface — suspect this first for a raymarch artefact. |
+| `raw16` | **OFF (shipped dark)** | uint16 chunks stay `Uint16Array` end-to-end (2 B/voxel, not the widened 4). Halves decode-cache and upload bytes, and deliberately moves `budgetMinLevel` FINER on uint16 pyramids — so a plan that now reaches too deep on a big uint16 stack is this. |
+| `occObservedRange`, `occPerSlab` | ON | Occupancy encoded against the observed range, per slab. Suspect for empty-space skipping that skips too much. |
+| `anisoLod`, `anisoStride`, `worldLod` | ON | The world-metric LOD contract. Suspect for wrong refinement on anisotropic (SPIM-like) voxel grids. |
+| `smoothZoom` | ON | Tricubic sampling on zoom. Purely visual; costs taps. |
+| `gpuRepack`, `gpuRepackR16` | ON | The compute repack path. The CPU worker REMAINS as the fallback (`supports()` still rejects per atlas kind, and the broken-latch still reverts) — this only removes the ability to force CPU. |
+| `r16Atlas`, `rgbaAtlas` | ON | Half-float and RGBA8 atlases. Revert if a pool's precision or channel packing looks wrong. |
+| `volumeTarget`, `volumeCache`, `volumeDepthPrepass`, `settleRefine`, `adaptiveDpr`, `volumeMerge` | ON | The volume compositor and its ladder. `volumeDepthPrepass` OFF was always a *documented visual regression* (volumes compositing over meshes), so it is the one whose removal cannot be a regression. |
+| `earlyBricks`, `twoPhaseBricks`, `annotationBatch` | ON | Out-of-canvas brick construction, halo prefetch, batched annotation lines. |
+
+**One flag settled the other way.** `atlasMirror` is gone too, but it settled
+**OFF**: its ON branch restored the *legacy eager CPU mirror* of the atlas, kept
+only as an A/B lever after R3 made the mirror lazy. Turning it on would have
+reinstated roughly 4× the host memory for intensity pools. What was deleted here
+is the eager path — the mirror queue, its idle drain, and the `kind: "slot"` read
+path that existed only to read it. Probes read the decoded-chunk cache through
+`gpuStaleKeys`, as they already did by default.
+
+**Two user-facing overrides survive**, because they are preferences and not kill
+switches: `orkestrator.volumeBudgetMB` and `orkestrator.decodeCacheMB`, plus the
+`orkestrator.fidelity` tier.
 
 ## 7. Roadmap — remaining gaps to Neuroglancer-class viewers
 

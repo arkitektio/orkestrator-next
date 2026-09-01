@@ -153,8 +153,20 @@ and clearing an entry means deleting it so it cannot come back.
   no-op handler.
 - **P13** — three.js overlay geometries need an explicit `dispose()` in effect
   cleanup.
-- **No `React.lazy` in the renderer** — Electron `file://` chunk loads fail.
-  This also rules out lazy barrels.
+- **Code splitting is UNPROVEN here, not impossible.** This rule used to read
+  "no `React.lazy` — Electron `file://` chunk loads fail", and that premise is
+  gone: since `098f661e` (2026-07-11) the packaged renderer is served over the
+  privileged `app://` scheme for cross-origin isolation
+  (`src/main/index.ts` registers it `standard`/`secure`/`corsEnabled`;
+  `WindowManager.ts` loads `${APP_ORIGIN}/index.html`), and the build already
+  emits and loads dynamic chunks (`zstd`, `blosc`, `lz4`,
+  `meshopt_simplifier`). What is still true is that **nobody has proven a lazy
+  route in a PACKAGED build** — so anyone introducing one must verify it there,
+  not in `pnpm dev`, which is served over http and proves nothing about
+  `app://`. Today the renderer is a single ~22 MB chunk (~4 MB gzipped) parsed
+  in full at startup; the obvious candidates if this is ever picked up are
+  Monaco (reached only by `kraph/components/cypher/`), the 3D scene stack, and
+  the per-service route trees.
 - **The typecheck ratchet stays at 0.** Syntax errors mask everything
   downstream, so check touched files individually during a mass rewrite.
 - **`COORDINATE_SYSTEMS.md` §0 is settled** — corner-anchored frames, half-voxel

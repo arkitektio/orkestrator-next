@@ -4,6 +4,7 @@ import type { AttributeLookupEngine } from "./lookupEngine";
 import {
   DISTINCT_LIMIT,
   HISTOGRAM_BINS,
+  describeColumnStatsError,
   readColumnDistinct,
   readColumnDomain,
   readColumnHistogram,
@@ -133,5 +134,59 @@ describe("readDefaultFilterRule", () => {
   it("refuses to invent a bound when the column cannot answer", async () => {
     expect(await readDefaultFilterRule(fakeEngine([]).engine, target, "MEASURE")).toBeNull();
     expect(await readDefaultFilterRule(fakeEngine([]).engine, target, "CATEGORICAL")).toBeNull();
+  });
+});
+
+describe("describeColumnStatsError", () => {
+  it("names the missing-object case rather than pasting SQL", () => {
+    const raw =
+      "HTTP Error: HTTP GET error reading 's3://bucket/9ea18631' in region 'us-east-1' " +
+      "(HTTP 404 Not Found) LINE 1: ... FROM read_parquet('s3://bucket/9ea18631')";
+    const { summary, detail } = describeColumnStatsError(new Error(raw));
+    expect(summary).toMatch(/not in storage/);
+    expect(summary).not.toMatch(/SELECT|read_parquet|s3:\/\//);
+    expect(detail).toBe(raw); // the detail is kept, not discarded
+  });
+
+  it("names an UNFINISHED upload when the store never recorded a size", () => {
+    const raw = "HTTP Error: ... (HTTP 404 Not Found)";
+    const store = { id: "s", bucket: "b", key: "k", sizeBytes: null };
+    expect(describeColumnStatsError(new Error(raw), store).summary).toMatch(
+      /upload never finished/,
+    );
+  });
+
+  it("says REMOVED, not unfinished, when the upload did finish", () => {
+    const raw = "HTTP Error: ... (HTTP 404 Not Found)";
+    const store = { id: "s", bucket: "b", key: "k", sizeBytes: 1234 };
+    const { summary } = describeColumnStatsError(new Error(raw), store);
+    expect(summary).toMatch(/may have been removed/);
+    expect(summary).not.toMatch(/never finished/);
+  });
+
+  it("stays non-committal when no store is supplied", () => {
+    const { summary } = describeColumnStatsError(
+      new Error("HTTP 404 Not Found"),
+    );
+    expect(summary).toMatch(/not in storage/);
+    expect(summary).not.toMatch(/never finished/);
+  });
+
+  it("recognises the other shapes DuckDB uses for a missing object", () => {
+    for (const raw of ["IO Error: No files found that match the pattern", "NoSuchKey"]) {
+      expect(describeColumnStatsError(new Error(raw)).summary).toMatch(/not in storage/);
+    }
+  });
+
+  it("falls back to a generic summary for a real query error", () => {
+    const { summary } = describeColumnStatsError(
+      new Error('Binder Error: Referenced column "nope" not found'),
+    );
+    expect(summary).toMatch(/could not be read/);
+    expect(summary).not.toMatch(/not in storage/);
+  });
+
+  it("survives a non-Error throw", () => {
+    expect(describeColumnStatsError("boom").detail).toBe("boom");
   });
 });

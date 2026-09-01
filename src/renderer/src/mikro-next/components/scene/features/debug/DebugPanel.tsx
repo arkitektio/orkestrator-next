@@ -14,71 +14,12 @@ import {
   setDecodeCacheOverrideMB,
 } from "../bricks/octree/poolBudget";
 import {
-  isAdaptiveDprEnabled,
-  isSettleRefineEnabled,
   qualityGovernor,
-  setAdaptiveDprEnabled,
-  setSettleRefineEnabled,
   TIER_LABELS,
   type QualityTier,
 } from "../../platform/quality/qualityGovernor";
 import { perfMonitor, type PerfSessionReport } from "../../platform/perf/perfMonitor";
-import { isEarlyBricksEnabled, setEarlyBricksEnabled } from "../bricks/residency/brickSystem";
 import type { FabriksCollectionManager } from "../meshes/fabriks/fabriksManager";
-import {
-  isGpuRepackEnabled,
-  isGpuRepackR16Enabled,
-  setGpuRepackEnabled,
-  setGpuRepackR16Enabled,
-} from "../bricks/gpu/computeRepack";
-import {
-  isR16AtlasesEnabled,
-  isRaw16ChunksEnabled,
-  isRgbaAtlasesEnabled,
-  setR16AtlasesEnabled,
-  setRaw16ChunksEnabled,
-  setRgbaAtlasesEnabled,
-} from "../bricks/octree/atlasFormat";
-import {
-  isAtlasMirrorEnabled,
-  setAtlasMirrorEnabled,
-} from "../bricks/gpu/brickAtlas";
-import {
-  isLineBatchEnabled as isAnnotationBatchEnabled,
-  setLineBatchEnabled as setAnnotationBatchEnabled,
-} from "../../platform/draw/lineBatchFlag";
-import {
-  isVolumeMergeEnabled,
-  setVolumeMergeEnabled,
-} from "../bricks/gpu/volumeMergeGroups";
-import {
-  isAnisoLodEnabled,
-  isAnisoStrideEnabled,
-  isFixedShapeFastPathEnabled,
-  isOccHierarchyEnabled,
-  isOccObservedRangeEnabled,
-  isOccPerSlabEnabled,
-  isShaderFastPathEnabled,
-  isSmoothZoomEnabled,
-  isWorldLodEnabled,
-  setAnisoLodEnabled,
-  setAnisoStrideEnabled,
-  setFixedShapeFastPathEnabled,
-  setOccHierarchyEnabled,
-  setOccObservedRangeEnabled,
-  setOccPerSlabEnabled,
-  setShaderFastPathEnabled,
-  setSmoothZoomEnabled,
-  setWorldLodEnabled,
-} from "../bricks/gpu/shaderFlags";
-import {
-  isVolumeCacheEnabled,
-  isVolumeDepthPrepassEnabled,
-  isVolumeTargetEnabled,
-  setVolumeCacheEnabled,
-  setVolumeDepthPrepassEnabled,
-  setVolumeTargetEnabled,
-} from "../../platform/gpu/volumeTargetFlags";
 import { usePerfRecording } from "../../platform/perf/PerfFrameProbe";
 import { useModeStore } from "../../platform/stores/modeStore";
 import { useViewerStore } from "../../platform/stores/viewerStore";
@@ -107,36 +48,11 @@ export const DebugPanel = () => {
   const [reportCopied, setReportCopied] = useState(false);
   const recording = usePerfRecording();
   const [lastSession, setLastSession] = useState<PerfSessionReport | null>(null);
-  const [gpuRepackOn, setGpuRepackOn] = useState(isGpuRepackEnabled);
-  const [gpuRepackR16On, setGpuRepackR16On] = useState(isGpuRepackR16Enabled);
-  const [volumeMergeOn, setVolumeMergeOn] = useState(isVolumeMergeEnabled);
-  const [shaderFastPathOn, setShaderFastPathOn] = useState(isShaderFastPathEnabled);
-  const [smoothZoomOn, setSmoothZoomOn] = useState(isSmoothZoomEnabled);
-  const [adaptiveDprOn, setAdaptiveDprOn] = useState(isAdaptiveDprEnabled);
-  const [r16AtlasOn, setR16AtlasOn] = useState(isR16AtlasesEnabled);
-  const [raw16On, setRaw16On] = useState(isRaw16ChunksEnabled);
-  const [annotationBatchOn, setAnnotationBatchOn] = useState(isAnnotationBatchEnabled);
-  const [rgbaAtlasOn, setRgbaAtlasOn] = useState(isRgbaAtlasesEnabled);
-  const [atlasMirrorOn, setAtlasMirrorOn] = useState(isAtlasMirrorEnabled);
-  const [occObservedRangeOn, setOccObservedRangeOn] = useState(isOccObservedRangeEnabled);
-  const [earlyBricksOn, setEarlyBricksOn] = useState(isEarlyBricksEnabled);
   const [volumeBudgetOverride, setVolumeBudgetOverride] = useState(
     getVolumeBudgetOverrideBytes,
   );
   const [decodeCacheOverride, setDecodeCacheOverride] = useState(
     getDecodeCacheOverrideBytes,
-  );
-  const [anisoStrideOn, setAnisoStrideOn] = useState(isAnisoStrideEnabled);
-  const [anisoLodOn, setAnisoLodOn] = useState(isAnisoLodEnabled);
-  const [worldLodOn, setWorldLodOn] = useState(isWorldLodEnabled);
-  const [occHierarchyOn, setOccHierarchyOn] = useState(isOccHierarchyEnabled);
-  const [occPerSlabOn, setOccPerSlabOn] = useState(isOccPerSlabEnabled);
-  const [fixedShapeOn, setFixedShapeOn] = useState(isFixedShapeFastPathEnabled);
-  const [settleRefineOn, setSettleRefineOn] = useState(isSettleRefineEnabled);
-  const [volumeTargetOn, setVolumeTargetOn] = useState(isVolumeTargetEnabled);
-  const [volumeCacheOn, setVolumeCacheOn] = useState(isVolumeCacheEnabled);
-  const [volumeDepthPrepassOn, setVolumeDepthPrepassOn] = useState(
-    isVolumeDepthPrepassEnabled,
   );
   // Applied drawing-buffer DPR (CanvasSync re-registers the canvas on every
   // dpr change, so this chip tracks the interaction ladder live).
@@ -146,142 +62,6 @@ export const DebugPanel = () => {
   useSyncExternalStore(qualityGovernor.subscribe, () => qualityGovernor.getVersion());
 
   if (!isDebug) return null;
-
-  const toggleGpuRepack = () => {
-    const next = !gpuRepackOn;
-    setGpuRepackEnabled(next);
-    setGpuRepackOn(next);
-  };
-
-  const toggleGpuRepackR16 = () => {
-    const next = !gpuRepackR16On;
-    setGpuRepackR16Enabled(next);
-    setGpuRepackR16On(next);
-  };
-
-  const toggleVolumeMerge = () => {
-    const next = !volumeMergeOn;
-    setVolumeMergeEnabled(next);
-    setVolumeMergeOn(next);
-  };
-
-  const toggleShaderFastPath = () => {
-    const next = !shaderFastPathOn;
-    setShaderFastPathEnabled(next);
-    setShaderFastPathOn(next);
-  };
-
-  const toggleSmoothZoom = () => {
-    const next = !smoothZoomOn;
-    setSmoothZoomEnabled(next);
-    setSmoothZoomOn(next);
-  };
-
-  const toggleAdaptiveDpr = () => {
-    const next = !adaptiveDprOn;
-    setAdaptiveDprEnabled(next);
-    setAdaptiveDprOn(next);
-  };
-
-  const toggleR16Atlas = () => {
-    const next = !r16AtlasOn;
-    setR16AtlasesEnabled(next);
-    setR16AtlasOn(next);
-  };
-
-  const toggleRaw16 = () => {
-    const next = !raw16On;
-    setRaw16ChunksEnabled(next);
-    setRaw16On(next);
-  };
-
-  const toggleAnnotationBatch = () => {
-    const next = !annotationBatchOn;
-    setAnnotationBatchEnabled(next);
-    setAnnotationBatchOn(next);
-  };
-
-  const toggleRgbaAtlas = () => {
-    const next = !rgbaAtlasOn;
-    setRgbaAtlasesEnabled(next);
-    setRgbaAtlasOn(next);
-  };
-
-  const toggleAtlasMirror = () => {
-    const next = !atlasMirrorOn;
-    setAtlasMirrorEnabled(next);
-    setAtlasMirrorOn(next);
-  };
-
-  const toggleEarlyBricks = () => {
-    const next = !earlyBricksOn;
-    setEarlyBricksEnabled(next);
-    setEarlyBricksOn(next);
-  };
-
-  const toggleOccObservedRange = () => {
-    const next = !occObservedRangeOn;
-    setOccObservedRangeEnabled(next);
-    setOccObservedRangeOn(next);
-  };
-
-  const toggleAnisoStride = () => {
-    const next = !anisoStrideOn;
-    setAnisoStrideEnabled(next);
-    setAnisoStrideOn(next);
-  };
-
-  const toggleWorldLod = () => {
-    const next = !worldLodOn;
-    setWorldLodEnabled(next);
-    setWorldLodOn(next);
-  };
-  const toggleAnisoLod = () => {
-    const next = !anisoLodOn;
-    setAnisoLodEnabled(next);
-    setAnisoLodOn(next);
-  };
-
-  const toggleOccPerSlab = () => {
-    const next = !occPerSlabOn;
-    setOccPerSlabEnabled(next);
-    setOccPerSlabOn(next);
-  };
-  const toggleOccHierarchy = () => {
-    const next = !occHierarchyOn;
-    setOccHierarchyEnabled(next);
-    setOccHierarchyOn(next);
-  };
-
-  const toggleFixedShape = () => {
-    const next = !fixedShapeOn;
-    setFixedShapeFastPathEnabled(next);
-    setFixedShapeOn(next);
-  };
-
-  const toggleSettleRefine = () => {
-    const next = !settleRefineOn;
-    setSettleRefineEnabled(next);
-    setSettleRefineOn(next);
-  };
-
-  const toggleVolumeTarget = () => {
-    const next = !volumeTargetOn;
-    setVolumeTargetEnabled(next);
-    setVolumeTargetOn(next);
-  };
-
-  const toggleVolumeCache = () => {
-    const next = !volumeCacheOn;
-    setVolumeCacheEnabled(next);
-    setVolumeCacheOn(next);
-  };
-
-  const toggleVolumeDepthPrepass = () => {
-    const next = !volumeDepthPrepassOn;
-    setVolumeDepthPrepassEnabled(next);
-    setVolumeDepthPrepassOn(next);
-  };
 
   const runGpuSelfTest = () => {
     const manager = viewerStoreApi.getState().brickSystem;
@@ -361,8 +141,6 @@ export const DebugPanel = () => {
       // members disagree on transform or overflow the uniform budget).
       volumePasses: {
         layers: Object.values(viewerState.nodePlans).filter((p) => p.mode === "3D").length,
-        merging: isVolumeMergeEnabled(),
-        shaderFastPath: isShaderFastPathEnabled(),
       },
       volumeCompositor: viewerState.volumeCompositorReport?.() ?? null,
       fidelity: qualityGovernor.getFidelity(),
@@ -419,7 +197,6 @@ export const DebugPanel = () => {
         emaFrameMs: Number(qualityGovernor.getEmaMs().toFixed(2)),
         streaming: qualityGovernor.isStreaming(),
         settleRefineStage: qualityGovernor.getSettleRefineStage(),
-        settleRefine: isSettleRefineEnabled() ? "on" : "off",
       },
     };
     const json = JSON.stringify(report, null, 2);
@@ -686,167 +463,10 @@ export const DebugPanel = () => {
           )}
           {brickSystem && (
             <div className="mb-2 flex flex-wrap items-center gap-1 text-[9px]">
-              <button
-                onClick={toggleGpuRepack}
-                title="Compute-shader repack for r32f atlases (WebGPU backend). Takes effect on the next scene mount."
-                className="px-1 rounded border border-border/50 hover:bg-accent"
-              >
-                gpu repack: {gpuRepackOn ? "on" : "off"}
-              </button>
-              <button
-                onClick={toggleGpuRepackR16}
-                title="r16f GPU repack: uint16 intensity pools (half-float atlases) take the compute path through the r16 arena kernel instead of the CPU worker (scalar copy + float32 scratch + half-encode per brick). Needs gpu repack + r16 atlas on. Pool report gpuPath should read 'gpu' instead of 'cpu:unsupported:r16f'. Takes effect on the next scene mount."
-                className="px-1 rounded border border-border/50 hover:bg-accent"
-              >
-                r16 gpu repack: {gpuRepackR16On ? "on" : "off"}
-              </button>
-              <button
-                onClick={toggleVolumeMerge}
-                title="Raymarch layers that share a brick pool in ONE pass instead of one each. Off = one pass per layer (the pre-merge path). Takes effect on the next scene mount."
-                className="px-1 rounded border border-border/50 hover:bg-accent"
-              >
-                volume merge: {volumeMergeOn ? "on" : "off"}
-              </button>
-              <button
-                onClick={toggleShaderFastPath}
-                title="Restructured raymarch: skip empty bricks BEFORE sampling, textureSampleLevel atlas taps, ATTENUATED_MIP early termination. Off = legacy emission order. Takes effect on the next scene mount."
-                className="px-1 rounded border border-border/50 hover:bg-accent"
-              >
-                shader fast path: {shaderFastPathOn ? "on" : "off"}
-              </button>
-              <button
-                onClick={toggleSmoothZoom}
-                title="Tricubic reconstruction of magnified fluorescence (8-tap B-spline past ~3 px/voxel): smooth blobs instead of hard voxel blocks. Takes effect on the next scene mount."
-                className="px-1 rounded border border-border/50 hover:bg-accent"
-              >
-                smooth zoom: {smoothZoomOn ? "on" : "off"}
-              </button>
-              <button
-                onClick={toggleAdaptiveDpr}
-                title="Interaction DPR ladder: drop the drawing-buffer resolution by the frame-time EMA while the camera moves or bricks stream (all tiers), restore crisp on settle. Takes effect on the next gesture."
-                className="px-1 rounded border border-border/50 hover:bg-accent"
-              >
-                adaptive dpr: {adaptiveDprOn ? "on" : "off"}
-              </button>
-              <button
-                onClick={toggleR16Atlas}
-                title="R16F half-float atlases for uint16 intensity data (raw/65535, rescaled in-shader): half the atlas bytes, double the slot budget. Labels always stay r32f. Takes effect for pools created after the toggle (reopen the scene for existing ones)."
-                className="px-1 rounded border border-border/50 hover:bg-accent"
-              >
-                r16 atlas: {r16AtlasOn ? "on" : "off"}
-              </button>
-              <button
-                onClick={toggleRaw16}
-                title="Raw uint16 chunks (C3): uint16 chunks stay Uint16Array end-to-end (decode cache, repack, GPU upload) instead of widening to float32 — 2x effective chunk-cache capacity and half the upload bytes for 16-bit data. Takes effect on the next scene mount."
-                className="px-1 rounded border border-border/50 hover:bg-accent"
-              >
-                raw16 chunks: {raw16On ? "on" : "off"}
-              </button>
-              <button
-                onClick={toggleAnnotationBatch}
-                title="Merged annotation outlines: one LineSegments2 per (collection, stroke width) instead of one Line2 + material per shape; selection highlight becomes a color rewrite, picking maps the segment index back to the ROI. Takes effect for collections mounted after the toggle (reopen the scene)."
-                className="px-1 rounded border border-border/50 hover:bg-accent"
-              >
-                annotation batch: {annotationBatchOn ? "on" : "off"}
-              </button>
-              <button
-                onClick={toggleRgbaAtlas}
-                title="RGBA8 atlases for 3/4-channel uint8 pools (RGB images): channels interleaved in one texel instead of z-stacked slabs, so an rgb layer samples ONE texel per step instead of three; GPU repack writes the interleaved layout directly. Pool report atlas.kind should read 'rgba8'. Takes effect for pools created after the toggle (reopen the scene)."
-                className="px-1 rounded border border-border/50 hover:bg-accent"
-              >
-                rgba atlas: {rgbaAtlasOn ? "on" : "off"}
-              </button>
-              <button
-                onClick={toggleAtlasMirror}
-                title="Eager CPU atlas mirror (legacy): every atlas byte also lives on the JS heap; probes read it instead of the decoded-chunk cache. Off (default) = lazy, half the real footprint. Takes effect on the next scene mount."
-                className="px-1 rounded border border-border/50 hover:bg-accent"
-              >
-                atlas mirror: {atlasMirrorOn ? "on" : "off"}
-              </button>
-              <button
-                onClick={toggleEarlyBricks}
-                title="Early bricks: start the brick residency system OUTSIDE the canvas so chunk fetch/decode/repack overlap WebGPU device creation instead of waiting for it. Off restores the old arrangement (the system is built inside the canvas, after renderer.init). Takes effect on the next scene open."
-                className="px-1 rounded border border-border/50 hover:bg-accent"
-              >
-                early bricks: {earlyBricksOn ? "on" : "off"}
-              </button>
-              <button
-                onClick={toggleOccObservedRange}
-                title="Occupancy observed-range encoding: quantize the per-brick min/max sidecar against the pool's observed value range instead of the full dtype range, so MIP maximum-culling discriminates on dim data. Takes effect for pools created after the toggle (reopen the scene)."
-                className="px-1 rounded border border-border/50 hover:bg-accent"
-              >
-                occ range: {occObservedRangeOn ? "on" : "off"}
-              </button>
-              <button
-                onClick={toggleAnisoStride}
-                title="Direction-projected ray stride: march at the ellipsoidal voxel-crossing distance along the ray instead of the max-axis pitch. Fixes the face-on z-undersample on anisotropic pyramids (thin structures dropping from MIP). Takes effect on the next scene mount."
-                className="px-1 rounded border border-border/50 hover:bg-accent"
-              >
-                aniso stride: {anisoStrideOn ? "on" : "off"}
-              </button>
-              <button
-                onClick={toggleAnisoLod}
-                title="Anisotropy-aware planner LOD: discount the view-aligned axis in the refinement criterion so face-on views of true-factor pyramids stop fetching a whole finer level early (~8× the bricks). Takes effect at the next replan."
-                className="px-1 rounded border border-border/50 hover:bg-accent"
-              >
-                aniso lod: {anisoLodOn ? "on" : "off"}
-              </button>
-              <button
-                onClick={toggleWorldLod}
-                title="World-metric LOD: measure footprint distances, foveation angles and the aniso discount in world units (per-axis voxel size from the layer affine) instead of raw voxel space — keeps the refinement region view-centered on calibrated anisotropic (µm) layers. Planner: next replan; shader: next uniform push. Identity affines are unaffected either way."
-                className="px-1 rounded border border-border/50 hover:bg-accent"
-              >
-                world lod: {worldLodOn ? "on" : "off"}
-              </button>
-              <button
-                onClick={toggleOccPerSlab}
-                title="Per-slab occupancy: multi-channel pools record one min/max bracket PER atlas slab (and one sidecar plane per slab) instead of the union across channels, so an RGB brick bright in red can still be skipped / EMPTY-detected in green and blue. Single-slab pools unaffected. Default ON; reopen the scene after toggling."
-                className="px-1 rounded border border-border/50 hover:bg-accent"
-              >
-                occ per-slab: {occPerSlabOn ? "on" : "off"}
-              </button>
-              <button
-                onClick={toggleOccHierarchy}
-                title="Hierarchical occupancy (R4): aggregate brick min/max one level up and hop whole coarse cells the aggregate proves invisible or mip-beaten. Default OFF until live-validated. Takes effect on the next scene mount."
-                className="px-1 rounded border border-border/50 hover:bg-accent"
-              >
-                occ hierarchy: {occHierarchyOn ? "on" : "off"}
-              </button>
-              <button
-                onClick={toggleFixedShape}
-                title="Fixed-shape compositor: a layer whose sources are one plain scalar channel (renderKind 'intensity') or three basis-tinted channels over one window ('rgb') compiles a specialised material — no 16-slot loop, no chParamsA/B uniform arrays, no source-kind tap, no blend branch, no LUT tap for rgb, straight-line occupancy skips. Off renders the same layers through the general compositor, which is a pixel-identical reference (the bisect tool). Default ON; needs shader fast path on. Takes effect on the next scene mount."
-                className="px-1 rounded border border-border/50 hover:bg-accent"
-              >
-                fixed-shape: {fixedShapeOn ? "on" : "off"}
-              </button>
-              <button
-                onClick={toggleSettleRefine}
-                title="Settle refinement ladder: after the camera settles, re-render the cached volume 1–2 more times with doubled step budgets — progressive de-graining of saturated (edge-on/diagonal) rays. Takes effect at the next settle."
-                className="px-1 rounded border border-border/50 hover:bg-accent"
-              >
-                settle refine: {settleRefineOn ? "on" : "off"}
-              </button>
-              <button
-                onClick={toggleVolumeTarget}
-                title="Volume compositor (R2): raymarch image volumes into a dedicated render target — full-res settled, half-res while the camera moves or bricks stream — and composite the upsampled result. Takes effect on the next scene mount."
-                className="px-1 rounded border border-border/50 hover:bg-accent"
-              >
-                volume target: {volumeTargetOn ? "on" : "off"}
-              </button>
-              <button
-                onClick={toggleVolumeCache}
-                title="Cached volume compositing (R1): skip re-raymarching when no volume input changed; composite the cached texture. Read per frame — flips live."
-                className="px-1 rounded border border-border/50 hover:bg-accent"
-              >
-                volume cache: {volumeCacheOn ? "on" : "off"}
-              </button>
-              <button
-                onClick={toggleVolumeDepthPrepass}
-                title="Depth-only prepass of opaque meshes into the volume target, preserving mesh-over-volume occlusion. Off = volumes composite over meshes (documented fallback). Read per frame."
-                className="px-1 rounded border border-border/50 hover:bg-accent"
-              >
-                depth prepass: {volumeDepthPrepassOn ? "on" : "off"}
-              </button>
+              {/* The kill switches that used to live here are gone: every
+                  optimisation they gated is now unconditional. See
+                  OCTREE_RENDERER.md "Settled flags" for the list and for what
+                  to revert first if a regression shows up. */}
               {typeof canvasDpr === "number" && (
                 <span className="px-1 rounded border border-border/50 text-muted-foreground">
                   dpr {canvasDpr.toFixed(2)}

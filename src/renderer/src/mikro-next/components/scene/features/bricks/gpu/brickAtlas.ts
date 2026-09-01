@@ -29,23 +29,6 @@ import type { SceneRenderer } from "../../../platform/gpu/sceneRenderer";
  * probe read would misinterpret; they are always mirror-less.
  */
 
-let atlasMirrorEnabled = false;
-try {
-  atlasMirrorEnabled = window.localStorage.getItem("orkestrator.atlasMirror") === "on";
-} catch {
-  /* no storage (worker/tests): lazy default applies */
-}
-
-export const isAtlasMirrorEnabled = (): boolean => atlasMirrorEnabled;
-export const setAtlasMirrorEnabled = (enabled: boolean): void => {
-  atlasMirrorEnabled = enabled;
-  try {
-    window.localStorage.setItem("orkestrator.atlasMirror", enabled ? "on" : "off");
-  } catch {
-    /* session keeps its current state */
-  }
-};
-
 export type BrickAtlas = {
   texture: THREE.Data3DTexture;
   kind: AtlasKind;
@@ -170,7 +153,7 @@ export function createBrickAtlas(opts: {
   // texels — the probe's slab-stride read assumes one channel per texel;
   // probes read these pools through the decoded-chunk cache).
   const backing: BrickArray | null =
-    isAtlasMirrorEnabled() && kind !== "r16f" && kind !== "rgba8"
+    false
       ? kind === "r8"
         ? new Uint8Array(elementCount)
         : new Float32Array(elementCount)

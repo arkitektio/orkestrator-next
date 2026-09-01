@@ -1,9 +1,5 @@
 import * as THREE from "three";
-import {
-  FabriksStoreFragment,
-  KonnektionStoreFragment,
-  SceneLayerFragment,
-} from "@/mikro-next/api/graphql";
+import { SceneLayerFragment } from "@/mikro-next/api/graphql";
 import {
   composePlacementPath,
   type PlacementStepLike,
@@ -74,19 +70,6 @@ export const sceneHasMeshLayer = (
   );
 
 /**
- * Does this scene render any konnektion network at all?
- *
- * Same contract as {@link sceneHasMeshLayer} and same reason: it reads the
- * FRAGMENT, so a page can decide from outside `SceneProvider`.
- */
-export const sceneHasNetworkLayer = (
-  scene: { layers: readonly SceneLayerFragment[] } | null | undefined,
-): boolean =>
-  (scene?.layers ?? []).some(
-    (layer) => layer.__typename === "NetworkLayer" && !!layer.collection,
-  );
-
-/**
  * The collection's axis names in VERTEX COMPONENT order, or null if unstated.
  *
  * fabriks addresses components by position — `cellSize[0]`, `bbox_*_x` — and
@@ -98,15 +81,6 @@ export const sceneHasNetworkLayer = (
 export const collectionAxisOrder = (node: {
   axes?: readonly string[] | null;
 }): string[] | null => (node.axes && node.axes.length > 0 ? [...node.axes] : null);
-
-/** @deprecated Historical name for {@link collectionAxisOrder}; the rule is not
- *  fabriks-specific — konnektion's store declares its axes the same way. */
-export const fabriksAxisOrder = (node: FabriksStoreFragment): string[] | null =>
-  collectionAxisOrder(node);
-
-/** The same, for a konnektion store. Both go through {@link collectionAxisOrder}. */
-export const konnektionAxisOrder = (node: KonnektionStoreFragment): string[] | null =>
-  collectionAxisOrder(node);
 
 /**
  * The collection's spatial axis names in VERTEX-COMPONENT (x, y, z slot)

@@ -11,7 +11,7 @@ import {
   rootLevel,
 } from "./fabriksManifest";
 import { cellExtent, cellGridBox, maskedChildren, mortonChildren, mortonParent } from "./fabriksGrid";
-import { encodeMorton3, decodeMorton3, meshCellKey } from "@/mikro-next/components/scene/platform/parquet/mortonCell";
+import { encodeMorton3, decodeMorton3 } from "@/mikro-next/components/scene/platform/parquet/mortonCell";
 import { buildFabriksCellIndex, maxAxisScale, parseCellRow, type FabriksCellRow } from "./fabriksCatalogs";
 import { groupByRowGroup, planFabriksCells, screenError } from "./fabriksPlanner";
 import { computeSmoothNormals, objectRange, positionStride, indexStride } from "./fabriksDecode";

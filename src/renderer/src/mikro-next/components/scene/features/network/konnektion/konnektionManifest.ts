@@ -29,6 +29,15 @@
  * values ever get.**
  */
 
+import {
+  isRecord,
+  levelPartsOf,
+  levelsCoarsestFirstOf,
+  parseLodFileEntry,
+  parseLodLevels,
+  rootLevelOf,
+} from "../../../platform/lod/lodManifest";
+
 /**
  * The spec version this reader was written against, recorded rather than
  * enforced — the same call `fabriksManifest.ts` makes and for the same reason.
@@ -154,23 +163,9 @@ type WireKey = keyof typeof VOCABULARY;
 
 const ENCODING_KEYS = Object.keys(VOCABULARY) as WireKey[];
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
-
-/** A file entry is a path, or an object carrying one (a bare string is legal). */
-const parseFileEntry = (raw: unknown, where: string): KonnektionFileEntry => {
-  if (typeof raw === "string") return { path: raw, bytes: null, rowGroups: null };
-  if (!isRecord(raw) || typeof raw.path !== "string") {
-    throw new KonnektionFormatError(
-      `${where} is a path, or an object carrying one; got ${JSON.stringify(raw)}.`,
-    );
-  }
-  return {
-    path: raw.path,
-    bytes: typeof raw.bytes === "number" ? raw.bytes : null,
-    rowGroups: typeof raw.rowGroups === "number" ? raw.rowGroups : null,
-  };
-};
+/** The shared file-entry contract, refusing in this format's name. */
+const parseFileEntry = (raw: unknown, where: string): KonnektionFileEntry =>
+  parseLodFileEntry(raw, where, (m) => new KonnektionFormatError(m));
 
 export const parseGrid = (raw: unknown): KonnektionGrid => {
   if (!isRecord(raw)) {
@@ -288,33 +283,8 @@ export const parseAttributes = (raw: unknown): KonnektionAttribute[] => {
   });
 };
 
-const parseLevels = (raw: unknown): Map<number, KonnektionFileEntry[]> => {
-  if (!isRecord(raw)) {
-    throw new KonnektionFormatError(
-      "This manifest's `files` carries no `levels`, which means its geometry can only be found by " +
-        "listing the prefix — and this reader cannot list. Rewrite the collection with a writer that " +
-        "records its parts.",
-    );
-  }
-  const levels = new Map<number, KonnektionFileEntry[]>();
-  for (const [key, value] of Object.entries(raw)) {
-    const level = Number(key);
-    if (!Number.isInteger(level) || level < 0) {
-      throw new KonnektionFormatError(
-        `\`files.levels\` is keyed by level number; got ${JSON.stringify(key)}.`,
-      );
-    }
-    if (!Array.isArray(value) || value.length === 0) {
-      throw new KonnektionFormatError(`\`files.levels[${key}]\` is a non-empty list of parts.`);
-    }
-    levels.set(
-      level,
-      value.map((entry, index) => parseFileEntry(entry, `files.levels[${key}][${index}]`)),
-    );
-  }
-  if (levels.size === 0) throw new KonnektionFormatError("`files.levels` names no levels at all.");
-  return levels;
-};
+const parseLevels = (raw: unknown): Map<number, KonnektionFileEntry[]> =>
+  parseLodLevels(raw, (m) => new KonnektionFormatError(m));
 
 /** Parse `konnektion.json`. Throws `KonnektionFormatError` for anything unreadable. */
 export function parseKonnektionManifest(raw: unknown): KonnektionManifest {
@@ -361,18 +331,12 @@ export const attributeVocabulary = (manifest: KonnektionManifest): string[] => {
 export const hasRadii = (encoding: KonnektionEncoding): boolean => encoding.radii !== "NONE";
 
 /** The geometry parts of one level, or an empty list if the level carries none. */
-export const levelParts = (
-  manifest: KonnektionManifest,
-  level: number,
-): readonly KonnektionFileEntry[] => manifest.levels.get(level) ?? [];
+export const levelParts = (manifest: KonnektionManifest, level: number): readonly KonnektionFileEntry[] =>
+  levelPartsOf(manifest, level);
 
 /** The levels that actually carry geometry, coarsest first. */
 export const levelsCoarsestFirst = (manifest: KonnektionManifest): number[] =>
-  [...manifest.levels.keys()].sort((a, b) => b - a);
-
-/** The levels that actually carry geometry, finest first. */
-export const levelsFinestFirst = (manifest: KonnektionManifest): number[] =>
-  [...manifest.levels.keys()].sort((a, b) => a - b);
+  levelsCoarsestFirstOf(manifest);
 
 /**
  * The coarsest level the planner may choose.
@@ -383,12 +347,5 @@ export const levelsFinestFirst = (manifest: KonnektionManifest): number[] =>
  * is the worst possible reading of a collection that has geometry.
  */
 export function rootLevel(manifest: KonnektionManifest): number {
-  const declared = manifest.grid.levels - 1;
-  if (manifest.levels.has(declared)) return declared;
-  const present = levelsCoarsestFirst(manifest)[0];
-  console.warn(
-    `[konnektion] grid declares ${manifest.grid.levels} levels, so the coarsest should be ${declared}, ` +
-      `but the coarsest level with geometry is ${present}. Using ${present}.`,
-  );
-  return present;
+  return rootLevelOf(manifest, "konnektion");
 }

@@ -31,6 +31,7 @@ import {
   type NetworkGpuBundle,
   type NetworkUniforms,
 } from "./networkMaterial";
+import { createSlabPlanes, updateSlabPlanes } from "../../platform/coords/slabClip";
 
 /**
  * Everything that draws a konnektion collection, and nothing that renders
@@ -233,10 +234,9 @@ export class KonnektionCollectionManager {
    *  swap-the-buffers strategy needs. */
   private generation = 0;
 
-  private readonly clipPlanes = [
-    new THREE.Plane(new THREE.Vector3(0, 0, 1), 0),
-    new THREE.Plane(new THREE.Vector3(0, 0, -1), 0),
-  ];
+  /** Order and pairing come from `platform/coords/slabClip.ts`; this used to
+   *  declare the pair in the opposite order from the mesh manager's. */
+  private readonly clipPlanes = createSlabPlanes();
 
   constructor(options: Options) {
     this.collection = options.collection;
@@ -394,10 +394,8 @@ export class KonnektionCollectionManager {
       this.onInvalidate();
       return;
     }
-    const half = Math.max(slab.thickness, 1e-6) / 2;
-    this.clipPlanes[0].constant = -(slab.z - half);
-    this.clipPlanes[1].constant = slab.z + half;
-    this.group.clippingPlanes = this.clipPlanes;
+    updateSlabPlanes(this.clipPlanes, slab);
+    this.group.clippingPlanes = [...this.clipPlanes];
     this.onInvalidate();
   }
 

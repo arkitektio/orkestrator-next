@@ -59,69 +59,17 @@ import type { AtlasKind } from "../octree/atlasFormat";
 
 // The repo deliberately avoids @webgpu/types (see sceneRenderer.ts) —
 // structural typings for exactly the members this module touches.
-type GpuBuffer = {
-  destroy(): void;
-  mapAsync(mode: number): Promise<void>;
-  getMappedRange(): ArrayBuffer;
-  unmap(): void;
-};
-type GpuBindGroup = { readonly __brand?: "bindGroup" };
-type GpuBindGroupLayout = { readonly __brand?: "bindGroupLayout" };
-type GpuComputePipeline = { readonly __brand?: "computePipeline" };
-type GpuTextureView = { readonly __brand?: "textureView" };
-type GpuComputePass = {
-  setPipeline(pipeline: GpuComputePipeline): void;
-  setBindGroup(index: number, group: GpuBindGroup, dynamicOffsets?: number[]): void;
-  dispatchWorkgroups(x: number, y: number, z: number): void;
-  end(): void;
-};
-type GpuCommandEncoder = {
-  beginComputePass(): GpuComputePass;
-  copyBufferToBuffer(
-    source: GpuBuffer,
-    sourceOffset: number,
-    destination: GpuBuffer,
-    destinationOffset: number,
-    size: number,
-  ): void;
-  clearBuffer(buffer: GpuBuffer, offset: number, size: number): void;
-  copyBufferToTexture(
-    source: { buffer: GpuBuffer; offset: number; bytesPerRow: number; rowsPerImage: number },
-    destination: { texture: unknown; origin: [number, number, number] },
-    copySize: [number, number, number],
-  ): void;
-  finish(): unknown;
-};
-type ComputeDevice = {
-  limits: { maxStorageBufferBindingSize?: number };
-  queue: {
-    submit(commandBuffers: unknown[]): void;
-    writeBuffer(
-      buffer: GpuBuffer,
-      bufferOffset: number,
-      data: ArrayBufferView | ArrayBuffer,
-      dataOffset?: number,
-      size?: number,
-    ): void;
-  };
-  createShaderModule(descriptor: { label?: string; code: string }): unknown;
-  createBindGroupLayout(descriptor: object): GpuBindGroupLayout;
-  createPipelineLayout(descriptor: object): unknown;
-  createComputePipelineAsync(descriptor: object): Promise<GpuComputePipeline>;
-  createBindGroup(descriptor: object): GpuBindGroup;
-  createBuffer(descriptor: { label?: string; size: number; usage: number }): GpuBuffer;
-  createCommandEncoder(): GpuCommandEncoder;
-};
-
-const BufferUsage = {
-  MAP_READ: 0x0001,
-  COPY_SRC: 0x0004,
-  COPY_DST: 0x0008,
-  UNIFORM: 0x0040,
-  STORAGE: 0x0080,
-} as const;
-const SHADER_STAGE_COMPUTE = 0x4;
-const MAP_MODE_READ = 0x1;
+import {
+  BufferUsage,
+  MAP_MODE_READ,
+  SHADER_STAGE_COMPUTE,
+  type ComputeDevice,
+  type GpuBindGroup,
+  type GpuBindGroupLayout,
+  type GpuBuffer,
+  type GpuComputePipeline,
+  type GpuTextureView,
+} from "../../../platform/gpu/webgpuTypes";
 
 /** WebGPU default when the limit is somehow unreadable (spec minimum). */
 const DEFAULT_MAX_STORAGE_BINDING = 128 * 1024 * 1024;
@@ -132,28 +80,10 @@ const DEFAULT_MAX_STORAGE_BINDING = 128 * 1024 * 1024;
 const CHUNK_CACHE_BYTES = 128 * 1024 * 1024;
 
 /**
- * Kill switch (localStorage, default ON): lets a session A/B the GPU repack
+ * Was a kill switch; settled ON (OCTREE_RENDERER.md §6.9): lets a session A/B the GPU repack
  * path against the CPU worker path without a rebuild. Read once per
  * residency manager — toggling takes effect on the next scene mount.
  */
-const GPU_REPACK_STORAGE_KEY = "orkestrator.gpuRepack";
-
-export function isGpuRepackEnabled(): boolean {
-  try {
-    return window.localStorage.getItem(GPU_REPACK_STORAGE_KEY) !== "off";
-  } catch {
-    return true;
-  }
-}
-
-export function setGpuRepackEnabled(enabled: boolean): void {
-  try {
-    window.localStorage.setItem(GPU_REPACK_STORAGE_KEY, enabled ? "on" : "off");
-  } catch {
-    /* storage unavailable: session keeps its current state */
-  }
-}
-
 /**
  * r16f GPU repack (same pattern, default ON): lets uint16 intensity pools —
  * the R3 half-float atlases — take the compute path through the r16 arena
@@ -161,24 +91,6 @@ export function setGpuRepackEnabled(enabled: boolean): void {
  * scalar half-encode per brick). Effective only with `orkestrator.gpuRepack`
  * and `orkestrator.r16Atlas` on. Read once per repacker (scene mount).
  */
-const GPU_REPACK_R16_STORAGE_KEY = "orkestrator.gpuRepackR16";
-
-export function isGpuRepackR16Enabled(): boolean {
-  try {
-    return window.localStorage.getItem(GPU_REPACK_R16_STORAGE_KEY) !== "off";
-  } catch {
-    return true;
-  }
-}
-
-export function setGpuRepackR16Enabled(enabled: boolean): void {
-  try {
-    window.localStorage.setItem(GPU_REPACK_R16_STORAGE_KEY, enabled ? "on" : "off");
-  } catch {
-    /* storage unavailable: session keeps its current state */
-  }
-}
-
 /** Kinds whose output rides the u32 arena + copyBufferToTexture path. */
 type ArenaKind = "r8" | "r16f" | "rgba8";
 const usesArena = (kind: AtlasKind): kind is ArenaKind =>
@@ -264,7 +176,6 @@ class GpuRepackerImpl<Token> implements GpuRepacker<Token> {
   private r8Broken = false;
   private r16Broken = false;
   private rgba8Broken = false;
-  private readonly r16Enabled = isGpuRepackR16Enabled();
   private disposed = false;
 
   private readonly group0Layout: GpuBindGroupLayout;
@@ -410,7 +321,7 @@ class GpuRepackerImpl<Token> implements GpuRepacker<Token> {
           console.warn("[bricks] rgba8 gpu repack pipeline failed to build; using CPU repack", error);
         });
     }
-    if (this.r16Enabled) {
+    {
       // Same group0 layout as r8 (params + minmax + arena) — the kernels
       // differ only in texel packing.
       const moduleR16 = device.createShaderModule({
@@ -509,7 +420,7 @@ class GpuRepackerImpl<Token> implements GpuRepacker<Token> {
       // fidelity) or as raw Uint16Array (orkestrator.raw16) — each has its own
       // kernel, and one brick's chunks are homogeneous (the representation is
       // an array-level decision; a mixed set falls back to the CPU repack).
-      if (!this.r16Enabled || this.r16Broken) return false;
+      if (this.r16Broken) return false;
       return (
         (this.pipelineR16 !== null &&
           chunks.every(

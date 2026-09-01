@@ -20,6 +20,15 @@
  * that decodes to garbage.
  */
 
+import {
+  isRecord,
+  levelPartsOf,
+  levelsCoarsestFirstOf,
+  parseLodFileEntry,
+  parseLodLevels,
+  rootLevelOf,
+} from "../../../platform/lod/lodManifest";
+
 /**
  * The spec version this reader was written against, recorded rather than
  * enforced.
@@ -102,23 +111,9 @@ const VOCABULARY = {
 
 const ENCODING_KEYS = Object.keys(VOCABULARY) as (keyof typeof VOCABULARY)[];
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
-
-/** A file entry is a path, or an object carrying one (a bare string is legal). */
-const parseFileEntry = (raw: unknown, where: string): FabriksFileEntry => {
-  if (typeof raw === "string") return { path: raw, bytes: null, rowGroups: null };
-  if (!isRecord(raw) || typeof raw.path !== "string") {
-    throw new FabriksFormatError(
-      `${where} is a path, or an object carrying one; got ${JSON.stringify(raw)}.`,
-    );
-  }
-  return {
-    path: raw.path,
-    bytes: typeof raw.bytes === "number" ? raw.bytes : null,
-    rowGroups: typeof raw.rowGroups === "number" ? raw.rowGroups : null,
-  };
-};
+/** The shared file-entry contract, refusing in this format's name. */
+const parseFileEntry = (raw: unknown, where: string): FabriksFileEntry =>
+  parseLodFileEntry(raw, where, (m) => new FabriksFormatError(m));
 
 const parseGrid = (raw: unknown): FabriksGrid => {
   if (!isRecord(raw)) {
@@ -184,31 +179,8 @@ const parseEncoding = (raw: unknown): FabriksEncoding => {
   return encoding;
 };
 
-const parseLevels = (raw: unknown): Map<number, FabriksFileEntry[]> => {
-  if (!isRecord(raw)) {
-    throw new FabriksFormatError(
-      "This manifest's `files` carries no `levels`, which means its geometry can only be found by " +
-        "listing the prefix — and this reader cannot list. Rewrite the collection with a writer that " +
-        "records its parts.",
-    );
-  }
-  const levels = new Map<number, FabriksFileEntry[]>();
-  for (const [key, value] of Object.entries(raw)) {
-    const level = Number(key);
-    if (!Number.isInteger(level) || level < 0) {
-      throw new FabriksFormatError(`\`files.levels\` is keyed by level number; got ${JSON.stringify(key)}.`);
-    }
-    if (!Array.isArray(value) || value.length === 0) {
-      throw new FabriksFormatError(`\`files.levels[${key}]\` is a non-empty list of parts.`);
-    }
-    levels.set(
-      level,
-      value.map((entry, index) => parseFileEntry(entry, `files.levels[${key}][${index}]`)),
-    );
-  }
-  if (levels.size === 0) throw new FabriksFormatError("`files.levels` names no levels at all.");
-  return levels;
-};
+const parseLevels = (raw: unknown): Map<number, FabriksFileEntry[]> =>
+  parseLodLevels(raw, (m) => new FabriksFormatError(m));
 
 /** Parse `fabriks.json`. Throws `FabriksFormatError` for anything unreadable. */
 export function parseFabriksManifest(raw: unknown): FabriksManifest {
@@ -236,11 +208,11 @@ export function parseFabriksManifest(raw: unknown): FabriksManifest {
 
 /** The geometry parts of one level, or an empty list if the level carries none. */
 export const levelParts = (manifest: FabriksManifest, level: number): readonly FabriksFileEntry[] =>
-  manifest.levels.get(level) ?? [];
+  levelPartsOf(manifest, level);
 
 /** The levels that actually carry geometry, coarsest first. */
 export const levelsCoarsestFirst = (manifest: FabriksManifest): number[] =>
-  [...manifest.levels.keys()].sort((a, b) => b - a);
+  levelsCoarsestFirstOf(manifest);
 
 /**
  * The level the planner descends FROM.
@@ -252,12 +224,5 @@ export const levelsCoarsestFirst = (manifest: FabriksManifest): number[] =>
  * of a collection that has geometry.
  */
 export function rootLevel(manifest: FabriksManifest): number {
-  const declared = manifest.grid.levels - 1;
-  if (manifest.levels.has(declared)) return declared;
-  const present = levelsCoarsestFirst(manifest)[0];
-  console.warn(
-    `[fabriks] grid declares ${manifest.grid.levels} levels, so roots should sit at level ${declared}, ` +
-      `but the coarsest level with geometry is ${present}. Descending from ${present}.`,
-  );
-  return present;
+  return rootLevelOf(manifest, "fabriks");
 }

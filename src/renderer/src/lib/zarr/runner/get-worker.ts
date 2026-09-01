@@ -67,16 +67,6 @@ import {
 import { DEFAULT_SHARD_INDEX_CACHE } from "./shardIndexCache"
 
 /**
- * Default URL for the codec worker. Uses `import.meta.url` to resolve
- * relative to this module.
- *
- * @deprecated Use {@link createDefaultWorker} instead — it produces a
- *   `new Worker(new URL(..., import.meta.url))` expression that bundlers
- *   like Vite recognise as a worker entry point and bundle accordingly.
- */
-export const DEFAULT_WORKER_URL = new URL("./codec-worker.js", import.meta.url)
-
-/**
  * Create a Worker using the default codec-worker script bundled with this
  * package.
  *

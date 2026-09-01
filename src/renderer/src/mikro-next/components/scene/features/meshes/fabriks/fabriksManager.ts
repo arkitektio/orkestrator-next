@@ -30,6 +30,7 @@ import {
 } from "./fabriksDecodeDispatcher";
 import { cellGridBox } from "./fabriksGrid";
 import { groupByRowGroup, planFabriksCells, type FabriksPlanInput } from "./fabriksPlanner";
+import { createSlabPlanes, updateSlabPlanes } from "../../../platform/coords/slabClip";
 
 /**
  * Imperative orchestration of one fabriks collection: plan → fetch → decode →
@@ -233,11 +234,9 @@ export class FabriksCollectionManager {
   private appliedColormap: FabriksInstanceColormap | null = DEFAULT_INSTANCE_COLORMAP;
   /** The colour LUT currently on the GPU, so a rebuild frees the old one. */
   private appliedLut: THREE.Texture | null = null;
-  /** WORLD-space clip planes for the 2D slab (constants mutated on z-scrub). */
-  private readonly clipPlanes = [
-    new THREE.Plane(new THREE.Vector3(0, 0, -1), 0), // keeps z ≤ slab top
-    new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), //  keeps z ≥ slab bottom
-  ];
+  /** WORLD-space clip planes for the 2D slab (constants mutated on z-scrub).
+   *  Order and pairing come from `platform/coords/slabClip.ts`. */
+  private readonly clipPlanes = createSlabPlanes();
   private slab: { z: number; thickness: number } | null = null;
   private selection: FabriksSelection | null = null;
   /** The hull's persistent scene objects — created once, rewritten per
@@ -685,11 +684,7 @@ export class FabriksCollectionManager {
   setSlabClip(slab: { z: number; thickness: number } | null): void {
     const wasClipping = this.slab !== null;
     this.slab = slab ? { ...slab } : null;
-    if (slab) {
-      const half = Math.max(slab.thickness, 1e-6) / 2;
-      this.clipPlanes[0].constant = slab.z + half;
-      this.clipPlanes[1].constant = -(slab.z - half);
-    }
+    if (slab) updateSlabPlanes(this.clipPlanes, slab);
     const clipping = slab !== null;
     if (clipping !== wasClipping) {
       // The plane-count change flows through the ClippingGroup's context and

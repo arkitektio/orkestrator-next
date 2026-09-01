@@ -70,11 +70,6 @@ export function setVolumeBudgetOverrideMB(mb: number | null): void {
   volumeBudgetOverrideMemo = undefined; // re-read (and re-clamp) on next get
 }
 
-/** Test seam: drop the memo so a suite can vary the stored value. */
-export function resetVolumeBudgetOverrideForTests(): void {
-  volumeBudgetOverrideMemo = undefined;
-}
-
 /**
  * Shared parse/clamp for the megabyte-valued overrides. Exported so
  * `poolBudget.ts`'s decode-cache override cannot drift from this one.

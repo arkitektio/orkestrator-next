@@ -187,9 +187,9 @@ const CinematicSection = () => {
 
           {/* Post-processing. Applied to the VOLUME TARGET only, so it never
               touches the grid, axis, ROI outlines, track lines or handles —
-              see platform/gpu/volumePost.ts. 3D only, and it rides the
-              `orkestrator.volumeTarget` kill switch: with the compositor off
-              there is no target and therefore no post. */}
+              see platform/gpu/volumePost.ts. 3D only. It used to ride the
+              `orkestrator.volumeTarget` kill switch (no target, no post); the
+              compositor is now unconditional — OCTREE_RENDERER.md §6.9. */}
           <div className="mt-2 border-t pt-1">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-medium text-muted-foreground">

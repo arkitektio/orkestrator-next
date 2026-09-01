@@ -1,6 +1,5 @@
 import { useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useRef, useState } from "react";
-import * as THREE from "three";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useDatalayerEndpoint, useMikro } from "@/app/Arkitekt";
 
@@ -10,12 +9,11 @@ import { useSceneStore, type NetworkLayerSessionState } from "../../platform/sto
 import { useViewStoreApi } from "../../platform/stores/viewStore";
 import { useViewerStoreApi } from "../../platform/stores/viewerStore";
 import {
-  resolveCollectionMatrix,
   type NetworkCollectionRef,
   type NetworkLayerVariant,
 } from "../../platform/model/collectionPlacement";
 import { useAttributeServiceOrNull } from "@/mikro-next/lib/attributes/AttributeServiceProvider";
-import { loadSparseSource } from "@/mikro-next/lib/sparse/sparseSource";
+import { makeSparseReader } from "@/mikro-next/lib/sparse/sparseSource";
 import {
   GetTableDatasetDocument,
   type GetTableDatasetQuery,
@@ -29,14 +27,28 @@ import {
   buildNetworkStyling,
   composeNetworkAppearance,
   identityNetworkStyling,
-  networkAppearanceKeyOf,
-  networkDataKeyOf,
   type NetworkPickerColorBy,
   type NetworkPickerFilterBy,
   type NodeTableFetcher,
 } from "./networkStyling";
 import type { NetworkValueAppearance } from "./konnektionManager";
 import { useNetworkStoreApi } from "./store/networkSlice";
+import { createLeadingThrottle } from "../../platform/perf/leadingThrottle";
+import { useActivePickers } from "../../platform/attributes/useActivePickers";
+import { usePickerResolution } from "../../platform/attributes/pickerResolution";
+import { useCollectionDriver } from "../../platform/collections/useCollectionDriver";
+import {
+  collectionSlabThickness,
+  useCollectionPlacement,
+} from "../../platform/collections/useCollectionPlacement";
+
+
+/**
+ * How long the streaming stats bump is held back. Matches the network layer's
+ * (and vice versa): both publish a debug-only version counter from the same
+ * kind of load loop, and a shared number is one fewer thing to wonder about.
+ */
+const STATS_THROTTLE_MS = 120;
 
 /**
  * NetworkLayer renderer: a konnektion collection — a self-describing prefix of
@@ -100,44 +112,20 @@ const NetworkCollectionGroup = ({
 
   // Load-cadence stats → debug-only `networkVersion`, throttled here so the
   // manager stays cadence-blind and the store sees at most ~8 writes/s (P17).
-  const onStatsChanged = useMemo(() => {
-    let last = 0;
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    const bump = () => {
-      last = performance.now();
-      networkApi.getState().bumpNetworkVersion();
-    };
-    return () => {
-      const elapsed = performance.now() - last;
-      if (elapsed >= 120) {
-        if (timer) {
-          clearTimeout(timer);
-          timer = null;
-        }
-        bump();
-      } else if (!timer) {
-        timer = setTimeout(() => {
-          timer = null;
-          bump();
-        }, 120 - elapsed);
-      }
-    };
-  }, [networkApi]);
+  const statsThrottle = useMemo(
+    () =>
+      createLeadingThrottle({
+        intervalMs: STATS_THROTTLE_MS,
+        run: () => networkApi.getState().bumpNetworkVersion(),
+      }),
+    [networkApi],
+  );
+  // The hand-rolled version this replaced never cancelled: a stats change
+  // within one window of unmount fired a timer into a torn-down scoped store.
+  useEffect(() => () => statsThrottle.cancel(), [statsThrottle]);
+  const onStatsChanged = statsThrottle.trigger;
 
-  // VALUE-stable: the memo's inputs churn identity on unrelated store writes,
-  // so a recompute landing on the same placement must return the SAME Matrix4 —
-  // downstream effects key on it.
-  const matrixRef = useRef<THREE.Matrix4 | null>(null);
-  const matrix = useMemo(() => {
-    const next = resolveCollectionMatrix(layer, collection, transformContext);
-    if (matrixRef.current?.equals(next)) return matrixRef.current;
-    matrixRef.current = next;
-    return next;
-    // `layer.pathToWorld` is ALL resolveCollectionMatrix reads from the layer.
-    // Depending on the whole `layer` would re-compose the transform chain on
-    // every patchSceneLayer tick — an opacity drag included.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [layer.pathToWorld, collection, transformContext]);
+  const { matrix } = useCollectionPlacement(layer, collection, transformContext);
 
   // Opening costs NO S3 round trip: the server mirrors konnektion.json onto the
   // store node. Collections are immutable per version, so the open survives as
@@ -178,10 +166,6 @@ const NetworkCollectionGroup = ({
     networkApi.getState().registerNetworkSystem(layer.id, manager);
     return () => networkApi.getState().registerNetworkSystem(layer.id, null);
   }, [manager, networkApi, layer.id]);
-
-  useEffect(() => {
-    manager?.setVoxelToWorld(matrix);
-  }, [manager, matrix]);
 
   useEffect(() => {
     manager?.setMaterialConfig({
@@ -258,28 +242,17 @@ const NetworkCollectionGroup = ({
     };
   }, [client]);
 
-  const activeColorBy =
-    layer.activeColorBy != null ? ((layer.colorBys?.[layer.activeColorBy] as NetworkPickerColorBy | undefined) ?? null) : null;
-  const activeRules = useMemo(
-    () =>
-      (layer.activeFilterBys ?? [])
-        .map((index) => layer.filterBys?.[index] as NetworkPickerFilterBy | undefined)
-        .filter((rule): rule is NetworkPickerFilterBy => Boolean(rule)),
-    [layer.activeFilterBys, layer.filterBys],
-  );
+  // CONTENT keys, and the two-key split: the DATA key re-runs the whole build
+  // and re-packs every resident cell, the APPEARANCE key is two uniform writes
+  // and a palette refill. `entryKeys.ts` decides what goes where — including
+  // why the colormap's qualitative CLASS is data while the colormap is not.
+  const {
+    colorBy: activeColorBy,
+    rules: activeRules,
+    dataKey,
+    appearanceKey,
+  } = useActivePickers<NetworkPickerColorBy, NetworkPickerFilterBy>(layer);
   const systemId = collection.coordinateSystem?.id ?? null;
-  // CONTENT keys, for the reason the mesh layer's `lutKey` gives: the fold
-  // after a picker mutation writes arrays back into an immer draft, and
-  // identity is structural sharing's call, not ours. TWO of them, because the
-  // costs differ by orders of magnitude: the DATA key re-runs the whole
-  // build and re-packs every resident cell, the APPEARANCE key is two
-  // uniform writes and a palette refill (`networkStyling.ts` says what goes
-  // where and why the colormap's qualitative CLASS is data).
-  const dataKey = useMemo(
-    () => networkDataKeyOf(activeColorBy, activeRules),
-    [activeColorBy, activeRules],
-  );
-  const appearanceKey = useMemo(() => networkAppearanceKeyOf(activeColorBy), [activeColorBy]);
 
   /** What the last completed build derived, so an appearance edit can be
    *  recomposed without it. `dataKey` stamps which build it belongs to — the
@@ -290,72 +263,71 @@ const NetworkCollectionGroup = ({
     qualitative: boolean;
   } | null>(null);
 
-  useEffect(() => {
-    if (!manager || !opened) return;
-    if (!activeColorBy && activeRules.length === 0) {
-      const identity = identityNetworkStyling();
-      resolvedStylingRef.current = {
-        dataKey,
-        appearance: identity.appearance,
-        qualitative: false,
-      };
-      manager.setStyling(identity.styling);
-      manager.setValueAppearance(identity.appearance);
-      return;
-    }
-    let cancelled = false;
-    void (async () => {
-      const needsObjects =
-        (activeColorBy && activeColorBy.kind !== "GRAPH") ||
-        activeRules.some((rule) => rule.kind !== "GRAPH");
-      const [objects, plans] = await Promise.all([
-        needsObjects ? manager.listObjects() : Promise.resolve(null),
-        needsObjects && attributeService && systemId
-          ? attributeService.plansFor(systemId)
-          : Promise.resolve(null),
-      ]);
-      if (cancelled) return;
-      const readSparse = datalayer
-        ? async (datasetId: string, at: readonly { axis: string; value: number }[]) => {
-            const source = await loadSparseSource(client, datalayer, datasetId);
-            return source.read(source.source, at) as Promise<{ values: Map<number, unknown> }>;
-          }
-        : null;
-      const resolved = await buildNetworkStyling({
-        colorBy: activeColorBy,
-        rules: activeRules,
-        vocabulary: attributeVocabulary(opened.manifest),
-        objects,
-        plans,
-        engine: attributeService?.engine ?? null,
-        readSparse,
-        collectionId: collection.id,
-        fetchTable,
-      });
-      if (cancelled) return;
-      if (resolved.skipped.length > 0) {
-        console.warn("[konnektion] picker entries that do not render yet:", resolved.skipped);
-      }
-      resolvedStylingRef.current = {
-        dataKey,
-        appearance: resolved.appearance,
-        qualitative: resolved.qualitative,
-      };
-      manager.setStyling(resolved.styling);
-      manager.setValueAppearance(resolved.appearance);
-      invalidate();
-    })().catch((error: unknown) => {
-      if (cancelled) return;
-      console.warn("[konnektion] could not resolve the picker:", error);
-    });
-    return () => {
-      cancelled = true;
+  const resetStyling = useCallback(() => {
+    if (!manager) return;
+    const identity = identityNetworkStyling();
+    resolvedStylingRef.current = {
+      dataKey,
+      appearance: identity.appearance,
+      qualitative: false,
     };
-    // `activeColorBy`/`activeRules` are read inside; `dataKey` decides
-    // whether it re-runs — see the note on the keys. An appearance-only edit
-    // must NOT land here: that is the whole point of the split.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [manager, opened, dataKey, attributeService, systemId, datalayer, client, invalidate]);
+    manager.setStyling(identity.styling);
+    manager.setValueAppearance(identity.appearance);
+  }, [manager, dataKey]);
+
+  /**
+   * The DATA half, through the shared lifecycle
+   * (`platform/attributes/pickerResolution.ts`). No `dispose`: this build
+   * produces per-node scatter, not a texture, so a superseded one owns
+   * nothing to free.
+   */
+  usePickerResolution<Awaited<ReturnType<typeof buildNetworkStyling>>>(
+    manager && opened && (activeColorBy || activeRules.length > 0) ? dataKey : null,
+    {
+      build: async () => {
+        // A GRAPH-kind entry is answered from the manifest's own attribute
+        // vocabulary, so it needs neither the object catalog nor a plan.
+        const needsObjects =
+          (activeColorBy && activeColorBy.kind !== "GRAPH") ||
+          activeRules.some((rule) => rule.kind !== "GRAPH");
+        const [objects, plans] = await Promise.all([
+          needsObjects ? manager!.listObjects() : Promise.resolve(null),
+          needsObjects && attributeService && systemId
+            ? attributeService.plansFor(systemId)
+            : Promise.resolve(null),
+        ]);
+        return buildNetworkStyling({
+          colorBy: activeColorBy,
+          rules: activeRules,
+          vocabulary: attributeVocabulary(opened!.manifest),
+          objects,
+          plans,
+          engine: attributeService?.engine ?? null,
+          readSparse: makeSparseReader(client, datalayer),
+          collectionId: collection.id,
+          fetchTable,
+        });
+      },
+      apply: (resolved) => {
+        if (resolved.skipped.length > 0) {
+          console.warn("[konnektion] picker entries that do not render yet:", resolved.skipped);
+        }
+        resolvedStylingRef.current = {
+          dataKey,
+          appearance: resolved.appearance,
+          qualitative: resolved.qualitative,
+        };
+        manager!.setStyling(resolved.styling);
+        manager!.setValueAppearance(resolved.appearance);
+        invalidate();
+      },
+      reset: resetStyling,
+      // Deliberately keeps the last styling on a failed read rather than
+      // repainting the whole graph grey for something the next edit retries.
+      resetOnError: false,
+      onError: (error) => console.warn("[konnektion] could not resolve the picker:", error),
+    },
+  );
 
   // The appearance half: colormap and clim edits recompose over the LAST
   // COMPLETED build — two uniform writes and a palette refill, no rebuild, no
@@ -374,52 +346,6 @@ const NetworkCollectionGroup = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [manager, appearanceKey, dataKey, invalidate]);
 
-  // Planning cadence: once the cell index is in, plan on mount and on every
-  // camera SETTLE — never per camera tick.
-  useEffect(() => {
-    if (!manager) return;
-    let cancelled = false;
-
-    const plan = () => {
-      if (cancelled) return;
-      const { viewProjectionMatrix, viewportSize, cameraPose } = viewApi.getState();
-      if (!viewProjectionMatrix) return;
-
-      // WORLD space throughout: the cell index was transformed once at load, so
-      // an anisotropic voxel grid cannot skew the error test.
-      const frustum = new THREE.Frustum().setFromProjectionMatrix(viewProjectionMatrix);
-      let cameraPosition: [number, number, number] | null = null;
-      let focalPixels = 0;
-      let errorBudget: number | undefined;
-      if (cameraPose?.isPerspective && cameraPose.fovY > 0) {
-        cameraPosition = [...cameraPose.position] as [number, number, number];
-        // An object of world size s at distance d covers s·focalPixels/d px.
-        focalPixels = (0.5 * viewportSize.height) / Math.tan(0.5 * cameraPose.fovY);
-      } else {
-        // Ortho (2D) has no focal length, so the planner's camera-free branch
-        // takes over. Without this an ortho plan picks level 0 unconditionally.
-        errorBudget =
-          manager.getPlanConfig().pixelBudget * viewerApi.getState().worldUnitsPerPixel;
-      }
-      void manager.updatePlan({ frustum, cameraPosition, focalPixels, errorBudget });
-    };
-
-    manager
-      .ensureIndex()
-      .then(plan)
-      .catch((error) =>
-        console.error("[konnektion] failed to load the cell catalog:", error),
-      );
-
-    const unsubscribe = viewApi.subscribe((state, prev) => {
-      if (prev.cameraMoving && !state.cameraMoving) plan();
-    });
-    return () => {
-      cancelled = true;
-      unsubscribe();
-    };
-  }, [manager, viewApi, viewerApi]);
-
   // 2D slab: clip the collection to one z-step around the displayed slice.
   // Thickness comes from the finest image layer's z-step; a scene without one
   // falls back to one collection voxel (the placement matrix's z basis length).
@@ -428,32 +354,30 @@ const NetworkCollectionGroup = ({
   // LOD/visibility write, but the step it yields is a number, so Object.is
   // equality suppresses those re-renders.
   const slabStep = useSceneStore((s) => sceneZExtent(s.layers)?.step);
-  const slabThickness = useMemo(() => {
-    const base =
-      slabStep && Number.isFinite(slabStep)
-        ? slabStep
-        : Math.max(new THREE.Vector3().setFromMatrixColumn(matrix, 2).length(), 1e-3);
-    return base * (layer.slabScale ?? 1);
-  }, [slabStep, matrix, layer.slabScale]);
+  const slabThickness = useMemo(
+    () => collectionSlabThickness(slabStep, matrix, layer.slabScale),
+    [slabStep, matrix, layer.slabScale],
+  );
 
-  // z-scrub via a VANILLA subscription: setSlabClip mutates plane constants
-  // only, so a scrub tick must not re-render this group to reach the manager.
-  useEffect(() => {
-    if (!manager) return;
-    const apply = () => {
-      manager.setSlabClip(
-        displayMode === "3D"
-          ? null
-          : { z: viewerApi.getState().currentZ, thickness: slabThickness },
-      );
-      invalidate();
-    };
-    apply();
-    if (displayMode === "3D") return; // 3D ignores z; nothing to track
-    return viewerApi.subscribe((state, prev) => {
-      if (state.currentZ !== prev.currentZ) apply();
-    });
-  }, [manager, displayMode, slabThickness, viewerApi, invalidate]);
+  /**
+   * Placement, the plan-on-settle cadence and the z-scrub clip, all on the
+   * render plane (`platform/collections/collectionDriver.ts`). The component
+   * keeps only what is konnektion's: the manager it built, its material and
+   * plan config, and its styling.
+   *
+   * The return value is unused here on purpose: a `detail` change writes the
+   * plan config but does NOT force a replan, so it takes effect at the next
+   * camera settle. The mesh layer behaves the same way; changing it would be
+   * a behaviour change, not a refactor.
+   */
+  useCollectionDriver(
+    manager,
+    { viewApi, viewerApi, invalidate, logTag: "[konnektion]" },
+    {
+      matrix,
+      slab: displayMode === "3D" ? null : { thickness: slabThickness },
+    },
+  );
 
   if (!manager) return null;
   // No pointer handlers attached at all: picking is not wired for this layer

@@ -123,7 +123,3 @@ export const renderLayerCard = (
   const Card = entry.Card as ComponentType<LayerCardProps<typeof layer>>;
   return <Card layer={layer} {...props} />;
 };
-
-/** Rank of a typename, for the panel's block ordering. */
-export const cardRankOf = (typename: SceneLayerFragment["__typename"]): number =>
-  LAYER_CARDS[typename].rank;

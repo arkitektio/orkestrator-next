@@ -14,8 +14,10 @@ import { loadSparseSource } from "@/mikro-next/lib/sparse/sparseSource";
 import { sliceDomain, sliceHistogram } from "@/mikro-next/lib/sparse/sliceStats";
 import {
   DISTINCT_LIMIT,
+  describeColumnStatsError,
   readColumnDistinct,
   readColumnDomain,
+  type ColumnStatsFailure,
   readColumnHistogram,
   type ColumnDomain,
 } from "@/mikro-next/lib/attributes/columnStats";
@@ -538,7 +540,7 @@ export const ColumnEntrySettings = ({
   const [distinct, setDistinct] = useState<{ values: string[]; truncated: boolean } | null>(
     null,
   );
-  const [statsError, setStatsError] = useState<string | null>(null);
+  const [statsError, setStatsError] = useState<ColumnStatsFailure | null>(null);
 
   const table = tableResult.data?.tableDataset;
   const column = table?.columns.find((candidate) => candidate.name === entry.column);
@@ -577,7 +579,11 @@ export const ColumnEntrySettings = ({
           });
     read.catch((error: unknown) => {
       if (cancelled) return;
-      setStatsError(error instanceof Error ? error.message : String(error));
+      const failure = describeColumnStatsError(error, table.store);
+      // The detail is a DuckDB SQL error carrying the statement and the s3://
+      // URL — useful when debugging, unreadable in a caption.
+      console.warn("[layer] could not read the column's values:", failure.detail);
+      setStatsError(failure);
     });
     return () => {
       cancelled = true;
@@ -805,8 +811,9 @@ export const ColumnEntrySettings = ({
         </div>
       )}
       {statsError && (
-        <div className="text-[10px] text-amber-300/80">
-          Could not read the column’s values: {statsError}
+        <div className="text-[10px] text-amber-300/80" title={statsError.detail}>
+          Could not read the column’s values: {statsError.summary}. The full error is in
+          the console.
         </div>
       )}
 

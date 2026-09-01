@@ -428,32 +428,16 @@ export function resolveDpr(
 }
 
 /**
- * Kill switch (localStorage, default ON) for the interaction DPR ladder,
+ * Was a kill switch; settled ON (OCTREE_RENDERER.md §6.9) for the interaction DPR ladder,
  * mirroring `orkestrator.gpuRepack`. Read per frame by `QualityAdapter`, so
  * toggling in the DebugPanel takes effect on the next gesture — no remount
  * needed for an A/B.
  */
-const ADAPTIVE_DPR_STORAGE_KEY = "orkestrator.adaptiveDpr";
 
-export function isAdaptiveDprEnabled(): boolean {
-  try {
-    return window.localStorage.getItem(ADAPTIVE_DPR_STORAGE_KEY) !== "off";
-  } catch {
-    return true;
-  }
-}
 
-export function setAdaptiveDprEnabled(enabled: boolean): void {
-  try {
-    window.localStorage.setItem(ADAPTIVE_DPR_STORAGE_KEY, enabled ? "on" : "off");
-  } catch {
-    /* storage unavailable: session keeps its current state */
-  }
-}
 
 /**
- * Kill switch (localStorage, default ON, same live-read pattern as
- * `adaptiveDpr`) for the SETTLE REFINEMENT LADDER: after the camera settles
+ * Was a kill switch; settled ON (OCTREE_RENDERER.md §6.9) for the SETTLE REFINEMENT LADDER: after the camera settles
  * and streaming drains, the volume compositor drives the governor's
  * `settleRefineStage` 0 → 1 → 2, each stage doubling the settled `uMaxSteps`
  * budget of the image raymarcher and re-rendering the cached target once —
@@ -461,23 +445,8 @@ export function setAdaptiveDprEnabled(enabled: boolean): void {
  * Read per advance by the compositor, so toggling takes effect at the next
  * settle with no remount.
  */
-const SETTLE_REFINE_STORAGE_KEY = "orkestrator.settleRefine";
 
-export function isSettleRefineEnabled(): boolean {
-  try {
-    return window.localStorage.getItem(SETTLE_REFINE_STORAGE_KEY) !== "off";
-  } catch {
-    return true;
-  }
-}
 
-export function setSettleRefineEnabled(enabled: boolean): void {
-  try {
-    window.localStorage.setItem(SETTLE_REFINE_STORAGE_KEY, enabled ? "on" : "off");
-  } catch {
-    /* storage unavailable: session keeps its current state */
-  }
-}
 
 /** Frame delta above this counts toward demotion (≈ can't hold ~40 fps). */
 const DEMOTE_FRAME_MS = 24;

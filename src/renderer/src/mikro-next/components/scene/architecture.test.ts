@@ -36,7 +36,9 @@ const KNOWN_SIDEWAYS: Record<string, number> = {
   // The debug panel reaches into brick and mesh internals to report on them.
   // Removed by shell/debugRegistry.ts, where each feature contributes its own
   // section instead.
-  "features/debug->features/bricks": 8,
+  // Was 8. Settling the kill switches removed six of them: the panel no
+  // longer imports brick flag modules just to toggle them.
+  "features/debug->features/bricks": 2,
   "features/debug->features/meshes": 3,
   "features/debug->features/annotations": 1,
   // BrickVolumeLayer and useBrickPlaneProbe run annotation drawing inline,
@@ -64,7 +66,7 @@ const KNOWN_SIDEWAYS: Record<string, number> = {
   // into the design session, and the Meshes panel's "edit in design" entry.
   // Removed by giving the enhancer registry a per-mode verdict sink and
   // moving the entry onto a design-owned panel. See ARCHITECTURE.md.
-  "features/meshDesign->features/annotations": 26,
+  "features/meshDesign->features/annotations": 25,
   "features/meshDesign->features/meshes": 7,
   "features/annotations->features/meshDesign": 4,
   "features/meshes->features/meshDesign": 2,

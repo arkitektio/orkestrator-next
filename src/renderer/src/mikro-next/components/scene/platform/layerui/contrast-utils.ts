@@ -14,18 +14,6 @@ export function getLayerDtypeRange(layer: LayerState): [number, number] {
   }
 }
 
-export function normalizedToAbsolute(value: number, rangeMin: number, rangeMax: number): number {
-  const span = rangeMax - rangeMin
-  if (span <= 0) return rangeMin
-  return rangeMin + value * span
-}
-
-export function absoluteToNormalized(value: number, rangeMin: number, rangeMax: number): number {
-  const span = rangeMax - rangeMin
-  if (span <= 0) return 0
-  return clamp01((value - rangeMin) / span)
-}
-
 export function formatContrastValue(value: number): string {
   const absValue = Math.abs(value)
 
@@ -44,14 +32,3 @@ export function formatContrastValue(value: number): string {
   return new Intl.NumberFormat('en-US', { maximumFractionDigits: 6 }).format(value)
 }
 
-export function toPercentString(value: number, rangeMin: number, rangeMax: number): string {
-  return `${(absoluteToNormalized(value, rangeMin, rangeMax) * 100).toFixed(2)}%`
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max)
-}
-
-function clamp01(value: number): number {
-  return clamp(value, 0, 1)
-}

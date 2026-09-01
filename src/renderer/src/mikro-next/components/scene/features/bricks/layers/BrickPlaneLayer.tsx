@@ -20,7 +20,6 @@ import {
 } from "../gpu/intensityNodeMaterials";
 import { buildRgbUniformData } from "../gpu/rgbUniforms";
 import { buildIntensityUniformData, buildIntensityWindow } from "../gpu/intensityUniforms";
-import { isFixedShapeFastPathEnabled } from "../gpu/shaderFlags";
 import { buildAffineMatrix } from "../../../platform/coords/worldTransform";
 import { useViewerStore } from "../../../platform/stores/viewerStore";
 import { perfMonitor } from "../../../platform/perf/perfMonitor";
@@ -91,7 +90,7 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
   // Read ONCE per mount, like every other build-time shader flag: a material is
   // specialised when it is compiled, so a mid-session toggle takes effect on the
   // next scene mount rather than leaving a half-built material bound.
-  const fastPathEnabled = useMemo(() => isFixedShapeFastPathEnabled(), []);
+  const fastPathEnabled = true;
   // The layer's own `renderKind` is EARNED from its sources (layerModel.ts), so
   // this demotes itself the moment an edit gives the layer something the
   // specialised shader cannot express — and `variantKey` turns that into a

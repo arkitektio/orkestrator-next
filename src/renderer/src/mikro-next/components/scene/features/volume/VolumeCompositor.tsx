@@ -24,7 +24,6 @@ import {
 } from "../../platform/visibility/passVisibility";
 import {
   MAX_SETTLE_REFINE_STAGES,
-  isSettleRefineEnabled,
   qualityGovernor,
   resolveDpr,
 } from "../../platform/quality/qualityGovernor";
@@ -38,10 +37,6 @@ import {
   resolveVolumeTargetSize,
   type VolumeFrameKey,
 } from "../../platform/gpu/volumeCompositor";
-import {
-  isVolumeCacheEnabled,
-  isVolumeDepthPrepassEnabled,
-} from "../../platform/gpu/volumeTargetFlags";
 import { useViewStoreApi } from "../../platform/stores/viewStore";
 
 import { useBrickStoreApi } from "../bricks/store/brickSlice";
@@ -240,8 +235,8 @@ export const VolumeCompositor = () => {
   useEffect(() => {
     viewerStoreApi.getState().registerVolumeCompositor(() => ({
       enabled: true,
-      cacheEnabled: isVolumeCacheEnabled(),
-      depthPrepass: isVolumeDepthPrepassEnabled(),
+      cacheEnabled: true,
+      depthPrepass: true,
       broken: brokenRef.current,
       lastError: lastErrorRef.current,
       targetWidth: target.width,
@@ -279,7 +274,6 @@ export const VolumeCompositor = () => {
     clearRefineTimer();
     refineTimerRef.current = setTimeout(() => {
       refineTimerRef.current = null;
-      if (!isSettleRefineEnabled() || !isVolumeCacheEnabled()) return;
       const view = viewStoreApi.getState();
       if (view.cameraMoving || view.interacting || qualityGovernor.isStreaming()) return;
       // The emit runs the whole chain: useStepScaleUniform recomputes the
@@ -394,7 +388,7 @@ export const VolumeCompositor = () => {
       targetHeight: nextSize.height,
     };
     const decision = decideVolumeFrame({
-      cacheEnabled: isVolumeCacheEnabled(),
+      cacheEnabled: true,
       hasTargetContent: hasContentRef.current,
       streaming: qualityGovernor.isStreaming(),
       key,
@@ -427,7 +421,7 @@ export const VolumeCompositor = () => {
         sceneWithBackground.background = null;
         gl.setClearColor(0x000000, 0);
         gl.setRenderTarget(target);
-        if (isVolumeDepthPrepassEnabled() && sets.occluders.length > 0) {
+        if (sets.occluders.length > 0) {
           // Depth-only prepass: occluders alone with their OWN materials and
           // colorWrite off (never scene.overrideMaterial — a plain override
           // corrupts BatchedMesh multi-draw ranges), then volumes on top of
@@ -468,8 +462,8 @@ export const VolumeCompositor = () => {
       // exactly as camera motion does, and its falling edge advances it.
       cameraMoving: interacting,
       streaming: qualityGovernor.isStreaming(),
-      enabled: isSettleRefineEnabled(),
-      cacheEnabled: isVolumeCacheEnabled(),
+      enabled: true,
+      cacheEnabled: true,
       renderedThisFrame: decision.render,
       scale,
       // Wait for QualityAdapter's DPR restore before spending boosted

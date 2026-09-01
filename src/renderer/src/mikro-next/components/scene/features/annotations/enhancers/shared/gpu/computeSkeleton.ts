@@ -50,64 +50,17 @@ import { DEFAULT_MARCHER, type MarcherId } from "../../meshes/marcher";
  * backtracked — and the caller falls back to the CPU path.
  */
 
-type GpuBuffer = {
-  destroy(): void;
-  mapAsync(mode: number): Promise<void>;
-  getMappedRange(): ArrayBuffer;
-  unmap(): void;
-};
-type GpuBindGroup = { readonly __brand?: "bindGroup" };
-type GpuBindGroupLayout = { readonly __brand?: "bindGroupLayout" };
-type GpuComputePipeline = { readonly __brand?: "computePipeline" };
-type GpuComputePass = {
-  setPipeline(pipeline: GpuComputePipeline): void;
-  setBindGroup(index: number, group: GpuBindGroup, dynamicOffsets?: number[]): void;
-  dispatchWorkgroups(x: number, y: number, z: number): void;
-  end(): void;
-};
-type GpuCommandEncoder = {
-  beginComputePass(): GpuComputePass;
-  copyBufferToBuffer(
-    source: GpuBuffer,
-    sourceOffset: number,
-    destination: GpuBuffer,
-    destinationOffset: number,
-    size: number,
-  ): void;
-  finish(): unknown;
-};
-type ComputeDevice = {
-  limits: { maxStorageBufferBindingSize?: number };
-  queue: {
-    submit(commandBuffers: unknown[]): void;
-    writeBuffer(
-      buffer: GpuBuffer,
-      bufferOffset: number,
-      data: ArrayBufferView | ArrayBuffer,
-      dataOffset?: number,
-      size?: number,
-    ): void;
-  };
-  createShaderModule(descriptor: { label?: string; code: string }): unknown;
-  createBindGroupLayout(descriptor: object): GpuBindGroupLayout;
-  createPipelineLayout(descriptor: object): unknown;
-  createComputePipelineAsync(descriptor: object): Promise<GpuComputePipeline>;
-  createBindGroup(descriptor: object): GpuBindGroup;
-  createBuffer(descriptor: { label?: string; size: number; usage: number }): GpuBuffer;
-  createCommandEncoder(): GpuCommandEncoder;
-  pushErrorScope?(filter: "validation"): void;
-  popErrorScope?(): Promise<{ message: string } | null>;
-};
-
-const BufferUsage = {
-  MAP_READ: 0x0001,
-  COPY_SRC: 0x0004,
-  COPY_DST: 0x0008,
-  UNIFORM: 0x0040,
-  STORAGE: 0x0080,
-} as const;
-const SHADER_STAGE_COMPUTE = 0x4;
-const MAP_MODE_READ = 0x1;
+import {
+  BufferUsage,
+  MAP_MODE_READ,
+  SHADER_STAGE_COMPUTE,
+  type ComputeDevice,
+  type GpuBindGroup,
+  type GpuBindGroupLayout,
+  type GpuBuffer,
+  type GpuCommandEncoder,
+  type GpuComputePipeline,
+} from "../../../../../platform/gpu/webgpuTypes";
 
 export type SkeletonRunJob = {
   atlas: BrickAtlas;

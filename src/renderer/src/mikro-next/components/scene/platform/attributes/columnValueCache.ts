@@ -47,26 +47,37 @@ const CACHE_CAPACITY = 24;
 
 const caches = new WeakMap<AttributeLookupEngine, LruMap<Promise<Map<number, unknown>>>>();
 
-export const readColumnByObjectIdCached = (
+/**
+ * Get-or-start a memoized promise in a per-engine LRU, self-evicting on
+ * rejection.
+ *
+ * Five readers below wanted exactly this and each spelled it out: look up the
+ * engine's cache (creating it on first use), build the key, return a hit, else
+ * start the read and attach a `catch` that removes the entry — but ONLY if the
+ * entry is still this promise, so a retry that already replaced it is left
+ * alone. That last condition is the whole reason this is a helper rather than
+ * five three-line bodies: it is easy to write as an unconditional `take(key)`,
+ * and the bug that produces (a slow failure evicting a newer, healthy read)
+ * is invisible until two reads of one column overlap.
+ *
+ * The caller supplies the cache map because the value types genuinely differ
+ * (`Map<number, …>`, `Map<string, …>`, `ColumnValues | null`) and a shared
+ * store with a union type would hand a caller the shape it did not ask for.
+ */
+const memoizePerEngine = <V>(
+  caches: WeakMap<AttributeLookupEngine, LruMap<Promise<V>>>,
   engine: AttributeLookupEngine,
-  access: TableAccess,
-  column: string,
-): Promise<Map<number, unknown>> => {
+  key: string,
+  start: () => Promise<V>,
+): Promise<V> => {
   let cache = caches.get(engine);
   if (!cache) {
     cache = new LruMap(CACHE_CAPACITY);
     caches.set(engine, cache);
   }
-  const key = `${access.store.id}:${access.keyColumn}:${column}`;
   const hit = cache.get(key);
   if (hit) return hit;
-  const promise: Promise<Map<number, unknown>> = readColumnByObjectId(
-    engine,
-    access,
-    column,
-  ).catch((error: unknown) => {
-    // Self-evict on failure — but only if this promise is still the cached
-    // one, so a retry that already replaced it is left alone.
+  const promise: Promise<V> = start().catch((error: unknown) => {
     const current = caches.get(engine);
     if (current && current.get(key) === promise) current.take(key);
     throw error;
@@ -74,6 +85,19 @@ export const readColumnByObjectIdCached = (
   cache.set(key, promise);
   return promise;
 };
+
+/** The key every table-scoped read shares: store, key column, value column. */
+const tableKey = (access: { store: { id: string }; keyColumn: string }, column: string): string =>
+  `${access.store.id}:${access.keyColumn}:${column}`;
+
+export const readColumnByObjectIdCached = (
+  engine: AttributeLookupEngine,
+  access: TableAccess,
+  column: string,
+): Promise<Map<number, unknown>> =>
+  memoizePerEngine(caches, engine, tableKey(access, column), () =>
+    readColumnByObjectId(engine, access, column),
+  );
 
 /**
  * `readColumnByObjectIdCached`, with the SCAN shared: the values come off the
@@ -90,36 +114,18 @@ export const readColumnByObjectIdBatchedCached = (
   engine: AttributeLookupEngine,
   access: TableAccess,
   column: string,
-): Promise<Map<number, unknown>> => {
-  let cache = caches.get(engine);
-  if (!cache) {
-    cache = new LruMap(CACHE_CAPACITY);
-    caches.set(engine, cache);
-  }
-  const key = `${access.store.id}:${access.keyColumn}:${column}`;
-  const hit = cache.get(key);
-  if (hit) return hit;
-  const promise: Promise<Map<number, unknown>> = readColumnValuesBatchedCached(
-    engine,
-    access,
-    column,
-  )
-    .then((columnar) => {
-      if (!columnar) return readColumnByObjectId(engine, access, column);
-      const map = new Map<number, unknown>();
-      for (let index = 0; index < columnar.count; index += 1) {
-        map.set(Number(columnar.ids[index]), columnValueAt(columnar, index));
-      }
-      return map;
-    })
-    .catch((error: unknown) => {
-      const current = caches.get(engine);
-      if (current && current.get(key) === promise) current.take(key);
-      throw error;
-    });
-  cache.set(key, promise);
-  return promise;
-};
+): Promise<Map<number, unknown>> =>
+  memoizePerEngine(caches, engine, tableKey(access, column), async () => {
+    const columnar = await readColumnValuesBatchedCached(engine, access, column);
+    // The columnar read declines on a non-numeric key column or an exotic
+    // result shape; the plain row path is the fallback, not an error.
+    if (!columnar) return readColumnByObjectId(engine, access, column);
+    const map = new Map<number, unknown>();
+    for (let index = 0; index < columnar.count; index += 1) {
+      map.set(Number(columnar.ids[index]), columnValueAt(columnar, index));
+    }
+    return map;
+  });
 
 /**
  * The same cache, for the COMPOSITE-keyed read (a network node/edge table's
@@ -138,29 +144,15 @@ export const readColumnByCompositeKeyCached = (
   engine: AttributeLookupEngine,
   access: CompositeTableAccess,
   column: string,
-): Promise<Map<string, unknown>> => {
-  let cache = compositeCaches.get(engine);
-  if (!cache) {
-    cache = new LruMap(CACHE_CAPACITY);
-    compositeCaches.set(engine, cache);
-  }
-  const key = `${access.store.id}:${access.keyColumns.join(",")}:${column}`;
-  const hit = cache.get(key);
-  if (hit) return hit;
-  const promise: Promise<Map<string, unknown>> = readColumnByCompositeKey(
+): Promise<Map<string, unknown>> =>
+  // Keyed by the ORDERED key-column list: order is meaning for a composite
+  // key, so `(a,b)` and `(b,a)` are different reads.
+  memoizePerEngine(
+    compositeCaches,
     engine,
-    access,
-    column,
-  ).catch((error: unknown) => {
-    // Self-evict on failure — but only if this promise is still the cached
-    // one, so a retry that already replaced it is left alone.
-    const current = compositeCaches.get(engine);
-    if (current && current.get(key) === promise) current.take(key);
-    throw error;
-  });
-  cache.set(key, promise);
-  return promise;
-};
+    `${access.store.id}:${access.keyColumns.join(",")}:${column}`,
+    () => readColumnByCompositeKey(engine, access, column),
+  );
 
 /**
  * The same cache, for the COLUMNAR read.
@@ -190,50 +182,16 @@ export const readColumnValuesBatchedCached = (
   engine: AttributeLookupEngine,
   access: TableAccess,
   column: string,
-): Promise<ColumnValues | null> => {
-  let cache = columnarCaches.get(engine);
-  if (!cache) {
-    cache = new LruMap(CACHE_CAPACITY);
-    columnarCaches.set(engine, cache);
-  }
-  const key = `${access.store.id}:${access.keyColumn}:${column}`;
-  const hit = cache.get(key);
-  if (hit) return hit;
-  const promise: Promise<ColumnValues | null> = readColumnValuesBatched(
-    engine,
-    access,
-    column,
-  ).catch((error: unknown) => {
-    const current = columnarCaches.get(engine);
-    if (current && current.get(key) === promise) current.take(key);
-    throw error;
-  });
-  cache.set(key, promise);
-  return promise;
-};
+): Promise<ColumnValues | null> =>
+  memoizePerEngine(columnarCaches, engine, tableKey(access, column), () =>
+    readColumnValuesBatched(engine, access, column),
+  );
 
 export const readColumnValuesCached = (
   engine: AttributeLookupEngine,
   access: TableAccess,
   column: string,
-): Promise<ColumnValues | null> => {
-  let cache = columnarCaches.get(engine);
-  if (!cache) {
-    cache = new LruMap(CACHE_CAPACITY);
-    columnarCaches.set(engine, cache);
-  }
-  const key = `${access.store.id}:${access.keyColumn}:${column}`;
-  const hit = cache.get(key);
-  if (hit) return hit;
-  const promise: Promise<ColumnValues | null> = readColumnValues(engine, access, column).catch(
-    (error: unknown) => {
-      // Self-evict on failure — but only if this promise is still the cached
-      // one, so a retry that already replaced it is left alone.
-      const current = columnarCaches.get(engine);
-      if (current && current.get(key) === promise) current.take(key);
-      throw error;
-    },
+): Promise<ColumnValues | null> =>
+  memoizePerEngine(columnarCaches, engine, tableKey(access, column), () =>
+    readColumnValues(engine, access, column),
   );
-  cache.set(key, promise);
-  return promise;
-};

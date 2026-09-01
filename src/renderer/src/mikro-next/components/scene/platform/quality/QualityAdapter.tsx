@@ -1,7 +1,6 @@
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import {
-  isAdaptiveDprEnabled,
   nextLadderRungDown,
   predictBurstLadderScale,
   qualityGovernor,
@@ -10,7 +9,6 @@ import {
 } from "./qualityGovernor";
 import { getGpuKey, type SceneRenderer } from "../gpu/sceneRenderer";
 import { ladderFeedforwardPassCount } from "../gpu/volumeCompositor";
-import { isVolumeTargetEnabled } from "../gpu/volumeTargetFlags";
 import { useViewStoreApi } from "../stores/viewStore";
 
 /**
@@ -134,24 +132,22 @@ export const QualityAdapter = () => {
         // pass count is the scene-load feedforward: a stale post-idle EMA
         // cannot see that six raymarch passes are open, but the mount
         // registry can. Disabled → rung 1 → pre-ladder behavior.
-        burstLadderScaleRef.current = isAdaptiveDprEnabled()
+        burstLadderScaleRef.current = true
           ? predictBurstLadderScale(
               qualityGovernor.getEmaMs(),
               lastBurstRungRef.current,
               // With the volume compositor on, raymarch fill lives in the
               // low-res target — the canvas ladder must not also drop for it.
               ladderFeedforwardPassCount(
-                isVolumeTargetEnabled(),
+                true,
                 qualityGovernor.getVolumePassCount(),
               ),
             )
           : 1;
       } else if (
-        // Ref check FIRST: `isAdaptiveDprEnabled` reads localStorage, and as the
         // leading operand it was read on EVERY frame of a gesture (forever, if
         // the correction never fires). The two are order-independent.
         !burstCorrectedRef.current &&
-        isAdaptiveDprEnabled() &&
         now - activeSinceRef.current >= MID_BURST_CORRECT_AFTER_MS &&
         shouldStepBurstRungDown(qualityGovernor.getEmaMs(), burstLadderScaleRef.current)
       ) {

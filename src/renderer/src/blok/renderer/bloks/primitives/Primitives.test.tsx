@@ -34,13 +34,25 @@ const catalog = createBlokCatalog(
   [...shadcnComposableComponents, Exploder],
   [
     createBlokFunction(
-      {name: "shout", purity: "pure", schema: z.object({text: z.string()})},
+      {
+        name: "shout",
+        description: "Uppercases text.",
+        purity: "pure",
+        schema: z.object({text: z.string()}),
+      },
       args => args.text.toUpperCase(),
     ),
-    createBlokFunction({name: "notify", schema: z.record(z.string(), z.unknown())}, args => {
-      sideEffect(args);
-      return null;
-    }),
+    createBlokFunction(
+      {
+        name: "notify",
+        description: "Records a side effect.",
+        schema: z.record(z.string(), z.unknown()),
+      },
+      args => {
+        sideEffect(args);
+        return null;
+      },
+    ),
   ],
 );
 

@@ -2,7 +2,12 @@ import {describe, expect, it} from "vitest";
 import {z} from "zod";
 
 import {createBlokComponent} from "./components";
-import {createBlokCatalog, createBlokFunction, normalizeFunctionArgs} from "./functions";
+import {
+  createBlokCatalog,
+  createBlokFunction,
+  createVariadicBlokFunction,
+  normalizeFunctionArgs,
+} from "./functions";
 import {preflightBlokDocument} from "./preflight";
 import {BlokPropSchemas} from "./schemas";
 
@@ -20,12 +25,12 @@ const Box = createBlokComponent(
 );
 
 const pureFn = createBlokFunction(
-  {name: "double", purity: "pure", schema: z.object({a: z.number()})},
+  {name: "double", description: "Doubles a number.", purity: "pure", schema: z.object({a: z.number()})},
   args => args.a * 2,
 );
 
 const effectFn = createBlokFunction(
-  {name: "logger.info", schema: z.record(z.string(), z.unknown())},
+  {name: "logger.info", description: "Logs a message.", schema: z.record(z.string(), z.unknown())},
   args => args,
 );
 
@@ -121,6 +126,102 @@ describe("preflightBlokDocument", () => {
     expect(result.errors).toEqual([]);
   });
 
+  it("reports an unknown argument key", () => {
+    const result = preflight([
+      {
+        id: "a",
+        component: "Box",
+        props: [
+          {key: "title", util_call: {operation: "double", arguments: [{key: "bogus"}]}},
+        ],
+      },
+    ]);
+
+    expect(result.errors.map(error => error.message).join(" ")).toContain(
+      'Unknown argument "bogus"',
+    );
+  });
+
+  it("reports a missing required argument", () => {
+    const result = preflight([
+      {id: "a", component: "Box", props: [{key: "title", util_call: {operation: "double"}}]},
+    ]);
+
+    expect(result.errors.map(error => error.message).join(" ")).toContain(
+      'Missing required argument "a"',
+    );
+  });
+
+  it("counts positional arguments as filling the schema keys in order", () => {
+    const result = preflight([
+      {
+        id: "a",
+        component: "Box",
+        props: [
+          {key: "title", util_call: {operation: "double", arguments: [{value_literal: 2}]}},
+        ],
+      },
+    ]);
+
+    expect(result.errors).toEqual([]);
+  });
+
+  it("reports too many positional arguments", () => {
+    const result = preflight([
+      {
+        id: "a",
+        component: "Box",
+        props: [
+          {
+            key: "title",
+            util_call: {
+              operation: "double",
+              arguments: [{value_literal: 1}, {value_literal: 2}],
+            },
+          },
+        ],
+      },
+    ]);
+
+    expect(result.errors.map(error => error.message).join(" ")).toContain(
+      "takes 1 argument(s) but 2 were given",
+    );
+  });
+
+  it("does not constrain the arity of a variadic function", () => {
+    const variadicCatalog = createBlokCatalog(
+      "variadic",
+      [Box],
+      [
+        createVariadicBlokFunction(
+          {name: "sum", description: "sums", purity: "pure", item: z.number()},
+          values => values.reduce((total, value) => total + value, 0),
+        ),
+      ],
+    );
+
+    const result = preflightBlokDocument(
+      [
+        {
+          id: "a",
+          component: "Box",
+          props: [
+            {
+              key: "title",
+              util_call: {
+                operation: "sum",
+                arguments: [{value_literal: 1}, {value_literal: 2}, {value_literal: 3}],
+              },
+            },
+          ],
+        },
+      ],
+      variadicCatalog,
+    );
+
+    expect(result.errors).toEqual([]);
+  });
+
   it("allows a pure function in value position", () => {
     const result = preflight([
       {
@@ -184,7 +285,7 @@ describe("catalog invokeFunction", () => {
       "throwing",
       [],
       [
-        createBlokFunction({name: "boom", purity: "pure", schema: z.object({})}, () => {
+        createBlokFunction({name: "boom", description: "Always throws.", purity: "pure", schema: z.object({})}, () => {
           throw new Error("kaboom");
         }),
       ],

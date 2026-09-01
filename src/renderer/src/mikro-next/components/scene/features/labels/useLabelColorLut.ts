@@ -7,7 +7,7 @@
  * which is exactly what the uniform-push contract exists to avoid. */
 import { useThree } from "@react-three/fiber";
 import { useDatalayerEndpoint, useMikro } from "@/app/Arkitekt";
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 import { useAttributeServiceOrNull } from "@/mikro-next/lib/attributes/AttributeServiceProvider";
 import { level0StoreIdOf, systemIdOf } from "../../platform/model/layerLevel0";
@@ -21,8 +21,9 @@ import {
   type ValueLutArena,
 } from "../../platform/attributes/valueLut";
 import { qualitativePalette } from "../../platform/layerui/colormap-utils";
-import { isColumnColorBy } from "../../platform/layerui/columnOptions";
-import { loadSparseSource } from "@/mikro-next/lib/sparse/sparseSource";
+import { loadSparseSource, makeSparseReader } from "@/mikro-next/lib/sparse/sparseSource";
+import { useActivePickers } from "../../platform/attributes/useActivePickers";
+import { usePickerResolution } from "../../platform/attributes/pickerResolution";
 
 /**
  * Resolve a label layer's ACTIVE colouring and filter rules into the material's
@@ -49,64 +50,28 @@ export const useLabelColorLut = (
   const datalayer = useDatalayerEndpoint();
 
   const render = layer?.labelRender;
-  const storedColorBy =
-    render?.activeColorBy != null ? (render.colorBys?.[render.activeColorBy] ?? null) : null;
   /**
-   * Both arms render now. A SPARSE entry names a matrix and a position rather
-   * than a table and a column, and is answered from the store directly — there
-   * is no SQL and no database in that path.
+   * Both arms render. A SPARSE entry names a matrix and a position rather than
+   * a table and a column, and is answered from the store directly — there is
+   * no SQL and no database in that path.
+   *
+   * The keys come from `entryKeys.ts` rather than being spelled here, and that
+   * is a FIX, not just deduplication. This used to build them by hand with the
+   * colormap in the STYLE key and absent from the DATA key — but
+   * `buildValueLut` branches on the colormap's class, writing RANKS for a
+   * qualitative one where a measure colouring gets normalised values. Switching
+   * viridis -> hues therefore recomposed the palette without rebuilding the
+   * table, leaving rank colours sampled with value-derived codes. `entryKeys`
+   * puts the qualitative CLASS (not the colormap itself) in the data key for
+   * exactly this reason, and says so.
    */
-  const activeColorBy = storedColorBy;
-  const sparseDatasetId = useMemo(
-    () => (storedColorBy && !isColumnColorBy(storedColorBy) ? (storedColorBy.dataset ?? null) : null),
-    [storedColorBy],
-  );
-  const activeRules = useMemo(
-    () =>
-      (render?.activeFilterBys ?? [])
-        .map((index) => render?.filterBys?.[index])
-        .filter((rule): rule is NonNullable<typeof rule> => Boolean(rule)),
-    [render?.activeFilterBys, render?.filterBys],
-  );
-
-  /**
-   * A CONTENT key, not references. The card folds the server's answer in with
-   * `Object.assign` into an immer draft, so array identity is structural
-   * sharing's call — keying on it would re-run this for nothing, or miss a real
-   * change. (Same reasoning as `FabriksCollectionLayer`'s `lutKey`.)
-   */
-  // Two keys, not one. The table depends on WHICH values are read; the window
-  // and the palette depend only on how they are drawn. Keying both off one
-  // string meant a clim nudge rebuilt and re-uploaded the whole table — at a bin
-  // lattice's scale, tens of megabytes to change how a number becomes a hue.
-  //
-  // `columnLut.ts` already makes this argument for the base colour, refusing to
-  // bake it in because it would tie the texture to live uniforms; the value
-  // encoding is that argument applied to the colormap as well.
-  const dataKey = useMemo(
-    () =>
-      JSON.stringify([
-        activeColorBy && {
-          table: activeColorBy.table ?? null,
-          column: activeColorBy.column ?? null,
-          joinPath: activeColorBy.joinPath ?? null,
-          dataset: activeColorBy.dataset ?? null,
-          at: activeColorBy.at ?? null,
-        },
-        activeRules,
-      ]),
-    [activeColorBy, activeRules],
-  );
-
-  const styleKey = useMemo(
-    () =>
-      JSON.stringify([
-        activeColorBy?.colormap ?? null,
-        activeColorBy?.min ?? null,
-        activeColorBy?.max ?? null,
-      ]),
-    [activeColorBy],
-  );
+  const {
+    colorBy: activeColorBy,
+    rules: activeRules,
+    sparseDatasetId,
+    dataKey,
+    appearanceKey: styleKey,
+  } = useActivePickers(render);
 
   const systemId = layer ? systemIdOf(layer) : null;
   const storeId = layer ? level0StoreIdOf(layer) : null;
@@ -124,101 +89,87 @@ export const useLabelColorLut = (
    */
   const arenaRef = useRef<ValueLutArena | null>(null);
 
-  useEffect(() => {
+  /**
+   * The DATA half, through the shared resolution lifecycle
+   * (`platform/attributes/pickerResolution.ts`). The choreography it owns —
+   * run on key change, let only the still-wanted build reach the GPU, hand the
+   * loser to `dispose` — used to be spelled out here and, near-identically,
+   * in three other layers. What stays here is the part that is actually about
+   * masks: which reads the build needs, and what binding one means.
+   */
+  const off = useCallback(() => {
     if (!nodes) return;
-    const off = () => {
-      setLabelColorLut(
-        nodes,
-        { texture: null, width: 0, height: 0, idOffset: 0, valueMin: 0, valueMax: 1 },
-        { colorize: false, filter: false },
-      );
-      // `setLabelColorLut` disposes what it unbinds, so the arena's texture is
-      // gone with it. Holding the reference would offer a destroyed
-      // `GPUTexture` to the next build.
-      arenaRef.current = null;
-      viewerStoreApi.getState().volumeInputs.bump("label-lut");
-    };
+    setLabelColorLut(
+      nodes,
+      { texture: null, width: 0, height: 0, idOffset: 0, valueMin: 0, valueMax: 1 },
+      { colorize: false, filter: false },
+    );
+    // `setLabelColorLut` disposes what it unbinds, so the arena's texture is
+    // gone with it. Holding the reference would offer a destroyed
+    // `GPUTexture` to the next build.
+    arenaRef.current = null;
+    viewerStoreApi.getState().volumeInputs.bump("label-lut");
+  }, [nodes, viewerStoreApi]);
 
-    const nothingActive = !activeColorBy && activeRules.length === 0;
-    if (!attributeService || !systemId || !storeId || nothingActive) {
-      off();
-      return;
-    }
+  const ready =
+    nodes && attributeService && systemId && storeId &&
+    (activeColorBy !== null || activeRules.length > 0);
 
-    let cancelled = false;
-    void (async () => {
-      const plans = await attributeService.plansFor(systemId);
-      if (cancelled) return;
-      // Fetched here rather than in the builder so the builder stays free of
-      // Apollo — the same reason `readColumn` is injected on the column side.
-      const sparse =
-        sparseDatasetId && datalayer
-          ? await loadSparseSource(client, datalayer, sparseDatasetId)
-          : null;
-      if (cancelled) return;
-      // A RULE may name a different matrix than the colouring does — or one
-      // while the colouring names a column — so the builder gets a reader it
-      // can call per rule rather than a source fetched up front. The dataset
-      // query behind it is cached per id for the app's life, so two rules over
-      // one matrix cost one fetch.
-      const readSparse = datalayer
-        ? async (datasetId: string, at: readonly { axis: string; value: number }[]) => {
-            const source = await loadSparseSource(client, datalayer, datasetId);
-            return source.read(source.source, at);
-          }
-        : null;
-      const lut = await buildLabelColorLut({
-        colorBy: activeColorBy,
-        sparse,
-        readSparse,
-        filterBys: activeRules,
-        plans,
-        storeId,
-        engine: attributeService.engine,
-        reuse: arenaRef.current,
-        // Checked inside, after the reads and before the first write. Without
-        // it a superseded build would still paint — into the LIVE buffer, now
-        // that the table is reused — and a slow read finishing last would
-        // overwrite the answer the user is actually looking at.
-        stillWanted: () => !cancelled,
-      });
-      // A superseded build must not reach the GPU, and its texture is ours to
-      // free — `setLabelColorLut` only ever disposes what it REPLACES, so a
-      // texture that never got bound would leak. The one it must NOT free is
-      // the reused arena's: that texture is still bound.
-      if (cancelled || lut.superseded) {
+  usePickerResolution<Awaited<ReturnType<typeof buildLabelColorLut>>>(
+    ready ? `${dataKey}|${sparseDatasetId ?? ""}` : null,
+    {
+      build: async ({ stillWanted }) => {
+        const plans = await attributeService!.plansFor(systemId!);
+        // Fetched here rather than in the builder so the builder stays free of
+        // Apollo — the same reason `readColumn` is injected on the column side.
+        const sparse =
+          sparseDatasetId && datalayer
+            ? await loadSparseSource(client, datalayer, sparseDatasetId)
+            : null;
+        return buildLabelColorLut({
+          colorBy: activeColorBy,
+          sparse,
+          readSparse: makeSparseReader(client, datalayer),
+          filterBys: activeRules,
+          plans,
+          storeId: storeId!,
+          engine: attributeService!.engine,
+          reuse: arenaRef.current,
+          // Checked inside, after the reads and before the first write:
+          // the arena is REUSED, so a superseded build that painted would
+          // overwrite the answer the user is actually looking at.
+          stillWanted,
+        });
+      },
+      apply: (lut) => {
+        // The builder can also bow out on its own (`superseded`), in which
+        // case it owns a texture nobody will bind.
+        if (lut.superseded) {
+          if (lut.texture && lut.texture !== arenaRef.current?.texture) lut.texture.dispose();
+          return;
+        }
+        if (lut.skipped.length > 0) {
+          console.warn("[label] picker entries that do not render yet:", lut.skipped);
+        }
+        // Adopted before the bind: `setLabelColorLut` disposes what it
+        // replaces, and what it replaces is the arena we are letting go of.
+        arenaRef.current = lut.arena ?? null;
+        setLabelColorLut(nodes!, lut, {
+          colorize: activeColorBy !== null,
+          filter: activeRules.length > 0,
+        });
+        viewerStoreApi.getState().volumeInputs.bump("label-lut");
+        invalidate();
+      },
+      // The one it must NOT free is the reused arena's: that texture is still
+      // bound to the live material.
+      dispose: (lut) => {
         if (lut.texture && lut.texture !== arenaRef.current?.texture) lut.texture.dispose();
-        return;
-      }
-      if (lut.skipped.length > 0) {
-        console.warn("[label] picker entries that do not render yet:", lut.skipped);
-      }
-      // Adopted before the bind: `setLabelColorLut` disposes what it replaces,
-      // and what it replaces is the arena we are letting go of.
-      arenaRef.current = lut.arena ?? null;
-      setLabelColorLut(nodes, lut, {
-        colorize: activeColorBy !== null,
-        filter: activeRules.length > 0,
-      });
-      viewerStoreApi.getState().volumeInputs.bump("label-lut");
-      invalidate();
-    })().catch((error) => {
-      if (cancelled) return;
-      console.warn("[label] could not build the colour lookup:", error);
-      off();
-    });
-
-    return () => {
-      cancelled = true;
-    };
-    // `activeColorBy` / `activeRules` are read inside; `dataKey` is what decides
-    // whether this re-runs. See the note on the key itself.
-    // `client` and `datalayer` are deliberately NOT here. They are infrastructure
-    // read inside, and a provider that returns a fresh object per render would
-    // rebuild the whole table on every render — which is the cost this split
-    // exists to remove. What the table depends on is `dataKey` and the dataset.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodes, attributeService, systemId, storeId, dataKey, sparseDatasetId, invalidate]);
+      },
+      reset: off,
+      onError: (error) => console.warn("[label] could not build the colour lookup:", error),
+    },
+  );
 
   // The appearance half. Synchronous, no await, no allocation: two uniform
   // writes and a 1 KB palette row, both of which the table is indifferent to.

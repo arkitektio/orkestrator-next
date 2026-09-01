@@ -108,3 +108,21 @@ const hslToRgb255 = (h: number, s: number, l: number): [number, number, number] 
     Math.round(channel(4) * 255),
   ];
 };
+
+/**
+ * The continuous ramps as a picker's options, with their gradient previews.
+ *
+ * A module constant, not a `useMemo(..., [])` per card: three cards built the
+ * identical array and memoised it against an empty dependency list, which is a
+ * constant spelled as a hook. Building it once also means the three pickers
+ * share one set of gradient strings rather than three copies.
+ */
+export const CONTINUOUS_COLORMAP_CHOICES: readonly {
+  value: ColorMap;
+  label: string;
+  css: string;
+}[] = CONTINUOUS_COLORMAPS.map((colormap) => ({
+  value: colormap,
+  label: colormap.toLowerCase(),
+  css: colormapGradientCSS(colormap),
+}));

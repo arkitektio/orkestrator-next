@@ -1,6 +1,5 @@
 import { MARCHERS, type MarcherId } from "../../annotations/enhancers/meshes/marcher";
 import type { CorridorBox } from "../../annotations/enhancers/shared/corridorPlan";
-import { corridorIndex } from "../../annotations/enhancers/shared/corridorPlan";
 import type { DesignGeometry } from "../store/meshDesignStore";
 import { weldSoup } from "../ops/weld";
 
@@ -409,7 +408,3 @@ export function marchField(field: SculptField, marcherId: MarcherId): DesignGeom
   }
   return weldSoup(world, 1e-6);
 }
-
-/** `corridorIndex` twin over a field, for tests. */
-export const fieldIndex = (field: SculptField, x: number, y: number, z: number): number =>
-  corridorIndex({ origin: [0, 0, 0], size: field.size }, x, y, z);

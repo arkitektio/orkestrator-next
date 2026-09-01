@@ -1,6 +1,7 @@
 import type { Vec3 } from "./strokeModel";
 import { corridorIndex, corridorVoxelCount, type CorridorBox } from "./corridorPlan";
 import { INF_COST } from "./corridorCost";
+import { MinHeap } from "./binaryHeap";
 
 /**
  * The geodesic distance field over a corridor cost field — the CPU reference
@@ -40,79 +41,6 @@ export const NEIGHBOUR_OFFSETS: readonly Vec3[] = (() => {
   }
   return offsets;
 })();
-
-/** Minimal binary heap over (priority, node) — `traceSearch.NodeHeap` restated. */
-class MinHeap {
-  private priorities: Float64Array;
-  private nodes: Int32Array;
-  private length = 0;
-
-  constructor(capacity: number) {
-    this.priorities = new Float64Array(Math.max(16, capacity));
-    this.nodes = new Int32Array(Math.max(16, capacity));
-  }
-
-  get size(): number {
-    return this.length;
-  }
-
-  push(priority: number, node: number): void {
-    if (this.length === this.nodes.length) {
-      const priorities = new Float64Array(this.priorities.length * 2);
-      priorities.set(this.priorities);
-      this.priorities = priorities;
-      const nodes = new Int32Array(this.nodes.length * 2);
-      nodes.set(this.nodes);
-      this.nodes = nodes;
-    }
-    let child = this.length;
-    this.length += 1;
-    this.priorities[child] = priority;
-    this.nodes[child] = node;
-    while (child > 0) {
-      const parent = (child - 1) >> 1;
-      if (this.priorities[parent] <= this.priorities[child]) break;
-      this.swap(parent, child);
-      child = parent;
-    }
-  }
-
-  pop(): number {
-    if (this.length === 0) return -1;
-    const top = this.nodes[0];
-    this.length -= 1;
-    if (this.length > 0) {
-      this.priorities[0] = this.priorities[this.length];
-      this.nodes[0] = this.nodes[this.length];
-      let parent = 0;
-      for (;;) {
-        const left = parent * 2 + 1;
-        const right = left + 1;
-        let smallest = parent;
-        if (left < this.length && this.priorities[left] < this.priorities[smallest]) {
-          smallest = left;
-        }
-        if (right < this.length && this.priorities[right] < this.priorities[smallest]) {
-          smallest = right;
-        }
-        if (smallest === parent) break;
-        this.swap(parent, smallest);
-        parent = smallest;
-      }
-    }
-    return top;
-  }
-
-  private swap(a: number, b: number): void {
-    const p = this.priorities[a];
-    this.priorities[a] = this.priorities[b];
-    this.priorities[b] = p;
-    const n = this.nodes[a];
-    this.nodes[a] = this.nodes[b];
-    this.nodes[b] = n;
-  }
-}
-
 /**
  * The full distance field from `seed` (BOX-relative voxel coordinates).
  *

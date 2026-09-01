@@ -16,14 +16,6 @@ import { resolveStyle } from "./annotationStyle";
  * expressed as data.
  */
 
-// The kill switch (`orkestrator.annotationBatch`, default OFF) lives in
-// `platform/draw/lineBatchFlag.ts` so the DebugPanel toggles it without a
-// sideways feature edge.
-export {
-  isLineBatchEnabled as isAnnotationBatchEnabled,
-  setLineBatchEnabled as setAnnotationBatchEnabled,
-} from "../../platform/draw/lineBatchFlag";
-
 /** Smallest cross-section drawn for an ellipsoid the plane barely grazes. */
 export const MIN_CROSS_SECTION_SCALE = 0.05;
 

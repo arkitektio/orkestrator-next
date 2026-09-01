@@ -61,7 +61,6 @@ import {
 } from "../gpu/mergedChannelUniforms";
 import {
   findMergeGroup,
-  isVolumeMergeEnabled,
   planVolumeMergeGroups,
 } from "../gpu/volumeMergeGroups";
 import { useBrickStore, useBrickStoreApi } from "../store/brickSlice";
@@ -305,7 +304,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   );
 
   const mergeGroup = useMemo(() => {
-    if (!pool || !isVolumeMergeEnabled()) return null;
+    if (!pool) return null;
     const members = buildMergeMembers({
       memberIds,
       layers,

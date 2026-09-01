@@ -3,7 +3,6 @@ import type { StoreApi } from "zustand/vanilla";
 import { perfMonitor } from "../../../platform/perf/perfMonitor";
 import { coldOpenTimeline } from "../../../platform/perf/coldOpenTimeline";
 import { getInitialVolumeTextureBudgetBytes } from "../../../platform/quality/lodPlanning";
-import { isAnisoLodEnabled, isWorldLodEnabled } from "../gpu/shaderFlags";
 import { resolveBrickSpec } from "../octree/brickSpec";
 import { atlasKindForGeometry, atlasSlotBytes } from "../octree/atlasFormat";
 import { totalBrickCount } from "../octree/nodeAddress";
@@ -175,7 +174,7 @@ export function startNodePlanTracking({
     const viewProjectionMatrix = snapshot?.viewProjectionMatrix ?? liveView.viewProjectionMatrix;
     const viewportSize = snapshot?.viewportSize ?? liveView.viewportSize;
     const cameraPose = snapshot ? snapshot.cameraPose : liveView.cameraPose;
-    const worldLod = isWorldLodEnabled();
+    const worldLod = true;
 
     const prevPlans = viewerState.nodePlans;
     const nextPlans: Record<string, LayerNodePlan> = {};
@@ -445,7 +444,7 @@ export function startNodePlanTracking({
         // unlocks from the second replan (~500 ms later / next interaction).
         // `undefined` lets the planner derive it from the cache share above.
         decodeAllowanceBytes: prevRepresentative ? undefined : 0,
-        anisoLod: isAnisoLodEnabled(),
+        anisoLod: true,
         previousBudgetMinLevel: prevCompatible ? prevRepresentative.budgetMinLevel : undefined,
         previousKeepKeys: prevCompatible ? keepKeysOf(prevRepresentative) : undefined,
         // Motion ceiling: while the camera moves, never plan finer than the

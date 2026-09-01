@@ -20,7 +20,7 @@ import {
   type AnnotationCollectionRef,
   type AnnotationLayerVariant,
 } from "../annotationBounds";
-import { buildOutlineBatches, isAnnotationBatchEnabled } from "../annotationBatch";
+import { buildOutlineBatches } from "../annotationBatch";
 import { prunedSelections, repairedSelections } from "../selectionRepair";
 import { useRoiDrawingStore } from "../roiDrawingStore";
 import { useRoiSelectionStore, type SelectedRoi } from "../roiSelectionStore";
@@ -255,10 +255,9 @@ const AnnotationCollectionGroup = ({
   // mount). Geometry deps carry NO plane and NO selection: a scrub or a click
   // must not rebuild the collection's Float32Arrays (sectioned ellipsoids are
   // excluded; selection is a color-only pass in the batch component).
-  const batchOutlines = useMemo(isAnnotationBatchEnabled, []);
   const outlineBatches = useMemo(
-    () => (batchOutlines ? buildOutlineBatches(otherShapes, flattenToPlane) : []),
-    [batchOutlines, otherShapes, flattenToPlane],
+    () => buildOutlineBatches(otherShapes, flattenToPlane),
+    [otherShapes, flattenToPlane],
   );
 
   if (shown.length === 0) return null;
@@ -292,7 +291,6 @@ const AnnotationCollectionGroup = ({
           planeZ={planeZLocal}
           isActive={selectedRoiIds.has(annotation.id)}
           selectable={selectable}
-          suppressOutlines={batchOutlines}
           onSelectRoi={onSelectRoi}
         />
       ))}

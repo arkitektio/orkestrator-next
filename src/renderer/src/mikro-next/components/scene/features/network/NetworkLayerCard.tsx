@@ -1,6 +1,5 @@
-import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Circle, Eye, EyeOff, MoveRight, Share2, Trash2 } from "lucide-react";
+import { Circle, MoveRight, Share2 } from "lucide-react";
 import { memo, useCallback, useMemo, useRef } from "react";
 import {
   useUpdateNetworkLayerMutation,
@@ -36,6 +35,8 @@ import {
   type EntriesPatch,
   type PickPatch,
 } from "../../platform/layerui/entrySections";
+import { useOptimisticLayerPatch } from "../../platform/layerui/useOptimisticLayerPatch";
+import { LayerCardActions } from "../../platform/layerui/LayerCardActions";
 
 /**
  * A compact card for a `NetworkLayer` in the Layers panel.
@@ -125,16 +126,10 @@ export const NetworkLayerCard = memo(
      * provider reconciles layers by STRUCTURE, so a `GetScene` re-emission that
      * changed only this layer's content keeps the stored object as it was.
      */
-    const persist = useCallback(
-      (patch: NetworkPatch) => {
-        patchSceneLayer(layer.id, patch as Parameters<typeof patchSceneLayer>[1]);
-        void updateNetworkLayer({ variables: { input: { id: layer.id, ...patch } } }).catch(
-          (error: unknown) => {
-            console.warn("[konnektion] could not save layer settings", error);
-          },
-        );
-      },
-      [layer.id, patchSceneLayer, updateNetworkLayer],
+    const persist = useOptimisticLayerPatch<NetworkPatch>(
+      layer.id,
+      updateNetworkLayer,
+      "[konnektion]",
     );
 
     const lineWidth = layer.lineWidth ?? 1;
@@ -236,28 +231,11 @@ export const NetworkLayerCard = memo(
         expanded={expanded}
         onToggle={() => onSelect(layer.id, expanded)}
         actions={
-          <>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-5 w-5 shrink-0 text-white/45 hover:text-white/90"
-              title={hidden ? "Show" : "Hide"}
-              onClick={() => persist({ visible: hidden })}
-            >
-              {hidden ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-            </Button>
-            {onRemove && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-5 w-5 shrink-0 text-white/35 hover:text-red-300"
-                title="Remove layer from scene"
-                onClick={() => onRemove(layer.id)}
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            )}
-          </>
+          <LayerCardActions
+            hidden={hidden}
+            onToggleVisible={() => persist({ visible: hidden })}
+            onRemove={onRemove ? () => onRemove(layer.id) : undefined}
+          />
         }
       >
         {/* ------------------------------------------------ width ---------- */}

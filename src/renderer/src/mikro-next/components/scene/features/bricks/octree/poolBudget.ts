@@ -100,11 +100,6 @@ export function setDecodeCacheOverrideMB(mb: number | null): void {
   decodeCacheOverrideMemo = undefined;
 }
 
-/** Test seam, mirroring `resetVolumeBudgetOverrideForTests`. */
-export function resetDecodeCacheOverrideForTests(): void {
-  decodeCacheOverrideMemo = undefined;
-}
-
 /** Fraction of the VOLUME budget the chunk cache is allowed to track. The cache
  * is heap, not VRAM, but the volume budget is the only device-size signal we
  * have, and a machine that can afford a big atlas can generally afford the

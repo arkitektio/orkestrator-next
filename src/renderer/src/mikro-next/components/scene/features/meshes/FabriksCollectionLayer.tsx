@@ -1,6 +1,6 @@
 import { effectiveFlatNormals } from "./meshLayerDefaults";
 import { useThree, type ThreeEvent } from "@react-three/fiber";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 
@@ -23,20 +23,30 @@ import { FabriksCollection } from "./fabriks/fabriksCollection";
 import { FabriksCollectionManager } from "./fabriks/fabriksManager";
 import { openFabriksCollection } from "./fabriks/fabriksSource";
 import { buildColorLut, composeMeshLutAppearance } from "./fabriks/fabriksColorLut";
-import {
-  entryAppearanceKeyOf,
-  entryDataKeyOf,
-} from "../../platform/attributes/entryKeys";
 import type { ValueLutArena, ValueLutWindow } from "../../platform/attributes/valueLut";
-import { loadSparseSource } from "@/mikro-next/lib/sparse/sparseSource";
-import { isColumnColorBy } from "../../platform/layerui/columnOptions";
+import { loadSparseSource, makeSparseReader } from "@/mikro-next/lib/sparse/sparseSource";
 import { useAttributeServiceOrNull } from "@/mikro-next/lib/attributes/AttributeServiceProvider";
 import {
-  resolveCollectionMatrix,
   type MeshCollectionRef,
   type MeshLayerVariant,
 } from "../../platform/model/collectionPlacement";
 import { useMeshStoreApi } from "./store/meshSlice";
+import { createLeadingThrottle } from "../../platform/perf/leadingThrottle";
+import { useActivePickers } from "../../platform/attributes/useActivePickers";
+import { usePickerResolution } from "../../platform/attributes/pickerResolution";
+import { useCollectionDriver } from "../../platform/collections/useCollectionDriver";
+import {
+  collectionSlabThickness,
+  useCollectionPlacement,
+} from "../../platform/collections/useCollectionPlacement";
+
+
+/**
+ * How long the streaming stats bump is held back. Matches the network layer's
+ * (and vice versa): both publish a debug-only version counter from the same
+ * kind of load loop, and a shared number is one fewer thing to wonder about.
+ */
+const STATS_THROTTLE_MS = 120;
 
 /**
  * MeshLayer renderer: a fabriks collection — a self-describing prefix of
@@ -92,50 +102,25 @@ const FabriksCollectionGroup = ({
   const client = useMikro();
 
   // Streaming-cadence stats → debug-only `meshVersion`, throttled here so the
-  // manager stays cadence-blind and the store sees at most ~8 writes/s.
-  const onStatsChanged = useMemo(() => {
-    let last = 0;
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    const bump = () => {
-      last = performance.now();
-      viewerApi.getState().bumpMeshVersion();
-    };
-    return () => {
-      const elapsed = performance.now() - last;
-      if (elapsed >= 120) {
-        if (timer) {
-          clearTimeout(timer);
-          timer = null;
-        }
-        bump();
-      } else if (!timer) {
-        timer = setTimeout(() => {
-          timer = null;
-          bump();
-        }, 120 - elapsed);
-      }
-    };
-  }, [viewerApi]);
+  // manager stays cadence-blind and the store sees at most ~8 writes/s (P17).
+  const statsThrottle = useMemo(
+    () =>
+      createLeadingThrottle({
+        intervalMs: STATS_THROTTLE_MS,
+        run: () => viewerApi.getState().bumpMeshVersion(),
+      }),
+    [viewerApi],
+  );
+  // The hand-rolled version this replaced never cancelled: a stats change
+  // within one window of unmount fired a timer into a torn-down scoped store.
+  useEffect(() => () => statsThrottle.cancel(), [statsThrottle]);
+  const onStatsChanged = statsThrottle.trigger;
 
-  // VALUE-stable: the memo's inputs churn identity on unrelated store writes,
-  // so a recompute that lands on the same placement must return the SAME
-  // Matrix4 — downstream effects key on it, and a fresh-but-equal instance
-  // used to rebuild the whole manager and refetch every cell.
-  const matrixRef = useRef<THREE.Matrix4 | null>(null);
-  // The inverse is constant per placement, and `resolveMeshHit` needs it per
-  // hover/click event — cached here so the pick path never pays a 4×4 invert.
-  const inverseRef = useRef<THREE.Matrix4>(new THREE.Matrix4());
-  const matrix = useMemo(() => {
-    const next = resolveCollectionMatrix(layer, collection, transformContext);
-    if (matrixRef.current?.equals(next)) return matrixRef.current;
-    matrixRef.current = next;
-    inverseRef.current.copy(next).invert();
-    return next;
-    // `layer.pathToWorld` is ALL resolveCollectionMatrix reads from the layer
-    // (collectionPlacement.ts). Depending on the whole `layer` re-composed the
-    // transform chain on every patchSceneLayer tick — an opacity drag included.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [layer.pathToWorld, collection, transformContext]);
+  const { matrix, inverse: inverseRef } = useCollectionPlacement(
+    layer,
+    collection,
+    transformContext,
+  );
 
   // Opening reads fabriks.json and nothing else; the catalogs come with the
   // first plan. Collections are immutable per version, so the open survives as
@@ -174,10 +159,6 @@ const FabriksCollectionGroup = ({
 
   // Placement, applied before the first plan (effects run in order) and again
   // on any real change. Value-equal matrices are a no-op inside the manager.
-  useEffect(() => {
-    manager?.setVoxelToWorld(matrix);
-  }, [manager, matrix]);
-
   // Debug registration: DebugPanel reads stats and steers the planner through
   // this handle — the mesh twin of registerBrickSystem.
   useEffect(() => {
@@ -226,38 +207,16 @@ const FabriksCollectionGroup = ({
    * no colouring exactly as cheap as it was before any of this existed.
    */
   const attributeService = useAttributeServiceOrNull();
-  const activeColorByIndex = layer.activeColorBy ?? null;
-  const storedColorBy =
-    activeColorByIndex === null ? null : (layer.colorBys?.[activeColorByIndex] ?? null);
-  /**
-   * Both arms render. A SPARSE entry names a matrix and a position rather than
-   * a table and a column, and is answered from the store directly.
-   */
-  const colorBy = storedColorBy;
-  const sparseDatasetId = useMemo(
-    () => (storedColorBy && !isColumnColorBy(storedColorBy) ? (storedColorBy.dataset ?? null) : null),
-    [storedColorBy],
-  );
-  const filterBys = layer.filterBys;
-  const activeFilterBys = layer.activeFilterBys;
-  const activeRules = useMemo(
-    () =>
-      (activeFilterBys ?? [])
-        .map((index) => filterBys?.[index])
-        .filter((rule): rule is NonNullable<typeof rule> => Boolean(rule)),
-    [activeFilterBys, filterBys],
-  );
+  // Both arms render: a SPARSE colouring names a matrix and a position rather
+  // than a table and a column, and is answered from the store directly.
+  const {
+    colorBy,
+    rules: activeRules,
+    sparseDatasetId,
+    dataKey: lutKey,
+    appearanceKey,
+  } = useActivePickers(layer);
   const systemId = collection.coordinateSystem?.id ?? null;
-  /**
-   * CONTENT keys, not the object references, because the fold after a picker
-   * mutation writes the server's arrays back with `Object.assign` into an immer
-   * draft — whether that yields new array identities is structural sharing's
-   * call, not ours. TWO of them (`entryKeys.ts`): the DATA key re-reads and
-   * repaints the table, the APPEARANCE key is two uniform writes and a 1 KB
-   * palette refill — the `useLabelColorLut` split, on meshes.
-   */
-  const lutKey = useMemo(() => entryDataKeyOf(colorBy, activeRules), [colorBy, activeRules]);
-  const appearanceKey = useMemo(() => entryAppearanceKeyOf(colorBy), [colorBy]);
 
   /** The reused table arena, and what the last completed paint derived — the
    *  appearance effect recomposes over it. `dataKey` stamps which build it
@@ -269,92 +228,74 @@ const FabriksCollectionGroup = ({
     qualitative: boolean;
   } | null>(null);
 
-  useEffect(() => {
-    if (!manager) return;
-    if (!attributeService || !systemId || (!colorBy && activeRules.length === 0)) {
-      // The manager disposes the bound texture on the way to null, so the
-      // arena must not be offered for reuse again.
-      lutArenaRef.current = null;
-      lutPaintRef.current = null;
-      manager.setColorLut(null, { colorize: false, filter: false });
-      return;
-    }
-    let cancelled = false;
-    void (async () => {
-      // The object catalog is shared with picking, so this is free once
-      // anything has resolved an ordinal — and vice versa.
-      const [objects, plans] = await Promise.all([
-        manager.listObjects(),
-        attributeService.plansFor(systemId),
-      ]);
-      if (cancelled) return;
-      // Fetched here rather than in the builder, so the builder stays free of
-      // Apollo — the same seam `readColumn` uses on the column side.
-      const sparse =
-        sparseDatasetId && datalayer
-          ? await loadSparseSource(client, datalayer, sparseDatasetId)
-          : null;
-      if (cancelled) return;
-      // A RULE may name a different matrix than the colouring does, so the
-      // builder gets a reader per rule rather than one source fetched up front.
-      // The dataset query behind it is cached per id for the app's life.
-      const readSparse = datalayer
-        ? async (datasetId: string, at: readonly { axis: string; value: number }[]) => {
-            const source = await loadSparseSource(client, datalayer, datasetId);
-            return source.read(source.source, at);
-          }
-        : null;
-      const prepared = await buildColorLut({
-        objects,
-        colorBy,
-        sparse,
-        readSparse,
-        filterBys: activeRules,
-        plans,
-        engine: attributeService.engine,
-      });
-      // The cancel check comes BEFORE the paint: painting into the shared
-      // arena from a superseded build would overwrite the bytes the live
-      // texture uploads. Nothing to free — a prepared build owns no texture.
-      if (cancelled) return;
-      if (prepared.skipped.length > 0) {
-        console.warn("[mesh] picker entries that do not render yet:", prepared.skipped);
-      }
-      const { arena, window, qualitative } = prepared.paint(lutArenaRef.current);
-      lutArenaRef.current = arena;
-      lutPaintRef.current = { dataKey: lutKey, window, qualitative };
-      manager.setColorLut(
-        {
-          texture: arena.texture,
-          width: arena.lut.width,
-          height: arena.lut.height,
-          window,
-        },
-        {
-          colorize: colorBy !== null,
-          filter: activeRules.length > 0,
-        },
-      );
-      manager.setColorAppearance(composeMeshLutAppearance(colorBy, { window, qualitative }));
-      invalidate();
-    })().catch((error) => {
-      if (cancelled) return;
-      console.warn("[mesh] could not build the colour lookup:", error);
-      lutArenaRef.current = null;
-      lutPaintRef.current = null;
-      manager.setColorLut(null, { colorize: false, filter: false });
-    });
-    return () => {
-      cancelled = true;
-    };
-    // `colorBy` / `activeRules` are read inside the effect; `lutKey` is what
-    // decides whether it re-runs. See the note on the key itself.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    // `client` and `datalayer` are deliberately absent: they are infrastructure
-    // read inside, and a provider returning a fresh object per render would
-    // rebuild the table on every render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [manager, attributeService, systemId, lutKey, sparseDatasetId, invalidate]);
+  const resetLut = useCallback(() => {
+    // The manager disposes the bound texture on the way to null, so the arena
+    // must not be offered for reuse again.
+    lutArenaRef.current = null;
+    lutPaintRef.current = null;
+    manager?.setColorLut(null, { colorize: false, filter: false });
+  }, [manager]);
+
+  /**
+   * The DATA half, through the shared lifecycle
+   * (`platform/attributes/pickerResolution.ts`). No `dispose`: a prepared
+   * build owns no texture — it allocates one only when `paint` runs, which
+   * happens inside `apply` and therefore only for the winner.
+   */
+  usePickerResolution<Awaited<ReturnType<typeof buildColorLut>>>(
+    manager && attributeService && systemId && (colorBy || activeRules.length > 0)
+      ? `${lutKey}|${sparseDatasetId ?? ""}`
+      : null,
+    {
+      build: async () => {
+        // The object catalog is shared with picking, so this is free once
+        // anything has resolved an ordinal — and vice versa.
+        const [objects, plans] = await Promise.all([
+          manager!.listObjects(),
+          attributeService!.plansFor(systemId!),
+        ]);
+        // Fetched here rather than in the builder, so the builder stays free
+        // of Apollo — the same seam `readColumn` uses on the column side.
+        const sparse =
+          sparseDatasetId && datalayer
+            ? await loadSparseSource(client, datalayer, sparseDatasetId)
+            : null;
+        return buildColorLut({
+          objects,
+          colorBy,
+          sparse,
+          readSparse: makeSparseReader(client, datalayer),
+          filterBys: activeRules,
+          plans,
+          engine: attributeService!.engine,
+        });
+      },
+      apply: (prepared) => {
+        if (prepared.skipped.length > 0) {
+          console.warn("[mesh] picker entries that do not render yet:", prepared.skipped);
+        }
+        // The paint happens HERE, not in `build`, and that placement is the
+        // point: it writes into the shared arena, so only a build that is
+        // still wanted may run it.
+        const { arena, window, qualitative } = prepared.paint(lutArenaRef.current);
+        lutArenaRef.current = arena;
+        lutPaintRef.current = { dataKey: lutKey, window, qualitative };
+        manager!.setColorLut(
+          {
+            texture: arena.texture,
+            width: arena.lut.width,
+            height: arena.lut.height,
+            window,
+          },
+          { colorize: colorBy !== null, filter: activeRules.length > 0 },
+        );
+        manager!.setColorAppearance(composeMeshLutAppearance(colorBy, { window, qualitative }));
+        invalidate();
+      },
+      reset: resetLut,
+      onError: (error) => console.warn("[mesh] could not build the colour lookup:", error),
+    },
+  );
 
   // The appearance half: colormap and clim edits recompose over the LAST
   // COMPLETED paint — two uniform writes and a palette refill, no re-read, no
@@ -411,55 +352,6 @@ const FabriksCollectionGroup = ({
     });
   }, [manager, viewerApi, layer.id, invalidate]);
 
-  // Planning cadence: once the cell index is in, plan on mount and on every
-  // camera SETTLE — never per camera tick.
-  useEffect(() => {
-    if (!manager) return;
-    let cancelled = false;
-
-    const plan = () => {
-      if (cancelled) return;
-      const { viewProjectionMatrix, viewportSize, cameraPose } = viewApi.getState();
-      if (!viewProjectionMatrix) return;
-
-      // WORLD space throughout: the cell index was transformed once at load,
-      // so there is no inverse-matrix pull-through and no per-plan clone, and
-      // an anisotropic voxel grid cannot skew the error test.
-      const frustum = new THREE.Frustum().setFromProjectionMatrix(viewProjectionMatrix);
-      let cameraPosition: [number, number, number] | null = null;
-      let focalPixels = 0;
-      let errorBudget: number | undefined;
-      if (cameraPose?.isPerspective && cameraPose.fovY > 0) {
-        cameraPosition = [...cameraPose.position] as [number, number, number];
-        // An object of world size s at distance d covers s·focalPixels/d px.
-        focalPixels = (0.5 * viewportSize.height) / Math.tan(0.5 * cameraPose.fovY);
-      } else {
-        // Ortho (2D): distance-independent LOD via the planner's camera-free
-        // branch — allow a world-space error worth `pixelBudget` on-screen
-        // pixels at the current zoom. Without this an ortho plan refines
-        // everything to level 0.
-        errorBudget =
-          manager.getPlanConfig().pixelBudget * viewerApi.getState().worldUnitsPerPixel;
-      }
-      // Budgets (pixelBudget, maxCells) live in the manager's plan config so
-      // the debug panel can steer them between settles.
-      manager.updatePlan({ frustum, cameraPosition, focalPixels, errorBudget });
-    };
-
-    manager
-      .ensureIndex()
-      .then(plan)
-      .catch((error) => console.error("[fabriks] failed to load the cell catalog:", error));
-
-    const unsubscribe = viewApi.subscribe((state, prev) => {
-      if (prev.cameraMoving && !state.cameraMoving) plan();
-    });
-    return () => {
-      cancelled = true;
-      unsubscribe();
-    };
-  }, [manager, viewApi, viewerApi]);
-
   // 2D slab: clip the collection to one z-step around the displayed slice
   // (the annotation layer's slab convention). Thickness comes from the finest
   // image layer's z-step; a scene without one falls back to one mesh voxel
@@ -470,31 +362,29 @@ const FabriksCollectionGroup = ({
   // LOD/visibility write, but the step it yields is a number — Object.is
   // equality suppresses the re-render this group used to pay for each of them.
   const slabStep = useSceneStore((s) => sceneZExtent(s.layers)?.step);
-  const slabThickness = useMemo(() => {
-    const base =
-      slabStep && Number.isFinite(slabStep)
-        ? slabStep
-        : Math.max(new THREE.Vector3().setFromMatrixColumn(matrix, 2).length(), 1e-3);
-    return base * (layer.slabScale ?? 1);
-  }, [slabStep, matrix, layer.slabScale]);
-  // z-scrub via a VANILLA subscription: setSlabClip mutates plane constants
-  // only, so a scrub tick must not re-render the group to reach the manager.
-  useEffect(() => {
-    if (!manager) return;
-    const apply = () => {
-      manager.setSlabClip(
-        displayMode === "3D"
-          ? null
-          : { z: viewerApi.getState().currentZ, thickness: slabThickness },
-      );
-      invalidate();
-    };
-    apply();
-    if (displayMode === "3D") return; // 3D ignores z; nothing to track
-    return viewerApi.subscribe((state, prev) => {
-      if (state.currentZ !== prev.currentZ) apply();
-    });
-  }, [manager, displayMode, slabThickness, viewerApi, invalidate]);
+  const slabThickness = useMemo(
+    () => collectionSlabThickness(slabStep, matrix, layer.slabScale),
+    [slabStep, matrix, layer.slabScale],
+  );
+
+  /**
+   * Placement, the plan-on-settle cadence and the z-scrub clip, all on the
+   * render plane (`platform/collections/collectionDriver.ts`). What stays in
+   * this component is what is fabriks': the manager, its material and plan
+   * config, its colour LUT, and — below — the picking, which the network
+   * layer has none of.
+   *
+   * The return value is unused: a `detail` change writes the plan config but
+   * takes effect at the next camera settle, which is what it did before.
+   */
+  useCollectionDriver(
+    manager,
+    { viewApi, viewerApi, invalidate, logTag: "[fabriks]" },
+    {
+      matrix,
+      slab: displayMode === "3D" ? null : { thickness: slabThickness },
+    },
+  );
 
   // --- Instance picking: click (PROBE) + debounced hover (PROBE follow /
   // ANNOTATE drawing tools — the brick layers' etiquette). Reads the hit's

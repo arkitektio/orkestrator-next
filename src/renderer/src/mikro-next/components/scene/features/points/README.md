@@ -6,7 +6,7 @@ one slice of a sparse matrix.
 This is the third and last way a sparse dataset gets drawn. Its object axis is identified by a
 `DATASET` (a mask → the label layer), a `MESH_COLLECTION` (→ the mesh layer) or a `TABLE` — and
 a table's rows have positions and nothing else, so until this module they had no renderer at
-all. `PointLayerRenderer` was `() => null` in `shell/chrome/stubs.tsx`. See the server's
+all. `PointLayerRenderer` was `() => null` in the old `stubs.tsx`, since deleted. See the server's
 `docs/visualising-a-sparse-dataset.md`.
 
 ## What is on the GPU, and why it is not an instanced attribute

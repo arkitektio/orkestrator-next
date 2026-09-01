@@ -5,6 +5,7 @@ import type * as THREE from "three";
 import { resolveProbeMarkerGeometry } from "../../platform/probe/probeWorld";
 import { useSceneStoreApi } from "../../platform/stores/sceneStore";
 import { useViewerStore, useViewerStoreApi } from "../../platform/stores/viewerStore";
+import { bindAll } from "../../platform/stores/bindStore";
 
 /**
  * Binds the probe marker to the live probe WITHOUT re-rendering per move.
@@ -86,11 +87,12 @@ export function useProbeMarkerBinding() {
       invalidate();
     };
 
-    apply();
     // Re-apply on ANY viewer-store change, not just the probe: the layer's
     // affine and the marker's slice come from the store too, and a probe that
-    // has not moved still has to follow a layer that has.
-    return viewerStoreApi.subscribe(apply);
+    // has not moved still has to follow a layer that has. `bindAll` is the
+    // deliberate blunt option here — a change test would read more of the
+    // state than the apply does.
+    return bindAll(viewerStoreApi, apply);
     // `identity` is a dep so the binding re-applies against the newly mounted
     // group refs when the target marker changes.
   }, [identity, viewerStoreApi, sceneStoreApi, invalidate]);

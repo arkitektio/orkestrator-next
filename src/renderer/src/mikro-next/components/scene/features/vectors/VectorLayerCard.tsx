@@ -20,7 +20,7 @@
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Eye, EyeOff, Trash2, Wind } from "lucide-react";
-import { memo, useCallback, useMemo } from "react";
+import { memo } from "react";
 import {
   ColorMap,
   VectorGlyph,
@@ -35,8 +35,9 @@ import {
   RowLabel,
 } from "../../platform/layerui/cardControls";
 import { ColormapSelect } from "../../platform/layerui/ColormapSelect";
-import { CONTINUOUS_COLORMAPS, colormapGradientCSS } from "../../platform/layerui/colormap-utils";
+import { CONTINUOUS_COLORMAP_CHOICES } from "../../platform/layerui/colormap-utils";
 import type { VectorLayerFragment } from "../../platform/model/layerGuards";
+import { useOptimisticLayerPatch } from "../../platform/layerui/useOptimisticLayerPatch";
 
 type VectorPatch = Omit<UpdateVectorLayerInput, "id">;
 
@@ -61,27 +62,8 @@ export const VectorLayerCard = memo(
     const [updateVectorLayer] = useUpdateVectorLayerMutation();
     const hidden = layer.visible === false;
 
-    const persist = useCallback(
-      (patch: VectorPatch) => {
-        patchSceneLayer(layer.id, patch as Parameters<typeof patchSceneLayer>[1]);
-        void updateVectorLayer({
-          variables: { input: { id: layer.id, ...patch } },
-        }).catch((error: unknown) => {
-          console.warn("[vectors] could not save layer settings", error);
-        });
-      },
-      [layer.id, patchSceneLayer, updateVectorLayer],
-    );
+    const persist = useOptimisticLayerPatch<VectorPatch>(layer.id, updateVectorLayer, "[vectors]");
 
-    const colormapChoices = useMemo(
-      () =>
-        CONTINUOUS_COLORMAPS.map((colormap) => ({
-          value: colormap,
-          label: colormap.toLowerCase(),
-          css: colormapGradientCSS(colormap),
-        })),
-      [],
-    );
 
     return (
       <div
@@ -200,7 +182,7 @@ export const VectorLayerCard = memo(
             <div className="min-w-0 flex-1">
               <ColormapSelect
                 value={(layer.vectorColormap as unknown as ColorMap) ?? ColorMap.Viridis}
-                choices={colormapChoices}
+                choices={CONTINUOUS_COLORMAP_CHOICES}
                 onChange={(value) => persist({ colormap: value as ColorMap })}
                 title="The ramp glyph MAGNITUDE runs through — a vector length in the component axis's unit, windowed by the clims"
               />

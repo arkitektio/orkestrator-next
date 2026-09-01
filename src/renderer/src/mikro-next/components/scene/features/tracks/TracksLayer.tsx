@@ -1,7 +1,8 @@
 /**
  * Trajectories drawn from a table dataset, grouped by its TRACK_ID column.
  *
- * The last of the layer kinds to graduate out of `shell/chrome/stubs.tsx`,
+ * The last of the layer kinds to graduate out of the old `stubs.tsx` (since
+ * deleted, once every kind had a real renderer),
  * which had said all along that "Track is the same data path [as Point] and can
  * follow the same way". It is: one ordered columnar scan of a parquet table,
  * packed into GPU buffers once, then coloured and faded by uniforms alone.
@@ -47,6 +48,7 @@ import {
   valueSpanOf,
   type TrackGeometry,
 } from "./tracksSource";
+import { bindField } from "../../platform/stores/bindStore";
 
 /** Tail length in timepoints when the layer has not been told otherwise. */
 export const DEFAULT_TAIL_WINDOW = 10;
@@ -68,22 +70,6 @@ const TrackLines = ({ layer }: { layer: TrackLayerView }) => {
   const [geometry, setGeometry] = useState<TrackGeometry | null>(null);
   const [refusal, setRefusal] = useState<string | null>(null);
 
-  const entity = layer as unknown as {
-    id: string;
-    tableDataset: { id: string; store: { id: string; bucket: string; key: string } };
-    trackIdColumn?: string | null;
-    xColumn?: string | null;
-    yColumn?: string | null;
-    zColumn?: string | null;
-    tColumn?: string | null;
-    colorByColumn?: string | null;
-    lineWidth?: number | null;
-    colormap?: string | null;
-    visible?: boolean | null;
-    opacity?: number | null;
-    asAffine?: { matrix: number[][]; inputAxes: string[]; outputAxes: string[] } | null;
-    placementInvariance?: string | null;
-  };
 
   // ------------------------------------------------------------------ placement
   const worldSystem = useSceneStore((s) => s.transformContext.worldCoordinateSystem);
@@ -99,29 +85,29 @@ const TrackLines = ({ layer }: { layer: TrackLayerView }) => {
     () =>
       affineToMatrix4(
         placementToSpatialAffine(
-          entity.asAffine,
-          [entity.xColumn ?? null, entity.yColumn ?? null, entity.zColumn ?? null],
+          layer.asAffine,
+          [layer.xColumn ?? null, layer.yColumn ?? null, layer.zColumn ?? null],
           spatialAxisTriple(worldSystem),
         ),
       ),
-    [entity.asAffine, entity.xColumn, entity.yColumn, entity.zColumn, worldSystem],
+    [layer.asAffine, layer.xColumn, layer.yColumn, layer.zColumn, worldSystem],
   );
 
   // ------------------------------------------------------------------ the read
   useEffect(() => {
     const engine = service?.engine;
-    if (!engine || !entity.trackIdColumn || !entity.xColumn || !entity.yColumn) return;
+    if (!engine || !layer.trackIdColumn || !layer.xColumn || !layer.yColumn) return;
     let cancelled = false;
 
-    void loadTrackGeometry(engine, entity.tableDataset.store as never, {
-      trackId: entity.trackIdColumn,
-      x: entity.xColumn,
-      y: entity.yColumn,
-      z: entity.zColumn ?? null,
-      t: entity.tColumn ?? null,
+    void loadTrackGeometry(engine, layer.tableDataset.store as never, {
+      trackId: layer.trackIdColumn,
+      x: layer.xColumn,
+      y: layer.yColumn,
+      z: layer.zColumn ?? null,
+      t: layer.tColumn ?? null,
       // Read in the SAME scan as the coordinates: a track table has no id
       // column, so a second scan could not be aligned to this one.
-      value: entity.colorByColumn ?? null,
+      value: layer.colorByColumn ?? null,
     })
       .then((result) => {
         if (cancelled) return;
@@ -149,13 +135,13 @@ const TrackLines = ({ layer }: { layer: TrackLayerView }) => {
     };
   }, [
     service,
-    entity.tableDataset.store,
-    entity.trackIdColumn,
-    entity.xColumn,
-    entity.yColumn,
-    entity.zColumn,
-    entity.tColumn,
-    entity.colorByColumn,
+    layer.tableDataset.store,
+    layer.trackIdColumn,
+    layer.xColumn,
+    layer.yColumn,
+    layer.zColumn,
+    layer.tColumn,
+    layer.colorByColumn,
   ]);
 
   useEffect(() => {
@@ -165,25 +151,25 @@ const TrackLines = ({ layer }: { layer: TrackLayerView }) => {
   // A world-space `lineWidth` is a well-defined length only from SIMILARITY up.
   // The schema names `lineWidth` explicitly among the scalars this governs.
   useEffect(() => {
-    const invariance = entity.placementInvariance;
+    const invariance = layer.placementInvariance;
     if (invariance && invariance !== "ISOMETRY" && invariance !== "SIMILARITY") {
       console.warn(
         `[tracks] this layer's placement is ${invariance}, so 'lineWidth' in scene units is not a well-defined length here`,
       );
     }
-  }, [entity.placementInvariance]);
+  }, [layer.placementInvariance]);
 
   // ------------------------------------------------------------------ the line
   const bundle = useMemo(
     () =>
       createTrackMaterial({
-        lineWidth: entity.lineWidth ?? 1,
-        colorize: Boolean(entity.colorByColumn) && Boolean(geometry?.values),
+        lineWidth: layer.lineWidth ?? 1,
+        colorize: Boolean(layer.colorByColumn) && Boolean(geometry?.values),
       }),
     // Rebuilt only when the COLOURED-ness changes, not on every width tick —
     // the width itself is a uniform write below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [Boolean(entity.colorByColumn) && Boolean(geometry?.values)],
+    [Boolean(layer.colorByColumn) && Boolean(geometry?.values)],
   );
 
   const lineGeometry = useMemo(() => new LineSegmentsGeometry(), []);
@@ -236,58 +222,56 @@ const TrackLines = ({ layer }: { layer: TrackLayerView }) => {
     const span = valueSpanOf(geometry?.values ?? null);
     bundle.nodes.uClimMin.value = span.min;
     bundle.nodes.uClimMax.value = span.max;
-    bundle.nodes.uOpacity.value = entity.opacity ?? 1;
-    bundle.nodes.uColorize.value = entity.colorByColumn && geometry?.values ? 1 : 0;
+    bundle.nodes.uOpacity.value = layer.opacity ?? 1;
+    bundle.nodes.uColorize.value = layer.colorByColumn && geometry?.values ? 1 : 0;
     setTrackPalette(
       bundle.nodes,
-      paletteRowFor((entity.colormap ?? DEFAULT_MEASURE_COLORMAP) as never),
+      paletteRowFor((layer.colormap ?? DEFAULT_MEASURE_COLORMAP) as never),
     );
-    bundle.material.linewidth = entity.lineWidth ?? 1;
+    bundle.material.linewidth = layer.lineWidth ?? 1;
     invalidate();
-  }, [bundle, geometry, entity.opacity, entity.colormap, entity.colorByColumn, entity.lineWidth, invalidate]);
+  }, [bundle, geometry, layer.opacity, layer.colormap, layer.colorByColumn, layer.lineWidth, invalidate]);
 
   // ------------------------------------------------------------------- time
   const tailWindow = useSceneStore(
-    (s) => s.trackTailWindows[entity.id] ?? DEFAULT_TAIL_WINDOW,
+    (s) => s.trackTailWindows[layer.id] ?? DEFAULT_TAIL_WINDOW,
   );
 
   /**
-   * The current timepoint, read IMPERATIVELY.
+   * The current timepoint, bound IMPERATIVELY.
    *
    * P17 (`ARCHITECTURE.md`): React-subscribed store fields may only change at UI
    * cadence, and `dimSelections` does not — `AnimationPlayer` writes
    * `setDimSelection` from inside `useFrame` while a camera tour plays, so a
    * `useViewerStore((s) => s.dimSelections)` selector here would re-render this
-   * layer at frame rate. A vanilla subscription with an identity latch writes
-   * the uniform and invalidates, touching React not at all. `dimSelections` is
-   * compared by REFERENCE, which is exactly why `setDimSelection` guards
-   * no-op writes and allocates a fresh object on a real change.
+   * layer at frame rate.
+   *
+   * The latch is on THIS layer's timepoint, not on the `dimSelections` object.
+   * It used to be the object: a fresh one is allocated on every real change,
+   * so scrubbing an unrelated dim (a `c` slider in a scene that also holds
+   * tracks) rewrote both uniforms and requested a frame for nothing. The point
+   * layer, which this was copied from, already compared `[TIME_DIM]`.
    */
   const viewerApi = useViewerStoreApi();
   useEffect(() => {
     // Both the segment times and the slider are INDICES into this timeline —
     // see `TrackGeometry.timeline` for why the raw t values are resolved away.
     const maxIndex = geometry?.timeline ? geometry.timeline.length - 1 : null;
-    const apply = () => {
-      // No t column means no tail: a non-positive window is the material's
-      // "draw the trajectory whole" sentinel.
-      bundle.nodes.uTailWindow.value = maxIndex === null ? 0 : tailWindow;
-      if (maxIndex === null) return;
-      const selected = viewerApi.getState().dimSelections[TIME_DIM];
-      // Absent selection = the end of the data, so a scene with no T slider
-      // still draws the full trajectories rather than an empty viewport.
-      bundle.nodes.uCurrentT.value =
-        selected === undefined ? maxIndex : Math.max(0, Math.min(maxIndex, Math.round(selected)));
-      invalidate();
-    };
-    apply();
-
-    let last = viewerApi.getState().dimSelections;
-    return viewerApi.subscribe((state) => {
-      if (state.dimSelections === last) return;
-      last = state.dimSelections;
-      apply();
-    });
+    return bindField(
+      viewerApi,
+      (state) => state.dimSelections[TIME_DIM],
+      (selected) => {
+        // No t column means no tail: a non-positive window is the material's
+        // "draw the trajectory whole" sentinel.
+        bundle.nodes.uTailWindow.value = maxIndex === null ? 0 : tailWindow;
+        if (maxIndex === null) return;
+        // Absent selection = the end of the data, so a scene with no T slider
+        // still draws the full trajectories rather than an empty viewport.
+        bundle.nodes.uCurrentT.value =
+          selected === undefined ? maxIndex : Math.max(0, Math.min(maxIndex, Math.round(selected)));
+        invalidate();
+      },
+    );
   }, [bundle, geometry, tailWindow, invalidate, viewerApi]);
 
   /**
@@ -308,13 +292,13 @@ const TrackLines = ({ layer }: { layer: TrackLayerView }) => {
    */
   const timeExtents = useMemo((): DimExtent[] | null => {
     const timeline = geometry?.timeline ?? null;
-    if (!timeline || entity.visible === false) return null;
+    if (!timeline || layer.visible === false) return null;
     const maxIndex = timeline.length - 1;
     return [{ dim: TIME_DIM, maxIndex, defaultIndex: maxIndex }];
-  }, [geometry, entity.visible]);
-  usePublishDimExtents(entity.id, timeExtents);
+  }, [geometry, layer.visible]);
+  usePublishDimExtents(layer.id, timeExtents);
 
-  if (entity.visible === false) return null;
+  if (layer.visible === false) return null;
   // Never mount a Line2 whose geometry has no segments: the shader would be
   // built against a geometry with no instanceStart/instanceEnd.
   if (!geometry || geometry.segmentCount === 0) return null;

@@ -18,6 +18,10 @@ fragment ParquetStore on ParquetStore {
   key
   bucket
   path
+  # Null while the upload is unfinished (and for stores written before this was
+  # recorded). Lets a reader tell "the data is not there yet" from "the read
+  # failed", instead of surfacing a raw 404 from DuckDB's httpfs.
+  sizeBytes
 }
 
 fragment BigFileStore on BigFileStore {

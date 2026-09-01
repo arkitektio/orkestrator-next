@@ -58,12 +58,6 @@ import {
   resolvePoolBudget,
 } from "../octree/poolBudget";
 import {
-  isFixedShapeFastPathEnabled,
-  isOccHierarchyEnabled,
-  isOccObservedRangeEnabled,
-  isOccPerSlabEnabled,
-} from "../gpu/shaderFlags";
-import {
   aggregateIfComplete,
   aggregateSlabsIfComplete,
   parentCellsOf,
@@ -92,7 +86,6 @@ import {
 import {
   haloStillWanted,
   initialFetchPhase,
-  isTwoPhaseBricksEnabled,
   needsHaloRefine,
 } from "./twoPhase";
 import { createNodeKeyMemo, type NodeKeyMemo } from "../octree/nodeKeyMemo";
@@ -127,7 +120,6 @@ import {
 } from "../gpu/brickAtlas";
 import {
   createGpuRepacker,
-  isGpuRepackEnabled,
   type GpuFlushOutcome,
   type GpuRepacker,
 } from "../gpu/computeRepack";
@@ -736,7 +728,7 @@ export class BrickResidencyManager {
    * above every generation; the slab prefetch stays at −1, below all of it. */
   private fetchGeneration = 1;
   /** Two-phase bricks kill switch, read once per manager (see twoPhase.ts). */
-  private readonly twoPhaseBricks = isTwoPhaseBricksEnabled();
+  private readonly twoPhaseBricks = true;
   /** Trailing hysteresis for the governor's streaming flag (drainUploads). */
   private lastStreamingTrueAt = 0;
   private streamingClearTimer: ReturnType<typeof setTimeout> | null = null;
@@ -930,9 +922,7 @@ export class BrickResidencyManager {
     // "no device yet" permanent for the whole session.
     if (this.renderer === null) return null;
     if (this.gpuRepacker === undefined) {
-      this.gpuRepacker = isGpuRepackEnabled()
-        ? createGpuRepacker<GpuBrickToken>(this.renderer)
-        : null;
+      this.gpuRepacker = createGpuRepacker<GpuBrickToken>(this.renderer);
     }
     return this.gpuRepacker;
   }
@@ -1056,7 +1046,7 @@ export class BrickResidencyManager {
        * the switch is not a bisect tool (pitfall P10: telemetry that lies is
        * worse than none). "off" includes the case where `shaderFastPath` is
        * off, which mutes it. */
-      fixedShapeFastPath: isFixedShapeFastPathEnabled() ? "on" : "off",
+      fixedShapeFastPath: "on",
       /** Summed atlas GPU bytes across pools. In lazy-mirror mode (the
        * default, roadmap R3) this IS the footprint; with
        * `orkestrator.atlasMirror = "on"` a JS-heap copy costs the same again. */
@@ -2296,8 +2286,8 @@ export class BrickResidencyManager {
       // slice/range change would otherwise pin this pool on the old policy
       // for its whole life.
       movable.occObservedRange =
-        derivation.valueSemantics === "intensity" && isOccObservedRangeEnabled();
-      movable.occHierarchy = isOccHierarchyEnabled();
+        derivation.valueSemantics === "intensity";
+      movable.occHierarchy = true;
       movable.poolKey = poolKey;
       this.pools.set(poolKey, movable);
       // The decode uniforms (minValue/maxValue, uEmptyDecode*, uOccDecode*)
@@ -2385,7 +2375,7 @@ export class BrickResidencyManager {
       // storage binding — permanently, silently disabling GPU repack for this
       // pool's whole life. Decide from the flag + geometry, which do not
       // depend on whether the device exists yet. (OCTREE_RENDERER.md P23.)
-      computeStorage: isGpuRepackEnabled() && !hasPhasorSlabs(geometry),
+      computeStorage: !hasPhasorSlabs(geometry),
     });
     // One occupancy plane per slab where the flag and the texture extent
     // allow it (intensity pools only — a label's id-space has no windowing).
@@ -2393,7 +2383,7 @@ export class BrickResidencyManager {
       spec.channelCount,
       layout.size[2],
       PAGE_TEXTURE_MAX_EXTENT,
-      derivation.valueSemantics === "intensity" && isOccPerSlabEnabled(),
+      derivation.valueSemantics === "intensity",
     );
     const pageTable = createPageTableTexture(layout, occSlabs);
 
@@ -2467,14 +2457,14 @@ export class BrickResidencyManager {
       // land. NEVER for label pools: their occupancy is id-space where
       // "range" has no windowing meaning, exactly like autoRange.
       occObservedRange:
-        derivation.valueSemantics === "intensity" && isOccObservedRangeEnabled(),
+        derivation.valueSemantics === "intensity",
       occObservedMin: 0,
       occObservedMax: 0,
       occObservedInitialized: false,
       occEncodeMin: minValue,
       occEncodeMax: maxValue,
       occReencodePending: false,
-      occHierarchy: isOccHierarchyEnabled(),
+      occHierarchy: true,
       measuredRanges: new Map(),
       aggregateRanges: new Map(),
       occSlabs,

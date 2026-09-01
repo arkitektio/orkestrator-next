@@ -7,6 +7,8 @@ import {
   toNumberOrNull,
   toTriple,
 } from "@/mikro-next/components/scene/platform/parquet/rowValues";
+import { octreeCellKey } from "../../../platform/parquet/mortonCell";
+import { toWorldCells } from "../../../platform/lod/lodCatalog";
 
 /**
  * The two catalogs, and the world-space index the planner works from.
@@ -31,7 +33,8 @@ import {
  *    falsifiable at a single level — and a single level is the common case.
  */
 
-export const konnektionCellKey = (level: number, cell: number): string => `${level}:${cell}`;
+/** `platform/parquet/mortonCell.ts`'s key, under this format's name. */
+export const konnektionCellKey = octreeCellKey;
 
 /** One row of the cell catalog, in the collection's own voxel space. */
 export type KonnektionCellRow = {
@@ -111,15 +114,6 @@ export type KonnektionObjectEntry = {
  * no single "the" scale. The max is the conservative choice: it can only
  * over-refine, never under-refine, and under-refining is the visible failure.
  */
-export function maxAxisScale(matrix: THREE.Matrix4): number {
-  const e = matrix.elements;
-  const x = Math.hypot(e[0], e[1], e[2]);
-  const y = Math.hypot(e[4], e[5], e[6]);
-  const z = Math.hypot(e[8], e[9], e[10]);
-  return Math.max(x, y, z);
-}
-
-const scratchBox = new THREE.Box3();
 
 /**
  * Precompute world AABBs and world-space errors once per (collection, matrix).
@@ -134,21 +128,7 @@ export function buildKonnektionCellIndex(
   manifest: KonnektionManifest,
   voxelToWorld: THREE.Matrix4,
 ): KonnektionCellIndex {
-  const errorScale = maxAxisScale(voxelToWorld);
-  const cells = rows.map((row): KonnektionCellEntry => {
-    scratchBox.min.set(row.bboxMin[0], row.bboxMin[1], row.bboxMin[2]);
-    scratchBox.max.set(row.bboxMax[0], row.bboxMax[1], row.bboxMax[2]);
-    // applyMatrix4 on a Box3 transforms all eight corners and re-bounds them,
-    // which is what a rotated or sheared placement needs.
-    scratchBox.applyMatrix4(voxelToWorld);
-    return {
-      ...row,
-      key: konnektionCellKey(row.level, row.cell),
-      worldMin: [scratchBox.min.x, scratchBox.min.y, scratchBox.min.z],
-      worldMax: [scratchBox.max.x, scratchBox.max.y, scratchBox.max.z],
-      worldLodError: row.lodError * errorScale,
-    };
-  });
+  const cells: KonnektionCellEntry[] = toWorldCells(rows, voxelToWorld);
 
   const byKey = new Map(cells.map((entry) => [entry.key, entry]));
   const byLevel = new Map<number, KonnektionCellEntry[]>();

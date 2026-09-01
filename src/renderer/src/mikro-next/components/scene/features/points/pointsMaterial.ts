@@ -46,7 +46,9 @@ const {
   mix,
   storage,
   texture,
+  uint,
   uniform,
+  varying,
   vec2,
   vec3,
   vec4,
@@ -77,16 +79,24 @@ export type PointMaterialBundle = {
 /**
  * The six corners of a quad, from the vertex index alone.
  *
- * Two triangles, wound (0,1,2)(2,1,3) over the unit square centred on the origin. Deriving them
+ * Two triangles, wound (0,1,2)(3,2,1) over the unit square centred on the origin. Deriving them
  * arithmetically rather than from a geometry attribute is what lets the mesh carry no per-vertex
  * data at all: the only buffers bound are the two storage ones, both indexed per INSTANCE.
+ *
+ * VERTEX STAGE ONLY. `vertexIndex` is a `u32`, so everything here stays integer until the
+ * final `toFloat()`: WGSL has no `floor(u32)` (integer division already truncates), and the
+ * shader module fails to compile on it rather than warning. The fragment stage must read the
+ * INTERPOLATED corner through `varying` below — three resolves `vertexIndex` in a fragment
+ * body as a flat varying of the provoking vertex, which is one constant per triangle, and a
+ * round-point discard tested against that throws every fragment away.
  */
 const emitCorner = (): any => {
   const index = vertexIndex.mod(6);
-  // 0,1,2,2,1,3 -> the two triangles of the square
-  const corner = index.lessThan(3).select(index, index.sub(3).oneMinus().add(2));
+  // 0,1,2 then 3,2,1 -> the two triangles of the square. `6 - index` rather than a wrapped
+  // `oneMinus`, which only worked by u32 overflow.
+  const corner = index.lessThan(3).select(index, uint(6).sub(index));
   const x = corner.mod(2).toFloat().sub(0.5);
-  const y = corner.div(2).floor().toFloat().sub(0.5);
+  const y = corner.div(2).toFloat().sub(0.5);
   return vec2(x, y);
 };
 
@@ -137,11 +147,14 @@ export const createPointMaterial = (
   // The quad is billboarded in VIEW space, so a point keeps its size and facing however the
   // layer's affine rotates or shears the data. `placementInvariance` is what says whether that
   // size is a well-defined length at all -- from SIMILARITY up -- and the layer badges it.
+  // One node for both stages: evaluated in the vertex shader, interpolated into the fragment
+  // shader, where it is the fragment's offset from the point centre in [-0.5, 0.5]^2.
+  const corner = varying(emitCorner(), "vPointCorner");
+
   material.vertexNode = Fn(() => {
     const centre = positionNode.element(pointIndex);
     const world = stride === 3 ? vec3(centre) : vec3(centre.x, centre.y, float(0));
     const view = TSL.modelViewMatrix.mul(vec4(world, 1.0));
-    const corner = emitCorner();
     return TSL.cameraProjectionMatrix.mul(
       vec4(view.xyz.add(vec3(corner.x, corner.y, float(0)).mul(nodes.uPointSize)), 1.0),
     );
@@ -149,7 +162,6 @@ export const createPointMaterial = (
 
   material.fragmentNode = Fn(() => {
     // A round point: the quad is a billboard and its corners are not part of the mark.
-    const corner = emitCorner();
     TSL.Discard(corner.length().greaterThan(0.5));
     if (maskNode) {
       TSL.Discard(maskNode.element(pointIndex).equal(TSL.uint(0)));

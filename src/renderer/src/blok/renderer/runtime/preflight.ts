@@ -1,5 +1,5 @@
 import type {z} from 'zod';
-import type {BlokCatalog} from './functions';
+import {validateUtilCallArgumentKeys, type BlokCatalog} from './functions';
 import {BlokSchemas, isActionSchema} from './schemas';
 import type {PreparedBlokNode} from './tree';
 import type {BlokActionArgument, BlokComponentNode, BlokComponentProp} from './types';
@@ -29,10 +29,18 @@ const isRequiredField = (fieldSchema: z.ZodTypeAny): boolean =>
  * effectful function is reported at validation time rather than blowing up
  * mid-render.
  */
-const collectUtilOperations = (
-  prop: BlokComponentProp,
-): Array<{operation: string; valuePosition: boolean}> => {
-  const operations: Array<{operation: string; valuePosition: boolean}> = [];
+type UtilOperationUse = {
+  operation: string;
+  valuePosition: boolean;
+  /** The keys the call site supplies, mirroring `resolveActionArguments`. */
+  argumentKeys: string[];
+};
+
+const getArgumentKeys = (argumentsList: BlokActionArgument[] | null | undefined): string[] =>
+  (argumentsList ?? []).map((argument, index) => argument.key ?? String(index));
+
+const collectUtilOperations = (prop: BlokComponentProp): UtilOperationUse[] => {
+  const operations: UtilOperationUse[] = [];
 
   const visitArgumentList = (
     argumentsList: BlokActionArgument[] | null | undefined,
@@ -40,7 +48,11 @@ const collectUtilOperations = (
   ) => {
     argumentsList?.forEach(argument => {
       if (argument.util_call) {
-        operations.push({operation: argument.util_call.operation, valuePosition});
+        operations.push({
+          operation: argument.util_call.operation,
+          valuePosition,
+          argumentKeys: getArgumentKeys(argument.util_call.arguments),
+        });
         visitArgumentList(argument.util_call.arguments, valuePosition);
       }
 
@@ -51,7 +63,11 @@ const collectUtilOperations = (
   };
 
   if (prop.util_call) {
-    operations.push({operation: prop.util_call.operation, valuePosition: true});
+    operations.push({
+      operation: prop.util_call.operation,
+      valuePosition: true,
+      argumentKeys: getArgumentKeys(prop.util_call.arguments),
+    });
     visitArgumentList(prop.util_call.arguments, true);
   }
 
@@ -86,7 +102,7 @@ const validateProps = (
     const fieldSchema = shape[prop.key];
     const propIsActionPosition = isActionSchema(fieldSchema);
 
-    collectUtilOperations(prop).forEach(({operation, valuePosition}) => {
+    collectUtilOperations(prop).forEach(({operation, valuePosition, argumentKeys}) => {
       const fn = catalog.functions.get(operation);
 
       if (!fn) {
@@ -108,6 +124,17 @@ const validateProps = (
           message: `Function "${operation}" has side effects and cannot compute the value of "${prop.key}". Bind it to an action prop instead.`,
         });
       }
+
+      // Argument *values* are only known at render time, but the keys are in
+      // the payload, so a misspelled or missing argument is caught here.
+      validateUtilCallArgumentKeys(fn, argumentKeys).forEach(message => {
+        isValid = false;
+        pushError({
+          path: `${basePath}.props.${prop.key}`,
+          componentId: node.id,
+          message,
+        });
+      });
     });
   });
 

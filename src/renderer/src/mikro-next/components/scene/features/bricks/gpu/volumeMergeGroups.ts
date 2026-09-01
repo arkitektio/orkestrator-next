@@ -173,26 +173,11 @@ export function findMergeGroup(
 }
 
 /**
- * Kill switch (localStorage, default ON), mirroring `orkestrator.gpuRepack`:
+ * Was a kill switch; settled ON (OCTREE_RENDERER.md §6.9), mirroring `orkestrator.gpuRepack`:
  * lets a session A/B the merged pass against one-pass-per-layer without a
  * rebuild. Read at material-build time, so toggling takes effect on the next
  * scene mount. This is the only practical way to bisect a visual regression in
  * a shader that cannot be unit-tested against a GPU.
  */
-const VOLUME_MERGE_STORAGE_KEY = "orkestrator.volumeMerge";
 
-export function isVolumeMergeEnabled(): boolean {
-  try {
-    return window.localStorage.getItem(VOLUME_MERGE_STORAGE_KEY) !== "off";
-  } catch {
-    return true;
-  }
-}
 
-export function setVolumeMergeEnabled(enabled: boolean): void {
-  try {
-    window.localStorage.setItem(VOLUME_MERGE_STORAGE_KEY, enabled ? "on" : "off");
-  } catch {
-    /* storage unavailable: session keeps its current state */
-  }
-}

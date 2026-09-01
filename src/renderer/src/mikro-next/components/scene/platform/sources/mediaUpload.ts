@@ -20,7 +20,7 @@ import type { MikroClient } from "@/lib/zarr/store/types";
  *     `ImageFileLike` scalar wants (`createSceneSnapshot`, `createSnapshot`).
  *
  * Signed with `aws4fetch`, the same signer the viewer already uses for reads
- * (`render/final/useArray.tsx`, `elektro/lib/store.tsx`). The main process has
+ * (the zarr read path in `lib/zarr/store`). The main process has
  * an `@aws-sdk` uploader (`main/modules/BigFileUploadService.ts`) but it streams
  * from a FILE PATH — a canvas blob never touches disk, so it cannot be reused.
  * Its grant handling is what this mirrors: path-style addressing against the

@@ -205,3 +205,48 @@ export const readDefaultFilterRule = async (
   if (distinct.values.length === 0) return null;
   return { rule: { values: distinct.values }, truncated: distinct.truncated };
 };
+
+/**
+ * Turn a failed stats read into something a person can act on.
+ *
+ * These reads go through DuckDB's httpfs, so a failure arrives as a SQL error
+ * carrying the whole statement and the `s3://` URL. Rendered verbatim in a
+ * 10px caption that is a wall of SQL, and it buries the one fact that matters:
+ * whether the data is missing or the query was wrong.
+ *
+ * The NOT-FOUND case is the common one and is not a bug in the query. A
+ * `ParquetStore` row can exist with no object behind it — `sizeBytes` is
+ * documented "Null while unfinished" — so a table whose upload never finished
+ * still resolves, still issues a read grant, and still 404s at the object.
+ * S3 also answers 404 rather than 403 for a caller without `ListBucket`, so a
+ * grant that does not cover the key looks identical from here; the message
+ * says both rather than guessing.
+ *
+ * The raw text is returned alongside so a caller can keep it reachable — a
+ * tooltip, a console line — rather than throwing away the detail.
+ */
+export type ColumnStatsFailure = { summary: string; detail: string };
+
+export const describeColumnStatsError = (
+  error: unknown,
+  store?: ParquetStoreLike,
+): ColumnStatsFailure => {
+  const detail = error instanceof Error ? error.message : String(error);
+  // Deliberately NOT a bare /not found/: a binder error reads "Referenced
+  // column \"x\" not found", which is a query bug and the opposite of this.
+  const notFound = /\b404\b|no files found|NoSuchKey|NoSuchBucket/i.test(detail);
+  if (!notFound) return { summary: "the values could not be read from this table", detail };
+
+  // `sizeBytes` is measured when the upload FINISHES, so a null alongside a
+  // missing object is the unfinished-upload case — the one a person can act
+  // on, by finishing or re-running the upload. Null is also what stores
+  // written before the server recorded it carry, which is why this only
+  // sharpens the message and never asserts it.
+  const unfinished = store !== undefined && (store.sizeBytes ?? null) === null;
+  return {
+    summary: unfinished
+      ? "this table's upload never finished, so there is no data file to read yet"
+      : "this table's data file is not in storage — it may have been removed, or this session's grant may not cover it",
+    detail,
+  };
+};

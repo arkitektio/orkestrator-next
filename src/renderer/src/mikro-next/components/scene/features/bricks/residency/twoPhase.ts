@@ -19,15 +19,7 @@
 
 import type { FetchPhase } from "../octree/nodeAddress";
 
-const STORAGE_KEY = "orkestrator.twoPhaseBricks";
 
-export function isTwoPhaseBricksEnabled(): boolean {
-  try {
-    return window.localStorage.getItem(STORAGE_KEY) !== "off";
-  } catch {
-    return true;
-  }
-}
 
 /**
  * The phase a brick's FIRST fetch runs in. Core only pays off when there is a

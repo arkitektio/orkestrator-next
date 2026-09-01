@@ -7,6 +7,7 @@ import { useSceneStore, useSceneStoreApi } from "../../platform/stores/sceneStor
 import { useViewerStoreApi } from "../../platform/stores/viewerStore";
 import { perfMonitor } from "../../platform/perf/perfMonitor";
 import { PreviewLine, type PreviewLineHandle } from "../../platform/draw/PreviewLine";
+import { bindAll } from "../../platform/stores/bindStore";
 
 /**
  * Three axis-aligned guide lines through the probed point, spanning the scene
@@ -103,8 +104,8 @@ export const ProbeAxisGuides = () => {
       ]);
     };
 
-    apply();
-    return viewerStoreApi.subscribe(apply);
+    // Any viewer-store change can move a guide: see `useProbeMarkerBinding`.
+    return bindAll(viewerStoreApi, apply);
   }, [guidesApply, box, viewerStoreApi]);
 
   return (

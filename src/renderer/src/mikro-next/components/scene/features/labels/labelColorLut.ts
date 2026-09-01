@@ -17,7 +17,7 @@ import {
   type ValueLutArena,
   type ValueSource,
 } from "../../platform/attributes/valueLut";
-import type { SparseReadRequest } from "@/mikro-next/lib/sparse/sparseSource";
+import type { SparseReadRequest, SparseReader, SparseSliceRead } from "@/mikro-next/lib/sparse/sparseSource";
 import {
   readColumnByObjectIdBatchedCached,
   readColumnValuesBatchedCached,
@@ -90,12 +90,10 @@ export const labelLutMaxTexels = (bytesPerTexel: number): number =>
  */
 export const LABEL_LUT_MAX_TEXELS = labelLutMaxTexels(VALUE_LUT_BYTES_PER_TEXEL);
 
-/** One slice of a matrix, as both a colouring and a rule consume it. */
-export type SparseSliceRead = {
-  values: Map<number, number>;
-  /** How many objects the matrix addresses — the slot space, zeros included. */
-  slotCount: number;
-};
+/** One slice of a matrix, as both a colouring and a rule consume it.
+ *  Defined with the reader that produces it; re-exported here because this
+ *  module's request type is where most callers meet it. */
+export type { SparseSliceRead } from "@/mikro-next/lib/sparse/sparseSource";
 
 export type LabelColorLutRequest = {
   colorBy: ColumnLutEntryColorBy | null;
@@ -111,12 +109,7 @@ export type LabelColorLutRequest = {
    * Absent (no datalayer) means a sparse rule cannot be read; it is then
    * `skipped` rather than silently applied to nothing.
    */
-  readSparse?:
-    | ((
-        datasetId: string,
-        at: readonly { axis: string; value: number }[],
-      ) => Promise<SparseSliceRead>)
-    | null;
+  readSparse?: SparseReader | null;
   filterBys: readonly ColumnLutEntryFilterBy[];
   /** The mask's attribute plans, for each table's store and key column. */
   plans: readonly AttributePlanLike[];

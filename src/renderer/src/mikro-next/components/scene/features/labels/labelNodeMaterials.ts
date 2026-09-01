@@ -4,6 +4,10 @@ import * as TSLTyped from "three/tsl";
 
 import type { LayerBrickPool } from "../bricks/residency/brickResidency";
 import { GOLDEN_RATIO_CONJUGATE } from "../../platform/gpu/instanceColormaps";
+import {
+  identityPaletteTexture,
+  setMeasurePalette,
+} from "../../platform/gpu/measurePalette";
 import { emitValueLutColor, identityValueLutTexture } from "../../platform/gpu/valueLutNodes";
 import {
   emitResolveBrickResidency,
@@ -20,7 +24,6 @@ import {
   MAX_RAY_STEPS,
 } from "../bricks/gpu/volumeRayNodes";
 import type { LabelUniformData } from "./labelUniforms";
-import { isAnisoStrideEnabled } from "../bricks/gpu/shaderFlags";
 
 // Same dynamic-typing bargain as `brickNodeMaterials.ts`: three's TSL TypeScript
 // surface lags the runtime API (int/ivec3 uniforms, node-valued Loop bounds,
@@ -140,14 +143,7 @@ export type LabelMaterialBundle = { material: NodeMaterial; nodes: LabelMaterial
  * lands, so nothing samples it; and if anything did, white is the identity the
  * old RGBA table used.
  */
-const createIdentityPalette = (): THREE.DataTexture => {
-  const texture = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1, THREE.RGBAFormat);
-  texture.magFilter = THREE.LinearFilter;
-  texture.minFilter = THREE.LinearFilter;
-  texture.generateMipmaps = false;
-  texture.needsUpdate = true;
-  return texture;
-};
+const createIdentityPalette = identityPaletteTexture;
 
 /** The shared RG8 decode — one implementation for masks and meshes; see
  *  `platform/gpu/valueLutNodes.ts` for the contract it enforces. */
@@ -520,25 +516,16 @@ export function setLabelColorStyle(
     lutPalette: { value: THREE.DataTexture };
     identityPalette?: THREE.DataTexture;
   };
-  const bound = handle.lutPalette.value;
-  const incoming = style.palette;
-  if (bound === incoming) return;
-
-  const boundImage = bound.image as { data?: Uint8Array } | undefined;
-  const nextImage = incoming.image as { data?: Uint8Array } | undefined;
-  if (
-    bound !== handle.identityPalette &&
-    boundImage?.data &&
-    nextImage?.data &&
-    boundImage.data.length === nextImage.data.length
-  ) {
-    boundImage.data.set(nextImage.data);
-    bound.needsUpdate = true;
-    incoming.dispose();
-    return;
+  // The shared implementation, which also carries the row's FILTERS across.
+  // This used to be a local copy that adopted only the bytes — and because a
+  // qualitative row and a continuous one are both 256x1 RGBA, switching
+  // viridis -> hues took the same-length adopt path and left the new ranks
+  // being sampled LINEAR, blending adjacent classes into colours belonging to
+  // neither. `measurePalette`'s docblock names that hazard; the mask path had
+  // it.
+  if (handle.identityPalette) {
+    setMeasurePalette(handle.lutPalette, handle.identityPalette, style.palette);
   }
-  if (bound !== handle.identityPalette) bound.dispose();
-  handle.lutPalette.value = incoming;
 }
 
 // ---------------------------------------------------------------- 3D --------
@@ -615,7 +602,7 @@ export function createLabelVolumeNodeMaterial(
   labelData: LabelUniformData,
 ): LabelVolumeMaterialBundle {
   // Read ONCE per material build (kill switch — see shaderFlags.ts).
-  const anisoStride = isAnisoStrideEnabled();
+  const anisoStride = true;
   const t = makeTraversalNodes(pool, dataRange);
   const rayUniforms = makeVolumeRayUniforms();
   const { uBaseShape, uDesiredLevel } = rayUniforms;

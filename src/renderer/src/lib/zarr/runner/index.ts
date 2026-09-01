@@ -10,8 +10,6 @@ export {
   chunkCacheKeyFor,
   createCacheKey,
   createDefaultWorker,
-  /** @deprecated Use {@link createDefaultWorker} instead. */
-  DEFAULT_WORKER_URL,
   effectiveChunkShapeOf,
   getChunkGroupWorker,
   getChunkWorker,

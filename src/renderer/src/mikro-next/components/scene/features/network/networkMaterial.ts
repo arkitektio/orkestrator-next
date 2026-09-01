@@ -317,14 +317,42 @@ export function createNetworkGpuBundle(
   // segment passes — so culling would drop half of every network.
   segmentMaterial.side = THREE.DoubleSide;
 
+  /**
+   * `positionNode` AND `vertexNode`, and why both.
+   *
+   * Every network material pulls its geometry from the storage buffers inside
+   * a custom `vertexNode`; the bound `position` attribute is only the template
+   * (a unit quad here, a unit sphere and cone below). But three's clipping —
+   * the 2D slab, via the manager's `ClippingGroup` — never reads the vertex
+   * output. It tests `positionView`, which is `modelViewMatrix * positionLocal`,
+   * and `positionLocal` is the `position` attribute unless `positionNode` says
+   * otherwise. With `clip-distances` available (it is: the renderer requests
+   * every adapter feature) the test even runs in the VERTEX stage, so it saw
+   * the template at the group origin and either kept or cut the whole network
+   * regardless of z. `positionNode` is what the clip reads; `vertexNode` still
+   * owns the clip-space output. three assigns `positionLocal` from
+   * `positionNode` before it builds `vertexNode` or the hardware clip, so the
+   * two coexist (`NodeMaterial.setup`).
+   *
+   * For a segment the clipped position is the CENTRE LINE, without the
+   * view-space width offset: that offset is perpendicular to the eye, so in 2D
+   * it has no z and the cut lands exactly on the slab plane.
+   */
+  const segmentT = positionGeometry.x;
+  const segmentA = edgesNode.element(instanceIndex.mul(2));
+  const segmentB = edgesNode.element(instanceIndex.mul(2).add(1));
+  const segmentStart = positionsNode.element(segmentA);
+  const segmentEnd = positionsNode.element(segmentB);
+  segmentMaterial.positionNode = mix(vec3(segmentStart), vec3(segmentEnd), segmentT);
+
   segmentMaterial.vertexNode = Fn(() => {
-    const t = positionGeometry.x;
+    const t = segmentT;
     const sideSign = positionGeometry.y;
 
-    const a = edgesNode.element(instanceIndex.mul(2));
-    const b = edgesNode.element(instanceIndex.mul(2).add(1));
-    const start = positionsNode.element(a);
-    const end = positionsNode.element(b);
+    const a = segmentA;
+    const b = segmentB;
+    const start = segmentStart;
+    const end = segmentEnd;
     const startRadius = radiusAt(a);
     const endRadius = radiusAt(b);
 
@@ -426,14 +454,19 @@ export function createNetworkGpuBundle(
   glyphMaterial.color = new THREE.Color(0.85, 0.86, 0.9);
   glyphMaterial.transparent = true;
 
-  glyphMaterial.vertexNode = Fn(() => {
+  // The sphere's local-space vertex, hoisted so the slab clip reads it too
+  // (see the segment material's docblock).
+  const glyphLocal = (() => {
     const centre = positionsNode.element(instanceIndex);
     const auxRow = auxNode.element(instanceIndex);
     // glyphScale is 0 for a ghost: the sphere collapses and rasterizes nothing.
     const scale = radiusAt(instanceIndex).mul(auxRow.z);
-    const local = positionGeometry.mul(scale).add(centre);
-    return cameraProjectionMatrix.mul(modelViewMatrix.mul(vec4(local, 1.0)));
+    return positionGeometry.mul(scale).add(centre);
   })();
+  glyphMaterial.positionNode = glyphLocal;
+  glyphMaterial.vertexNode = Fn(() =>
+    cameraProjectionMatrix.mul(modelViewMatrix.mul(vec4(glyphLocal, 1.0))),
+  )();
   // A node glyph paints only when the colouring targets nodes — a target=EDGE
   // entry leaves the spheres at the material colour, which is what makes the
   // two targets read differently at all.
@@ -452,7 +485,8 @@ export function createNetworkGpuBundle(
   arrowMaterial.color = new THREE.Color(0.85, 0.86, 0.9);
   arrowMaterial.transparent = true;
 
-  arrowMaterial.vertexNode = Fn(() => {
+  // The cone's local-space vertex, hoisted for the slab clip like the sphere's.
+  const arrowPlaced = (() => {
     const a = edgesNode.element(instanceIndex.mul(2));
     const b = edgesNode.element(instanceIndex.mul(2).add(1));
     const pa = positionsNode.element(a);
@@ -478,12 +512,15 @@ export function createNetworkGpuBundle(
     // it one length back puts the tip ON the node rather than past it.
     const seat = vec3(pb).sub(axis.mul(r));
     const local = positionGeometry;
-    const placed = seat
+    return seat
       .add(u.mul(local.x.mul(r)))
       .add(axis.mul(local.y.mul(r)))
       .add(w.mul(local.z.mul(r)));
-    return cameraProjectionMatrix.mul(modelViewMatrix.mul(vec4(placed, 1.0)));
   })();
+  arrowMaterial.positionNode = arrowPlaced;
+  arrowMaterial.vertexNode = Fn(() =>
+    cameraProjectionMatrix.mul(modelViewMatrix.mul(vec4(arrowPlaced, 1.0))),
+  )();
   // An arrow is part of its segment, so it takes its segment's value — the
   // same `uValueSource` select — and the EDGE visibility bit; painted under
   // either target.

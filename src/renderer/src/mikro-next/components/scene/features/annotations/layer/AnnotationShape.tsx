@@ -35,7 +35,6 @@ export type AnnotationShapeProps = {
   /** False in PROBE mode, so a shape can't swallow the click meant for a probe. */
   selectable: boolean;
   /** True when the collection's merged outline batch draws the fat lines. */
-  suppressOutlines: boolean;
   onSelectRoi: (roi: SelectedRoi, appendSelection: boolean) => void;
 };
 
@@ -56,7 +55,6 @@ export const shapePropsEqual = (
   prev.flattenToPlane === next.flattenToPlane &&
   prev.isActive === next.isActive &&
   prev.selectable === next.selectable &&
-  prev.suppressOutlines === next.suppressOutlines &&
   prev.onSelectRoi === next.onSelectRoi &&
   (prev.planeZ === next.planeZ || !shapeReadsPlaneZ(next.annotation));
 
@@ -115,7 +113,6 @@ export const AnnotationShape = memo(function AnnotationShape({
   planeZ,
   isActive,
   selectable,
-  suppressOutlines,
   onSelectRoi,
 }: AnnotationShapeProps) {
   perfMonitor.countRender("AnnotationShape"); // no-op unless a recording is armed
@@ -135,16 +132,9 @@ export const AnnotationShape = memo(function AnnotationShape({
     : undefined;
 
   if (annotation.kind === AnnotationKind.Line && vectors.length >= 2) {
-    // The batch draws the stroke AND owns the pick (segment → roi mapping).
-    if (suppressOutlines) return null;
-    return (
-      <Line
-        points={vectors.map((vector) => getVectorPoint(vector, flattenToPlane))}
-        color={style.stroke}
-        lineWidth={style.strokeWidth}
-        onClick={handleSelect}
-      />
-    );
+    // The merged outline batch draws the stroke AND owns the pick (segment →
+    // roi mapping), so a line contributes nothing of its own.
+    return null;
   }
 
   // CUBE shares the rectangle branch: same corner-pair vectors.
@@ -207,19 +197,6 @@ export const AnnotationShape = memo(function AnnotationShape({
         >
           <InteriorMaterial style={style} />
         </mesh>
-        {!suppressOutlines && (
-          <Line
-            points={[
-              [x0, y0, z0],
-              [x1, y0, z0],
-              [x1, y1, z0],
-              [x0, y1, z0],
-              [x0, y0, z0],
-            ]}
-            color={style.stroke}
-            lineWidth={style.strokeWidth}
-          />
-        )}
       </group>
     );
   }
@@ -298,7 +275,7 @@ export const AnnotationShape = memo(function AnnotationShape({
         {/* A SECTIONED ring moves with the plane, so the batch — rebuilt only
             on data/selection changes, never per scrub — excludes it
             (`outlinePoints` returns null); it always draws its own line. */}
-        {(!suppressOutlines || sectioned) && (
+        {sectioned && (
           <Line points={points} color={style.stroke} lineWidth={style.strokeWidth} />
         )}
       </group>
@@ -310,7 +287,7 @@ export const AnnotationShape = memo(function AnnotationShape({
 
     // A batched path has nothing left to draw here; a polygon keeps its
     // pickable interior.
-    if (suppressOutlines && !isPolygon) return null;
+    if (!isPolygon) return null;
 
     const pts = vectors.map((vector) => getVectorPoint(vector, flattenToPlane));
     if (isPolygon) pts.push(pts[0]); // close polygon
@@ -320,25 +297,13 @@ export const AnnotationShape = memo(function AnnotationShape({
         {isPolygon && (
           <PolygonInterior vectors={vectors} flattenToPlane={flattenToPlane} style={style} />
         )}
-        {!suppressOutlines && (
-          <Line points={pts} color={style.stroke} lineWidth={style.strokeWidth} />
-        )}
       </group>
     );
   }
 
-  // Fallback: render any shape as a polyline
-  if (vectors.length >= 2) {
-    if (suppressOutlines) return null;
-    return (
-      <Line
-        points={vectors.map((vector) => getVectorPoint(vector, flattenToPlane))}
-        color={style.stroke}
-        lineWidth={style.strokeWidth}
-        onClick={handleSelect}
-      />
-    );
-  }
+  // Fallback: any other shape with enough vectors is a polyline, and the
+  // merged outline batch draws it — nothing of its own to contribute.
+  if (vectors.length >= 2) return null;
 
   return null;
 }, shapePropsEqual);

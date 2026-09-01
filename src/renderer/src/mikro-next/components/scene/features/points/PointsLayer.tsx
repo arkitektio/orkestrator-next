@@ -2,7 +2,8 @@
  * A point cloud drawn from a table dataset.
  *
  * The layer kind the backend has had all along and nothing drew: `PointLayerRenderer` was
- * `() => null` in `shell/chrome/stubs.tsx`, registered so that implementing it later would be a
+ * `() => null` in the old `stubs.tsx` (since deleted), registered so that implementing it
+ * later would be a
  * one-component change. This is that change.
  *
  * It is also the third and last way a sparse dataset gets drawn. Its object axis is identified
@@ -39,9 +40,10 @@ import {
   type PointScatter,
 } from "./pointsCompute";
 import { fillPointFilterMask } from "./pointsFilterMask";
-import type { ColumnLutEntryFilterBy } from "../../platform/attributes/columnLut";
 import { loadPointGeometry, scatterPointValues, type PointGeometry } from "./pointsSource";
 import { valueWindowOf } from "../../platform/attributes/valueWindow";
+import { bindField } from "../../platform/stores/bindStore";
+import { useActivePickers } from "../../platform/attributes/useActivePickers";
 
 export const PointLayerRenderer = ({ layerId }: { layerId: string }) => {
   const layer = useSceneStore((s) => s.sceneLayers.find((candidate) => candidate.id === layerId));
@@ -69,25 +71,6 @@ const PointCloud = ({ layer }: { layer: PointLayerView }) => {
   const scatterRef = useRef<PointScatter | null>(null);
   const [bundle, setBundle] = useState<PointMaterialBundle | null>(null);
 
-  const entity = layer as unknown as {
-    id: string;
-    tableDataset: { id: string; name: string; store: { id: string; bucket: string; key: string } };
-    xColumn?: string | null;
-    yColumn?: string | null;
-    zColumn?: string | null;
-    tColumn?: string | null;
-    idColumn?: string | null;
-    pointSize?: number | null;
-    colormap?: string | null;
-    visible?: boolean | null;
-    opacity?: number | null;
-    activeColorBy?: number | null;
-    colorBys?: readonly Record<string, unknown>[] | null;
-    activeFilterBys?: readonly number[] | null;
-    filterBys?: readonly Record<string, unknown>[] | null;
-    asAffine?: { matrix: number[][]; inputAxes: string[]; outputAxes: string[] } | null;
-    placementInvariance?: string | null;
-  };
 
   // The world's own axis order, needed to read `asAffine`'s ROWS. Not the
   // scene's spatial unit — the names, which mikro writes with x last.
@@ -110,41 +93,29 @@ const PointCloud = ({ layer }: { layer: PointLayerView }) => {
     () =>
       affineToMatrix4(
         placementToSpatialAffine(
-          entity.asAffine,
-          [entity.xColumn ?? null, entity.yColumn ?? null, entity.zColumn ?? null],
+          layer.asAffine,
+          [layer.xColumn ?? null, layer.yColumn ?? null, layer.zColumn ?? null],
           spatialAxisTriple(worldSystem),
         ),
       ),
-    [entity.asAffine, entity.xColumn, entity.yColumn, entity.zColumn, worldSystem],
+    [layer.asAffine, layer.xColumn, layer.yColumn, layer.zColumn, worldSystem],
   );
 
-  const colorBy = useMemo(() => {
-    const index = entity.activeColorBy;
-    if (index == null) return null;
-    return (entity.colorBys?.[index] ?? null) as never;
-  }, [entity.activeColorBy, entity.colorBys]);
-
-  const activeRules = useMemo(
-    () =>
-      (entity.activeFilterBys ?? [])
-        .map((index) => entity.filterBys?.[index] as ColumnLutEntryFilterBy | undefined)
-        .filter((rule): rule is ColumnLutEntryFilterBy => Boolean(rule)),
-    [entity.activeFilterBys, entity.filterBys],
-  );
+  const { colorBy, rules: activeRules } = useActivePickers(layer);
 
   // ------------------------------------------------------------------ positions
   // Read ONCE per table. Positions do not change with a colouring, and re-reading them on every
   // gene switch is the cost this split exists to avoid.
   useEffect(() => {
     const engine = service?.engine;
-    if (!engine || !entity.xColumn || !entity.yColumn || !entity.idColumn) return;
+    if (!engine || !layer.xColumn || !layer.yColumn || !layer.idColumn) return;
     let cancelled = false;
-    void loadPointGeometry(engine, entity.tableDataset.store as never, {
-      key: entity.idColumn,
-      x: entity.xColumn,
-      y: entity.yColumn,
-      z: entity.zColumn ?? null,
-      t: entity.tColumn ?? null,
+    void loadPointGeometry(engine, layer.tableDataset.store as never, {
+      key: layer.idColumn,
+      x: layer.xColumn,
+      y: layer.yColumn,
+      z: layer.zColumn ?? null,
+      t: layer.tColumn ?? null,
     })
       .then((read) => {
         if (cancelled || !read) return;
@@ -163,12 +134,12 @@ const PointCloud = ({ layer }: { layer: PointLayerView }) => {
     };
   }, [
     service,
-    entity.tableDataset.store,
-    entity.xColumn,
-    entity.yColumn,
-    entity.zColumn,
-    entity.tColumn,
-    entity.idColumn,
+    layer.tableDataset.store,
+    layer.xColumn,
+    layer.yColumn,
+    layer.zColumn,
+    layer.tColumn,
+    layer.idColumn,
   ]);
 
   // ------------------------------------------------------------------ the mesh
@@ -242,8 +213,8 @@ const PointCloud = ({ layer }: { layer: PointLayerView }) => {
         // directly — no FIELD edge and no attribute plan, which is the whole difference from
         // a mask or a collection.
         const access =
-          (colorBy as { table?: string }).table === entity.tableDataset.id
-            ? { store: entity.tableDataset.store as never, keyColumn: entity.idColumn as string }
+          (colorBy as { table?: string }).table === layer.tableDataset.id
+            ? { store: layer.tableDataset.store as never, keyColumn: layer.idColumn as string }
             : accessForTable([], (colorBy as { table: string }).table, { kind: "mesh" });
         if (!access) return;
         byId = await readColumnByObjectIdBatchedCached(engine, access, (colorBy as { column: string }).column);
@@ -305,17 +276,17 @@ const PointCloud = ({ layer }: { layer: PointLayerView }) => {
     const current = bundleRef.current;
     if (!current) return;
     const colormap = ((colorBy as { colormap?: string } | null)?.colormap ??
-      entity.colormap ??
+      layer.colormap ??
       DEFAULT_MEASURE_COLORMAP) as never;
     current.setPalette(paletteRowFor(colormap));
     current.nodes.uClimMin.value =
       (colorBy as { min?: number | null } | null)?.min ?? Number.NEGATIVE_INFINITY;
     current.nodes.uClimMax.value =
       (colorBy as { max?: number | null } | null)?.max ?? Number.POSITIVE_INFINITY;
-    current.nodes.uPointSize.value = entity.pointSize ?? 3;
-    current.nodes.uOpacity.value = entity.opacity ?? 1;
+    current.nodes.uPointSize.value = layer.pointSize ?? 3;
+    current.nodes.uOpacity.value = layer.opacity ?? 1;
     invalidate();
-  }, [bundle, colorBy, entity.colormap, entity.pointSize, entity.opacity, invalidate]);
+  }, [bundle, colorBy, layer.colormap, layer.pointSize, layer.opacity, invalidate]);
 
   // ------------------------------------------------------------------ culling
   /**
@@ -383,7 +354,7 @@ const PointCloud = ({ layer }: { layer: PointLayerView }) => {
           if (
             !engine ||
             !rule.column ||
-            rule.table !== entity.tableDataset.id ||
+            rule.table !== layer.tableDataset.id ||
             (rule.joinPath?.length ?? 0) > 0
           ) {
             notApplied.push(
@@ -394,7 +365,7 @@ const PointCloud = ({ layer }: { layer: PointLayerView }) => {
           try {
             return await readColumnByObjectIdBatchedCached(
               engine,
-              { store: entity.tableDataset.store as never, keyColumn: entity.idColumn as string },
+              { store: layer.tableDataset.store as never, keyColumn: layer.idColumn as string },
               rule.column,
             );
           } catch (error) {
@@ -443,8 +414,8 @@ const PointCloud = ({ layer }: { layer: PointLayerView }) => {
    * P17 (`ARCHITECTURE.md`): `AnimationPlayer` writes `setDimSelection` from
    * inside `useFrame` while a camera tour plays, so a
    * `useViewerStore((s) => s.dimSelections)` selector here would re-render this
-   * layer at frame rate. A vanilla subscription with an identity latch writes the
-   * uniforms and re-dispatches, touching React not at all.
+   * layer at frame rate. `bindField` latches on THIS layer's timepoint and
+   * writes the uniforms imperatively, touching React not at all.
    *
    * The window is ONE timepoint wide: a point cloud is a snapshot, not a
    * trajectory, so there is no tail to fade the way a track has one. With no
@@ -458,28 +429,21 @@ const PointCloud = ({ layer }: { layer: PointLayerView }) => {
     if (!culling || !timeline) return;
     const maxIndex = timeline.length - 1;
 
-    const apply = () => {
-      const selected = viewerApi.getState().dimSelections[TIME_DIM];
-      if (selected === undefined) {
-        culling.time.min.value = -Infinity;
-        culling.time.max.value = Infinity;
-      } else {
-        const index = Math.max(0, Math.min(maxIndex, Math.round(selected)));
-        culling.time.min.value = index;
-        culling.time.max.value = index;
-      }
-      runCull();
-    };
-    apply();
-
-    let last = viewerApi.getState().dimSelections;
-    return viewerApi.subscribe((state) => {
-      if (state.dimSelections === last) return;
-      const previous = last;
-      last = state.dimSelections;
-      if (previous[TIME_DIM] === last[TIME_DIM]) return;
-      apply();
-    });
+    return bindField(
+      viewerApi,
+      (state) => state.dimSelections[TIME_DIM],
+      (selected) => {
+        if (selected === undefined) {
+          culling.time.min.value = -Infinity;
+          culling.time.max.value = Infinity;
+        } else {
+          const index = Math.max(0, Math.min(maxIndex, Math.round(selected)));
+          culling.time.min.value = index;
+          culling.time.max.value = index;
+        }
+        runCull();
+      },
+    );
   }, [geometry, bundle, viewerApi, runCull]);
 
   /**
@@ -493,10 +457,10 @@ const PointCloud = ({ layer }: { layer: PointLayerView }) => {
    */
   const timeExtents = useMemo((): DimExtent[] | null => {
     const timeline = geometry?.timeline ?? null;
-    if (!timeline || entity.visible === false) return null;
+    if (!timeline || layer.visible === false) return null;
     return [{ dim: TIME_DIM, maxIndex: timeline.length - 1, defaultIndex: 0 }];
-  }, [geometry, entity.visible]);
-  usePublishDimExtents(entity.id, timeExtents);
+  }, [geometry, layer.visible]);
+  usePublishDimExtents(layer.id, timeExtents);
 
   useEffect(() => {
     if (skipped.length > 0) console.warn("[points] not drawn:", skipped);
@@ -505,15 +469,15 @@ const PointCloud = ({ layer }: { layer: PointLayerView }) => {
   // A world-space point size is a well-defined length only from SIMILARITY up; below it the
   // number still draws but means nothing, so say so rather than implying a scale.
   useEffect(() => {
-    const invariance = entity.placementInvariance;
+    const invariance = layer.placementInvariance;
     if (invariance && invariance !== "ISOMETRY" && invariance !== "SIMILARITY") {
       console.warn(
         `[points] this layer's placement is ${invariance}, so 'pointSize' in scene units is not a well-defined length here`,
       );
     }
-  }, [entity.placementInvariance]);
+  }, [layer.placementInvariance]);
 
-  if (entity.visible === false || !bundle || !geometry) return null;
+  if (layer.visible === false || !bundle || !geometry) return null;
 
   return (
     <group matrix={affine} matrixAutoUpdate={false}>

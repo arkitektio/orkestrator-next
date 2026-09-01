@@ -37,6 +37,7 @@ export default defineConfig({
         "src/renderer/src/blok/renderer/runtime/functions.ts",
         "src/renderer/src/blok/renderer/runtime/preflight.ts",
         "src/renderer/src/blok/renderer/runtime/checks.ts",
+        "src/renderer/src/blok/renderer/functions/**/*.ts",
         "src/renderer/src/rekuest/widgets/utils.tsx",
         "src/renderer/src/lib/localactions/LocalActionProvider.tsx",
         "src/renderer/src/providers/selection/store.tsx",

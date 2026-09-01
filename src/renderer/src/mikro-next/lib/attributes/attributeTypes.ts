@@ -18,6 +18,16 @@ export type ParquetStoreLike = {
   id: string;
   bucket: string;
   key: string;
+  /**
+   * Bytes the store holds, measured when its upload FINISHED. Null while
+   * unfinished — and also for stores written before the server recorded it, so
+   * null is "unknown", never "empty".
+   *
+   * Optional here because most readers do not care; the ones that report a
+   * failed read do, because it is the difference between "the data is not
+   * there yet" and "the read broke".
+   */
+  sizeBytes?: number | null;
 };
 
 export type ZarrStoreLike = {

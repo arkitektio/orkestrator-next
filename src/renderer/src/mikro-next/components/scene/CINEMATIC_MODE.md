@@ -461,8 +461,10 @@ BloomNode's own uniform nodes and never rebuild.
   `EXCLUDE_FROM_CAPTURE`) and re-raymarches the volumes live at capture resolution —
   the capture takes the DIRECT path and never touches this chain. Fixing it means
   routing the capture through a compositor-like path at capture size.
-- **3D only**, and it rides the `orkestrator.volumeTarget` kill switch: with the
-  compositor off there is no target, so there is no post. `TwoDScene` gets none.
+- **3D only.** It depends on the volume compositor, which is now unconditional —
+  it used to ride the `orkestrator.volumeTarget` kill switch, and with the
+  compositor off there was no target and so no post (OCTREE_RENDERER.md §6.9).
+  `TwoDScene` gets none.
 - **`CanvasHueProbe`** samples canvas pixels for the brand hue; bloom shifts it.
 
 ### DOF: still deferred, and now with the reasons

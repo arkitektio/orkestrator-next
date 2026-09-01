@@ -1,4 +1,3 @@
-import * as THREE from "three";
 import { ColorMap } from "@/mikro-next/api/graphql";
 import type {
   AttributePlanLike,
@@ -583,20 +582,3 @@ export const paintColumnLut = ({
   }
 };
 
-/**
- * PHASE 4 — the texture. NEAREST and no mips: this is a table indexed by an
- * exact integer, not an image — any filtering would blend one object's colour
- * into its neighbour's.
- */
-export const columnLutTexture = (
-  data: Uint8Array,
-  width: number,
-  height: number,
-): THREE.DataTexture => {
-  const texture = new THREE.DataTexture(data, width, height, THREE.RGBAFormat);
-  texture.magFilter = THREE.NearestFilter;
-  texture.minFilter = THREE.NearestFilter;
-  texture.generateMipmaps = false;
-  texture.needsUpdate = true;
-  return texture;
-};

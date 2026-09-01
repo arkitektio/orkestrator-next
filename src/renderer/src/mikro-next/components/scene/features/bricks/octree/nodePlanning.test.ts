@@ -977,15 +977,22 @@ describe("planLayerNodes sub-floor decode allowance (plane-chunked pyramid)", ()
   const spec = resolveBrickSpec(geo, "3D");
 
   // A zoomed-in 3D view (real session ranges): x/y cropped, z ~the full
-  // stack. visibleBytesAtLevel: L3 ≈ 29.5 MB ≤ 128 MiB, L2 = 6 z-chunk-rows
-  // × 39 321 600 B ≈ 236 MB > 128 MiB → legacy floor = L3.
+  // stack. visibleBytesAtLevel: L3 ≈ 14.7 MB ≤ 64 MiB, L2 = 6 z-chunk-rows
+  // × 19 660 800 B ≈ 118 MB > 64 MiB → legacy floor = L3.
+  //
+  // Every byte figure here is HALF what it was before `raw16` was settled
+  // on: uint16 chunks now stay `Uint16Array` end-to-end and charge
+  // 2 B/voxel instead of the widened 4. The scenario is deliberately
+  // unchanged — the same six z-chunk-rows, the same relation to the budget
+  // — because these cases are about the ALLOWANCE mechanism, not about the
+  // currency it is denominated in.
   const VIEW: LayerViewRange = {
     xRange: [150, 1000],
     yRange: [1586, 2048],
     zRange: [0, 894],
     scale: 3.38,
   };
-  const L2_CHUNK_BYTES = 480 * 512 * 40 * 4; // 39 321 600
+  const L2_CHUNK_BYTES = 480 * 512 * 40 * 2; // 19 660 800
   const MiB = 1024 * 1024;
 
   const plan = (
@@ -1005,7 +1012,7 @@ describe("planLayerNodes sub-floor decode allowance (plane-chunked pyramid)", ()
       camera: null,
       lodBias: 1,
       currentZ: undefined,
-      maxPlanBytes: overrides.maxPlanBytes ?? 128 * MiB,
+      maxPlanBytes: overrides.maxPlanBytes ?? 64 * MiB,
       decodeAllowanceBytes: overrides.decodeAllowanceBytes,
       previousBudgetMinLevel: overrides.previousBudgetMinLevel,
     });
@@ -1029,7 +1036,7 @@ describe("planLayerNodes sub-floor decode allowance (plane-chunked pyramid)", ()
   });
 
   it("unlocks the visible L2 set within the allowance, floor unchanged", () => {
-    const p = plan({ decodeAllowanceBytes: 256 * MiB }); // ≥ all 6 z rows
+    const p = plan({ decodeAllowanceBytes: 128 * MiB }); // ≥ all 6 z rows
     expect(p.budgetMinLevel).toBe(3);
     expect(p.targetLevel).toBe(2);
     const fine = p.nodes.filter((n) => n.role === "target" && n.level === 2);
@@ -1041,17 +1048,17 @@ describe("planLayerNodes sub-floor decode allowance (plane-chunked pyramid)", ()
   });
 
   it("bounds the charged chunk set by the allowance", () => {
-    // 160 MiB covers the first refinement's 4 z-chunk-rows (157 286 400 B)
+    // 160 MiB covers the first refinement's 4 z-chunk-rows (78 643 200 B)
     // but not the far rows: the fine region stops there.
-    const p = plan({ decodeAllowanceBytes: 160 * MiB });
-    expect(p.decodeBytesCharged).toBeLessThanOrEqual(160 * MiB);
+    const p = plan({ decodeAllowanceBytes: 80 * MiB });
+    expect(p.decodeBytesCharged).toBeLessThanOrEqual(80 * MiB);
     const keys = subFloorChunkKeys(p);
     expect(keys.size * L2_CHUNK_BYTES).toBe(p.decodeBytesCharged);
     expect(keys.size).toBeLessThanOrEqual(4);
   });
 
   it("keeps the far region coarse when the allowance runs out", () => {
-    const p = plan({ decodeAllowanceBytes: 160 * MiB });
+    const p = plan({ decodeAllowanceBytes: 80 * MiB });
     const fine = p.nodes.filter((n) => n.role === "target" && n.level === 2);
     const coarse = p.nodes.filter((n) => n.role === "target" && n.level === 3);
     expect(fine.length).toBeGreaterThan(0);
@@ -1061,7 +1068,7 @@ describe("planLayerNodes sub-floor decode allowance (plane-chunked pyramid)", ()
   });
 
   it("emits the full ancestor keep chain for sub-floor targets", () => {
-    const p = plan({ decodeAllowanceBytes: 256 * MiB });
+    const p = plan({ decodeAllowanceBytes: 128 * MiB });
     const byKey = new Map(p.nodes.map((n) => [n.key, n]));
     for (const n of p.nodes.filter((x) => x.role === "target" && x.level === 2)) {
       const parent = byKey.get(
@@ -1076,13 +1083,13 @@ describe("planLayerNodes sub-floor decode allowance (plane-chunked pyramid)", ()
   });
 
   it("is deterministic and chunk-granular-stable under small focus motion", () => {
-    const a = plan({ decodeAllowanceBytes: 160 * MiB });
-    const b = plan({ decodeAllowanceBytes: 160 * MiB });
+    const a = plan({ decodeAllowanceBytes: 80 * MiB });
+    const b = plan({ decodeAllowanceBytes: 80 * MiB });
     expect(sameNodePlan(a, b)).toBe(true);
     // A few voxels of x/y pan re-charges the SAME chunk rows (x/y chunks span
     // the full extent), so the fine set does not thrash.
     const nudged = plan({
-      decodeAllowanceBytes: 160 * MiB,
+      decodeAllowanceBytes: 80 * MiB,
       viewRange: { ...VIEW, xRange: [154, 1004], yRange: [1590, 2048] },
     });
     expect(subFloorChunkKeys(nudged)).toEqual(subFloorChunkKeys(a));
@@ -1091,12 +1098,12 @@ describe("planLayerNodes sub-floor decode allowance (plane-chunked pyramid)", ()
   it("does not ratchet the floor through hysteresis under mixed plans", () => {
     // Sub-floor L2 targets must not drag budgetMinLevel to 2 on the next
     // replan: hysteresis keys on the previous FLOOR, and even a claimed
-    // previous floor of 2 fails the slack test (236 MB > 128 MiB × 1.15).
+    // previous floor of 2 fails the slack test (118 MB > 64 MiB × 1.15).
     expect(
-      plan({ decodeAllowanceBytes: 256 * MiB, previousBudgetMinLevel: 3 }).budgetMinLevel,
+      plan({ decodeAllowanceBytes: 128 * MiB, previousBudgetMinLevel: 3 }).budgetMinLevel,
     ).toBe(3);
     expect(
-      plan({ decodeAllowanceBytes: 256 * MiB, previousBudgetMinLevel: 2 }).budgetMinLevel,
+      plan({ decodeAllowanceBytes: 128 * MiB, previousBudgetMinLevel: 2 }).budgetMinLevel,
     ).toBe(3);
   });
 

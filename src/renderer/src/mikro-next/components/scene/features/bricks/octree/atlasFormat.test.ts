@@ -55,17 +55,6 @@ describe("atlasKindForGeometry (planner ↔ pool slot-byte agreement)", () => {
     expect(atlasKindForGeometry(labelGeo)).toBe("r32f");
   });
 
-  it("the r16 kill switch restores the promoted-r32f behavior", async () => {
-    const { setR16AtlasesEnabled } = await import("./atlasFormat");
-    setR16AtlasesEnabled(false);
-    try {
-      expect(atlasKindForGeometry(geo("uint16", false))).toBe("r32f");
-      expect(atlasKindForDtype("uint16", false)).toBe("r32f");
-    } finally {
-      setR16AtlasesEnabled(true);
-    }
-  });
-
   it("r16f is 2 bytes per voxel (planner and pool must agree)", () => {
     expect(atlasBytesPerVoxel("r16f")).toBe(2);
   });
@@ -109,15 +98,6 @@ describe("rgba8 atlases (3/4-channel uint8 pools)", () => {
     expect(atlasSlotBytes(spec, "r16f")).toBe(66 * 66 * 66 * 3 * 2);
   });
 
-  it("the rgba kill switch restores r8", async () => {
-    const { setRgbaAtlasesEnabled } = await import("./atlasFormat");
-    setRgbaAtlasesEnabled(false);
-    try {
-      expect(atlasKindForGeometry(rgbGeo("uint8", 3))).toBe("r8");
-    } finally {
-      setRgbaAtlasesEnabled(true);
-    }
-  });
 });
 
 /**
@@ -126,32 +106,20 @@ describe("rgba8 atlases (3/4-channel uint8 pools)", () => {
  * planner charging 2 B/voxel (or vice versa) breaks the P5/P24 budget
  * accounting.
  */
-describe("raw16 chunk fidelity + decode currency (orkestrator.raw16)", () => {
-  it("defaults OFF: uint16 chunks widen to float32 and charge 4 B/voxel", async () => {
+describe("raw16 chunk fidelity + decode currency", () => {
+  it("uint16 stays raw (2 B/voxel); other dtypes are untouched", async () => {
     const { chunkFidelityForDtype, decodedBytesPerVoxel } = await import("./atlasFormat");
-    expect(chunkFidelityForDtype("uint16")).toBe("default");
-    expect(decodedBytesPerVoxel("uint16")).toBe(4);
-  });
-
-  it("flag ON: uint16 stays raw (2 B/voxel); other dtypes are untouched", async () => {
-    const { chunkFidelityForDtype, decodedBytesPerVoxel, setRaw16ChunksEnabled } =
-      await import("./atlasFormat");
-    setRaw16ChunksEnabled(true);
-    try {
-      expect(chunkFidelityForDtype("uint16")).toBe("raw16");
-      expect(chunkFidelityForDtype("|u2")).toBe("raw16");
-      expect(decodedBytesPerVoxel("uint16")).toBe(2);
-      // uint8 stays 1 B, signed/float widths stay at the promoted 4 B.
-      expect(chunkFidelityForDtype("uint8")).toBe("default");
-      expect(decodedBytesPerVoxel("uint8")).toBe(1);
-      expect(decodedBytesPerVoxel("|u1")).toBe(1);
-      expect(decodedBytesPerVoxel("int8")).toBe(1);
-      for (const dtype of ["int16", "uint32", "int32", "float32", "float64"]) {
-        expect(chunkFidelityForDtype(dtype)).toBe("default");
-        expect(decodedBytesPerVoxel(dtype)).toBe(4);
-      }
-    } finally {
-      setRaw16ChunksEnabled(false);
+    expect(chunkFidelityForDtype("uint16")).toBe("raw16");
+    expect(chunkFidelityForDtype("|u2")).toBe("raw16");
+    expect(decodedBytesPerVoxel("uint16")).toBe(2);
+    // uint8 stays 1 B, signed/float widths stay at the promoted 4 B.
+    expect(chunkFidelityForDtype("uint8")).toBe("default");
+    expect(decodedBytesPerVoxel("uint8")).toBe(1);
+    expect(decodedBytesPerVoxel("|u1")).toBe(1);
+    expect(decodedBytesPerVoxel("int8")).toBe(1);
+    for (const dtype of ["int16", "uint32", "int32", "float32", "float64"]) {
+      expect(chunkFidelityForDtype(dtype)).toBe("default");
+      expect(decodedBytesPerVoxel(dtype)).toBe(4);
     }
   });
 });

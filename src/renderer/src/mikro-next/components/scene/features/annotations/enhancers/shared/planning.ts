@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { planCorridor, type CorridorBox } from "./corridorPlan";
 import { simplifyPath, type PathPoint } from "./pathSimplify";
 import { climToUnit } from "../../../../platform/model/dataRange";
+import { voxelWorldSizeOf } from "../../../../platform/coords/worldTransform";
 import type { Vec3 } from "./strokeModel";
 
 /**
@@ -103,19 +104,16 @@ export function pickCorridor(opts: {
  * affine's basis vectors. This is what makes every search anisotropy-aware —
  * z spacing is routinely several times xy, and a lattice that ignored it
  * would prefer z-hops because they cover more ground for the same price.
- * (Moved here from the vector trace's traceBox: both strategy families need
- * it.)
+ *
+ * The enhancers' name for `platform/coords/worldTransform.ts`'s
+ * `voxelWorldSizeOf`, which is the same three `Math.hypot` calls and used to
+ * be a byte-identical second copy of them. The two were kept apart because
+ * the platform one "needs no enhancers import" — but the dependency only ever
+ * ran this way, and `platform/coords` is a leaf every tier may import, so one
+ * definition serves both. The alias stays because the callers below read
+ * better with the shorter name.
  */
-export function voxelWorldSize(
-  affine: THREE.Matrix4,
-): [number, number, number] {
-  const e = affine.elements; // column-major
-  return [
-    Math.hypot(e[0], e[1], e[2]) || 1,
-    Math.hypot(e[4], e[5], e[6]) || 1,
-    Math.hypot(e[8], e[9], e[10]) || 1,
-  ];
-}
+export const voxelWorldSize = voxelWorldSizeOf;
 
 /**
  * The layer's DISPLAY window in raw units — clim bounds resolved against the

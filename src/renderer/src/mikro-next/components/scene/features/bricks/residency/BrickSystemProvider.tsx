@@ -5,7 +5,7 @@ import { useSceneStoreApi } from "../../../platform/stores/sceneStore";
 
 import { useViewStoreApi } from "../../../platform/stores/viewStore";
 import type { BrickResidencyManager } from "./brickResidency";
-import { createBrickSystem, isEarlyBricksEnabled } from "./brickSystem";
+import { createBrickSystem } from "./brickSystem";
 import { useBrickStoreApi } from "../store/brickSlice";
 
 /**
@@ -30,7 +30,7 @@ export function BrickSystemProvider() {
 
   // Must match the host's decision for this mount — read once, same as there.
   const earlyRef = useRef<boolean | null>(null);
-  if (earlyRef.current === null) earlyRef.current = isEarlyBricksEnabled();
+  if (earlyRef.current === null) earlyRef.current = true;
 
   useEffect(() => {
     // The host (outside the canvas) normally built and registered the manager

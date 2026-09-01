@@ -63,7 +63,3 @@ export function decodeMorton3(code: number): [number, number, number] {
 
 /** Stable string key of one octree node: `level:morton`. */
 export const octreeCellKey = (level: number, cell: number): string => `${level}:${cell}`;
-
-/** @deprecated Historical name for {@link octreeCellKey}; the key is not
- *  mesh-specific. Kept so the fabriks path reads unchanged. */
-export const meshCellKey = octreeCellKey;

@@ -1766,14 +1766,15 @@ enum ColumnControl {
 }
 
 """
-One column of the table. **Every column of the Parquet is declared, and the declaration is checked against the file** -- same names, same order, same types -- so a declaration that has drifted from the data is refused rather than stored. That check is the whole reason `name` is here: it is a fact about the file, and stating it is how a caller says which file they think they are describing. `dtype` is **optional** -- the server read every column's type off the Parquet when the upload finished, so it is checked when given and taken from the file when not. Given, it is a **DuckDB** type name (`BIGINT`, `DOUBLE`, `VARCHAR`), not a pandas one where a float64 is a `double`. A COORDINATE column is an axis and is declared in `axes` as well, which is where its type and its identification live
+One column of the table -- THE one declaration a column gets. **Every column of the Parquet is declared, and the declaration is checked against the file** -- same names, same order, same types -- so a declaration that has drifted from the data is refused rather than stored. That check is the whole reason `name` is here: it is a fact about the file, and stating it is how a caller says which file they think they are describing. `dtype` is **optional** -- the server read every column's type off the Parquet when the upload finished, so it is checked when given and taken from the file when not. Given, it is a **DuckDB** type name (`BIGINT`, `DOUBLE`, `VARCHAR`), not a pandas one where a float64 is a `double`. A non-null `axisType` makes the column an axis of the table's own space; **the axis-typed columns, in this list's (= the file's) order, ARE the space** -- a table has no byte order, its axes are named columns, and an edge wanting a different order states its own `inputAxes`/`outputAxes`. `identifiedBy` says what the values are, for an axis and a data column alike
 """
 input ColumnInput {
+  axisType: AxisType = null
   description: String = null
   dtype: String = null
+  identifiedBy: [IdentificationInput!]! = []
   longName: String = null
   name: String!
-  references: ID = null
   role: ColumnRole = null
   unit: Unit = null
 }
@@ -2442,10 +2443,9 @@ input CreateSparseDatasetInput {
 }
 
 """
-Input for creating a table dataset from a Parquet store. Its coordinate columns become the axes of a coordinate system it owns; declare no coordinate columns for a pure measurement table (its rows enumerate objects and its lineage edge is UNMAPPABLE)
+Input for creating a table dataset from a Parquet store. A column is declared ONCE, in `columns`: a non-null `axisType` makes it an axis of the coordinate system the table owns, and the axis-typed columns, in list (= file) order, are the space -- there is no separate axes list, because a table's axes are named columns and every consumer addresses them by name. Declare no axis-typed columns for a pure measurement table (its rows enumerate objects, its space is a synthetic `object` axis, and its lineage edge is UNMAPPABLE)
 """
 input CreateTableDatasetInput {
-  axes: [TableAxisInput!]! = []
   columns: [ColumnInput!]! = []
   data: ParquetLike!
   derivedFrom: [DerivedFromInput!] = null
@@ -3854,7 +3854,7 @@ enum HistoryKind {
 }
 
 """
-What one axis of a sparse dataset **is**, as a discriminated union: `kind` selects which sort of thing is being named, and only that member's id field is read -- any other is rejected. Every axis carries exactly one of these, which is what makes 'identified exactly once' a property of the input rather than a check on it. `DATASET`, `MESH_COLLECTION` and `NETWORK_COLLECTION` author a FIELD edge from the source into this matrix, which is also what makes the matrix reachable from a layer over that source; `TABLE` authors no edge and states a foreign key instead
+What a column's values or an axis' positions **are**, as a discriminated union: `kind` selects which sort of thing is being named, and only that member's id field is read -- any other is rejected. Carried by a sparse dataset's axes and by a table's columns alike -- the one spelling of every 'values here identify things there' claim. `DATASET`, `MESH_COLLECTION` and `NETWORK_COLLECTION` author a FIELD edge from the source into this data, which is also what makes it reachable from a layer over that source (INDEX axes only -- the edge produces an axis); `TABLE` authors no edge and states a foreign key instead, on an INDEX axis or a plain data column; `NETWORK_COLLECTION_NODES` likewise authors none, on an INDEX axis scoped by a sibling object axis
 """
 input IdentificationInput {
   """
@@ -3863,7 +3863,7 @@ input IdentificationInput {
   dataset: ID = null
 
   """
-  Which sort of thing identifies this axis. It fixes which id field below is read; any other is rejected
+  Which sort of thing identifies this column or axis. It fixes which id field below is read; any other is rejected
   """
   kind: IdentificationKind!
 
@@ -3883,7 +3883,7 @@ input IdentificationInput {
   networkCollection: ID = null
 
   """
-  (TABLE) The table whose rows this axis' positions are. Must be keyed by exactly one INDEX coordinate column, which is where a position is looked up -- the same contract `Column.references` carries. A matrix with 19 059 features costs one picker entry because of this, not 19 059
+  (TABLE) The table whose rows this column's values are -- an INDEX axis' enumeration, or a plain data column's foreign key (an `instance_id` referencing a table of tracks: the edge of the join graph `colorBys` walks). Must be keyed by exactly one INDEX coordinate column, which is where a value is looked up -- the contract `Column.references` records. A matrix with 19 059 features costs one picker entry because of this, not 19 059
   """
   table: ID = null
 
@@ -8881,18 +8881,6 @@ input StrFilterLookup {
 type Subscription {
   """Subscribe to real-time file updates"""
   files(folder: ID = null): FileEvent!
-}
-
-"""
-One axis of the table's own space: which Parquet column it is, what kind of position it holds, and what those positions **are**. The list's order is the axis order, so the space is stated rather than derived by filtering a column list. `identifiedBy` replaces the old sibling `keyedBy`: there the axis a source keyed was matched by subtraction inside the server, correct and invisible, and here the pairing is the input's own shape. It is a list because fan-in is real -- a nucleus mask and a cell mask may key one axis, one edge each -- and it may be empty, because a localization table's `x` axis is identified by nothing and should be
-"""
-input TableAxisInput {
-  column: String!
-  description: String = null
-  identifiedBy: [IdentificationInput!]! = []
-  longName: String = null
-  type: AxisType!
-  unit: Unit = null
 }
 
 """

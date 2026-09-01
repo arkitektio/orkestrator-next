@@ -41,6 +41,17 @@ export type PickerRuleLike = PickerEntryLike & {
   exclude?: boolean | null;
 };
 
+/**
+ * The COLUMN arm of the stored-colouring either/or: it names a table and a
+ * column. A SPARSE entry names a `dataset` and a position `at` instead.
+ *
+ * Structural, so it also answers for the generic picker shape. The nominal
+ * `columnOptions.isColumnColorBy` delegates here and adds the narrowing its
+ * callers want — one rule, two typings.
+ */
+export const isColumnEntry = (entry: PickerEntryLike | null | undefined): boolean =>
+  entry?.table != null && entry?.column != null;
+
 /** True when the entry's colormap takes the RANK branch. */
 export const entryQualitative = (entry: PickerEntryLike | null): boolean =>
   qualitativePalette((entry?.colormap ?? "") as never) !== null;

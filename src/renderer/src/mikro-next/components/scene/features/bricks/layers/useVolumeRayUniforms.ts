@@ -15,7 +15,6 @@ import {
   resolveCinematic,
   resolveSmoothThreshold,
 } from "../../../platform/quality/qualityGovernor";
-import { isSmoothZoomEnabled, isWorldLodEnabled } from "../gpu/shaderFlags";
 import { voxelWorldSizeOf } from "../../../platform/coords/worldTransform";
 import type * as THREE from "three";
 import type { LayerBrickPool } from "../residency/brickResidency";
@@ -146,7 +145,7 @@ export const useVolumeRayUniforms = (
     nodes.uLodBias.value = lodBias;
     nodes.uPxPerVoxelAtUnitDist.value = pxPerVoxelAtUnitDistance;
     const worldSize =
-      worldMatrix && isWorldLodEnabled() ? voxelWorldSizeOf(worldMatrix) : null;
+      worldMatrix ? voxelWorldSizeOf(worldMatrix) : null;
     if (worldSize) nodes.uVoxelWorldSize.value.set(worldSize[0], worldSize[1], worldSize[2]);
     else nodes.uVoxelWorldSize.value.set(1, 1, 1);
     nodes.uMinDelta.value = minDelta;
@@ -234,7 +233,7 @@ export const useStepScaleUniform = (
     if (!nodes) return;
     // Read once per effect, not per camera tick (localStorage): flipping the
     // flag rebuilds the material, which remounts this effect anyway.
-    const smoothZoom = isSmoothZoomEnabled();
+    const smoothZoom = true;
     return stepScaleDriverFor(viewStoreApi).register(
       nodes,
       { settleRefine, canvasPass, smoothZoom, cinematic, animationPlaying },

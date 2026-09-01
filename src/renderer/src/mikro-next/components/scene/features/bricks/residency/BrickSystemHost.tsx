@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useSceneStoreApi } from "../../../platform/stores/sceneStore";
 
 import { useViewStoreApi } from "../../../platform/stores/viewStore";
-import { createBrickSystem, isEarlyBricksEnabled } from "./brickSystem";
+import { createBrickSystem } from "./brickSystem";
 import { useBrickStoreApi } from "../store/brickSlice";
 
 /**
@@ -23,7 +23,7 @@ import { useBrickStoreApi } from "../store/brickSlice";
  * Mount ORDER is not load-bearing in either direction: `manager.start()`
  * subscribes to plans AND immediately reconciles whatever is already published.
  *
- * Kill switch `orkestrator.earlyBricks` (default ON), read ONCE at mount: off,
+ * Was a kill switch; settled ON (OCTREE_RENDERER.md §6.9), read ONCE at mount: off,
  * this renders nothing and the provider constructs the system itself, exactly
  * as before.
  */
@@ -35,7 +35,7 @@ export function BrickSystemHost() {
   // Read once per mount, not per render: a mid-session toggle must not tear
   // down a running system (and the DebugPanel tooltip says "next scene open").
   const enabledRef = useRef<boolean | null>(null);
-  if (enabledRef.current === null) enabledRef.current = isEarlyBricksEnabled();
+  if (enabledRef.current === null) enabledRef.current = true;
 
   useEffect(() => {
     if (!enabledRef.current) return;

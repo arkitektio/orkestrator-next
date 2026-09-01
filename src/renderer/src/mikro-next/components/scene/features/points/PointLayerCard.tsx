@@ -1,7 +1,6 @@
-import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { CircleDot, Eye, EyeOff, Trash2 } from "lucide-react";
-import { memo, useCallback, useMemo } from "react";
+import { CircleDot } from "lucide-react";
+import { memo } from "react";
 import {
   ColorMap,
   useUpdatePointLayerMutation,
@@ -19,7 +18,9 @@ import {
   SegmentGroup,
 } from "../../platform/layerui/cardControls";
 import { ColormapSelect } from "../../platform/layerui/ColormapSelect";
-import { CONTINUOUS_COLORMAPS, colormapGradientCSS } from "../../platform/layerui/colormap-utils";
+import { CONTINUOUS_COLORMAP_CHOICES } from "../../platform/layerui/colormap-utils";
+import { useOptimisticLayerPatch } from "../../platform/layerui/useOptimisticLayerPatch";
+import { LayerCardActions } from "../../platform/layerui/LayerCardActions";
 
 /**
  * A compact card for a `PointLayer` in the Layers panel.
@@ -85,33 +86,8 @@ export const PointLayerCard = memo(
      * resolved against the wrong table, silently. This card only ever moves the
      * ACTIVE index, which carries no such hazard.
      */
-    const persist = useCallback(
-      (patch: PointPatch) => {
-        // The two sides have deliberately different nullability. The INPUT lets
-        // a field be null to mean "reset to the server's default"; the FRAGMENT
-        // types some of those same fields non-null, because that is what comes
-        // back. So the local preview takes the patch as-is and the authoritative
-        // value arrives with the mutation's own result — the cast states that,
-        // rather than widening the input type and losing the check above.
-        patchSceneLayer(layer.id, patch as Parameters<typeof patchSceneLayer>[1]);
-        void updatePointLayer({
-          variables: { input: { id: layer.id, ...patch } },
-        }).catch((error: unknown) => {
-          console.warn("[points] could not save layer settings", error);
-        });
-      },
-      [layer.id, patchSceneLayer, updatePointLayer],
-    );
+    const persist = useOptimisticLayerPatch<PointPatch>(layer.id, updatePointLayer, "[points]");
 
-    const colormapChoices = useMemo(
-      () =>
-        CONTINUOUS_COLORMAPS.map((colormap) => ({
-          value: colormap,
-          label: colormap.toLowerCase(),
-          css: colormapGradientCSS(colormap),
-        })),
-      [],
-    );
 
     const colorBys = layer.colorBys ?? [];
     const pointSize = layer.pointSize ?? 3;
@@ -129,28 +105,11 @@ export const PointLayerCard = memo(
         expanded={expanded}
         onToggle={() => onSelect(layer.id, expanded)}
         actions={
-          <>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-5 w-5 shrink-0 text-white/45 hover:text-white/90"
-              title={hidden ? "Show" : "Hide"}
-              onClick={() => persist({ visible: hidden })}
-            >
-              {hidden ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-            </Button>
-            {onRemove && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-5 w-5 shrink-0 text-white/35 hover:text-red-300"
-                title="Remove layer from scene"
-                onClick={() => onRemove(layer.id)}
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            )}
-          </>
+          <LayerCardActions
+            hidden={hidden}
+            onToggleVisible={() => persist({ visible: hidden })}
+            onRemove={onRemove ? () => onRemove(layer.id) : undefined}
+          />
         }
       >
         {/* ------------------------------------------------ size ----------- */}
@@ -197,7 +156,7 @@ export const PointLayerCard = memo(
               <div className="mt-1.5">
                 <ColormapSelect
                   value={layer.colormap ?? ColorMap.Viridis}
-                  choices={colormapChoices}
+                  choices={CONTINUOUS_COLORMAP_CHOICES}
                   onChange={(value) => persist({ colormap: value as ColorMap })}
                   title="The ramp used when the active colouring names none of its own"
                 />

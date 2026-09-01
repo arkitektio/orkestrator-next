@@ -27,62 +27,32 @@ export const R16F_DATA_SCALE = 65535;
  * (nodePlanning), which must not touch browser globals — the render side
  * initializes the flag once from `orkestrator.r16Atlas` (default ON).
  */
-let r16AtlasesEnabled = true;
-try {
-  r16AtlasesEnabled = window.localStorage.getItem("orkestrator.r16Atlas") !== "off";
-} catch {
-  /* no storage (worker/tests): default applies */
-}
-
-export const isR16AtlasesEnabled = (): boolean => r16AtlasesEnabled;
 
 /**
  * RGBA8 atlases for 3/4-channel unsigned-8-bit intensity pools (an RGB
  * image): channels interleaved in one texel instead of z-stacked slabs, so
  * a sample is ONE tap. Same module-flag pattern as R16F (planner-pure).
- * Kill switch `orkestrator.rgbaAtlas`, default ON; pool-creation time.
+ * Was a kill switch; settled ON (OCTREE_RENDERER.md §6.9); pool-creation time.
  */
-let rgbaAtlasesEnabled = true;
-try {
-  rgbaAtlasesEnabled = window.localStorage.getItem("orkestrator.rgbaAtlas") !== "off";
-} catch {
-  /* no storage (worker/tests): default applies */
-}
-
-export const isRgbaAtlasesEnabled = (): boolean => rgbaAtlasesEnabled;
 
 /**
  * raw16 chunks (roadmap C3): uint16 chunks stay `Uint16Array` end-to-end —
  * decode cache, repack input, GPU-repack upload — instead of being widened to
  * Float32Array in the codec worker, halving those bytes. An ARRAY-level
- * decision (dtype + this flag), NOT per pool: the decoded-chunk cache and the
+ * decision (dtype alone), NOT per pool: the decoded-chunk cache and the
  * in-flight fetch keys carry no representation component, so every consumer
  * of one array must agree on the chunk representation. Consumers are audited
  * for Uint16Array reads: CPU repack (generic element loops), the GPU repack's
  * u16 kernel (r32f/f32 GPU kernels reject u16 chunks and fall back to the CPU
  * repack), and the chunk-cache probes (generic reads, raw values per P11).
- * Same module-flag pattern as r16f (planner-pure). Kill switch
- * `orkestrator.raw16`, default OFF pending live validation; pool-creation
- * time.
+ * Was `orkestrator.raw16`, shipped dark; settled ON (OCTREE_RENDERER.md §6.9).
+ * Note what settling it changed beyond bytes: `decodedBytesPerVoxel` charges
+ * uint16 at 2 B/voxel rather than the widened 4, which deliberately moves
+ * `budgetMinLevel` FINER on uint16 pyramids — the same cache now holds twice
+ * the working set.
  */
-let raw16ChunksEnabled = false;
-try {
-  raw16ChunksEnabled = window.localStorage.getItem("orkestrator.raw16") === "on";
-} catch {
-  /* no storage (worker/tests): default applies */
-}
 
-export const isRaw16ChunksEnabled = (): boolean => raw16ChunksEnabled;
-export const setRaw16ChunksEnabled = (enabled: boolean): void => {
-  raw16ChunksEnabled = enabled;
-  try {
-    window.localStorage.setItem("orkestrator.raw16", enabled ? "on" : "off");
-  } catch {
-    /* session keeps its current state */
-  }
-};
-
-/** True when this dtype's chunks arrive as Uint16Array under the raw16 flag. */
+/** True when this dtype's chunks arrive as `Uint16Array` rather than widened. */
 export const isRaw16Dtype = (dtype: string): boolean => {
   const d = dtype.toLowerCase();
   return d === "uint16" || d.includes("u2");
@@ -95,7 +65,7 @@ export const isRaw16Dtype = (dtype: string): boolean => {
  * the shared chunk cache holds mixed representations for one array.
  */
 export const chunkFidelityForDtype = (dtype: string): "default" | "raw16" =>
-  raw16ChunksEnabled && isRaw16Dtype(dtype) ? "raw16" : "default";
+  isRaw16Dtype(dtype) ? "raw16" : "default";
 
 /**
  * DECODE-cache bytes per voxel for a dtype — the planner's budget currency
@@ -108,24 +78,8 @@ export const chunkFidelityForDtype = (dtype: string): "default" | "raw16" =>
 export const decodedBytesPerVoxel = (dtype: string): number => {
   const d = dtype.toLowerCase();
   if (d.includes("u1") || d.includes("i1") || d.includes("8")) return 1;
-  if (raw16ChunksEnabled && isRaw16Dtype(d)) return 2;
+  if (isRaw16Dtype(d)) return 2;
   return 4;
-};
-export const setRgbaAtlasesEnabled = (enabled: boolean): void => {
-  rgbaAtlasesEnabled = enabled;
-  try {
-    window.localStorage.setItem("orkestrator.rgbaAtlas", enabled ? "on" : "off");
-  } catch {
-    /* session keeps its current state */
-  }
-};
-export const setR16AtlasesEnabled = (enabled: boolean): void => {
-  r16AtlasesEnabled = enabled;
-  try {
-    window.localStorage.setItem("orkestrator.r16Atlas", enabled ? "on" : "off");
-  } catch {
-    /* session keeps its current state */
-  }
 };
 
 /**
@@ -179,7 +133,7 @@ export const atlasKindForGeometry = (geometry: LayerLevelGeometry): AtlasKind =>
   if (hasPhasorSlabs(geometry)) return "r32f";
   const kind = atlasKindForDtype(
     geometry.levels[0].dtype,
-    isR16AtlasesEnabled() && !geometry.exactValues,
+    !geometry.exactValues,
   );
   // CONTENT-based, not renderKind-based: an intensity layer over the same
   // 3-channel array shares the pool (the tap selects the component), so the
@@ -187,7 +141,6 @@ export const atlasKindForGeometry = (geometry: LayerLevelGeometry): AtlasKind =>
   // fields plus the creation-time flag, exactly like r16f.
   if (
     kind === "r8" &&
-    isRgbaAtlasesEnabled() &&
     !geometry.exactValues &&
     (geometry.channelSlabCount === 3 || geometry.channelSlabCount === 4) &&
     geometry.channelCount === geometry.channelSlabCount

@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { SceneVolume } from "./SceneVolume";
 import { BrushStrokeSession } from "../features/annotations/enhancers/paths/brushSkeleton/BrushStrokeSession";
 import { MeshDesignSession } from "../features/meshDesign/ui/MeshDesignSession";
@@ -6,18 +5,16 @@ import { DoubleClickRecenter } from "../features/probe/DoubleClickRecenter";
 import { ProbeAxisGuides } from "../features/probe/ProbeAxisGuides";
 import { RoiDrawer } from "../features/annotations/RoiDrawer";
 import { VolumeCompositor } from "../features/volume/VolumeCompositor";
-import { isVolumeTargetEnabled } from "../platform/gpu/volumeTargetFlags";
 
 export const ThreeDScene = () => {
-  // Read once per mount (like smoothZoom): mounting/unmounting the
-  // compositor mid-session would flip the render-loop ownership under R3F's
-  // feet, so a flip re-enters through a scene remount. (The image materials'
-  // blending is IDENTICAL in both paths — plain AdditiveBlending; the old
-  // "flag switches the blend mode" rationale was a reverted design.)
-  const [volumeTarget] = useState(isVolumeTargetEnabled);
   return (
     <>
-      {volumeTarget && <VolumeCompositor />}
+      {/* The compositor takes over rendering with a priority-1 useFrame. It
+          used to sit behind `orkestrator.volumeTarget`, read once per mount
+          because flipping it mid-session would move render-loop ownership
+          under R3F's feet. The flag is gone (OCTREE_RENDERER.md §6.9); the
+          compositor is simply always mounted in 3D. */}
+      <VolumeCompositor />
       {/* NAVIGATE double-click → recenter on the clicked content (3D-only by
           construction: this component tree only mounts in 3D). */}
       <DoubleClickRecenter />

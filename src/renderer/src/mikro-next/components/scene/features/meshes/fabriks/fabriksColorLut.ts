@@ -21,7 +21,7 @@ import {
   type ValueLutArena,
   type ValueLutWindow,
 } from "../../../platform/attributes/valueLut";
-import type { SparseReadRequest } from "@/mikro-next/lib/sparse/sparseSource";
+import type { SparseReadRequest, SparseReader } from "@/mikro-next/lib/sparse/sparseSource";
 import { readColumnByObjectIdBatchedCached } from "../../../platform/attributes/columnValueCache";
 import type { FabriksObjectEntry } from "./fabriksCatalogs";
 
@@ -90,12 +90,7 @@ export type ColorLutRequest = {
    * matrix the colouring does, so its source is resolved by id at read time.
    * Absent means a sparse rule cannot be read and is `skipped`.
    */
-  readSparse?:
-    | ((
-        datasetId: string,
-        at: readonly { axis: string; value: number }[],
-      ) => Promise<{ values: Map<number, number>; slotCount: number }>)
-    | null;
+  readSparse?: SparseReader | null;
 };
 
 /**

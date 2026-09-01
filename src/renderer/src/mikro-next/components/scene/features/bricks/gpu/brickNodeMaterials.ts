@@ -67,13 +67,6 @@ export type UniformArrayNodeLike<T> = { array: T[] };
 import { MAX_BRICK_LEVELS } from "../octree/brickEncoding";
 import { MAX_RAY_STEPS_CEILING } from "../../../platform/quality/qualityGovernor";
 import { NameScope } from "./tslNames";
-import {
-  isAnisoStrideEnabled,
-  isOccHierarchyEnabled,
-  isFixedShapeFastPathEnabled,
-  isShaderFastPathEnabled,
-  isSmoothZoomEnabled,
-} from "./shaderFlags";
 import { ensureAggregate } from "./pageTableTexture";
 import {
   emitVolumeRayBounds,
@@ -368,7 +361,7 @@ export function updateChannelWindows(
 
 /** Copy fresh channel data into the existing uniform nodes (no rebuild). */
 export function updateChannelNodes(nodes: ChannelNodesPublic, data: ChannelUniformData): void {
-  adoptColormapAtlas(nodes, data.atlas);
+  adoptFixedSizeTexture(nodes.colormapAtlas, data.atlas);
   nodes.numChannels.value = data.numChannels;
   nodes.blendMode.value = data.blendMode;
   copyChannelArrays(nodes, data);
@@ -377,21 +370,46 @@ export function updateChannelNodes(nodes: ChannelNodesPublic, data: ChannelUnifo
   // would leave the compiled material's bind group pointing at a disposed
   // texture. These two are fixed-size, so the copy always applies. A SLIM
   // material has none of them (see makeChannelNodes).
-  if (nodes.sourceParams) adoptDataTexture(nodes.sourceParams, data.sourceParams);
-  if (nodes.cursorParams) adoptDataTexture(nodes.cursorParams, data.cursors);
+  if (nodes.sourceParams) adoptFixedSizeTexture(nodes.sourceParams, data.sourceParams);
+  if (nodes.cursorParams) adoptFixedSizeTexture(nodes.cursorParams, data.cursors);
   if (nodes.cursorCount) nodes.cursorCount.value = data.cursorCount;
 }
 
-function adoptDataTexture(
+/**
+ * Take over a freshly built DataTexture WITHOUT swapping the bound texture
+ * object when the dimensions match: copy the texels into the texture the
+ * material is already bound to and dispose the incoming one.
+ *
+ * Why not just assign? The layers rebuild these as NEW DataTextures on every
+ * data change and used to dispose the old one — the texture the compiled
+ * material was still bound to. On the WebGPU backend that leaves the bind
+ * group pointing at a destroyed GPUTexture, which three silently replaces
+ * with its default (white) texture: every channel then samples the SAME white
+ * tint and an RGB composite collapses to gray. In-place adoption keeps one
+ * long-lived texture bound for the material's whole life; only a size change
+ * (rare: a render-graph channel add/remove) swaps the object, disposing the
+ * old one AFTER the swap.
+ *
+ * This is NOT `platform/gpu/measurePalette.setMeasurePalette`, though it
+ * guards the same hazard. That one owns a per-material IDENTITY texture it
+ * must never dispose, accepts `null` to mean "unbind", compares BYTE LENGTH
+ * rather than dimensions, and carries the row's filters across. None of that
+ * applies here: these textures are fixed-size, always present, and never
+ * change filtering. Folding the two together would need three extra branches
+ * and a flag, so they stay separate — deliberately.
+ */
+function adoptFixedSizeTexture(
   node: UniformNodeLike<THREE.Texture>,
   next: THREE.DataTexture,
 ): void {
   const bound = node.value as THREE.DataTexture;
   if (bound === next) return;
-  const boundImage = bound.image as { width: number; height: number; data: Float32Array };
-  const nextImage = next.image as { width: number; height: number; data: Float32Array };
+  const boundImage = bound.image as { width: number; height: number; data: ArrayBufferView };
+  const nextImage = next.image as { width: number; height: number; data: ArrayBufferView };
   if (boundImage.width === nextImage.width && boundImage.height === nextImage.height) {
-    boundImage.data.set(nextImage.data);
+    // Same element type on both sides by construction — each caller rebuilds
+    // its own texture, so the pair is always Float32/Float32 or Uint8/Uint8.
+    (boundImage.data as unknown as { set(v: ArrayBufferView): void }).set(nextImage.data);
     bound.needsUpdate = true;
     next.dispose();
   } else {
@@ -400,37 +418,6 @@ function adoptDataTexture(
   }
 }
 
-/**
- * Take over a freshly built colormap atlas WITHOUT swapping the bound
- * texture object: same-size updates copy the texel data into the texture the
- * material is already bound to (`needsUpdate` re-upload) and dispose the
- * incoming one.
- *
- * Why not `nodes.colormapAtlas.value = data.atlas` (the previous code)? The
- * layers rebuild the atlas as a NEW DataTexture on every channel-data change
- * and used to dispose the old one — the texture the compiled material was
- * still bound to. On the WebGPU backend that leaves the bind group pointing
- * at a destroyed GPUTexture, which three silently replaces with its default
- * (white) texture: every channel then samples the SAME white tint and an RGB
- * composite collapses to gray. In-place adoption keeps one long-lived
- * texture bound for the material's whole life; only a row-count change (rare:
- * render-graph channel add/remove) swaps the object, disposing the old one
- * AFTER the swap.
- */
-function adoptColormapAtlas(nodes: ChannelNodesPublic, atlas: THREE.DataTexture): void {
-  const bound = nodes.colormapAtlas.value as THREE.DataTexture;
-  if (bound === atlas) return;
-  const boundImage = bound.image as { width: number; height: number; data: Uint8Array };
-  const nextImage = atlas.image as { width: number; height: number; data: Uint8Array };
-  if (boundImage.width === nextImage.width && boundImage.height === nextImage.height) {
-    boundImage.data.set(nextImage.data);
-    bound.needsUpdate = true;
-    atlas.dispose();
-  } else {
-    nodes.colormapAtlas.value = atlas;
-    bound.dispose();
-  }
-}
 
 /** Node handles produced by `emitResolveBrickResidency`. */
 export type ResolvedResidency = {
@@ -635,7 +622,7 @@ export function emitChannelTap(
       // textureSample this replaces costs derivative math on every tap and is
       // a WGSL uniformity hazard inside the divergent ray loop.
       raw.assign(
-        selectLane(isShaderFastPathEnabled() ? tap.level(0) : tap, address.mask).mul(
+        selectLane(tap.level(0), address.mask).mul(
           t.uAtlasScale,
         ),
       );
@@ -1525,18 +1512,17 @@ export function createVolumeNodeMaterial(
 ): VolumeMaterialBundle {
   // Read ONCE per material build (kill switch — see shaderFlags.ts): selects
   // which node graph is emitted. Off = the legacy emission order, verbatim.
-  const fastPath = isShaderFastPathEnabled();
   // Zoom smoothing (tricubic reconstruction past uSmoothThreshold px/voxel);
   // off = the filter is not emitted at all.
-  const smoothZoom = isSmoothZoomEnabled();
+  const smoothZoom = true;
   // Direction-projected stride (Phase B, see shaderFlags.ts); off = the
   // legacy max-axis pitch, verbatim.
-  const anisoStride = isAnisoStrideEnabled();
+  const anisoStride = true;
   // Hierarchical-occupancy coarse hop (R4, default OFF); off = not emitted.
   // The aggregate sidecar is lazily allocated — ensure it exists BEFORE
   // makeTraversalNodes captures the texture reference (a pool created while
   // the flag was off would otherwise hand the emission a null texture).
-  const occHierarchy = isOccHierarchyEnabled();
+  const occHierarchy = true;
   if (occHierarchy) ensureAggregate(pool.pageTable);
   const t = makeTraversalNodes(pool, dataRange);
   // Compile-time FIXED-SHAPE specialization (fast path + the flag): a member
@@ -1544,10 +1530,9 @@ export function createVolumeNodeMaterial(
   // tinted channels over one window (`isRgb`) contributes through straight-
   // line code reading per-member plain uniforms instead of a dynamic loop over
   // `chParamsA/B`. Absent member info → conservative false (emit the loop).
-  const fixedShape = fastPath && isFixedShapeFastPathEnabled();
   const memberShape = Array.from({ length: Math.max(1, memberCount) }, (_, m) => ({
-    simple: fixedShape && (channelData.members?.[m]?.isSimpleIntensity ?? false),
-    rgb: fixedShape && (channelData.members?.[m]?.isRgb ?? false),
+    simple: channelData.members?.[m]?.isSimpleIntensity ?? false,
+    rgb: channelData.members?.[m]?.isRgb ?? false,
   }));
   // Every member fixed-shape ⇒ the material never indexes the slot arrays or
   // the params textures: build the SLIM node set (two bindings + two
@@ -1577,7 +1562,7 @@ export function createVolumeNodeMaterial(
       // Compile-time phasor specialization (fast path only): a member with no
       // phasor sources gets the phasor branch omitted from its WGSL. Absent
       // member info → conservative true (emit the branch).
-      emitPhasor: !fastPath || (channelData.members?.[m]?.hasPhasorSources ?? true),
+      emitPhasor: channelData.members?.[m]?.hasPhasorSources ?? true,
       // See `memberShape` above.
       emitSimple: memberShape[m].simple,
       emitRgb: memberShape[m].rgb,
@@ -1912,8 +1897,8 @@ export function createVolumeNodeMaterial(
         Continue();
       };
 
-      if (fastPath) {
-        // FAST PATH — decide skippability BEFORE any per-slot sampling is
+      {
+        // Skippability is decided BEFORE any per-slot sampling is
         // emitted (CPU mirror: features/bricks/shaderspec/raymarchStep.ts). The legacy path below
         // built the full transfer-function + colormap + phasor sample set
         // first and only then tested the skip predicate, so every skipped
@@ -2222,7 +2207,6 @@ export function createVolumeNodeMaterial(
       }
 
       // Per-sample composite, per member (ChunkPlane semantics).
-      const maxSampleNorm = float(0.0).toVar();
       const samples = memberNodes.map((mem, m) => {
         // A SIMPLE member seeds to zero unconditionally: its blend cannot be
         // MULTIPLICATIVE (that is what `resolveRenderKind` refuses), so the
@@ -2252,7 +2236,6 @@ export function createVolumeNodeMaterial(
               c.colormapAtlas.sample(vec2(norm, mem.fixed.uRow)).rgb.mul(norm),
             );
           });
-          maxSampleNorm.assign(max(maxSampleNorm, sampleNorm));
           return {
             sampleColor,
             sampleNorm,
@@ -2298,7 +2281,6 @@ export function createVolumeNodeMaterial(
               gradSlab.assign(int(mem.fixed.uSlab2));
             });
           });
-          maxSampleNorm.assign(max(maxSampleNorm, sampleNorm));
           return {
             sampleColor,
             sampleNorm,
@@ -2376,7 +2358,6 @@ export function createVolumeNodeMaterial(
             },
           );
         });
-        maxSampleNorm.assign(max(maxSampleNorm, sampleNorm));
         return {
           sampleColor,
           sampleNorm,
@@ -2384,23 +2365,6 @@ export function createVolumeNodeMaterial(
           gradNormalize: (raw: any) => memberFns[m].channelNormalize(domSlot, raw),
         };
       });
-
-      // LEGACY empty-space skipping (fast path decides BEFORE sampling, above):
-      // nothing resident anywhere (status 0), or a known-uniform EMPTY brick
-      // (status 2) contributing nothing — jump past the resolved cell. Status
-      // 1 (resident) never skips. Merged, the test uses the MAX across
-      // members: strictly more conservative than any single member's, so no
-      // member loses a sample.
-      if (!fastPath) {
-        If(
-          resolved.status
-            .lessThan(0.5)
-            .or(resolved.status.greaterThan(1.5).and(maxSampleNorm.lessThanEqual(0.001))),
-          () => {
-            hopPastCell();
-          },
-        );
-      }
 
       memberNodes.forEach((mem, m) => {
         const a = acc[m];
@@ -2449,32 +2413,24 @@ export function createVolumeNodeMaterial(
         If(a.done.not(), () => {
           If(int(mem.projectionMode).equal(1), () => {
             const depthFrac = rayT.sub(boundsX).div(rayLen);
-            if (fastPath) {
-              const atten = exp(float(-1.5).mul(depthFrac)).toVar();
-              // The winner is chosen on the UNSHADED norm × attenuation (C1);
-              // only the colour stored for it is lit. The exp() depth fade is
-              // deliberately kept — it composes with shading as a depth cue,
-              // and touching it would change which sample WINS.
-              const av = sampleNorm.mul(atten);
-              If(av.greaterThan(a.attenuatedMax), () => {
-                a.attenuatedMax.assign(av);
-                a.attenuatedColor.assign(shadeColor(`amipFastGrad${m}`, null, cine.uMipShading));
-              });
-              // Early ray termination (CPU mirror: attenuatedMipDone). atten
-              // strictly decreases along the ray and sampleNorm ≤ 1, so every
-              // future contribution is < atten_now; once the accumulated max
-              // reaches that ceiling nothing later can beat it. Deterministic
-              // per pixel (P14-safe, same argument as the MIP 0.995 bound).
-              If(a.attenuatedMax.greaterThanEqual(atten), () => {
-                a.done.assign(true);
-              });
-            } else {
-              const av = sampleNorm.mul(exp(float(-1.5).mul(depthFrac)));
-              If(av.greaterThan(a.attenuatedMax), () => {
-                a.attenuatedMax.assign(av);
-                a.attenuatedColor.assign(shadeColor(`amipGrad${m}`, null, cine.uMipShading));
-              });
-            }
+            const atten = exp(float(-1.5).mul(depthFrac)).toVar();
+            // The winner is chosen on the UNSHADED norm × attenuation (C1);
+            // only the colour stored for it is lit. The exp() depth fade is
+            // deliberately kept — it composes with shading as a depth cue,
+            // and touching it would change which sample WINS.
+            const av = sampleNorm.mul(atten);
+            If(av.greaterThan(a.attenuatedMax), () => {
+              a.attenuatedMax.assign(av);
+              a.attenuatedColor.assign(shadeColor(`amipFastGrad${m}`, null, cine.uMipShading));
+            });
+            // Early ray termination (CPU mirror: attenuatedMipDone). atten
+            // strictly decreases along the ray and sampleNorm ≤ 1, so every
+            // future contribution is < atten_now; once the accumulated max
+            // reaches that ceiling nothing later can beat it. Deterministic
+            // per pixel (P14-safe, same argument as the MIP 0.995 bound).
+            If(a.attenuatedMax.greaterThanEqual(atten), () => {
+              a.done.assign(true);
+            });
           })
             .ElseIf(int(mem.projectionMode).equal(2), () => {
               // Step-size (opacity) correction — mirrors features/bricks/shaderspec/opacityCorrection.ts.

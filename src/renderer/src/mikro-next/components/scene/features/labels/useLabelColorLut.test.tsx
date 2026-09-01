@@ -171,6 +171,39 @@ describe("useLabelColorLut", () => {
     );
   });
 
+  it("DOES rebuild when the colormap crosses the qualitative boundary", async () => {
+    // The distinction the two-key split turns on, and the one this path used
+    // to get backwards. `buildValueLut` writes RANKS for a qualitative
+    // colormap and normalised VALUES otherwise, so the colormap's CLASS is
+    // data, not appearance — while the colormap itself (MAGMA -> INFERNO)
+    // stays appearance. Keying the table without the class left rank colours
+    // being sampled with value-derived codes.
+    buildLabelColorLut.mockResolvedValue({
+      texture: { dispose: vi.fn() },
+      width: 4,
+      height: 1,
+      idOffset: 1,
+      skipped: [],
+      valueMin: 0,
+      valueMax: 10,
+    });
+    const { rerender } = render(<Harness layer={ACTIVE} />);
+    await waitFor(() => expect(buildLabelColorLut).toHaveBeenCalledTimes(1));
+
+    rerender(
+      <Harness
+        layer={layerWith({
+          // Same column, same window — only continuous -> categorical.
+          colorBys: [{ table: "t", column: "area", joinPath: [], colormap: "HUES" }],
+          activeColorBy: 0,
+          filterBys: [],
+          activeFilterBys: [],
+        })}
+      />,
+    );
+    await waitFor(() => expect(buildLabelColorLut).toHaveBeenCalledTimes(2));
+  });
+
   it("DOES rebuild when the column changes", async () => {
     buildLabelColorLut.mockResolvedValue({
       texture: { dispose: vi.fn() },

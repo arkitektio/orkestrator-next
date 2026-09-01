@@ -96,3 +96,49 @@ export const loadSparseSource = async (client: MikroClient, datalayer: string, d
     },
   };
 };
+
+/** One slice of a matrix, as both a colouring and a rule consume it. */
+export type SparseSliceRead = {
+  values: Map<number, number>;
+  /** How many objects the matrix addresses — the slot space, zeros included. */
+  slotCount: number;
+};
+
+/**
+ * Reads one slice of ANY matrix, by dataset id — what every picker builder
+ * takes for its RULES.
+ *
+ * A rule need not name the matrix the colouring does, so its source is
+ * resolved at read time rather than fetched once by the caller. `null` (no
+ * datalayer) means a sparse rule cannot be read at all, and the builders
+ * report it as `skipped` rather than silently applying it to nothing.
+ */
+export type SparseReader = (
+  datasetId: string,
+  at: readonly { axis: string; value: number }[],
+) => Promise<SparseSliceRead>;
+
+/**
+ * The reader the label, mesh and network LUT builders all inject.
+ *
+ * It was three byte-identical closures before, one per call site, each
+ * re-deriving the same two facts: that the builder must stay free of Apollo
+ * (so the fetch is injected, exactly as `readColumn` is on the column side),
+ * and that `loadSparseSource`'s dataset query is cached per id for the app's
+ * life — which is what makes "resolve per rule" cost one fetch per matrix
+ * rather than one per rule.
+ *
+ * Lives beside `loadSparseSource` rather than in `scene/` because both the
+ * scene's builders and anything else reading a sparse colouring want it, and
+ * because from here it is subject to no layering rule at all.
+ */
+export const makeSparseReader = (
+  client: MikroClient,
+  datalayer: string | null | undefined,
+): SparseReader | null =>
+  datalayer
+    ? async (datasetId, at) => {
+        const source = await loadSparseSource(client, datalayer, datasetId);
+        return source.read(source.source, at);
+      }
+    : null;

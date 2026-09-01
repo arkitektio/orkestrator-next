@@ -1,3 +1,10 @@
+## [2.0.2](https://github.com/arkitektio/orkestrator-next/compare/v2.0.1...v2.0.2) (2026-09-01)
+
+
+### Bug Fixes
+
+* point sprite WGSL corner, network 2D slab clip, dead-code cleanup ([19c5dce](https://github.com/arkitektio/orkestrator-next/commit/19c5dcef62fe2aefe7433338b0e174b1e70e58b0))
+
 ## [2.0.1](https://github.com/arkitektio/orkestrator-next/compare/v2.0.0...v2.0.1) (2026-09-01)
 
 

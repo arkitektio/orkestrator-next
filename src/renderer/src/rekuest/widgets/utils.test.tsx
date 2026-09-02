@@ -2,8 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 
 // `../api/graphql` is the 1.3MB generated Apollo module (and pulls in the
 // rekuest hooks/client). We only need the PortKind enum, so stub it. The smart
-// registry drags in UI components, and shadowrealm-api instantiates a realm at
-// module load — both are stubbed so this stays a fast, isolated unit test.
+// registry drags in UI components, so it is stubbed too; this stays a fast,
+// isolated unit test.
 vi.mock("../api/graphql", () => ({
   PortKind: {
     Bool: "BOOL",
@@ -26,12 +26,10 @@ vi.mock("@/providers/smart/registry", () => ({
   smartRegistry: { getDisplayName: (identifier: string) => identifier },
 }));
 
-vi.mock("shadowrealm-api", () => ({
-  default: class ShadowRealmStub {
-    evaluate() {
-      return () => true;
-    }
-  },
+// The port-call catalog pulls in the standard blok functions, one of which
+// toasts; keep the toaster out of the unit test.
+vi.mock("sonner", () => ({
+  toast: { info: vi.fn(), warning: vi.fn(), error: vi.fn(), success: vi.fn() },
 }));
 
 import type { LabellablePort, PortablePort } from "./types";
@@ -224,6 +222,39 @@ describe("buildZodSchema", () => {
     const schema = buildZodSchema([p({ kind: PortKind.String, key: "name" })], [], "@x/model");
     expect(schema.safeParse({ name: "Ada", __identifier: "@x/model" }).success).toBe(true);
     expect(schema.safeParse({ name: "Ada", __identifier: "@x/other" }).success).toBe(false);
+  });
+
+  it("applies port validators (catalog calls) with the validator's message at the port path", () => {
+    const schema = buildZodSchema([
+      p({ kind: PortKind.Int, key: "min" }),
+      p({
+        kind: PortKind.Int,
+        key: "max",
+        validators: [
+          {
+            call: {
+              operation: "compare.gt",
+              arguments: [
+                { key: "a", value_path: "value" },
+                { key: "b", value_path: "min" },
+              ],
+            },
+            dependencies: ["min"],
+            errorMessage: "max must exceed min",
+          },
+        ],
+      } as unknown as Partial<PortablePort> & { kind: PortKind; key: string }),
+    ]);
+
+    expect(schema.safeParse({ min: 1, max: 5 }).success).toBe(true);
+
+    const failed = schema.safeParse({ min: 5, max: 1 });
+    expect(failed.success).toBe(false);
+    if (!failed.success) {
+      expect(failed.error.issues).toEqual([
+        expect.objectContaining({ message: "max must exceed min", path: ["max"] }),
+      ]);
+    }
   });
 });
 

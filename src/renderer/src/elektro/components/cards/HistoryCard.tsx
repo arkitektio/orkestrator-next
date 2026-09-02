@@ -1,3 +1,4 @@
+import React from "react";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -75,4 +76,4 @@ const HistoryCard = ({ history }: HistoryCardProps) => {
   );
 };
 
-export default HistoryCard;
+export default React.memo(HistoryCard);

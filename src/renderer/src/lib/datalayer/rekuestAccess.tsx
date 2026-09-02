@@ -9,7 +9,6 @@ export const createBlobUrl = async (_media: MediaStoreFragment, datalayer: strin
 
 
   const s3Url = datalayer + "/" + credentials.bucket + "/" + credentials.key;
-  console.log("Item URL:", s3Url);
 
 
   const headers = await signS3Request(s3Url, 'GET', credentials);
@@ -41,8 +40,6 @@ export const createBlobedUrl = async (media: MediaStoreFragment, mikro: ApolloCl
   if (!credentials) {
     throw new Error("Failed to get media access credentials");
   }
-
-  console.log("Received credentials for media access:", credentials);
 
   return await createBlobUrl(media, datalayer, credentials);
 };

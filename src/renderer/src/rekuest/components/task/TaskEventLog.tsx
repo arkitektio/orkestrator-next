@@ -102,12 +102,17 @@ const YieldLogRow = (props: {
 export const ChildTasksSection = (props: {
   task: DetailTaskFragment;
 }) => {
-  const children = (props.task.children ?? [])
-    .slice()
-    .sort(
-      (a, b) =>
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-    );
+  // Sorted once per `children` identity; this section rerenders on every
+  // task event, and `createdAt` is ISO-8601 so the strings sort correctly
+  // without allocating Dates per comparison.
+  const rawChildren = props.task.children;
+  const children = useMemo(
+    () =>
+      (rawChildren ?? [])
+        .slice()
+        .sort((a, b) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0)),
+    [rawChildren],
+  );
 
   if (children.length === 0) {
     return null;

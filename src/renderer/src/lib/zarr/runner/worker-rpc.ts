@@ -143,14 +143,21 @@ export function disposeWorker(
 
 let nextMetaId = 0
 const metaKeyToId = new Map<string, number>()
+// Identity fast path: codec metadata objects come from the per-array
+// metadata cache and are reused across every chunk of that array, so the
+// stringify (main thread, once per chunk request) only runs on a new object.
+const metaObjectToId = new WeakMap<CodecChunkMeta, number>()
 
 export function getMetaId(meta: CodecChunkMeta): number {
+  const cached = metaObjectToId.get(meta)
+  if (cached !== undefined) return cached
   const key = JSON.stringify(meta)
   let id = metaKeyToId.get(key)
   if (id === undefined) {
     id = nextMetaId++
     metaKeyToId.set(key, id)
   }
+  metaObjectToId.set(meta, id)
   return id
 }
 

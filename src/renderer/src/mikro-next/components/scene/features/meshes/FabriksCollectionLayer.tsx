@@ -2,6 +2,9 @@ import { effectiveFlatNormals } from "./meshLayerDefaults";
 import { useThree, type ThreeEvent } from "@react-three/fiber";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
+
+/** Scratch for the per-pointer-move hit transform (never escapes the handler). */
+const hitScratch = new THREE.Vector3();
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 
 import { useDatalayerEndpoint, useMikro } from "@/app/Arkitekt";
@@ -415,7 +418,8 @@ const FabriksCollectionGroup = ({
   const pickEnabled = visible && clickProbeEnabled(gate) && interactionMode === "PROBE";
   const hoverCoalescer = useMemo(() => createRafCoalescer<() => void>((run) => run()), []);
   useEffect(() => () => hoverCoalescer.cancel(), [hoverCoalescer]);
-  const lastHover = useRef<string | null>(null);
+  // Last published hover, compared numerically (no per-move string key).
+  const lastHover = useRef<{ ordinal: number; x: number; y: number; z: number } | null>(null);
 
   /** The picked ordinal + frame, or null when the event isn't a usable hit. */
   const resolveMeshHit = (event: ThreeEvent<MouseEvent | PointerEvent>) => {
@@ -426,7 +430,8 @@ const FabriksCollectionGroup = ({
     // Mesh-local IS collection voxel space (corner-anchored), so the hit
     // point through the inverse placement is the voxel coordinate.
     const worldPos: [number, number, number] = [event.point.x, event.point.y, event.point.z];
-    const local = event.point.clone().applyMatrix4(inverseRef.current);
+    // Scratch vector: this runs on every pointer move, before the dedupe.
+    const local = hitScratch.copy(event.point).applyMatrix4(inverseRef.current);
     const voxelIndex: [number, number, number] = [
       Math.floor(local.x),
       Math.floor(local.y),
@@ -559,9 +564,19 @@ const FabriksCollectionGroup = ({
     event.stopPropagation();
     // Dedupe: same instance at the same voxel republishes nothing; the
     // tracker's 150 ms debounce (and its instant path) do the rest.
-    const signature = `${hit.ordinal}:${hit.voxelIndex.join(",")}`;
-    if (lastHover.current === signature) return;
-    lastHover.current = signature;
+    const [vx, vy, vz] = hit.voxelIndex;
+    const last = lastHover.current;
+    if (last && last.ordinal === hit.ordinal && last.x === vx && last.y === vy && last.z === vz) {
+      return;
+    }
+    if (last) {
+      last.ordinal = hit.ordinal;
+      last.x = vx;
+      last.y = vy;
+      last.z = vz;
+    } else {
+      lastHover.current = { ordinal: hit.ordinal, x: vx, y: vy, z: vz };
+    }
     hoverCoalescer.schedule(() => publishMeshProbe(hit, "hover"));
   };
 

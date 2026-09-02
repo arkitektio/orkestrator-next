@@ -126,12 +126,17 @@ fragment FlussPortEffect on Effect {
   __typename
   kind
   dependencies
+  call {
+    ...FlussPortCall
+  }
   ...FlussCustomEffect
   ...FlussMessageEffect
 }
 
 fragment Validator on Validator {
-  function
+  call {
+    ...FlussPortCall
+  }
   dependencies
 }
 
@@ -221,4 +226,63 @@ fragment FlussReturnWidget on ReturnWidget {
   kind
   ...FlussCustomReturnWidget
   ...FlussChoiceReturnWidget
+}
+
+# --- Port calls -------------------------------------------------------------
+# `call` is a blok UtilCall. GraphQL fragments cannot recurse, so nesting is
+# selected to a fixed depth: a top-level call, whose arguments may hold one
+# nested call, whose arguments may hold one more (leaf) call. Deeper payloads
+# are rejected by the client's parser rather than silently truncated.
+
+fragment FlussPortCallLeafArgument on ActionArgument {
+  key
+  valueLiteral
+  valuePath
+}
+
+fragment FlussPortCallLeaf on UtilCall {
+  operation
+  arguments {
+    ...FlussPortCallLeafArgument
+  }
+}
+
+fragment FlussPortCallInnerArgument on ActionArgument {
+  ...FlussPortCallLeafArgument
+  utilCall {
+    ...FlussPortCallLeaf
+  }
+  valueList {
+    ...FlussPortCallLeafArgument
+  }
+  valueDict {
+    ...FlussPortCallLeafArgument
+  }
+}
+
+fragment FlussPortCallInner on UtilCall {
+  operation
+  arguments {
+    ...FlussPortCallInnerArgument
+  }
+}
+
+fragment FlussPortCallArgument on ActionArgument {
+  ...FlussPortCallLeafArgument
+  utilCall {
+    ...FlussPortCallInner
+  }
+  valueList {
+    ...FlussPortCallInnerArgument
+  }
+  valueDict {
+    ...FlussPortCallInnerArgument
+  }
+}
+
+fragment FlussPortCall on UtilCall {
+  operation
+  arguments {
+    ...FlussPortCallArgument
+  }
 }

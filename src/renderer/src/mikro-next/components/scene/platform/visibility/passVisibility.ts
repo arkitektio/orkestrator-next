@@ -60,12 +60,18 @@ const isOpaqueDepthWriter = (object: LeafRenderable): boolean => {
   if (object.isMesh !== true) return false;
   const material = object.material;
   if (!material) return false;
-  const materials = Array.isArray(material) ? material : [material];
-  return (
-    materials.length > 0 &&
-    materials.every((m) => m.depthWrite === true && m.transparent === false && m.visible !== false)
-  );
+  // Runs per leaf per frame: no per-call array or closure for the common
+  // single-material case.
+  if (!Array.isArray(material)) return isOpaqueMaterial(material);
+  if (material.length === 0) return false;
+  for (let i = 0; i < material.length; i++) {
+    if (!isOpaqueMaterial(material[i])) return false;
+  }
+  return true;
 };
+
+const isOpaqueMaterial = (m: THREE.Material): boolean =>
+  m.depthWrite === true && m.transparent === false && m.visible !== false;
 
 /**
  * One traversal classifying every VISIBLE leaf renderable under `root`.
@@ -108,15 +114,33 @@ export const collectPassSets = (
  */
 export const hideObjects = (objects: readonly THREE.Object3D[]): (() => void) => {
   const hidden: THREE.Object3D[] = [];
-  for (const object of objects) {
+  hideObjectsInto(objects, hidden);
+  return () => restoreHidden(hidden);
+};
+
+/**
+ * Allocation-free variant of `hideObjects` for per-frame callers: records
+ * the objects it actually hid into `hidden` (cleared first). Restore with
+ * `restoreHidden(hidden)` under the same `finally` contract.
+ */
+export const hideObjectsInto = (
+  objects: readonly THREE.Object3D[],
+  hidden: THREE.Object3D[],
+): void => {
+  hidden.length = 0;
+  for (let i = 0; i < objects.length; i++) {
+    const object = objects[i];
     if (object.visible) {
       object.visible = false;
       hidden.push(object);
     }
   }
-  return () => {
-    for (const object of hidden) object.visible = true;
-  };
+};
+
+/** Re-show everything `hideObjectsInto` hid, and clear the scratch list. */
+export const restoreHidden = (hidden: THREE.Object3D[]): void => {
+  for (let i = 0; i < hidden.length; i++) hidden[i].visible = true;
+  hidden.length = 0;
 };
 
 /**
@@ -133,18 +157,40 @@ export const disableColorWrite = (
   objects: readonly THREE.Object3D[],
 ): (() => void) => {
   const touched = new Map<THREE.Material, boolean>();
-  for (const object of objects) {
-    const material = (object as LeafRenderable).material;
+  disableColorWriteInto(objects, touched);
+  return () => restoreColorWrite(touched);
+};
+
+const disableOne = (m: THREE.Material, touched: Map<THREE.Material, boolean>) => {
+  if (!touched.has(m)) {
+    touched.set(m, m.colorWrite);
+    m.colorWrite = false;
+  }
+};
+
+/**
+ * Allocation-free variant of `disableColorWrite` for per-frame callers:
+ * `touched` (cleared first) records the previous flags. Restore with
+ * `restoreColorWrite(touched)`.
+ */
+export const disableColorWriteInto = (
+  objects: readonly THREE.Object3D[],
+  touched: Map<THREE.Material, boolean>,
+): void => {
+  touched.clear();
+  for (let i = 0; i < objects.length; i++) {
+    const material = (objects[i] as LeafRenderable).material;
     if (!material) continue;
-    const materials = Array.isArray(material) ? material : [material];
-    for (const m of materials) {
-      if (!touched.has(m)) {
-        touched.set(m, m.colorWrite);
-        m.colorWrite = false;
-      }
+    if (Array.isArray(material)) {
+      for (let j = 0; j < material.length; j++) disableOne(material[j], touched);
+    } else {
+      disableOne(material, touched);
     }
   }
-  return () => {
-    for (const [m, colorWrite] of touched) m.colorWrite = colorWrite;
-  };
+};
+
+/** Restore the flags recorded by `disableColorWriteInto` and clear the map. */
+export const restoreColorWrite = (touched: Map<THREE.Material, boolean>): void => {
+  for (const [m, colorWrite] of touched) m.colorWrite = colorWrite;
+  touched.clear();
 };

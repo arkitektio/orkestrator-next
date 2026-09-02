@@ -1,5 +1,6 @@
 import Handlebars from "handlebars";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
+import { Control, FieldValues, useWatch } from "react-hook-form";
 
 function replaceVariablesWithNames(implementation: string) {
   // This regular expression captures Handlebars expressions {{ variable }}
@@ -20,48 +21,52 @@ function replaceUndefinedValuesWithKeyName(obj: any) {
   return obj;
 }
 
-export const ActionDescription = (props: {
-  description: string;
-  variables?: { [key: string]: any };
-}) => {
-  const [text, setText] = useState<string>(
-    replaceVariablesWithNames(props.description),
-  );
-
-  useEffect(() => {
-    if (props.variables) {
-      const implementation = Handlebars.compile(props.description);
-      const newText = implementation(
-        replaceUndefinedValuesWithKeyName({ ...props.variables }),
-      );
-      setText(newText);
-    } else {
-      setText(replaceVariablesWithNames(props.description));
-    }
-  }, [props.description, props.variables]);
-
-  return <>{text}</>;
+// Compiling a Handlebars template parses and code-generates; the description
+// text rarely changes while the variables change on every keystroke, so cache
+// the compiled template per description.
+const compiledTemplates = new Map<string, HandlebarsTemplateDelegate>();
+const compileDescription = (description: string) => {
+  let template = compiledTemplates.get(description);
+  if (!template) {
+    template = Handlebars.compile(description);
+    compiledTemplates.set(description, template);
+  }
+  return template;
 };
 
 export const useActionDescription = (props: {
   description: string;
   variables?: { [key: string]: any };
 }) => {
-  const [text, setText] = useState<string>(
-    replaceVariablesWithNames(props.description),
-  );
-
-  useEffect(() => {
+  return useMemo(() => {
     if (props.variables) {
-      const implementation = Handlebars.compile(props.description);
-      const newText = implementation(
+      return compileDescription(props.description)(
         replaceUndefinedValuesWithKeyName({ ...props.variables }),
       );
-      setText(newText);
-    } else {
-      setText(replaceVariablesWithNames(props.description));
     }
+    return replaceVariablesWithNames(props.description);
   }, [props.description, props.variables]);
+};
 
-  return text;
+export const ActionDescription = (props: {
+  description: string;
+  variables?: { [key: string]: any };
+}) => {
+  const text = useActionDescription(props);
+  return <>{text}</>;
+};
+
+/**
+ * An `ActionDescription` fed by the live values of a react-hook-form form.
+ *
+ * Use this instead of `form.watch()` in the form component: watching the whole
+ * form there rerenders every widget on every keystroke, whereas this leaf only
+ * rerenders itself.
+ */
+export const FormActionDescription = (props: {
+  description: string;
+  control: Control<FieldValues>;
+}) => {
+  const variables = useWatch({ control: props.control });
+  return <ActionDescription description={props.description} variables={variables} />;
 };

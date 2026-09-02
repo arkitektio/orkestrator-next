@@ -124,7 +124,7 @@ input ActionArgumentInput {
   """
   Defines a nested utility call if this argument should trigger a system utility interaction.
   """
-  utilCall: UtilProbeInput = null
+  utilCall: UtilCallInput = null
 
   """
   Defines a list of key-value pairs if this argument should be a dictionary.
@@ -1327,7 +1327,7 @@ input ComponentPropInput {
   """
   Defines an imperative interactive network action callback loop if this prop should trigger a system utility interaction.
   """
-  utilCall: UtilProbeInput = null
+  utilCall: UtilCallInput = null
 }
 
 """The input for creating a blok."""
@@ -1534,8 +1534,8 @@ type CustomAssignWidget implements AssignWidget {
 }
 
 type CustomEffect implements Effect {
+  call: UtilCall!
   dependencies: [String!]!
-  function: ValidatorFunction!
   hook: String!
   kind: EffectKind!
   ward: String!
@@ -1847,8 +1847,8 @@ input DynamicValueInput {
 }
 
 interface Effect {
+  call: UtilCall!
   dependencies: [String!]!
-  function: ValidatorFunction!
   kind: EffectKind!
 }
 
@@ -1860,10 +1860,15 @@ enum EffectClass {
   PHYSICAL
 }
 
-"\n                 An effect is a way to modify a port based on a condition. For example,\n    you could have an effect that sets a port to null if another port is null.\n\n    Or, you could have an effect that hides the port if another port meets a condition.\n    E.g when the user selects a certain option in a dropdown, another port is hidden.\n\n\n    "
+"\n    An effect is a way to modify a port based on a condition. For example,\n    you could have an effect that hides the port if another port meets a condition,\n    e.g. when the user selects a certain option in a dropdown, another port is hidden.\n\n    The condition is a pure blok UtilCall (`call`) evaluated client-side against the\n    catalog; it must return a boolean deciding whether the effect applies. `dependencies`\n    is the authoritative list of other ports the call may reference (plus `value` for the\n    port's own value).\n    "
 input EffectInput {
   """
-  The dependencies of the effect. Use the .. syntax to traverse the tree of ports. For example, if you have a port with the key 'foo' and you want to reference a port with the key 'bar' that is a child of 'foo', you would use 'foo..bar'
+  The pure blok UtilCall, evaluated client-side against the catalog, that decides whether the effect applies. It must return a boolean. Argument value_paths may only reference names listed in `dependencies`, plus `value` for the port's own value.
+  """
+  call: UtilCallInput!
+
+  """
+  The form-field subscription list of the effect: the keys of the other ports whose values the call may reference. This list is authoritative: a value_path in the call may only reference these names (plus `value` for the port's own value). Use the .. syntax to traverse the tree of ports, e.g. 'foo..bar' for the child 'bar' of port 'foo'.
   """
   dependencies: [String!] = []
 
@@ -1871,9 +1876,6 @@ input EffectInput {
   Whether to fade out the port when the effect is applied (if it is a hide effect)
   """
   fade: Boolean = true
-
-  """The function to run to determine if the effect should be applied"""
-  function: ValidatorFunction!
 
   """The hook to run when the effect is applied (if it is a custom effect)"""
   hook: String = null
@@ -1942,9 +1944,9 @@ input HardwareRecordFilter {
 }
 
 type HideEffect implements Effect {
+  call: UtilCall!
   dependencies: [String!]!
   fade: Boolean!
-  function: ValidatorFunction!
   kind: EffectKind!
 }
 
@@ -2467,8 +2469,8 @@ input MemoryShelveOrder @oneOf {
 }
 
 type MessageEffect implements Effect {
+  call: UtilCall!
   dependencies: [String!]!
-  function: ValidatorFunction!
   kind: EffectKind!
   message: String!
 }
@@ -4849,7 +4851,7 @@ type UtilCall {
 }
 
 """Defines a utility call that can be invoked within the system."""
-input UtilProbeInput {
+input UtilCallInput {
   """Key-value arguments map compiled for the target utility call."""
   arguments: [ActionArgumentInput!] = null
 
@@ -4858,27 +4860,26 @@ input UtilProbeInput {
 }
 
 type Validator {
+  call: UtilCall!
   dependencies: [String!]
   errorMessage: String
-  function: ValidatorFunction!
   label: String
 }
 
-"\n    The `Validator` scalar represents a javascript function that should execute on the client side (inside a shadow realm)\n      to validate a value (or a set of values) before it is sent to the server.  The function has two parameters (value, otherValues) and should return a string if the value is invalid and undefined if the value is valid.\n        The otherValues parameter is an object with the other values in the form {fieldName: value}."
-scalar ValidatorFunction
-
-"\nA validating function for a port. Can specify a function that will run when validating values of the port.\nIf outside dependencies are needed they need to be specified in the dependencies field. With the .. syntax\nwhen transversing the tree of ports.\n\n"
+"\nA validator for a port. `call` is a pure blok UtilCall evaluated client-side against the\ncatalog; it must return a boolean meaning 'valid'. Other ports the call references must be\nlisted in `dependencies` (the authoritative subscription list); `value` refers to the port's\nown value. Use the .. syntax when traversing the tree of ports.\n"
 input ValidatorInput {
   """
-  The dependencies of the function. Use the .. syntax to traverse the tree of ports. For example, if you have a port with the key 'foo' and you want to reference a port with the key 'bar' that is a child of 'foo', you would use 'foo..bar'
+  The pure blok UtilCall, evaluated client-side against the catalog, that validates the port value. It must return a boolean meaning 'valid'. Argument value_paths may only reference names listed in `dependencies`, plus `value` for the port's own value.
+  """
+  call: UtilCallInput!
+
+  """
+  The form-field subscription list of the validator: the keys of the other ports whose values the call may reference. This list is authoritative: a value_path in the call may only reference these names (plus `value` for the port's own value). Use the .. syntax to traverse the tree of ports, e.g. 'foo..bar' for the child 'bar' of port 'foo'.
   """
   dependencies: [String!] = []
 
   """The error message to display when the validation fails"""
   errorMessage: String = null
-
-  """The function to run when validating the port"""
-  function: ValidatorFunction!
 
   """An optional human-readable label for the validator."""
   label: String = null

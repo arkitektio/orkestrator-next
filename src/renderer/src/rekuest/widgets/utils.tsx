@@ -1,9 +1,9 @@
 import { notEmpty } from "@/lib/utils";
 import { smartRegistry } from "@/providers/smart/registry";
 import { ApolloClient, gql, NormalizedCache } from "@apollo/client";
-import ShadowRealm from "shadowrealm-api";
-import { z } from "zod"; // Add new import
+import { z } from "zod";
 import { PortKind } from "../api/graphql";
+import { runPortValidators } from "./portValidators";
 import { LabellablePort, PortablePort } from "./types";
 
 export const pathToName = (path: string[]): string => {
@@ -246,13 +246,6 @@ export const buildDescribeFunction = (client: ApolloClient<NormalizedCache>) => 
 
 
 
-export type ValidatorFunction = (
-  v: any,
-  x: { [key: string]: any },
-) => string | undefined;
-
-const ream = new ShadowRealm();
-
 export const buildZodSchema = (ports: PortablePort[], path: string[] = [], __identifier?: string) => {
 
   let portSchemas =  ports.reduce(
@@ -273,49 +266,28 @@ export const buildZodSchema = (ports: PortablePort[], path: string[] = [], __ide
     portSchemas
   );
 
-  ports.forEach((port) => {
-    // do somethin
-    if (port.validators) {
-      for (const validator of port.validators) {
-        const wrappedValidator = (v: any, values: any) => {
-          const wrappedValidatorFunc = `(v, values) => {
-                const func = ${validator.function};
+  // Server-defined validators are catalog calls (see portCalls.ts). Attach
+  // them as one refinement over the whole object so a validator can read its
+  // dependencies. (`refine` returns a NEW schema; the previous code dropped
+  // the result, so validators never applied.)
+  const validatedPorts = ports.filter((port) => port.validators && port.validators.length > 0);
+  if (validatedPorts.length === 0) {
+    return schema;
+  }
 
-                let json_values = JSON.parse(values);
-
-                return func(v, ...json_values);
-            }`;
-
-          const func = ream.evaluate(wrappedValidatorFunc) as (
-            v: any,
-            ...value: any
-          ) => boolean;
-
-          const params = validator.dependencies?.map((dep) => values[dep]);
-          if (params?.every((predicate) => predicate != undefined)) {
-            const serialized_values = JSON.stringify(params);
-            const x = func(v, serialized_values);
-            console.log(x);
-            return x;
-          } else {
-            return true;
-          }
-        };
-
-        schema.refine(
-          (data) => {
-            return wrappedValidator(data[port.key], data);
-          },
-          {
-            message: validator.errorMessage || "Validation failed",
-            path: [pathToName([...path, port.key])],
-          },
-        );
+  return schema.superRefine((data, ctx) => {
+    const values = data as Record<string, unknown>;
+    for (const port of validatedPorts) {
+      const messages = runPortValidators(port.validators, values[port.key], values);
+      for (const message of messages) {
+        ctx.addIssue({
+          code: "custom",
+          message,
+          path: [pathToName([...path, port.key])],
+        });
       }
     }
   });
-
-  return schema;
 };
 
 export const portToDefaults = (

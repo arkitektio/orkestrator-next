@@ -28,6 +28,17 @@ export const NanaContainer = () => {
   );
 };
 
+const EMPTY_EFFECTS: ArgPort["effects"] = [];
+
+type ResolvedPort = {
+  port: ArgPort;
+  Widget: ReturnType<ArgsContainerProps["registry"]["getInputWidgetForPort"]>;
+  path: string[];
+  effects: NonNullable<ArgPort["effects"]>;
+};
+
+type ResolvedGroup = FilledGroup & { resolvedPorts: ResolvedPort[] };
+
 export const ArgsContainer = ({
   ports,
   groups,
@@ -38,26 +49,35 @@ export const ArgsContainer = ({
   path,
 }: ArgsContainerProps) => {
   const hash = portHash(ports.filter(notEmpty));
+  const pathKey = path.join(".");
 
-  const filledGroups = useMemo(() => {
-    if (!groups || groups.length === 0) {
-      groups = [
-        {
-          key: "default",
-          ports: ports.filter(notEmpty).map((p) => p.key),
-        },
-      ];
-    }
+  // Resolve widgets, paths and effects once per port set. Doing this in the
+  // render body handed every widget fresh `path` / `effects` arrays on each
+  // render, which defeated memoization down the widget tree and re-triggered
+  // search queries keyed on those props.
+  const resolvedGroups = useMemo<ResolvedGroup[]>(() => {
+    const presentPorts = ports.filter(notEmpty);
+    const effectiveGroups: PortGroup[] =
+      !groups || groups.length === 0
+        ? [{ key: "default", ports: presentPorts.map((p) => p.key) }]
+        : groups.filter(notEmpty);
 
-    const argGroups: FilledGroup[] = groups.filter(notEmpty).map((g) => ({
-      ...g,
-      filledPorts: ports
-        .filter(notEmpty)
-        .filter((x) => g.ports.includes(x?.key)),
-    }));
-
-    return argGroups;
-  }, [ports, hash]);
+    return effectiveGroups.map((g) => {
+      const filledPorts = presentPorts.filter((x) => g.ports.includes(x?.key));
+      return {
+        ...g,
+        filledPorts,
+        resolvedPorts: filledPorts.map((port) => ({
+          port,
+          Widget: registry.getInputWidgetForPort(port),
+          path: [...path, port.key],
+          effects: port.effects || EMPTY_EFFECTS,
+        })),
+      };
+    });
+    // `hash` and `pathKey` stand in for the identity of `ports` / `path`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hash, groups, registry, pathKey]);
 
   const glen = groups?.length || 0;
 
@@ -72,7 +92,7 @@ export const ArgsContainer = ({
     <div
       className={`grid @lg:grid-cols-${glg_size} @xl:grid-cols-${gxl_size} @2xl:grid-cols-${gxxl_size}  @3xl:grid-cols-${gxxxl_size}   @5xl:grid-cols-${gxxxxl_size} gap-5`}
     >
-      {filledGroups.map((group, index) => {
+      {resolvedGroups.map((group) => {
         const len = group.filledPorts.length;
 
         const lg_size = len < 2 ? len : 2;
@@ -83,7 +103,7 @@ export const ArgsContainer = ({
 
 
         return (
-          <Collapsible key={index} className="@container" defaultOpen={true}>
+          <Collapsible key={group.key} className="@container" defaultOpen={true}>
             {group.key != "default" && (
               <div className="mb-2">
                 <CollapsibleTrigger className="text-xs">
@@ -98,24 +118,22 @@ export const ArgsContainer = ({
               <div className={`grid @lg:grid-cols-${lg_size} @xl:grid-cols-${xl_size} @2xl:grid-cols-${xxl_size}  @3xl:grid-cols-${xxxl_size}   @5xl:grid-cols-${xxxxl_size} gap-5`}>
 
 
-                {group.filledPorts.map((port, index) => {
-                  const Widget = registry.getInputWidgetForPort(port);
+                {group.resolvedPorts.map(({ port, Widget, path: portPath, effects }) => {
                   if (hidden && hidden[port.key]) return null;
 
                   return (
                     <EffectWrapper
-                      key={index}
-                      effects={port.effects || []}
+                      key={port.key}
+                      effects={effects}
                       port={port}
                       registry={registry}
                     >
                       <Widget
-                        key={index}
                         port={port}
                         bound={bound}
                         widget={port.widget as unknown as AssignWidgetFragment}
                         options={options}
-                        path={[...path, port.key]}
+                        path={portPath}
                       />
                     </EffectWrapper>
                   );

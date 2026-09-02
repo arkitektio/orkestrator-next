@@ -1,3 +1,4 @@
+import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { buildAssignInput } from "@/rekuest/assign";
 import { Button } from "@/components/ui/button";
@@ -161,4 +162,4 @@ const TheCard = ({ item }: Props) => {
   );
 };
 
-export default TheCard;
+export default React.memo(TheCard);

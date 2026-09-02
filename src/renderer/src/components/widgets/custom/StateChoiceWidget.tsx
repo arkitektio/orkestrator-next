@@ -12,7 +12,7 @@ import {
 } from "@/rekuest/widgets/DependencyContext";
 import { InputWidgetProps } from "@/rekuest/widgets/types";
 import { pathToName } from "@/rekuest/widgets/utils";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useWatch } from "react-hook-form";
 
 
@@ -32,8 +32,14 @@ export const StateChoiceWidget = (
 ) => {
 
 
-  const stateKey = props.widget?.statePath?.split(".")[0];
-  const statePaths = props.widget?.statePath?.split(".").slice(1) || [];
+  const statePath = props.widget?.statePath;
+  const stateKey = statePath?.split(".")[0];
+  // Memoized: `statePaths` is a dependency of `search` below, and a fresh
+  // array per render made SearchField re-query on every live-state patch.
+  const statePaths = useMemo(
+    () => statePath?.split(".").slice(1) || [],
+    [statePath],
+  );
   const stateAccessors = props.widget?.stateAccessors;
   const dependency = props.widget?.dependency;
 

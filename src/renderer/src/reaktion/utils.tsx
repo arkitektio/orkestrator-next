@@ -134,13 +134,35 @@ const flussReturnWidgetToInput = (
   return input;
 };
 
+/**
+ * Recursively drop `__typename` markers so a fetched object can be sent back
+ * as its input type. Used for `call` (a nested `UtilCall` / `ActionArgument`
+ * tree whose input and output field names otherwise match).
+ */
+const stripTypenames = <T,>(value: T): T => {
+  if (Array.isArray(value)) {
+    return value.map(stripTypenames) as unknown as T;
+  }
+  if (value !== null && typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
+      if (key === "__typename") continue;
+      out[key] = stripTypenames(entry);
+    }
+    return out as T;
+  }
+  return value;
+};
+
 const flussPortEffectToInput = (
   effect: FlussPortEffectFragment,
 ): EffectInput => {
-  const { __typename, ...rest } = effect;
-  // The fluss effect fragment doesn't select `function` (required on EffectInput);
-  // preserve the rest of the effect and let the backend supply/ignore it.
-  return { ...rest, kind: flussEffectKindMap[__typename] } as EffectInput;
+  const { __typename, call, ...rest } = effect;
+  return {
+    ...rest,
+    call: stripTypenames(call),
+    kind: flussEffectKindMap[__typename],
+  };
 };
 
 export const flussArgChildToInput = (
@@ -167,7 +189,10 @@ export const flussArgPortToInput = (
     children: children?.map(flussArgChildToInput),
     widget: widget ? flussAssignWidgetToInput(widget) : undefined,
     choices: choices?.map(({ __typename, ...c }) => c),
-    validators: validators?.map(({ __typename, ...v }) => v),
+    validators: validators?.map(({ __typename, call, ...v }) => ({
+      ...v,
+      call: stripTypenames(call),
+    })),
     requires: requires?.map(({ __typename, ...r }) => r),
   };
 };

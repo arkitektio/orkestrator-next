@@ -1,7 +1,77 @@
+"""A JSON-serializable argument entry for a multi-agent action trigger."""
+type ActionArgument {
+  agentCall: AgentCall
+  key: String
+  utilCall: UtilCall
+  valueDict: [ActionArgument!]
+  valueList: [ActionArgument!]
+  valueLiteral: JSONSerializable
+  valuePath: String
+}
+
+"""A JSON-serializable argument entry for a multi-agent action trigger."""
+input ActionArgumentInput {
+  """
+  Defines a nested agent call if this argument should trigger an agent interaction.
+  """
+  agentCall: AgentCallInput = null
+
+  """The argument property name."""
+  key: String = null
+
+  """
+  Defines a nested utility call if this argument should trigger a system utility interaction.
+  """
+  utilCall: UtilCallInput = null
+
+  """
+  Defines a list of key-value pairs if this argument should be a dictionary.
+  """
+  valueDict: [ActionArgumentInput!] = null
+
+  """Defines a list of values if this argument should be an array."""
+  valueList: [ActionArgumentInput!] = null
+
+  """Static literal value if not dynamically bound."""
+  valueLiteral: JSONSerializable = null
+
+  """
+  JSON Pointer referencing the shared Blok state to inject into this argument slot dynamically.
+  """
+  valuePath: String = null
+}
+
 """The kind of action."""
 enum ActionKind {
   FUNCTION
   GENERATOR
+}
+
+"""
+Defines a callback that routes user interactions directly to an Arkitekt Agent via Rekuest.
+"""
+type AgentCall {
+  arguments: [ActionArgument!]
+  dependency: String!
+  operation: String!
+}
+
+"""
+Defines a callback that routes user interactions directly to an Arkitekt Agent via Rekuest.
+"""
+input AgentCallInput {
+  """Key-value arguments map compiled for the target agent call."""
+  arguments: [ActionArgumentInput!] = null
+
+  """
+  The abstract agent dependency key declared in the Blok manifest (e.g., 'stage_dep').
+  """
+  dependency: String!
+
+  """
+  The target function name registered on that specific agent's worker thread loop.
+  """
+  operation: String!
 }
 
 """
@@ -130,12 +200,15 @@ type ArgPort {
   choices: [Choice!]
   default: AnyDefault
   description: String
+  dimension: String
   effects: [Effect!]
   identifier: Identifier
   key: String!
   kind: PortKind!
   label: String
   nullable: Boolean!
+  proposedUnits: [String!]
+  referenceUnit: String
   requires: [Requires!]
   validators: [Validator!]
   widget: AssignWidget
@@ -156,6 +229,11 @@ input ArgPortInput {
   The description of the port. This is the text that is displayed in the UI when the user hovers over the port
   """
   description: String = null
+
+  """
+  For QUANTITY ports: the pint dimensionality string, e.g. "[mass] * [length] ** 2 / [time] ** 3 / [current]". This is the wiring-compatibility key between quantity ports.
+  """
+  dimension: String = null
 
   """The effects of the port"""
   effects: [EffectInput!] = null
@@ -180,6 +258,16 @@ input ArgPortInput {
   Whether the port is nullable or not. If the port is nullable, it can be set to null. If the port is not nullable, it cannot be set to null
   """
   nullable: Boolean! = false
+
+  """
+  For QUANTITY ports: units offered as a dropdown in the UI, e.g. ["pF", "nF", "uF"]. Proposals only — any unit of the same dimension remains valid input.
+  """
+  proposedUnits: [String!] = null
+
+  """
+  For QUANTITY ports: the canonical/reference unit of the physical quantity, e.g. "volt" or "farad". It is the default selection and the key used to resolve the concrete quantity type; other units of the same dimension are still allowed.
+  """
+  referenceUnit: String = null
 
   """
   The descriptors for the port. Descriptors are key-value pairs that can be used to add additional metadata to a port. When using rekuest's action search, you can filter actions based on their port descriptors
@@ -388,8 +476,8 @@ type CustomAssignWidget implements AssignWidget {
 }
 
 type CustomEffect implements Effect {
+  call: UtilCall!
   dependencies: [String!]!
-  function: ValidatorFunction!
   hook: String!
   kind: EffectKind!
   ward: String!
@@ -413,15 +501,20 @@ input DeleteSnapshotInput {
 }
 
 interface Effect {
+  call: UtilCall!
   dependencies: [String!]!
-  function: ValidatorFunction!
   kind: EffectKind!
 }
 
-"\n                 An effect is a way to modify a port based on a condition. For example,\n    you could have an effect that sets a port to null if another port is null.\n\n    Or, you could have an effect that hides the port if another port meets a condition.\n    E.g when the user selects a certain option in a dropdown, another port is hidden.\n\n\n    "
+"\n    An effect is a way to modify a port based on a condition. For example,\n    you could have an effect that hides the port if another port meets a condition,\n    e.g. when the user selects a certain option in a dropdown, another port is hidden.\n\n    The condition is a pure blok UtilCall (`call`) evaluated client-side against the\n    catalog; it must return a boolean deciding whether the effect applies. `dependencies`\n    is the authoritative list of other ports the call may reference (plus `value` for the\n    port's own value).\n    "
 input EffectInput {
   """
-  The dependencies of the effect. Use the .. syntax to traverse the tree of ports. For example, if you have a port with the key 'foo' and you want to reference a port with the key 'bar' that is a child of 'foo', you would use 'foo..bar'
+  The pure blok UtilCall, evaluated client-side against the catalog, that decides whether the effect applies. It must return a boolean. Argument value_paths may only reference names listed in `dependencies`, plus `value` for the port's own value.
+  """
+  call: UtilCallInput!
+
+  """
+  The form-field subscription list of the effect: the keys of the other ports whose values the call may reference. This list is authoritative: a value_path in the call may only reference these names (plus `value` for the port's own value). Use the .. syntax to traverse the tree of ports, e.g. 'foo..bar' for the child 'bar' of port 'foo'.
   """
   dependencies: [String!] = []
 
@@ -429,9 +522,6 @@ input EffectInput {
   Whether to fade out the port when the effect is applied (if it is a hide effect)
   """
   fade: Boolean = true
-
-  """The function to run to determine if the effect should be applied"""
-  function: ValidatorFunction!
 
   """The hook to run when the effect is applied (if it is a custom effect)"""
   hook: String = null
@@ -695,9 +785,9 @@ enum GraphNodeKind {
 }
 
 type HideEffect implements Effect {
+  call: UtilCall!
   dependencies: [String!]!
   fade: Boolean!
-  function: ValidatorFunction!
   kind: EffectKind!
 }
 
@@ -705,6 +795,11 @@ type HideEffect implements Effect {
 The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer
 """
 scalar Identifier
+
+"""
+The `JSONSerializable` scalar type represents a JSON-serializable value.
+"""
+scalar JSONSerializable
 
 """
 An edge that, in addition to streaming items, logs them at the configured level for debugging.
@@ -744,8 +839,8 @@ enum MapStrategy {
 }
 
 type MessageEffect implements Effect {
+  call: UtilCall!
   dependencies: [String!]!
-  function: ValidatorFunction!
   kind: EffectKind!
   message: String!
 }
@@ -811,6 +906,7 @@ enum PortKind {
   LIST
   MEMORY_STRUCTURE
   MODEL
+  QUANTITY
   STRING
   STRUCTURE
   UNION
@@ -1324,13 +1420,16 @@ type ReturnPort {
   choices: [Choice!]
   default: AnyDefault
   description: String
+  dimension: String
   effects: [Effect!]
   identifier: Identifier
   key: String!
   kind: PortKind!
   label: String
   nullable: Boolean!
+  proposedUnits: [String!]
   provides: [Provides!]
+  referenceUnit: String
   widget: ReturnWidget
 }
 
@@ -1349,6 +1448,11 @@ input ReturnPortInput {
   The description of the port. This is the text that is displayed in the UI when the user hovers over the port
   """
   description: String = null
+
+  """
+  For QUANTITY ports: the pint dimensionality string, e.g. "[mass] * [length] ** 2 / [time] ** 3 / [current]". This is the wiring-compatibility key between quantity ports.
+  """
+  dimension: String = null
 
   """The effects of the port"""
   effects: [EffectInput!] = null
@@ -1375,9 +1479,19 @@ input ReturnPortInput {
   nullable: Boolean! = false
 
   """
+  For QUANTITY ports: units offered as a dropdown in the UI, e.g. ["pF", "nF", "uF"]. Proposals only — any unit of the same dimension remains valid input.
+  """
+  proposedUnits: [String!] = null
+
+  """
   The provisions for the port. Provisions are key-value pairs that can be used to add additional metadata to a port. When using rekuest's action search, you can filter actions based on their port provisions
   """
   provides: [ProvidesInput!] = null
+
+  """
+  For QUANTITY ports: the canonical/reference unit of the physical quantity, e.g. "volt" or "farad". It is the default selection and the key used to resolve the concrete quantity type; other units of the same dimension are still allowed.
+  """
+  referenceUnit: String = null
 
   """The validators for the port"""
   validators: [ValidatorInput!] = null
@@ -1718,28 +1832,42 @@ input UpdateWorkspaceInput {
   workspace: ID!
 }
 
+"""Defines a utility call that can be invoked within the system."""
+type UtilCall {
+  arguments: [ActionArgument!]
+  operation: String!
+}
+
+"""Defines a utility call that can be invoked within the system."""
+input UtilCallInput {
+  """Key-value arguments map compiled for the target utility call."""
+  arguments: [ActionArgumentInput!] = null
+
+  """The utility function name to invoke."""
+  operation: String!
+}
+
 type Validator {
+  call: UtilCall!
   dependencies: [String!]
   errorMessage: String
-  function: ValidatorFunction!
   label: String
 }
 
-"\n    The `Validator` scalar represents a javascript function that should execute on the client side (inside a shadow realm)\n      to validate a value (or a set of values) before it is sent to the server.  The function has two parameters (value, otherValues) and should return a string if the value is invalid and undefined if the value is valid.\n        The otherValues parameter is an object with the other values in the form {fieldName: value}."
-scalar ValidatorFunction
-
-"\nA validating function for a port. Can specify a function that will run when validating values of the port.\nIf outside dependencies are needed they need to be specified in the dependencies field. With the .. syntax\nwhen transversing the tree of ports.\n\n"
+"\nA validator for a port. `call` is a pure blok UtilCall evaluated client-side against the\ncatalog; it must return a boolean meaning 'valid'. Other ports the call references must be\nlisted in `dependencies` (the authoritative subscription list); `value` refers to the port's\nown value. Use the .. syntax when traversing the tree of ports.\n"
 input ValidatorInput {
   """
-  The dependencies of the function. Use the .. syntax to traverse the tree of ports. For example, if you have a port with the key 'foo' and you want to reference a port with the key 'bar' that is a child of 'foo', you would use 'foo..bar'
+  The pure blok UtilCall, evaluated client-side against the catalog, that validates the port value. It must return a boolean meaning 'valid'. Argument value_paths may only reference names listed in `dependencies`, plus `value` for the port's own value.
+  """
+  call: UtilCallInput!
+
+  """
+  The form-field subscription list of the validator: the keys of the other ports whose values the call may reference. This list is authoritative: a value_path in the call may only reference these names (plus `value` for the port's own value). Use the .. syntax to traverse the tree of ports, e.g. 'foo..bar' for the child 'bar' of port 'foo'.
   """
   dependencies: [String!] = []
 
   """The error message to display when the validation fails"""
   errorMessage: String = null
-
-  """The function to run when validating the port"""
-  function: ValidatorFunction!
 
   """An optional human-readable label for the validator."""
   label: String = null

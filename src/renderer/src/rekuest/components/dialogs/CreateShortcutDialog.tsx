@@ -18,7 +18,7 @@ import {
 import { Form } from "@/components/ui/form";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ActionDescription } from "@/lib/rekuest/ActionDescription";
+import { FormActionDescription } from "@/lib/rekuest/ActionDescription";
 import { notEmpty } from "@/lib/utils";
 import { EffectWrapper } from "@/rekuest/widgets/EffectWrapper";
 import { ArgsContainerProps } from "@/rekuest/widgets/tailwind";
@@ -198,7 +198,6 @@ export const CreateShortcutDialog = (props: {
     );
   };
 
-  const data = form.watch();
   const isSubmitting = form.formState.isSubmitting;
   const isValid = form.formState.isValid;
 
@@ -237,7 +236,7 @@ export const CreateShortcutDialog = (props: {
 
       {action.description && (
         <div className="rounded-md border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
-          <ActionDescription description={action.description} variables={data} />
+          <FormActionDescription description={action.description} control={form.control} />
         </div>
       )}
 

@@ -7,6 +7,7 @@ import { DragSourceMonitor, DropTargetMonitor, useDrag, useDrop } from "react-dn
 import { NativeTypes } from "react-dnd-html5-backend";
 import { toast } from "sonner";
 
+import { useLatestRef } from "@/hooks/useLatestRef";
 import { useSelectionStoreApi } from "../selection/SelectionContext";
 import { SelectionState } from "../selection/store";
 import { smartDropRegistryStore } from "./dropRegistry";
@@ -276,6 +277,15 @@ export const useSmartModel = ({
 
   }, [isOver, isDragging, canDrop]);
 
+  // The ref callback below must keep a stable identity for the lifetime of
+  // the model: React detaches and re-attaches a ref whenever the callback
+  // changes, and every re-attach re-registers the node with the selection
+  // store and react-dnd. Drag state lives in a ref so that a drag starting
+  // anywhere on the page (which flips `canDrop` on every card) does not churn
+  // every card's registration. The effect above remains the source of truth
+  // for those attributes after mount.
+  const dndStateRef = useLatestRef({ isOver, isDragging, canDrop });
+
   const registerNode = React.useCallback(
     (node: HTMLDivElement | null) => {
       const previousNode = registeredNodeRef.current;
@@ -304,7 +314,9 @@ export const useSmartModel = ({
       refs.setReference(node);
 
       syncAttribute(node, "data-identifier", identifier);
-      syncAttribute(node, "data-object", JSON.stringify(object));
+      // Only the id: nothing parses this attribute (SelectionBox checks for its
+      // presence), and serializing the whole fragment per card was expensive.
+      syncAttribute(node, "data-object", self.object.id);
       syncAttribute(node, "data-selectable", "true");
 
       selectionStore.getState().registerSelectables([
@@ -320,23 +332,12 @@ export const useSmartModel = ({
         selectedIndex: latestSnapshotRef.current.selectedIndex,
         bselectedIndex: latestSnapshotRef.current.bselectedIndex,
       });
-      syncAttribute(node, "data-over", isOver ? "true" : "false");
-      syncAttribute(node, "data-dragging", isDragging ? "true" : "false");
-      syncAttribute(node, "data-can-drop", canDrop ? "true" : "false");
+      const dnd = dndStateRef.current;
+      syncAttribute(node, "data-over", dnd.isOver ? "true" : "false");
+      syncAttribute(node, "data-dragging", dnd.isDragging ? "true" : "false");
+      syncAttribute(node, "data-can-drop", dnd.canDrop ? "true" : "false");
     },
-    [
-      canDrop,
-      drag,
-      drop,
-      identifier,
-      isDragging,
-      isOver,
-      object,
-      refs,
-      selectionStore,
-      self,
-      syncSelectionState,
-    ],
+    [drag, drop, identifier, refs, selectionStore, self, syncSelectionState],
   );
 
   useEffect(() => {
@@ -415,10 +416,10 @@ export const useSmartModel = ({
       event.dataTransfer.setData("text/plain", data);
       event.dataTransfer.setData(
         "text/uri-list",
-        `arkitekt://${identifier}:${object}`,
+        `arkitekt://${identifier}:${self.object.id}`,
       );
     },
-    [identifier, object, self],
+    [identifier, self],
   );
 
   return {

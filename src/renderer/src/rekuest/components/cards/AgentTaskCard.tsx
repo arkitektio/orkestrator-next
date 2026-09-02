@@ -1,3 +1,4 @@
+import React from "react";
 import { cn } from "@/lib/utils";
 import { RekuestTask } from "@/linkers";
 import { ListTaskFragment } from "@/rekuest/api/graphql";
@@ -31,4 +32,4 @@ const AgentTaskCard = ({ item }: Props) => {
   );
 };
 
-export default AgentTaskCard;
+export default React.memo(AgentTaskCard);

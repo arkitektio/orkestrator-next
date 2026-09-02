@@ -1,44 +1,6 @@
 import { useCallback } from "react";
-import ShadowRealm from "shadowrealm-api";
 import { PortKind, ValidatorFragment } from "../api/graphql";
-
-const buildValidators = (validators: ValidatorFragment[]) => {
-  const ream = new ShadowRealm();
-  const buildValidators: ValidatorFunction[] = [];
-
-  for (const validator of validators) {
-    const wrappedValidatorFunc = `(v, values) => {
-            const func = ${validator.function};
-
-            let json_values = JSON.stringify(values);
-
-            return func(v, json_values);
-        }`;
-
-    const func = ream.evaluate(wrappedValidatorFunc) as (
-      v: any,
-      ...value: any
-    ) => any;
-
-    const wrappedValidator = (v: any, values: any) => {
-      const params = validator.dependencies?.map((param) => values[param]);
-      if (params?.every((predicate) => predicate != undefined)) {
-        return func(v, ...params);
-      } else {
-        return undefined;
-      }
-    };
-
-    buildValidators.push(wrappedValidator);
-  }
-
-  return buildValidators;
-};
-
-export type ValidatorFunction = (
-  v: any,
-  x: { [key: string]: any },
-) => string | undefined;
+import { runPortValidators } from "../widgets/portValidators";
 
 export const usePortValidate = <
   T extends {
@@ -52,43 +14,28 @@ export const usePortValidate = <
 ) =>
   useCallback(
     (v: any, values: any) => {
-      const validators: ValidatorFunction[] = [];
+      const errors: string[] = [];
 
-      if (!port.nullable) {
-        validators.push((v) =>
-          v != undefined ? undefined : `${port.key} is required`,
-        );
+      if (!port.nullable && v == undefined) {
+        errors.push(`${port.key} is required`);
       }
 
-      if (port.kind === PortKind.Float) {
-        validators.push((v) =>
-          typeof v === "number" ? undefined : `${port.key} must be a number`,
-        );
+      if (port.kind === PortKind.Float && typeof v !== "number") {
+        errors.push(`${port.key} must be a number`);
       }
 
-      if (port.kind === PortKind.Quantity) {
-        validators.push((v) =>
-          v == undefined || typeof v === "string"
-            ? undefined
-            : `${port.key} must be a quantity`,
-        );
+      if (
+        port.kind === PortKind.Quantity &&
+        !(v == undefined || typeof v === "string")
+      ) {
+        errors.push(`${port.key} must be a quantity`);
       }
 
-      if (port.validators) {
-        const builtValidators = buildValidators(port.validators);
-        validators.push(...builtValidators);
-      }
+      // Server-defined validators are catalog calls (see portCalls.ts).
+      errors.push(...runPortValidators(port.validators, v, values ?? {}));
 
-      const errors: (string | undefined)[] = [];
-
-      for (const validator of validators) {
-        errors.push(validator(v, values));
-      }
-
-      const filtered_errors = errors.filter((e) => e?.length && e.length > 0);
-
-      if (filtered_errors.length > 0) {
-        return filtered_errors.join(", ");
+      if (errors.length > 0) {
+        return errors.join(", ");
       }
 
       return undefined;

@@ -1,3 +1,4 @@
+import React from "react";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { RekuestTask } from "@/linkers";
 import Timestamp from "react-timestamp";
@@ -25,4 +26,4 @@ const TheCard = ({ item }: Props) => {
   );
 };
 
-export default TheCard;
+export default React.memo(TheCard);

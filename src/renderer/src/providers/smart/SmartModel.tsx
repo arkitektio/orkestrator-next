@@ -69,7 +69,7 @@ export const SmartModel = ({
 
   const triggerContent = (
     <div
-      key={`${props.identifier}:${props.object}`}
+      key={`${props.identifier}:${props.object.id}`}
       ref={ref}
       onClick={handleClick}
       className={cn("relative", props.containerClassName, className)}

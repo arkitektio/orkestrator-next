@@ -14,7 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
-import { ActionDescription } from "@/lib/rekuest/ActionDescription";
+import { ActionDescription, FormActionDescription } from "@/lib/rekuest/ActionDescription";
 import { notEmpty } from "@/lib/utils";
 import { RekuestShortcut } from "@/linkers";
 import { EffectWrapper } from "@/rekuest/widgets/EffectWrapper";
@@ -194,7 +194,6 @@ export const ReserveForm = (props: {
     );
   };
 
-  const data = form.watch();
   const isValid = form.formState.isValid;
 
   const { registry } = useWidgetRegistry();
@@ -207,7 +206,7 @@ export const ReserveForm = (props: {
 
       <DialogDescription className="mt2">
         {action?.description && (
-          <ActionDescription description={action?.description} variables={data} />
+          <FormActionDescription description={action?.description} control={form.control} />
         )}
 
         <Form {...form}>

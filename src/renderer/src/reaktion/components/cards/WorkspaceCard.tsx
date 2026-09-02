@@ -1,3 +1,4 @@
+import React from "react";
 import {
   Card,
   CardDescription,
@@ -37,4 +38,4 @@ const TheCard = ({ workspace }: Props) => {
   );
 };
 
-export default TheCard;
+export default React.memo(TheCard);

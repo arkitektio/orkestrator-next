@@ -4,6 +4,7 @@ import {
   createBlokCatalog,
   describeBlokCatalog,
   invokeUtilCall,
+  normalizeBlokCall,
   type BlokResolutionContext,
   type BlokUtilCall,
 } from "@/blok/renderer/runtime";
@@ -46,46 +47,6 @@ const parsedByObject = new WeakMap<object, ParsedPortCall>();
 const parsedByString = new Map<string, ParsedPortCall>();
 const MAX_STRING_CACHE = 500;
 
-// The GraphQL `UtilCall` / `ActionArgument` types use camelCase field names
-// (`valueLiteral`, `utilCall`, …) while blok's runtime reads snake_case
-// (`value_literal`, `util_call`, …). Both spellings are accepted; the
-// GraphQL one is translated here, `__typename` markers are dropped.
-const ARGUMENT_KEY_MAP: Record<string, string> = {
-  valueLiteral: "value_literal",
-  valuePath: "value_path",
-  utilCall: "util_call",
-  agentCall: "agent_call",
-  valueList: "value_list",
-  valueDict: "value_dict",
-};
-
-const normalizeArgument = (raw: unknown): unknown => {
-  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) return raw;
-  const out: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
-    if (key === "__typename") continue;
-    const mapped = ARGUMENT_KEY_MAP[key] ?? key;
-    if (mapped === "util_call" || mapped === "agent_call") {
-      out[mapped] = value == null ? value : normalizeCall(value);
-    } else if (mapped === "value_list" || mapped === "value_dict") {
-      out[mapped] = Array.isArray(value) ? value.map(normalizeArgument) : value;
-    } else {
-      out[mapped] = value;
-    }
-  }
-  return out;
-};
-
-const normalizeCall = (raw: unknown): unknown => {
-  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) return raw;
-  const out: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
-    if (key === "__typename") continue;
-    out[key] = key === "arguments" && Array.isArray(value) ? value.map(normalizeArgument) : value;
-  }
-  return out;
-};
-
 const parseUncached = (raw: unknown): ParsedPortCall => {
   let candidate: unknown = raw;
   if (typeof raw === "string") {
@@ -95,7 +56,7 @@ const parseUncached = (raw: unknown): ParsedPortCall => {
       return { ok: false, error: "Port call is not valid JSON." };
     }
   }
-  const parsed = BlokSchemas.UtilCall.safeParse(normalizeCall(candidate));
+  const parsed = BlokSchemas.UtilCall.safeParse(normalizeBlokCall(candidate));
   if (!parsed.success) {
     const detail = parsed.error.issues
       .map((issue) => `${issue.path.join(".") || "(root)"}: ${issue.message}`)

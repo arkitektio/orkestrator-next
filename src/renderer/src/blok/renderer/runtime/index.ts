@@ -3,6 +3,7 @@ export * from './components';
 export * from './context';
 export * from './functions';
 export * from './hooks';
+export * from './normalize';
 export * from './preflight';
 export * from './schemas';
 export * from './scope';

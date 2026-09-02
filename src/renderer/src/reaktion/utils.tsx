@@ -229,12 +229,14 @@ export const flussReturnPortToInput = (
 // ArgNode emits its values as node *outs* (ReturnPort) which are semantically the
 // action's input args, and the ReturnNode consumes via node *ins* (ArgPort) which
 // are the action's returns. Only the structural signature matters here, so widgets/
-// validators are dropped. fluss inputs are structurally identical to rekuest inputs.
+// validators are dropped. The signatures are typed as *rekuest* inputs because
+// that is where they go (a rekuest DefinitionInput); the widget sub-unions of the
+// two services have drifted apart, so fluss inputs are no longer assignable as-is.
 
 type AnyFlussChild = FlussArgChildPortFragment | FlussReturnChildPortFragment;
 type AnyFlussPort = FlussArgPortFragment | FlussReturnPortFragment;
 
-const flowChildToArgSignature = (c: AnyFlussChild): ArgPortInput => ({
+const flowChildToArgSignature = (c: AnyFlussChild): RekuestArgPortInput => ({
   key: c.key,
   kind: c.kind,
   identifier: c.identifier,
@@ -242,7 +244,7 @@ const flowChildToArgSignature = (c: AnyFlussChild): ArgPortInput => ({
   children: c.children?.map((cc) => flowChildToArgSignature(cc as AnyFlussChild)),
 });
 
-const flowChildToReturnSignature = (c: AnyFlussChild): ReturnPortInput => ({
+const flowChildToReturnSignature = (c: AnyFlussChild): RekuestReturnPortInput => ({
   key: c.key,
   kind: c.kind,
   identifier: c.identifier,
@@ -250,7 +252,7 @@ const flowChildToReturnSignature = (c: AnyFlussChild): ReturnPortInput => ({
   children: c.children?.map((cc) => flowChildToReturnSignature(cc as AnyFlussChild)),
 });
 
-const flowPortToArgSignature = (port: AnyFlussPort): ArgPortInput => ({
+const flowPortToArgSignature = (port: AnyFlussPort): RekuestArgPortInput => ({
   key: port.key,
   label: port.label,
   nullable: port.nullable,
@@ -262,7 +264,7 @@ const flowPortToArgSignature = (port: AnyFlussPort): ArgPortInput => ({
   children: port.children?.map((c) => flowChildToArgSignature(c as AnyFlussChild)),
 });
 
-const flowPortToReturnSignature = (port: AnyFlussPort): ReturnPortInput => ({
+const flowPortToReturnSignature = (port: AnyFlussPort): RekuestReturnPortInput => ({
   key: port.key,
   label: port.label,
   nullable: port.nullable,

@@ -8,8 +8,8 @@ import { useCallback } from "react";
 export const ChoicesWidget = (
   props: InputWidgetProps<ChoiceAssignWidgetFragment>,
 ) => {
-  console.log(props.widget?.choices);
-  const choices = props.widget?.choices || [];
+  // Choices live on the port; the widget only selects the presentation.
+  const choices = props.port.choices || [];
 
   const search = useCallback(
     async (searching: SearchOptions) => {

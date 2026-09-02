@@ -16,12 +16,20 @@ fragment SliderAssignWidget on SliderAssignWidget {
 fragment StateChoiceAssignWidget on StateChoiceAssignWidget {
   __typename
   kind
+  followValue
   statePath
+  stateCall {
+    ...PortCall
+  }
   stateAccessors {
     optionKey
-    subPath
+    path
+    call {
+      ...PortCall
+    }
   }
   dependency
+  dependencies
 }
 
 fragment ProxyWidget on ProxyWidget {
@@ -57,20 +65,38 @@ fragment SearchAssignWidget on SearchAssignWidget {
   dependencies
 }
 
+# Custom widgets name a component from the UI catalog (`component`) and bind
+# its props like a blok node. `fallback` is the widget to use when the catalog
+# does not know the component; it cannot recurse into another custom widget,
+# so it is selected as the non-custom variants only.
 fragment CustomAssignWidget on CustomAssignWidget {
   __typename
-  ward
-  hook
+  kind
+  followValue
+  component
+  props {
+    ...BlokComponentProp
+  }
+  dependencies
+  fallback {
+    __typename
+    kind
+    ...StringAssignWidget
+    ...SearchAssignWidget
+    ...SliderAssignWidget
+    ...ChoiceAssignWidget
+    ...ProxyWidget
+    ...StateChoiceAssignWidget
+  }
 }
 
+# Choices live on the port (`ArgPort.choices` / `ReturnPort.choices`); the
+# widget only says how to present them.
 fragment ChoiceAssignWidget on ChoiceAssignWidget {
   __typename
   kind
-  choices {
-    value
-    label
-    description
-  }
+  followValue
+  placeholder
 }
 
 fragment ArgChildPortNested on ArgPort {
@@ -178,6 +204,7 @@ fragment BaseEffect on Effect {
   __typename
   kind
   dependencies
+  source
   call {
     ...PortCall
   }
@@ -187,8 +214,6 @@ fragment CustomEffect on CustomEffect {
   ...BaseEffect
   __typename
   kind
-  hook
-  ward
 }
 
 fragment MessageEffect on MessageEffect {
@@ -229,6 +254,7 @@ fragment Validator on Validator {
   dependencies
   label
   errorMessage
+  source
 }
 
 fragment ArgPort on ArgPort {
@@ -306,17 +332,15 @@ fragment ReturnPort on ReturnPort {
 fragment CustomReturnWidget on CustomReturnWidget {
   __typename
   kind
-  hook
-  ward
+  component
+  props {
+    ...BlokComponentProp
+  }
 }
 
 fragment ChoiceReturnWidget on ChoiceReturnWidget {
   __typename
-  choices {
-    label
-    value
-    description
-  }
+  kind
 }
 
 fragment ReturnWidget on ReturnWidget {

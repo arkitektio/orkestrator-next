@@ -93,9 +93,9 @@ export const StateChoiceWidget = (
       }
 
       // 2. Identify Subpaths (Handling null accessors)
-      const valuePath = stateAccessors?.find(a => a?.optionKey === 'VALUE')?.subPath;
-      const labelPath = stateAccessors?.find(a => a?.optionKey === 'LABEL')?.subPath;
-      const descPath = stateAccessors?.find(a => a?.optionKey === 'DESCRIPTION')?.subPath;
+      const valuePath = stateAccessors?.find(a => a?.optionKey === 'VALUE')?.path;
+      const labelPath = stateAccessors?.find(a => a?.optionKey === 'LABEL')?.path;
+      const descPath = stateAccessors?.find(a => a?.optionKey === 'DESCRIPTION')?.path;
 
 
       // 3. Map the array with fallbacks

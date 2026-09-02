@@ -6,6 +6,7 @@ import {
   UI_CATALOG_NAME,
 } from "@/blok/renderer/catalog";
 import {
+  useBaseCatalogQuery,
   useRegisterUiCatalogMutation,
   useUiCatalogsQuery,
 } from "@/rekuest/api/graphql";
@@ -22,18 +23,27 @@ import { buildRegisterUiCatalogInput, catalogMatches } from "./uiCatalogInput";
  * when the endpoint changes, which is exactly when a re-check is due.
  */
 export const UiCatalogRegistrar = () => {
+  // The server refuses a UI catalog that redefines its built-in base
+  // operations (`eq`, `if`, `get`, …), so those are excluded from what we send.
+  const base = useBaseCatalogQuery({ fetchPolicy: "network-only" });
+  const reservedOperations = useMemo(
+    () => new Set(base.data?.baseCatalog.operations.map((operation) => operation.name) ?? []),
+    [base.data],
+  );
   const input = useMemo(
     () =>
-      buildRegisterUiCatalogInput(defaultBlokCatalog, {
-        name: UI_CATALOG_NAME,
-        description: UI_CATALOG_DESCRIPTION,
-      }),
-    [],
+      buildRegisterUiCatalogInput(
+        defaultBlokCatalog,
+        { name: UI_CATALOG_NAME, description: UI_CATALOG_DESCRIPTION },
+        { reservedOperations },
+      ),
+    [reservedOperations],
   );
 
-  const { data, loading, error } = useUiCatalogsQuery({
-    fetchPolicy: "network-only",
-  });
+  const catalogs = useUiCatalogsQuery({ fetchPolicy: "network-only" });
+  const data = catalogs.data;
+  const loading = catalogs.loading || base.loading;
+  const error = catalogs.error ?? base.error;
   const [register] = useRegisterUiCatalogMutation({
     refetchQueries: ["UiCatalogs", "GetBlok"],
   });
@@ -50,7 +60,7 @@ export const UiCatalogRegistrar = () => {
       return;
     }
 
-    if (!data) {
+    if (!data || !base.data) {
       return;
     }
 
@@ -78,7 +88,7 @@ export const UiCatalogRegistrar = () => {
         `[ui-catalog] registered "${result.data.registerUiCatalog.name}" (${input.components.length} components, ${input.operations.length} operations).`,
       );
     });
-  }, [data, error, input, loading, register]);
+  }, [base.data, data, error, input, loading, register]);
 
   return null;
 };

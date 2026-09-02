@@ -150,6 +150,22 @@ describe("buildRegisterUiCatalogInput", () => {
       expect(operationNames.has(name)).toBe(true);
     }
   });
+
+  it("leaves out operations the server's base catalog reserves", () => {
+    const reserved = new Set(["eq", "if", "get"]);
+    const input = buildRegisterUiCatalogInput(
+      defaultBlokCatalog,
+      { name: UI_CATALOG_NAME },
+      { reservedOperations: reserved },
+    );
+    const names = new Set(input.operations.map((operation) => operation.name));
+    for (const name of reserved) {
+      expect(defaultBlokCatalog.functions.has(name)).toBe(true);
+      expect(names.has(name)).toBe(false);
+    }
+    // The canonical (non-alias) names stay registered.
+    expect(names.has("compare.eq")).toBe(true);
+  });
 });
 
 describe("catalogMatches", () => {

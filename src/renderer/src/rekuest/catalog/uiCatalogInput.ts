@@ -198,9 +198,20 @@ export const operationInputs = (fn: BlokFunctionDefinition): CatalogOperationInp
   ];
 };
 
+export type BuildUiCatalogOptions = {
+  /**
+   * Operation names the server's built-in base catalog already defines. A UI
+   * catalog may not redefine them (the server rejects the whole registration),
+   * so they are left out; the client still evaluates them locally, the server
+   * simply validates them against its own definition.
+   */
+  reservedOperations?: ReadonlySet<string>;
+};
+
 export const buildRegisterUiCatalogInput = (
   catalog: BlokCatalog,
   meta: { name: string; description?: string | null },
+  options: BuildUiCatalogOptions = {},
 ): BuiltUiCatalogInput => ({
   name: meta.name,
   description: meta.description ?? null,
@@ -209,6 +220,7 @@ export const buildRegisterUiCatalogInput = (
     .sort((left, right) => left.name.localeCompare(right.name)),
   operations: catalog.functionDefinitions
     .flatMap(operationInputs)
+    .filter((operation) => !options.reservedOperations?.has(operation.name))
     .sort((left, right) => left.name.localeCompare(right.name)),
   // The client's per-PortKind fallbacks are built-in React widgets, not
   // catalog components, so there is nothing meaningful to publish yet.

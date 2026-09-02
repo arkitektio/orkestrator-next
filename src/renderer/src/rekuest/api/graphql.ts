@@ -5493,6 +5493,18 @@ export type ToolboxFragment = { __typename?: 'Toolbox', id: string, name: string
 
 export type ListToolboxFragment = { __typename?: 'Toolbox', id: string, name: string, description: string };
 
+export type CatalogPropFragment = { __typename?: 'CatalogProp', key: string, kind: CatalogValueKind, required: boolean, description?: string | null };
+
+export type CatalogArgumentFragment = { __typename?: 'CatalogArgument', key: string, kind: CatalogValueKind, required: boolean, description?: string | null };
+
+export type CatalogComponentFragment = { __typename?: 'CatalogComponent', name: string, description?: string | null, acceptsChildren: boolean, props: Array<{ __typename?: 'CatalogProp', key: string, kind: CatalogValueKind, required: boolean, description?: string | null }> };
+
+export type CatalogOperationFragment = { __typename?: 'CatalogOperation', name: string, description?: string | null, returns: CatalogValueKind, arguments: Array<{ __typename?: 'CatalogArgument', key: string, kind: CatalogValueKind, required: boolean, description?: string | null }> };
+
+export type UiCatalogFragment = { __typename?: 'UICatalog', id: string, name: string, description?: string | null, isRegistered: boolean, components: Array<{ __typename?: 'CatalogComponent', name: string, description?: string | null, acceptsChildren: boolean, props: Array<{ __typename?: 'CatalogProp', key: string, kind: CatalogValueKind, required: boolean, description?: string | null }> }>, operations: Array<{ __typename?: 'CatalogOperation', name: string, description?: string | null, returns: CatalogValueKind, arguments: Array<{ __typename?: 'CatalogArgument', key: string, kind: CatalogValueKind, required: boolean, description?: string | null }> }> };
+
+export type ListUiCatalogFragment = { __typename?: 'UICatalog', id: string, name: string, isRegistered: boolean };
+
 export type AcknowledgeMutationVariables = Exact<{
   task: Scalars['ID']['input'];
 }>;
@@ -5770,6 +5782,13 @@ export type DeleteImplementationMutationVariables = Exact<{
 
 
 export type DeleteImplementationMutation = { __typename?: 'Mutation', deleteImplementation: string };
+
+export type RegisterUiCatalogMutationVariables = Exact<{
+  input: RegisterUiCatalogInput;
+}>;
+
+
+export type RegisterUiCatalogMutation = { __typename?: 'Mutation', registerUiCatalog: { __typename?: 'UICatalog', id: string, name: string, description?: string | null, isRegistered: boolean, components: Array<{ __typename?: 'CatalogComponent', name: string, description?: string | null, acceptsChildren: boolean, props: Array<{ __typename?: 'CatalogProp', key: string, kind: CatalogValueKind, required: boolean, description?: string | null }> }>, operations: Array<{ __typename?: 'CatalogOperation', name: string, description?: string | null, returns: CatalogValueKind, arguments: Array<{ __typename?: 'CatalogArgument', key: string, kind: CatalogValueKind, required: boolean, description?: string | null }> }> } };
 
 export type ConstantActionQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -6361,6 +6380,23 @@ export type ToolboxQueryVariables = Exact<{
 
 
 export type ToolboxQuery = { __typename?: 'Query', toolbox: { __typename?: 'Toolbox', id: string, name: string, description: string } };
+
+export type UiCatalogsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type UiCatalogsQuery = { __typename?: 'Query', uiCatalogs: Array<{ __typename?: 'UICatalog', id: string, name: string, description?: string | null, isRegistered: boolean, components: Array<{ __typename?: 'CatalogComponent', name: string, description?: string | null, acceptsChildren: boolean, props: Array<{ __typename?: 'CatalogProp', key: string, kind: CatalogValueKind, required: boolean, description?: string | null }> }>, operations: Array<{ __typename?: 'CatalogOperation', name: string, description?: string | null, returns: CatalogValueKind, arguments: Array<{ __typename?: 'CatalogArgument', key: string, kind: CatalogValueKind, required: boolean, description?: string | null }> }> }> };
+
+export type UiCatalogQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type UiCatalogQuery = { __typename?: 'Query', uiCatalog: { __typename?: 'UICatalog', id: string, name: string, description?: string | null, isRegistered: boolean, components: Array<{ __typename?: 'CatalogComponent', name: string, description?: string | null, acceptsChildren: boolean, props: Array<{ __typename?: 'CatalogProp', key: string, kind: CatalogValueKind, required: boolean, description?: string | null }> }>, operations: Array<{ __typename?: 'CatalogOperation', name: string, description?: string | null, returns: CatalogValueKind, arguments: Array<{ __typename?: 'CatalogArgument', key: string, kind: CatalogValueKind, required: boolean, description?: string | null }> }> } };
+
+export type BaseCatalogQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type BaseCatalogQuery = { __typename?: 'Query', baseCatalog: { __typename?: 'BaseCatalog', name: string, version: number, description?: string | null, operations: Array<{ __typename?: 'CatalogOperation', name: string, description?: string | null, returns: CatalogValueKind, arguments: Array<{ __typename?: 'CatalogArgument', key: string, kind: CatalogValueKind, required: boolean, description?: string | null }> }> } };
 
 export type WatchAgentsSubscriptionVariables = Exact<{ [key: string]: never; }>;
 
@@ -8457,6 +8493,64 @@ export const ListToolboxFragmentDoc = gql`
   description
 }
     `;
+export const CatalogPropFragmentDoc = gql`
+    fragment CatalogProp on CatalogProp {
+  key
+  kind
+  required
+  description
+}
+    `;
+export const CatalogComponentFragmentDoc = gql`
+    fragment CatalogComponent on CatalogComponent {
+  name
+  description
+  acceptsChildren
+  props {
+    ...CatalogProp
+  }
+}
+    ${CatalogPropFragmentDoc}`;
+export const CatalogArgumentFragmentDoc = gql`
+    fragment CatalogArgument on CatalogArgument {
+  key
+  kind
+  required
+  description
+}
+    `;
+export const CatalogOperationFragmentDoc = gql`
+    fragment CatalogOperation on CatalogOperation {
+  name
+  description
+  returns
+  arguments {
+    ...CatalogArgument
+  }
+}
+    ${CatalogArgumentFragmentDoc}`;
+export const UiCatalogFragmentDoc = gql`
+    fragment UICatalog on UICatalog {
+  id
+  name
+  description
+  isRegistered
+  components {
+    ...CatalogComponent
+  }
+  operations {
+    ...CatalogOperation
+  }
+}
+    ${CatalogComponentFragmentDoc}
+${CatalogOperationFragmentDoc}`;
+export const ListUiCatalogFragmentDoc = gql`
+    fragment ListUICatalog on UICatalog {
+  id
+  name
+  isRegistered
+}
+    `;
 export const ImplementationStatsDocument = gql`
     query ImplementationStats($id: ID!) {
   taskStats(filters: {implementation: $id}) {
@@ -9805,6 +9899,39 @@ export function useDeleteImplementationMutation(baseOptions?: ApolloReactHooks.M
 export type DeleteImplementationMutationHookResult = ReturnType<typeof useDeleteImplementationMutation>;
 export type DeleteImplementationMutationResult = Apollo.MutationResult<DeleteImplementationMutation>;
 export type DeleteImplementationMutationOptions = Apollo.BaseMutationOptions<DeleteImplementationMutation, DeleteImplementationMutationVariables>;
+export const RegisterUiCatalogDocument = gql`
+    mutation RegisterUiCatalog($input: RegisterUiCatalogInput!) {
+  registerUiCatalog(input: $input) {
+    ...UICatalog
+  }
+}
+    ${UiCatalogFragmentDoc}`;
+export type RegisterUiCatalogMutationFn = Apollo.MutationFunction<RegisterUiCatalogMutation, RegisterUiCatalogMutationVariables>;
+
+/**
+ * __useRegisterUiCatalogMutation__
+ *
+ * To run a mutation, you first call `useRegisterUiCatalogMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRegisterUiCatalogMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [registerUiCatalogMutation, { data, loading, error }] = useRegisterUiCatalogMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useRegisterUiCatalogMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RegisterUiCatalogMutation, RegisterUiCatalogMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<RegisterUiCatalogMutation, RegisterUiCatalogMutationVariables>(RegisterUiCatalogDocument, options);
+      }
+export type RegisterUiCatalogMutationHookResult = ReturnType<typeof useRegisterUiCatalogMutation>;
+export type RegisterUiCatalogMutationResult = Apollo.MutationResult<RegisterUiCatalogMutation>;
+export type RegisterUiCatalogMutationOptions = Apollo.BaseMutationOptions<RegisterUiCatalogMutation, RegisterUiCatalogMutationVariables>;
 export const ConstantActionDocument = gql`
     query ConstantAction($id: ID!) {
   action(id: $id) {
@@ -12625,6 +12752,114 @@ export function useToolboxLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHook
 export type ToolboxQueryHookResult = ReturnType<typeof useToolboxQuery>;
 export type ToolboxLazyQueryHookResult = ReturnType<typeof useToolboxLazyQuery>;
 export type ToolboxQueryResult = Apollo.QueryResult<ToolboxQuery, ToolboxQueryVariables>;
+export const UiCatalogsDocument = gql`
+    query UiCatalogs {
+  uiCatalogs {
+    ...UICatalog
+  }
+}
+    ${UiCatalogFragmentDoc}`;
+
+/**
+ * __useUiCatalogsQuery__
+ *
+ * To run a query within a React component, call `useUiCatalogsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useUiCatalogsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useUiCatalogsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useUiCatalogsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<UiCatalogsQuery, UiCatalogsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<UiCatalogsQuery, UiCatalogsQueryVariables>(UiCatalogsDocument, options);
+      }
+export function useUiCatalogsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<UiCatalogsQuery, UiCatalogsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<UiCatalogsQuery, UiCatalogsQueryVariables>(UiCatalogsDocument, options);
+        }
+export type UiCatalogsQueryHookResult = ReturnType<typeof useUiCatalogsQuery>;
+export type UiCatalogsLazyQueryHookResult = ReturnType<typeof useUiCatalogsLazyQuery>;
+export type UiCatalogsQueryResult = Apollo.QueryResult<UiCatalogsQuery, UiCatalogsQueryVariables>;
+export const UiCatalogDocument = gql`
+    query UiCatalog($id: ID!) {
+  uiCatalog(id: $id) {
+    ...UICatalog
+  }
+}
+    ${UiCatalogFragmentDoc}`;
+
+/**
+ * __useUiCatalogQuery__
+ *
+ * To run a query within a React component, call `useUiCatalogQuery` and pass it any options that fit your needs.
+ * When your component renders, `useUiCatalogQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useUiCatalogQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useUiCatalogQuery(baseOptions: ApolloReactHooks.QueryHookOptions<UiCatalogQuery, UiCatalogQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<UiCatalogQuery, UiCatalogQueryVariables>(UiCatalogDocument, options);
+      }
+export function useUiCatalogLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<UiCatalogQuery, UiCatalogQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<UiCatalogQuery, UiCatalogQueryVariables>(UiCatalogDocument, options);
+        }
+export type UiCatalogQueryHookResult = ReturnType<typeof useUiCatalogQuery>;
+export type UiCatalogLazyQueryHookResult = ReturnType<typeof useUiCatalogLazyQuery>;
+export type UiCatalogQueryResult = Apollo.QueryResult<UiCatalogQuery, UiCatalogQueryVariables>;
+export const BaseCatalogDocument = gql`
+    query BaseCatalog {
+  baseCatalog {
+    name
+    version
+    description
+    operations {
+      ...CatalogOperation
+    }
+  }
+}
+    ${CatalogOperationFragmentDoc}`;
+
+/**
+ * __useBaseCatalogQuery__
+ *
+ * To run a query within a React component, call `useBaseCatalogQuery` and pass it any options that fit your needs.
+ * When your component renders, `useBaseCatalogQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useBaseCatalogQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useBaseCatalogQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<BaseCatalogQuery, BaseCatalogQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<BaseCatalogQuery, BaseCatalogQueryVariables>(BaseCatalogDocument, options);
+      }
+export function useBaseCatalogLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<BaseCatalogQuery, BaseCatalogQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<BaseCatalogQuery, BaseCatalogQueryVariables>(BaseCatalogDocument, options);
+        }
+export type BaseCatalogQueryHookResult = ReturnType<typeof useBaseCatalogQuery>;
+export type BaseCatalogLazyQueryHookResult = ReturnType<typeof useBaseCatalogLazyQuery>;
+export type BaseCatalogQueryResult = Apollo.QueryResult<BaseCatalogQuery, BaseCatalogQueryVariables>;
 export const WatchAgentsDocument = gql`
     subscription WatchAgents {
   agents {

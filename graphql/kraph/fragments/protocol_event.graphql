@@ -22,8 +22,8 @@ fragment PathProtocolEvent on ProtocolEvent {
   category {
     label
     image {
-      presignedUrl
-    }
+    ...MediaStore
+  }
   }
   richProperties {
     value

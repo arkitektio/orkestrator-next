@@ -19,7 +19,7 @@ fragment PathNaturalEvent on NaturalEvent {
   category {
     label
     image {
-      presignedUrl
-    }
+    ...MediaStore
+  }
   }
 }

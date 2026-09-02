@@ -20,6 +20,7 @@ import { TaskUpdater } from "@/rekuest/components/functional/TaskUpdater";
 import { TaskHookRunner } from "@/lib/taskhooks/TaskHookRunner";
 import { TaskNotificationStack } from "@/rekuest/components/global/TaskNotificationStack";
 import { AgentUpdater } from "@/rekuest/components/functional/AgentUpdater";
+import { UiCatalogRegistrar } from "@/rekuest/catalog/UiCatalogRegistrar";
 import { WidgetRegistryProvider } from "@/rekuest/widgets/WidgetsProvider";
 import { NuqsAdapter } from "nuqs/adapters/react-router"; // <--- Specific adapter
 import React from "react";
@@ -137,6 +138,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                                       <TaskUpdater />
                                       <TaskNotificationStack />
                                       <AgentUpdater />
+                                      <UiCatalogRegistrar />
                                       <RekuestDashboardWidgets />
                                       <LatestTasksDashboardWidget />
                                       <TaskHookRunner />

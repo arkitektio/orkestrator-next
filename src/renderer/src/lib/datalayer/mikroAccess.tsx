@@ -2,6 +2,7 @@ import { grantExpiresAt, presignS3Url } from "./s3request";
 import { ApolloClient } from "@apollo/client";
 import { useDatalayerEndpoint, useMikro } from "@/app/Arkitekt";
 import React from "react";
+import { useNearViewport } from "./useNearViewport";
 import { GeneralMediaAccessGrantFragment, MediaStoreFragment, RequestGeneralMediaAccessDocument, RequestGeneralMediaAccessMutation, RequestGeneralMediaAccessMutationVariables } from "@/mikro-next/api/graphql";
 
 /** A grant plus the absolute expiry derived from its `expiresIn` — computed
@@ -97,38 +98,6 @@ export const createBlobUrl = async (media: MediaStoreFragment, datalayer: string
 export const createBlobedUrl = async (media: MediaStoreFragment, client: ApolloClient<any>, datalayer: string) => {
   const credentials = await getCredentials(client);
   return await createBlobUrl(media, datalayer, credentials);
-};
-
-/**
- * Whether `ref`'s element is (about to be) visible. Starts `false` and flips
- * to `true` once, the first time the element enters the viewport margin; the
- * fetch behind it should not start before then.
- */
-const useNearViewport = (ref: React.RefObject<Element | null>) => {
-  // Without an IntersectionObserver (tests, old runtimes) everything counts
-  // as near, so the fetch is not deferred forever.
-  const [near, setNear] = React.useState(
-    () => typeof IntersectionObserver === "undefined",
-  );
-
-  React.useEffect(() => {
-    if (near) return;
-    const element = ref.current;
-    if (!element) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) {
-          setNear(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "200px" },
-    );
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [ref, near]);
-
-  return near;
 };
 
 /**

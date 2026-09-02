@@ -3,7 +3,7 @@ import { Slider } from "@/components/ui/slider";
 import { useEffect, useState } from "react";
 import { FiPlay } from "react-icons/fi";
 import { RiStopLine } from "react-icons/ri";
-import Timestamp from "react-timestamp";
+import Timestamp from "@/components/ui/timestamp";
 import {
   DetailRunFragment,
   RunEventFragment,

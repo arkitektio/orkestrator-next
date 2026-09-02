@@ -213,6 +213,9 @@ export class FabriksCollectionManager {
   private readonly decodeDispatcher: FabriksDecodeDispatcher;
   /** Bumped per plan; a drain whose generation is stale abandons its work. */
   private generation = 0;
+  /** Aborts decodes still queued in the dispatcher when the plan they served
+   * is superseded — see `bumpGeneration`. */
+  private decodeAbort = new AbortController();
   private draining = false;
   private pendingView: FabriksPlanView | null = null;
   private disposed = false;
@@ -756,7 +759,7 @@ export class FabriksCollectionManager {
     this.hidden = hidden;
     this.group.visible = visible;
     if (hidden) {
-      this.generation++; // stale-mark the current drain; it stops at its next await
+      this.bumpGeneration(); // stale-mark the current drain; it stops at its next await
       this.pendingView = null;
     } else if (!this.planConfig.frozen && this.lastView) {
       this.runPlan(this.lastView); // replay the settle recorded while hidden
@@ -839,7 +842,7 @@ export class FabriksCollectionManager {
     this.opts.onStatsChanged?.();
 
     // A replan invalidates whatever the previous drain was doing.
-    this.generation++;
+    this.bumpGeneration();
     this.pendingView = view;
     void this.drain();
   }
@@ -930,12 +933,17 @@ export class FabriksCollectionManager {
     try {
       decoded = await this.opts.collection.readFetchGroupVia(
         group,
-        (request) => this.decodeDispatcher.decode(request, () => this.ensureDecoder()),
+        (request) =>
+          this.decodeDispatcher.decode(request, () => this.ensureDecoder(), {
+            signal: this.decodeAbort.signal,
+          }),
         // Smooth mode: the worker computes the normals too, so nothing
         // per-vertex is left on this thread.
         { computeNormals: !this.flatNormals },
       );
     } catch (error) {
+      // A superseded plan's queued decode was dropped on purpose, not failed.
+      if (this.isStale(generation)) return false;
       this.stats.fetchErrors++;
       this.opts.onStatsChanged?.();
       console.error(
@@ -984,6 +992,14 @@ export class FabriksCollectionManager {
   /** A drain from a superseded plan stops rather than mounting stale work. */
   private isStale(generation: number): boolean {
     return this.disposed || generation !== this.generation;
+  }
+
+  /** Stale-mark the running drain AND drop its decodes still queued in the
+   * dispatcher, so a replan never waits behind work nobody will mount. */
+  private bumpGeneration(): void {
+    this.generation++;
+    this.decodeAbort.abort();
+    this.decodeAbort = new AbortController();
   }
 
   getBatching(): boolean {
@@ -1165,7 +1181,7 @@ export class FabriksCollectionManager {
 
   dispose(): void {
     this.disposed = true;
-    this.generation++;
+    this.bumpGeneration();
     this.cache.clear(); // evictions unmount and dispose every geometry
     this.batch.dispose();
     this.mountedMeshes.clear();

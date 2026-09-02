@@ -61,7 +61,12 @@ export const AssignButton = (props: {
   );
 };
 
-const InstallDialog = (props: { item: ListReleaseFragment }) => {
+/**
+ * Rendered only inside the opened `DropdownMenuContent` (Radix unmounts it when
+ * closed), so the implementations query fires on open rather than once per
+ * card on mount.
+ */
+const InstallTargets = (props: { release: string }) => {
   const { data, error } = useImplementationsQuery({
     variables: {
       filters: {
@@ -94,6 +99,20 @@ const InstallDialog = (props: { item: ListReleaseFragment }) => {
   });
 
   return (
+    <>
+      {data?.implementations.length === 0 && (
+        <>No installers found. Please install an engine...</>
+      )}
+      {error && <div>Error: {error.message}</div>}
+      {data?.implementations.map((t) => (
+        <AssignButton template={t} release={props.release} key={t.id} />
+      ))}
+    </>
+  );
+};
+
+const InstallDialog = (props: { item: ListReleaseFragment }) => {
+  return (
     <DropdownMenu>
       <DropdownMenuTrigger>
         <Button variant="outline" size="sm">
@@ -101,13 +120,7 @@ const InstallDialog = (props: { item: ListReleaseFragment }) => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent side="right">
-        {data?.implementations.length === 0 && (
-          <>No installers found. Please install an engine...</>
-        )}
-        {error && <div>Error: {error.message}</div>}
-        {data?.implementations.map((t) => (
-          <AssignButton template={t} release={props.item.id} key={t.id} />
-        ))}
+        <InstallTargets release={props.item.id} />
       </DropdownMenuContent>
     </DropdownMenu>
   );

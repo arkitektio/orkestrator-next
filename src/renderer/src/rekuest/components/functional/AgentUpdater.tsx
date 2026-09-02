@@ -93,7 +93,6 @@ export const AgentUpdater = (_props: {}) => {
 
   useEffect(() => {
     if (client) {
-      console.log("Subscribing to Postman Agents");
       const subscription = client
         ?.subscribe<WatchAgentsSubscription, WatchAgentsSubscriptionVariables>({
           query: WatchAgentsDocument,

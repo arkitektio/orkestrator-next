@@ -9,6 +9,7 @@
  * Uses a persistent WorkerPool queue for bounded-concurrency scheduling.
  */
 
+import { zarrTimingEnabled } from './timing.js'
 import type { WorkerPoolTaskHandle, WorkerPoolTaskInput } from "../pool/types"
 import type {
   Chunk,
@@ -20,7 +21,7 @@ import type {
   Array as ZarrArray,
 } from "zarrita"
 
-import { LRUCache } from "@/lib/zarr/caches/inMemoryLru"
+import { ByteBudgetChunkCache } from "@/lib/zarr/caches/byteBudgetChunkCache"
 import { BasicIndexer } from "./internals/indexer"
 import { setter } from "./internals/setter"
 import {
@@ -239,13 +240,16 @@ function roundTiming(ms: number): number {
   return Number(ms.toFixed(2))
 }
 
+export { zarrTimingEnabled }
+
 /**
- * Per-chunk timing logs are opt-in: they fire twice per chunk and are a
- * measurable cost when hundreds of chunks stream in. Enable at runtime with
- * `globalThis.__ZARR_TIMING__ = true`.
+ * Per-chunk timing logs are opt-in (see `zarrTimingEnabled`). Every call site
+ * is guarded with `if (zarrTimingEnabled())` so the 15-field record and its
+ * `roundTiming` calls are never built when logging is off; the check here is
+ * only a belt-and-braces guard for callers that forget.
  */
 function logChunkTiming(label: string, timings: Record<string, unknown>): void {
-  if ((globalThis as { __ZARR_TIMING__?: boolean }).__ZARR_TIMING__ !== true) return
+  if (!zarrTimingEnabled()) return
   console.log(label, timings)
 }
 
@@ -253,10 +257,14 @@ function logChunkTiming(label: string, timings: Record<string, unknown>): void {
 // Chunk cache helpers — store-scoped key generation
 // ---------------------------------------------------------------------------
 
-const globalChunkCache = new LRUCache<string, Chunk<DataType>>(500)
+// Byte-bounded, not count-bounded: callers that pass no `cache` (attribute
+// probes, one-off reads) used to fill a 500-entry LRU with promoted float32
+// chunks — at 128³ that is gigabytes the pool budget never saw.
+const DEFAULT_CHUNK_CACHE_BYTES = 256 * 1024 * 1024
+const globalChunkCache = new ByteBudgetChunkCache(DEFAULT_CHUNK_CACHE_BYTES)
 
 const DEFAULT_CHUNK_CACHE: ChunkCache = {
-  get: (key) => globalChunkCache.get(key) as Chunk<DataType> | undefined,
+  get: (key) => globalChunkCache.get(key),
   set: (key, value) => {
     globalChunkCache.set(key, value as Chunk<DataType>)
   },
@@ -635,7 +643,7 @@ function executeShardRun(ctx: ShardRunContext, run: CoalescedRange<ShardBatchIte
         ctx.useShared,
       )
       result.chunks.forEach((chunk, k) => members[k].onChunk(chunk ?? undefined))
-      logChunkTiming("[zarr run timing]", {
+      if (zarrTimingEnabled()) logChunkTiming("[zarr run timing]", {
         shardPath: ctx.shardPath,
         parts: run.items.length,
         rangeBytes: run.length,
@@ -879,7 +887,7 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
   const cacheLookupMs = performance.now() - cacheLookupStartedAt
 
   if (cachedChunk) {
-    logChunkTiming("[zarr chunk timing]", {
+    if (zarrTimingEnabled()) logChunkTiming("[zarr chunk timing]", {
       chunkPath: chunkStoragePathFor(arr, arrayMeta, chunkCoords),
       chunkCoords: [...chunkCoords],
       cacheStatus: "hit",
@@ -897,7 +905,7 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
       mainThreadWriteMs: 0,
       totalMs: roundTiming(performance.now() - startedAt),
     })
-    logChunkTiming("[zarr get timing]", {
+    if (zarrTimingEnabled()) logChunkTiming("[zarr get timing]", {
       selectionShape: [...cachedChunk.shape],
       chunkCount: 1,
       metadataReadMs: roundTiming(metadataReadMs),
@@ -944,7 +952,7 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
     const fillStartedAt = performance.now()
     const fillChunk = makeFillChunk()
     cache.set(cacheKey, fillChunk)
-    logChunkTiming("[zarr chunk timing]", {
+    if (zarrTimingEnabled()) logChunkTiming("[zarr chunk timing]", {
       chunkPath,
       chunkCoords: [...chunkCoords],
       cacheStatus: "missing-fill",
@@ -1004,7 +1012,7 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
         fillChunkMs = performance.now() - fillStartedAt
       }
 
-      logChunkTiming("[zarr chunk timing]", {
+      if (zarrTimingEnabled()) logChunkTiming("[zarr chunk timing]", {
         chunkPath,
         chunkCoords: [...chunkCoords],
         cacheStatus: fetchedChunk ? "miss" : "missing-fill",
@@ -1032,7 +1040,7 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
 
   const [chunk] = await waitForTaskHandles([handle], opts.signal)
 
-  logChunkTiming("[zarr get timing]", {
+  if (zarrTimingEnabled()) logChunkTiming("[zarr get timing]", {
     selectionShape: [...chunk.shape],
     chunkCount: 1,
     metadataReadMs: roundTiming(metadataReadMs),
@@ -1178,7 +1186,7 @@ export async function getWorker<
       const writeStartedAt = performance.now()
       setter.set_from_chunk(out, cachedChunk as Chunk<D>, mapping)
       const mainThreadWriteMs = performance.now() - writeStartedAt
-      logChunkTiming("[zarr chunk timing]", {
+      if (zarrTimingEnabled()) logChunkTiming("[zarr chunk timing]", {
         chunkPath: chunkStoragePathFor(arr, arrayMeta, chunk_coords),
         chunkCoords: [...chunk_coords],
         cacheStatus: "hit",
@@ -1237,7 +1245,7 @@ export async function getWorker<
       const fillChunkMs = performance.now() - fillStartedAt
       const writeStartedAt = performance.now()
       setter.set_from_chunk(out, fillChunk, mapping)
-      logChunkTiming("[zarr chunk timing]", {
+      if (zarrTimingEnabled()) logChunkTiming("[zarr chunk timing]", {
         chunkPath,
         chunkCoords: [...chunk_coords],
         cacheStatus: "missing-fill",
@@ -1309,7 +1317,7 @@ export async function getWorker<
           const writeStartedAt = performance.now()
           setter.set_from_chunk(out, chunkToWrite, mapping)
           const mainThreadWriteMs = performance.now() - writeStartedAt
-          logChunkTiming("[zarr chunk timing]", {
+          if (zarrTimingEnabled()) logChunkTiming("[zarr chunk timing]", {
             chunkPath,
             chunkCoords: [...chunk_coords],
             cacheStatus: fetchedChunk ? "miss" : "missing-fill",
@@ -1340,7 +1348,7 @@ export async function getWorker<
     await waitForTaskHandles(tasks, opts.signal)
   }
 
-  logChunkTiming("[zarr get timing]", {
+  if (zarrTimingEnabled()) logChunkTiming("[zarr get timing]", {
     selectionShape: [...indexer.shape],
     chunkCount: tasks.length,
     metadataReadMs: roundTiming(metadataReadMs),

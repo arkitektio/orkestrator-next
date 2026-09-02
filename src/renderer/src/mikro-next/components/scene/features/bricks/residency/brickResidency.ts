@@ -2924,6 +2924,10 @@ export class BrickResidencyManager {
             fixedOffsets: pool.fixedOffsets,
             chunks,
           },
+          // A brick cancelled while its repack is still queued behind other
+          // jobs is dropped from the dispatcher instead of being posted; the
+          // rejection lands in the catch below, which is silent once aborted.
+          signal: controller.signal,
         });
         this.stats.repackMs += performance.now() - repackStartedAt;
         if (controller.signal.aborted || this.disposed) return;

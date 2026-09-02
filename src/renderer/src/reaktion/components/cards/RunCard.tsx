@@ -8,7 +8,7 @@ import {
 import { FlussRun } from "@/linkers";
 
 import { ListRunFragment } from "@/reaktion/api/graphql";
-import Timestamp from "react-timestamp";
+import Timestamp from "@/components/ui/timestamp";
 
 interface Props {
   item: ListRunFragment;

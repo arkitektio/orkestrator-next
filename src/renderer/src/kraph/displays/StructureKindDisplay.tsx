@@ -26,7 +26,7 @@ export const StructureKindDisplay = (props: DisplayWidgetProps) => {
     <KraphStructureKind.DetailLink object={{ id: props.object }}>
       <div className="w-full rounded-lg border border-border/60 bg-card p-3 space-y-1">
         {cat.image?.presignedUrl && (
-          <img src={cat.image.presignedUrl} alt={cat.label ?? cat.identifier} className="w-full h-20 object-cover rounded" />
+          <img src={cat.image.presignedUrl} alt={cat.label ?? cat.identifier} loading="lazy" height={80} className="w-full h-20 object-cover rounded" />
         )}
         <div className="font-semibold text-sm">{cat.label || cat.identifier}</div>
         <div className="text-xs text-muted-foreground font-mono">{cat.identifier}</div>

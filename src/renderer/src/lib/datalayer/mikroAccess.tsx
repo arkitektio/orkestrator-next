@@ -1,21 +1,26 @@
-import { signS3Request } from "./s3request";
+import { grantExpiresAt, presignS3Url } from "./s3request";
 import { ApolloClient } from "@apollo/client";
 import { useDatalayerEndpoint, useMikro } from "@/app/Arkitekt";
 import React from "react";
 import { GeneralMediaAccessGrantFragment, MediaStoreFragment, RequestGeneralMediaAccessDocument, RequestGeneralMediaAccessMutation, RequestGeneralMediaAccessMutationVariables } from "@/mikro-next/api/graphql";
 
-// --- Caching & Lock Mechanism ---
-let cachedCredentialsPromise: Promise<GeneralMediaAccessGrantFragment> | null = null;
-let cachedCredentials: GeneralMediaAccessGrantFragment | null = null;
-let credentialsExpiration: number | null = null;
+/** A grant plus the absolute expiry derived from its `expiresIn` — computed
+ * once on arrival so the presign memo (keyed on it) stays stable. */
+export type MikroMediaCredentials = GeneralMediaAccessGrantFragment & { expiresAt: number };
 
-const getCredentials = async (client: ApolloClient<any>): Promise<GeneralMediaAccessGrantFragment> => {
+/** Refresh the grant this far before it expires, so a URL minted at the very
+ * end of its life still has time to be fetched. */
+const CREDENTIAL_REFRESH_SKEW_MS = 60_000;
+
+// --- Caching & Lock Mechanism ---
+let cachedCredentialsPromise: Promise<MikroMediaCredentials> | null = null;
+let cachedCredentials: MikroMediaCredentials | null = null;
+
+const getCredentials = async (client: ApolloClient<any>): Promise<MikroMediaCredentials> => {
   const now = Date.now();
 
   // 1. Return valid cached credentials
-  // Note: If your GraphQL schema provides an expiration date, it gets used below.
-  // Otherwise, this defaults to a safe 55-minute TTL.
-  if (cachedCredentials && credentialsExpiration && now < credentialsExpiration) {
+  if (cachedCredentials && now < cachedCredentials.expiresAt - CREDENTIAL_REFRESH_SKEW_MS) {
     return cachedCredentials;
   }
 
@@ -31,24 +36,18 @@ const getCredentials = async (client: ApolloClient<any>): Promise<GeneralMediaAc
       input: {}
     }
   }).then(({ data }) => {
-    const credentials = data?.requestGeneralMediaAccess;
+    const grant = data?.requestGeneralMediaAccess;
 
-    if (!credentials) {
+    if (!grant) {
       throw new Error("Failed to get media access credentials");
     }
 
+    const credentials: MikroMediaCredentials = { ...grant, expiresAt: grantExpiresAt(grant) };
     cachedCredentials = credentials;
-
-    // Extract expiration if available (adjust the property name to match your GraphQL schema)
-    // If your schema doesn't provide an expiration time, we default to expiring in 55 minutes.
-    const expiryFromCreds = (credentials as any).expiration ? new Date((credentials as any).expiration).getTime() : null;
-    credentialsExpiration = expiryFromCreds || (Date.now() + 55 * 60 * 1000);
-
     return credentials;
   }).catch((err) => {
     // Clear cache on error so subsequent attempts can retry cleanly
     cachedCredentials = null;
-    credentialsExpiration = null;
     throw err;
   }).finally(() => {
     // Clear the promise lock once resolved or rejected
@@ -58,107 +57,46 @@ const getCredentials = async (client: ApolloClient<any>): Promise<GeneralMediaAc
   return cachedCredentialsPromise;
 };
 
-
-export const createBlobUrl = async (media: MediaStoreFragment, datalayer: string, credentials: GeneralMediaAccessGrantFragment) => {
-  const s3Url = datalayer + "/" + credentials.bucket + "/" + media.key;
-
-  const headers = await signS3Request(s3Url, 'GET', credentials);
-
-  const response = await fetch(s3Url, {
-    method: 'GET',
-    headers: headers
-  });
-
-  const blob = await response.blob();
-  const blobUrl = URL.createObjectURL(blob);
-  return blobUrl;
-};
-
-
-export const createBlobedUrl = async (media: MediaStoreFragment, client: ApolloClient<any>, datalayer: string) => {
-  // Grab credentials via the lock/cache mechanism instead of calling mutate directly
-  const credentials = await getCredentials(client);
-
-  return await createBlobUrl(media, datalayer, credentials);
-};
-
-
-// --- Shared blob-URL cache ---
-//
-// Cards in a grid frequently show the same snapshot, and a grid re-mounts its
-// cards on every pagination / filter change. Each mount used to sign and
-// download the full object again. Blob URLs are now shared per (endpoint, key)
-// and reference counted; a URL is revoked shortly after its last user unmounts
-// so a quick remount (pagination back and forth) still hits the cache.
-type BlobCacheEntry = {
-  promise: Promise<string>;
-  url: string | null;
-  refs: number;
-  releaseTimer: ReturnType<typeof setTimeout> | null;
-};
-
-const blobUrlCache = new Map<string, BlobCacheEntry>();
-const BLOB_RELEASE_DELAY_MS = 30_000;
-
-const blobCacheKey = (endpoint: string, media: MediaStoreFragment) =>
-  `${endpoint}::${media.id ?? media.key}`;
+const mediaObjectUrl = (media: MediaStoreFragment, datalayer: string, credentials: MikroMediaCredentials) =>
+  datalayer + "/" + credentials.bucket + "/" + media.key;
 
 /**
- * Acquire a shared blob URL for `media`. Returns the (cached or in-flight)
- * promise and a `release` function that must be called exactly once when the
- * caller no longer needs the URL.
+ * A presigned URL for `media` — what `<img src>` should be handed. Memoized
+ * by the signer per (credential, UTC hour, object), so repeated mounts of the
+ * same snapshot cost a Map lookup, and the URL itself is a stable HTTP cache
+ * key: Chromium fetches the object once and serves every later card from its
+ * cache. Nothing to revoke.
  */
-export const acquireBlobUrl = (
+export const createMediaUrl = (media: MediaStoreFragment, datalayer: string, credentials: MikroMediaCredentials) =>
+  presignS3Url(mediaObjectUrl(media, datalayer, credentials), credentials);
+
+/** `createMediaUrl` with the grant fetched (and cached) via `client`. */
+export const getMikroMediaUrl = async (
   media: MediaStoreFragment,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   client: ApolloClient<any>,
-  endpoint: string,
-): { promise: Promise<string>; release: () => void } => {
-  const key = blobCacheKey(endpoint, media);
-  let entry = blobUrlCache.get(key);
+  datalayer: string,
+): Promise<string> => {
+  const credentials = await getCredentials(client);
+  return createMediaUrl(media, datalayer, credentials);
+};
 
-  if (!entry) {
-    const created: BlobCacheEntry = {
-      promise: Promise.resolve(""),
-      url: null,
-      refs: 0,
-      releaseTimer: null,
-    };
-    created.promise = createBlobedUrl(media, client, endpoint)
-      .then((url) => {
-        created.url = url;
-        return url;
-      })
-      .catch((error) => {
-        // Do not cache failures: the next acquire retries.
-        if (blobUrlCache.get(key) === created) blobUrlCache.delete(key);
-        throw error;
-      });
-    blobUrlCache.set(key, created);
-    entry = created;
-  }
+/**
+ * Blob path: pulls the WHOLE object into memory and wraps it in an object
+ * URL. Only for a consumer that genuinely needs the bytes (a download, a
+ * canvas read-back) — an `<img>` should use `createMediaUrl` instead. The
+ * caller owns the returned URL and must `URL.revokeObjectURL` it.
+ */
+export const createBlobUrl = async (media: MediaStoreFragment, datalayer: string, credentials: MikroMediaCredentials) => {
+  const response = await fetch(await createMediaUrl(media, datalayer, credentials), { method: "GET" });
+  const blob = await response.blob();
+  return URL.createObjectURL(blob);
+};
 
-  if (entry.releaseTimer) {
-    clearTimeout(entry.releaseTimer);
-    entry.releaseTimer = null;
-  }
-  entry.refs += 1;
-
-  let released = false;
-  const current = entry;
-  const release = () => {
-    if (released) return;
-    released = true;
-    current.refs -= 1;
-    if (current.refs > 0) return;
-    current.releaseTimer = setTimeout(() => {
-      if (current.refs > 0) return;
-      if (blobUrlCache.get(key) === current) blobUrlCache.delete(key);
-      if (current.url) URL.revokeObjectURL(current.url);
-    }, BLOB_RELEASE_DELAY_MS);
-  };
-
-  return { promise: entry.promise, release };
+/** `createBlobUrl` with the grant fetched (and cached) via `client`. */
+export const createBlobedUrl = async (media: MediaStoreFragment, client: ApolloClient<any>, datalayer: string) => {
+  const credentials = await getCredentials(client);
+  return await createBlobUrl(media, datalayer, credentials);
 };
 
 /**
@@ -193,6 +131,11 @@ const useNearViewport = (ref: React.RefObject<Element | null>) => {
   return near;
 };
 
+/**
+ * Renders `children(url)` with a presigned URL for `media` once the element
+ * is near the viewport. The URL is a plain https URL the browser loads (and
+ * caches) itself — no blob, nothing held in JS memory, nothing to revoke.
+ */
 export const WithMikroMediaUrl = (props: { children: (url: string) => React.ReactNode, media?: MediaStoreFragment | undefined | null }) => {
   const endpointUrl = useDatalayerEndpoint();
   const mikro = useMikro();
@@ -207,18 +150,16 @@ export const WithMikroMediaUrl = (props: { children: (url: string) => React.Reac
     if (!near) return;
 
     let isMounted = true;
-    const { promise, release } = acquireBlobUrl(props.media, mikro, endpointUrl);
 
-    promise
-      .then((blobUrl) => {
-        if (isMounted) setUrl(blobUrl);
+    getMikroMediaUrl(props.media, mikro, endpointUrl)
+      .then((mediaUrl) => {
+        if (isMounted) setUrl(mediaUrl);
       })
-      .catch((err) => console.error("Error creating blob URL:", err));
+      .catch((err) => console.error("Error creating media URL:", err));
 
     return () => {
       isMounted = false;
       setUrl(null);
-      release();
     };
   }, [props.media, endpointUrl, mikro, near]);
 

@@ -1,7 +1,7 @@
 import { useDialog } from "@/app/dialog";
 import { useConnection } from "@/lib/arkitekt/provider";
 import { useDownload } from "@/providers/download/DownloadProvider";
-import { TaskEventKind, useTaskQuery } from "@/rekuest/api/graphql";
+import { TaskEventKind, useFullTaskQuery } from "@/rekuest/api/graphql";
 import { ApolloClient } from "@apollo/client";
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
@@ -48,7 +48,8 @@ const SingleHookWatcher = ({ entry }: { entry: PendingHook }) => {
   // completion still fires (the ref resets with the fresh mount).
   const handledRef = useRef(false);
 
-  const { data } = useTaskQuery({
+  // Full ports: handlers align positional `returns` to `task.action.returns`.
+  const { data } = useFullTaskQuery({
     variables: { id: entry.taskId },
     fetchPolicy: "cache-and-network",
   });

@@ -12,7 +12,13 @@ import { useSelectionStoreApi } from "../selection/SelectionContext";
 import { SelectionState } from "../selection/store";
 import { smartDropRegistryStore } from "./dropRegistry";
 import { getMatchingActions, getSmartDropObjects, resolveSmartDrop } from "./dropUtils";
+import { registerSmartNode, unregisterSmartNode } from "./nodeRegistry";
 import { SmartModelProps } from "./types";
+
+// Module-level: `useFloating` deep-compares the middleware array on every
+// render (down to `fn.toString()`), so a fresh literal per card per render was
+// three closure stringifications per card per commit.
+const PARTNER_PANEL_MIDDLEWARE = [offset(12), flip(), shift({ padding: 12 })];
 
 type SmartModelSelectionSnapshot = {
   selection: Structure[];
@@ -105,7 +111,7 @@ export const useSmartModel = ({
     strategy: "fixed",
     transform: true,
     whileElementsMounted: autoUpdate,
-    middleware: [offset(12), flip(), shift({ padding: 12 })],
+    middleware: PARTNER_PANEL_MIDDLEWARE,
   });
 
   const dropHandler = React.useCallback(async (
@@ -291,6 +297,7 @@ export const useSmartModel = ({
       const previousNode = registeredNodeRef.current;
 
       if (previousNode && previousNode !== node) {
+        unregisterSmartNode(previousNode);
         selectionStore.getState().unregisterSelectables([
           {
             structure: self,
@@ -318,6 +325,9 @@ export const useSmartModel = ({
       // presence), and serializing the whole fragment per card was expensive.
       syncAttribute(node, "data-object", self.object.id);
       syncAttribute(node, "data-selectable", "true");
+      // The delegated context menu / hover card (`SmartSurface`) resolves the
+      // card under the pointer through this registry.
+      registerSmartNode(node, self);
 
       selectionStore.getState().registerSelectables([
         {
@@ -347,6 +357,7 @@ export const useSmartModel = ({
         return;
       }
 
+      unregisterSmartNode(node);
       selectionStore.getState().unregisterSelectables([
         {
           structure: self,
@@ -359,6 +370,14 @@ export const useSmartModel = ({
   const clearPartners = React.useCallback(() => {
     setPartners([]);
   }, []);
+
+  const floatingRef = React.useCallback(
+    (node: HTMLDivElement | null) => {
+      floatingNodeRef.current = node;
+      refs.setFloating(node);
+    },
+    [refs],
+  );
 
   useEffect(() => {
     const handlePointerDownOutside = (event: PointerEvent) => {
@@ -424,10 +443,7 @@ export const useSmartModel = ({
 
   return {
     ref: registerNode,
-    floatingRef: (node) => {
-      floatingNodeRef.current = node;
-      refs.setFloating(node);
-    },
+    floatingRef,
     floatingStyles,
     self,
     isOver,

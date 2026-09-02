@@ -36,6 +36,8 @@ export const TermDisplay = (props: DisplayWidgetProps) => {
           <img
             src={term.image.presignedUrl}
             alt={term.label ?? term.key}
+            loading="lazy"
+            height={80}
             className="w-full h-20 object-cover rounded"
           />
         )}

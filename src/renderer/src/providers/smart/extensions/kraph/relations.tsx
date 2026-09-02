@@ -230,7 +230,7 @@ export const EntityRelationActions = (props: PassDownProps) => {
     variables: {
       search: props.filter && props.filter !== "" ? props.filter : undefined,
     },
-    fetchPolicy: "network-only",
+    fetchPolicy: "cache-and-network",
   });
 
   const candidates = React.useMemo(
@@ -279,7 +279,7 @@ export const StructureRelationActions = (props: PassDownProps) => {
     variables: {
       search: props.filter && props.filter !== "" ? props.filter : undefined,
     },
-    fetchPolicy: "network-only",
+    fetchPolicy: "cache-and-network",
   });
 
   // `StructureRelationCategoryFilter` has no `sourceIdentifier` / `targetIdentifier`
@@ -334,7 +334,7 @@ export const MeasurementActions = (props: PassDownProps) => {
     variables: {
       filters: { pinned: true },
     },
-    fetchPolicy: "network-only",
+    fetchPolicy: "cache-and-network",
   });
 
   if (!firstObject) {
@@ -388,7 +388,7 @@ export const ApplicableMeasurements = (props: PassDownProps) => {
       search: props.filter && props.filter !== "" ? props.filter : undefined,
       sourceIdentifier: firstObject?.identifier || "",
     },
-    fetchPolicy: "network-only",
+    fetchPolicy: "cache-and-network",
   });
 
   if (firstPartner || !firstObject) {

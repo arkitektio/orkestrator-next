@@ -144,3 +144,170 @@ the worker, which rejects and clears every pending request.
   synchronous read of `selectables`.
 - Flow-store consumers select fields; there is intentionally no
   whole-state hook.
+
+---
+
+# Pass II — 2026-09-02 (branch `new-stuff`)
+
+Three fresh audits (Apollo data layer; React render paths outside the scene;
+workers / IPC / zarr / main process) after Pass I. Same verification rule:
+`pnpm typecheck` clean and `pnpm test` green; render-count and frame-time
+claims still want a human with the React Profiler / DebugPanel.
+
+## Done
+
+### Data layer
+- **Forced `nextFetchPolicy: "network-only"`** on every generated rekuest and
+  mikro hook (`lib/rekuest/hooks.tsx`, `lib/mikro/funcs.tsx`) is gone. The
+  wrappers now default to `fetchPolicy: "cache-and-network"` +
+  `nextFetchPolicy: "cache-first"` and let call sites override — hover cards'
+  and `useTasks`' `cache-first` are honoured again, and a variables change
+  (page, filter, route param) serves from cache when present. Trade-off: a
+  page revisited within one mount shows cached rows without a refetch;
+  mutations already `refetchQueries`.
+- **Smart context menu** debounces its search (200 ms,
+  `providers/smart/extensions/context.tsx`) before fanning out to ten query
+  children; the kraph relation candidates dropped `network-only`.
+- **`useDescriptorProbe`** dedupes probes per distinct (end, descriptor) pair
+  (`kraph/lib/applicableCategories.ts`). True one-query-per-side batching
+  needs a schema change (`matchesDescriptor` is a single input) — see Not done.
+- **Focus refetch** (`hooks/use-refetch-on-reactivate.ts`): 10 s cooldown,
+  skipped when the window was away < 2 s, `MyTasks` excluded.
+- **Per-card `useImplementationsQuery`** in the kabinet release/flavour cards
+  runs only once the install dropdown opens.
+- `ResourcePage` polls at 15 s and not while hidden; `AgentUpdater` log line
+  removed; `FolderListExplorer` sort and `useTask` lookup memoized.
+
+### React render paths
+- **One delegated context menu and one hover card for every smart card**
+  (`providers/smart/SmartSurface.tsx`, mounted in `AppProvider`; cards
+  register their node + structure in `providers/smart/nodeRegistry.ts`).
+  A card no longer mounts Radix `ContextMenu` + `HoverCard` roots (~15
+  component instances and a capture-phase document `keydown` listener each —
+  60-200 per list page). `hoverGroup.ts` is gone; the warm-group delay lives
+  in the surface.
+- `useSmartModel`: floating-ui middleware hoisted to module scope (it was
+  deep-compared, down to `fn.toString()`, every render), `floatingRef` stable.
+- **`key={index}` → `key={item.id}`** in 48 list sites + the panes and the
+  Gantt bars, so the Pass I card memos actually hold when a list prepends.
+- `react-timestamp` wrapped in `React.memo` (`components/ui/timestamp.tsx`),
+  all 32 importers repointed.
+- Command palette provider value memoized; `usePerformAction` reads modifier
+  keys from one shared window tracker (`app/hooks/modifierTracker.ts`) instead
+  of five listeners per action row; shortcut rows no longer rebind keydown per
+  render; local-action sort memoized.
+- `TaskTimeline` pan/wheel coalesced to one store write per frame;
+  `GanttTimeline` uses a `Set` for highlights and mounts a `Popover` only for
+  the clicked bar; kraph `EntityList` / `StructureList` / `GraphTable`
+  memoize columns, rows and filters; `fancy-input` caches its rect; kraph
+  display images and `ClientAvatar` load lazily.
+- **Route-level code splitting** (`app/App.tsx`): the 13 module roots are
+  `React.lazy`, so three.js, DuckDB, Monaco, the flow editor and dockview
+  leave the entry chunk.
+- **Chat**: `ChatList` renders a `React.memo` `ChatMessage` per row, the
+  rereply callback is stable, message times use one `Intl.DateTimeFormat`,
+  and the per-message `layout` animation is gone. `Markdown` parses once per
+  `text` (module-level regexes, `useMemo`, `React.memo`) — 24 rendering
+  snapshots recorded against the old parser pin the output.
+- **Task event log**: `TaskLogEntry` is memoized on the event, times come
+  from a module-level formatter, and the log windows to the newest 200 events
+  with a "show earlier" button.
+- **Slim `MyTasks`** (`fragment LiveTask`, `graphql/rekuest-next`): the live
+  task list and its single-task hydration no longer carry `...Ports` per task
+  (only `args { key kind identifier }`, which `useFilteredTasks` reads);
+  detail pages, `DetailTask.children` hydration and task hooks use a new
+  `FullTask` query. `useHashActionWithProgress` asks for `ActionIdByHash`
+  instead of the full ports tree per install row.
+- **DuckDB tables** (`useDuckDbTable.ts`): one long-lived connection per
+  table (httpfs + secret once per grant), 200 ms debounced search, superseded
+  runs ticketed and `cancelSent()`, `COUNT(*)` cached per search/filter so
+  page and sort changes issue one statement.
+- **`FolderTableExplorer`** paginates and searches server-side (the
+  `Children` document already accepted both), like the list explorer.
+
+### Workers / main process
+- `onHeadersReceived` is filtered to the app and dev-server origins, so S3
+  chunk GETs from the codec workers no longer round-trip through the main
+  process (COOP/COEP dedupe unchanged — see the SAB note in `src/main/index.ts`).
+- `app://` handler streams files and sets `Cache-Control` (immutable for
+  hashed assets, `no-cache` for `index.html`); zoom factor applied on resize
+  only when it changed; drag-start writes async; machine id memoized;
+  gateway `initialize()` resets its implementation list.
+- Zarr telemetry: per-chunk timing payloads are built only when
+  `__ZARR_TIMING__` is on (`lib/zarr/runner/timing.ts`); codec workers stop
+  scanning the Resource Timing buffer per fetch.
+- Default chunk cache is byte-bounded (256 MB) and attribute probes use their
+  own 128 MB `ByteBudgetChunkCache` (`exactSampleSource.ts`).
+- Blurhash placeholders memoized per hash; updater IPC listeners are
+  disposable; `fabriksBake` bbox no longer boxes the whole position array.
+- **Thumbnails and GLTF assets** (`lib/datalayer/s3request.tsx`,
+  `mikroAccess.tsx`, `rekuestAccess.tsx`): the second SigV4 implementation
+  now delegates to the zarr path's memoized signing key and hour-pinned
+  presigned URLs (credential identity in the key), and `<img>` / `useGLTF`
+  consumers get the presigned URL directly — no blob download, no object URL,
+  Chromium's cache dedupes. The rekuest media grant is cached per store.
+- **Worker dispatch on a free list** (`repackDispatcher.ts`,
+  `fabriksDecodeDispatcher.ts`): idle worker first, capped in-flight per
+  worker (2 for repack, 1 for fabriks decodes), FIFO overflow queue, and a
+  queued job whose `signal` aborts is dropped instead of posted. Wired at
+  both call sites: bricks pass the fetch controller's signal; the fabriks
+  manager aborts queued decodes on every generation bump.
+
+### Cache and subscriptions
+- **Apollo `typePolicies`** (`lib/arkitekt/builders/cachePolicies.ts`,
+  `app/cachePolicies.ts`, wired in `app/Arkitekt.tsx`): every root `Query`
+  field with a `pagination` argument is keyed on its other arguments and
+  stored as ONE offset-indexed window per filter/order — `read` returns
+  exactly the requested `[offset, offset+limit)` slice or goes to the network,
+  so a search prefix or a page no longer becomes a permanent separate
+  `ROOT_QUERY` entry. `Action.args` / `Action.returns` merge ports by `key`
+  (field union), so the slim `LiveTask` write cannot clobber a full-ports
+  `Action` a detail view is showing. `GcOnNavigate` runs `cache.gc()` on all
+  clients at most once per minute on route change.
+- **`useAgentLiveState`** reads from one module-level store per
+  `agent:interface` (`rekuest/hooks/liveStateStore.ts`): one `WatchState`
+  subscription shared by all widgets, refcounted, patches coalesced to one
+  publish per animation frame.
+
+## Not done (and why)
+
+- **`pnpm rekuest` against the live server fails on pre-existing drift**:
+  `fragments/blok.graphql` (`Blok.uiComponents` → `components`),
+  `fragments/ports.graphql` (`StateAccessor.subPath` → `path`;
+  `hook`/`ward` on the custom widget/effect types replaced by
+  `component`/`props`). The `LiveTask` / `FullTask` / `ActionIdByHash`
+  documents were generated against the checked-in SDL with a scratch config;
+  `src/renderer/src/rekuest/api/graphql.ts` and `src/main/schemas/rekuest.ts`
+  are additive only. Reconcile those documents with the server before the
+  next real `pnpm rekuest`.
+- **`useDescriptorProbe` one-query-per-side batching** needs a kraph schema
+  change (`matchesDescriptor` takes a single input); the client dedupes per
+  distinct (end, descriptor) pair instead.
+- **`FolderTableExplorer` server-side ordering**: the `Children` document does
+  not declare the `order` argument the schema offers; needs `pnpm mikro`.
+- **`MyTasks` pagination** still needs the server change from Pass I.
+- **`exportAsCsv`** still materializes the table in JS; a `COPY … TO` path
+  needs a registered wasm-FS file.
+- `omero_ark` / `dokuments` have no schema under `graphql/schemas/`, so their
+  caches keep default keying.
+- Worker dispatchers still reuse a worker after `onerror` (no respawn).
+- `AnnotationLayerRenderer` poll hoisting and `mergedChannelUniforms` texture
+  churn remain from Pass I.
+
+## Verify by hand (Pass II)
+
+- List page: typing in the filter commits no card; right-click on a
+  multi-selection acts on the whole selection; hover cards open with the
+  warm-group delay and close when the pointer leaves card and card content.
+- Chat with a running replyer stays smooth; the task log shows "show earlier"
+  above 200 events.
+- DuckDB table: typing issues one query per pause; page/sort changes issue a
+  single statement.
+- `pnpm build`: three.js, DuckDB, Monaco, the flow editor and dockview are
+  not in the entry chunk. Checked on 2026-09-02: entry went from 10.9 MB to
+  7.9 MB; `MikroNextModule` (4.4 MB, the scene) and `NeuronRenderer` are
+  their own chunks. The remaining entry weight is the generated GraphQL
+  modules, forms and the dialog registry (`app/dialog.tsx` statically imports
+  forms from every module) — the next split, if wanted.
+- Scene streaming: DebugPanel frame stats unchanged, no main-process CPU
+  spike while chunks stream (the header listener no longer sees S3).

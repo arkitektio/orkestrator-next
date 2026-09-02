@@ -2,6 +2,7 @@
  * Main-thread helpers for communicating with the read-only codec worker.
  */
 
+import { zarrTimingEnabled } from './timing.js'
 import type { DataType, TypedArray } from 'zarrita'
 import { get_ctr } from './internals/util.js'
 import type { CodecChunkMeta, TextureChunkBounds, TexturedChunk } from './types.js'
@@ -218,6 +219,7 @@ export async function workerFetchDecodeMulti<D extends DataType>(
     requestInit,
     textureFidelity,
     useSharedArrayBuffer,
+    timing: zarrTimingEnabled(),
   })) as {
     parts: ({
       promotedType?: TextureCompatibleDataType
@@ -294,6 +296,7 @@ export async function workerFetchDecode<D extends DataType>(
     actualChunkShape,
     textureFidelity,
     useSharedArrayBuffer,
+    timing: zarrTimingEnabled(),
   }) as {
     missing?: boolean
     promotedType?: TextureCompatibleDataType

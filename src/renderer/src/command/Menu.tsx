@@ -20,7 +20,7 @@ import { DialogPortal } from "@radix-ui/react-dialog";
 import { Cross2Icon } from "@radix-ui/react-icons";
 import { useDebounce } from "@uidotdev/usehooks";
 import { Sparkles } from "lucide-react";
-import { createElement, Suspense, useCallback, useEffect, useState } from "react";
+import { createElement, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import {
   Context,
   ExtensionContext,
@@ -156,20 +156,27 @@ export const CommandMenu = (props: {
     setContext((c) => ({ ...c, query }));
   };
 
-  const activateModifier = (modifier: Modifier) => {
+  const activateModifier = useCallback((modifier: Modifier) => {
     setContext((c) => ({
       ...c,
       modifiers: [...c.modifiers, modifier],
       query: "",
     }));
-  };
+  }, []);
 
-  const removeModifier = (index: number) => {
+  const removeModifier = useCallback((index: number) => {
     setContext((c) => ({
       ...c,
       modifiers: c.modifiers.filter((_, i) => i !== index),
     }));
-  };
+  }, []);
+
+  // Stable provider value: only changes when the debounced context does, so
+  // extension consumers don't re-render on every keystroke of the raw query.
+  const extensionContextValue = useMemo(
+    () => ({ ...debouncedContext, activateModifier, removeModifier }),
+    [debouncedContext, activateModifier, removeModifier],
+  );
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === "m" && (e.metaKey || e.ctrlKey)) {
@@ -272,13 +279,7 @@ export const CommandMenu = (props: {
                     No actions matched this query.
                   </CommandEmpty>
                 )}
-                <ExtensionContext.Provider
-                  value={{
-                    ...debouncedContext,
-                    activateModifier,
-                    removeModifier,
-                  }}
-                >
+                <ExtensionContext.Provider value={extensionContextValue}>
                   <Guard.Rekuest>
                     <ApplicableShortcuts
                       filter={context.query}

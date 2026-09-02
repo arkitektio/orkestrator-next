@@ -119,7 +119,9 @@ const FabriksCollectionGroup = ({
   useEffect(() => () => statsThrottle.cancel(), [statsThrottle]);
   const onStatsChanged = statsThrottle.trigger;
 
-  const { matrix, inverse: inverseRef } = useCollectionPlacement(
+  // `inverse` is the hook's own scratch matrix, kept current in place: the
+  // same object across renders, so the pick closure below reads it live.
+  const { matrix, inverse } = useCollectionPlacement(
     layer,
     collection,
     transformContext,
@@ -431,7 +433,7 @@ const FabriksCollectionGroup = ({
     // point through the inverse placement is the voxel coordinate.
     const worldPos: [number, number, number] = [event.point.x, event.point.y, event.point.z];
     // Scratch vector: this runs on every pointer move, before the dedupe.
-    const local = hitScratch.copy(event.point).applyMatrix4(inverseRef.current);
+    const local = hitScratch.copy(event.point).applyMatrix4(inverse);
     const voxelIndex: [number, number, number] = [
       Math.floor(local.x),
       Math.floor(local.y),

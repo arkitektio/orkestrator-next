@@ -9,6 +9,7 @@ vi.mock("sonner", () => ({
 
 import type { PortEffectFragment } from "@/rekuest/api/graphql";
 import type { MappablePort } from "@/rekuest/widgets/types";
+import { PortsRootContext } from "@/rekuest/widgets/PortsRootContext";
 import { HideEffect } from "./HideEffect";
 
 const port = { key: "details", kind: "STRING" } as unknown as MappablePort;
@@ -30,17 +31,25 @@ const showWhenAdvanced = {
 const Harness = ({
   effect,
   onForm,
+  path = ["details"],
+  portsRoot = [],
+  defaultValues = { mode: "basic", details: "" },
 }: {
   effect: PortEffectFragment;
   onForm: (form: UseFormReturn) => void;
+  path?: string[];
+  portsRoot?: string[];
+  defaultValues?: Record<string, unknown>;
 }) => {
-  const form = useForm({ defaultValues: { mode: "basic", details: "" } });
+  const form = useForm({ defaultValues });
   onForm(form);
   return (
     <FormProvider {...form}>
-      <HideEffect effect={effect} port={port}>
-        <span>details input</span>
-      </HideEffect>
+      <PortsRootContext.Provider value={portsRoot}>
+        <HideEffect effect={effect} port={port} path={path}>
+          <span>details input</span>
+        </HideEffect>
+      </PortsRootContext.Provider>
     </FormProvider>
   );
 };
@@ -61,6 +70,54 @@ describe("HideEffect", () => {
       form!.setValue("mode", "basic");
     });
     expect(screen.queryByText("details input")).toBeNull();
+  });
+
+  it("resolves the port and its dependencies under a form prefix (args.*)", async () => {
+    let form: UseFormReturn | null = null;
+    render(
+      <Harness
+        effect={showWhenAdvanced}
+        onForm={(f) => (form = f)}
+        path={["args", "details"]}
+        portsRoot={["args"]}
+        defaultValues={{ args: { mode: "basic", details: "" } }}
+      />,
+    );
+    expect(screen.queryByText("details input")).toBeNull();
+    await act(async () => {
+      form!.setValue("args.mode", "advanced");
+    });
+    expect(screen.getByText("details input")).toBeTruthy();
+  });
+
+  it("resolves relative dependencies against the port's parent and absolute ones against the root", async () => {
+    let form: UseFormReturn | null = null;
+    const absolute = {
+      ...showWhenAdvanced,
+      dependencies: ["/mode"],
+      call: {
+        operation: "compare.eq",
+        arguments: [
+          { key: "a", value_path: "/mode" },
+          { key: "b", value_literal: "advanced" },
+        ],
+      },
+    } as unknown as PortEffectFragment;
+    render(
+      <Harness
+        effect={absolute}
+        onForm={(f) => (form = f)}
+        path={["args", "model", "details"]}
+        portsRoot={["args"]}
+        defaultValues={{ args: { mode: "basic", model: { mode: "advanced", details: "" } } }}
+      />,
+    );
+    // The sibling `model.mode` is "advanced" but the rule points at the root.
+    expect(screen.queryByText("details input")).toBeNull();
+    await act(async () => {
+      form!.setValue("args.mode", "advanced");
+    });
+    expect(screen.getByText("details input")).toBeTruthy();
   });
 
   it("keeps the port visible and reports once when the call is broken", () => {

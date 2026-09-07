@@ -57,8 +57,9 @@ export const ActionAssignForm = (props: {
     dialog.closeDialog();
   };
 
+  // Subscribing to `isValid` makes react-hook-form run the whole-form
+  // resolver on every keystroke; submit-time errors are reported per field.
   const isSubmitting = form.formState.isSubmitting;
-  const isValid = form.formState.isValid;
 
   const { registry } = useWidgetRegistry();
 
@@ -91,7 +92,7 @@ export const ActionAssignForm = (props: {
             />
 
             <DialogFooter>
-              <Button type="submit" variant={"outline"} disabled={!isValid}>
+              <Button type="submit" variant={"outline"} disabled={isSubmitting}>
                 {" "}
                 Do {isSubmitting && "ing"}
               </Button>

@@ -85,17 +85,34 @@ export type SearchFieldProps = {
   createComponent?: React.ReactNode;
   noOptionFoundPlaceholder?: string;
   search: SearchFunction;
+  /**
+   * What to store in the form for a chosen option value. Defaults to the
+   * option value itself; structure ports store `{ __identifier, object }`.
+   */
+  toFieldValue?: (optionValue: string) => unknown;
+  /** The option key a stored field value corresponds to (inverse of `toFieldValue`). */
+  fieldKey?: (fieldValue: unknown) => string | undefined;
+  /**
+   * Changes when the option source changes (e.g. live agent state), so the
+   * initial option list is reloaded even though `search` is held in a ref.
+   */
+  searchKey?: string | number;
 } & FieldProps;
+
+const identityKey = (value: unknown): string | undefined =>
+  value == null ? undefined : String(value);
 
 export const SearchField = ({
   name,
   label,
-  validate,
   search,
   createComponent,
   commandPlaceholder = "Search...",
   noOptionFoundPlaceholder = "No options found",
   description,
+  toFieldValue,
+  fieldKey = identityKey,
+  searchKey,
 }: SearchFieldProps) => {
   const form = useFormContext();
 
@@ -147,7 +164,7 @@ export const SearchField = ({
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [name, runSearch]);
+  }, [name, runSearch, searchKey]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -173,8 +190,9 @@ export const SearchField = ({
     <FormField
       control={form.control}
       name={name}
-      rules={{ validate: validate }}
-      render={({ field }) => (
+      render={({ field }) => {
+        const currentKey = fieldKey(field.value);
+        return (
         <>
           <FormItem className="flex flex-col dark:text-white">
             {label != undefined && <FormLabel>{label}</FormLabel>}
@@ -197,7 +215,7 @@ export const SearchField = ({
                         onBlur={() => setOpen(false)}
                         onFocus={() => setOpen(true)}
                       />
-                      {field.value != undefined && field.value != null && (
+                      {currentKey !== undefined && (
                         <div
                           className={cn(
                             "z-8 absolute w-full h-full cursor-pointer flex flex-row items-center bg-slate-800 top-0 left-0 rounded-md px-2 flex h-10 w-full rounded-md  py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 truncate",
@@ -205,14 +223,14 @@ export const SearchField = ({
                           onClick={() => {
                             setInputValue("");
                             form.setValue(name, undefined, {
-                              shouldValidate: false,
+                              shouldValidate: true,
                             });
                             setOpen(true);
                             field.onChange(undefined);
                             inputRef.current?.focus();
                           }}
                         >
-                          <ButtonLabel search={search} value={field.value} />
+                          <ButtonLabel search={search} value={currentKey} />
                         </div>
                       )}
                     </div>
@@ -252,14 +270,16 @@ export const SearchField = ({
                                 e.stopPropagation();
                               }}
                               onSelect={() => {
-                                if (field.value !== option.value) {
-                                  form.setValue(name, option.value, {
-                                    shouldValidate: true,
-                                  });
+                                if (currentKey !== option.value) {
+                                  form.setValue(
+                                    name,
+                                    toFieldValue ? toFieldValue(option.value) : option.value,
+                                    { shouldValidate: true },
+                                  );
                                   setInputValue("");
                                 } else {
                                   form.setValue(name, null, {
-                                    shouldValidate: false,
+                                    shouldValidate: true,
                                   });
                                   setInputValue("");
                                 }
@@ -270,7 +290,7 @@ export const SearchField = ({
                               <CheckIcon
                                 className={cn(
                                   "ml-auto h-4 w-4",
-                                  option.value === field.value
+                                  option.value === currentKey
                                     ? "opacity-100"
                                     : "opacity-0",
                                 )}
@@ -288,7 +308,8 @@ export const SearchField = ({
             <FormMessage />
           </FormItem>
         </>
-      )}
+        );
+      }}
     />
   );
 };

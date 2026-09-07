@@ -65,7 +65,7 @@ export const StateChoiceWidget = (
       ?.mappedAgents?.[0]?.agent;
   }
 
-  const { value: liveValue } = useAgentLiveState({
+  const { value: liveValue, revision } = useAgentLiveState({
     agentID: agentID,
     stateInterface: stateKey,
     skip: !agentID || !stateKey,
@@ -166,6 +166,7 @@ export const StateChoiceWidget = (
         description={props.port.description || undefined}
         noOptionFoundPlaceholder="No options found"
         commandPlaceholder="Search..."
+        searchKey={revision ?? undefined}
       />
     </>
   );

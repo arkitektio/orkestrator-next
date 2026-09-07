@@ -316,7 +316,7 @@ input ActionFilter {
 }
 
 """
-The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer
+The `ActionHash` scalar is the sha256 identity hash of an action definition (key, version, ports, ...)
 """
 scalar ActionHash
 
@@ -699,7 +699,7 @@ type AgentWithValues {
 }
 
 """
-The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer
+The `AnyDefault` scalar is any JSON value used as a port default or a choice value; the server checks it against the port's kind
 """
 scalar AnyDefault
 
@@ -734,15 +734,17 @@ type ArgPort {
   widget: AssignWidget
 }
 
-"Port\n\n    A Port is a single input or output of a action. It is composed of a key and a kind\n    which are used to uniquely identify the port.\n\n    If the Port is a structure, we need to define a identifier and scope,\n    Identifiers uniquely identify a specific type of model for the scopes (e.g\n    all the ports that have the identifier \"@mikro/image\" are of the same type, and\n    are hence compatible with each other). Scopes are used to define in which context\n    the identifier is valid (e.g. a port with the identifier \"@mikro/image\" and the\n    scope \"local\", can only be wired to other ports that have the same identifier and\n    are running in the same app). Global ports are ports that have the scope \"global\",\n    and can be wired to any other port that has the same identifier, as there exists a\n    mechanism to resolve and retrieve the object for each app. Please check the rekuest\n    documentation for more information on how this works.\n\n\n    "
+"A Port is a single input or output of an action, identified by its `key` and typed by its `kind`.\n\n    STRUCTURE, MEMORY_STRUCTURE and INTERFACE ports carry an `identifier` of the form `@package/key`\n    (e.g. `@mikro/image`); ports with the same identifier are compatible. LIST and DICT ports have one\n    child (the item type), UNION ports two or more (the variants), MODEL ports one per field. ENUM ports\n    declare `choices`. See docs/design/ports.md for the full table.\n    "
 input ArgPortInput {
   """The child ports (used for list, dict, union and model ports)."""
   children: [ArgPortInput!] = null
 
-  """The options for the port. This is used for dropdowns and text inputs"""
+  """
+  The values the port accepts (required for ENUM; optional for INT, FLOAT, STRING). Rendered by CHOICE widgets.
+  """
   choices: [ChoiceInput!] = null
 
-  """The default value for the port."""
+  """The default value for the port; must fit the port's kind."""
   default: AnyDefault = null
 
   """
@@ -763,7 +765,9 @@ input ArgPortInput {
   """
   identifier: String = null
 
-  """The key of the port"""
+  """
+  The key of the port: unique among its siblings, free of '..', not 'value'. LIST/DICT item ports are conventionally keyed '...'.
+  """
   key: String!
 
   """
@@ -1294,7 +1298,7 @@ type Choice {
   description: String
   image: String
   label: String!
-  value: String!
+  value: AnyDefault!
 }
 
 """A dropdown over the port's own `choices`."""
@@ -1334,7 +1338,7 @@ input ChoiceInput {
   label: String!
 
   """
-  The value of the choice. This is the value that is returned when the choice is selected
+  The value of the choice (any JSON value); must fit the port's kind. This is the value that is returned when the choice is selected
   """
   value: AnyDefault!
 }
@@ -2025,6 +2029,21 @@ input DescriptorInput {
   value: Arg!
 }
 
+"""
+The operator of a requires/provides descriptor: how a port's constraint compares the object's value at `key` with `value`.
+"""
+enum DescriptorOperator {
+  CONTAINS
+  EQUALS
+  EXISTS
+  GTE
+  IN
+  LTE
+  MATCHES
+  NOT_EQUALS
+  NOT_IN
+}
+
 """Represents a device assigned to users within an organization."""
 type Device {
   """The device identifier."""
@@ -2206,7 +2225,7 @@ enum HookKind {
 }
 
 """
-The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer
+The `Identifier` scalar is a structure identifier of the form `@package/key` (e.g. `@mikro/image`) that types STRUCTURE, MEMORY_STRUCTURE and INTERFACE ports
 """
 scalar Identifier
 
@@ -3130,32 +3149,84 @@ type PortGroup {
 A Port Group is a group of ports that are related to each other. It is used to group ports together in the UI and provide a better user experience.
 """
 input PortGroupInput {
-  description: String
+  """The description of the port group, displayed in the UI"""
+  description: String = null
+
+  """The effects applied to the port group as a whole"""
   effects: [EffectInput!] = []
 
   """
   The key of the port group. This is used to uniquely identify the port group
   """
   key: String!
-  ports: [String!] = []
-  title: String
+
+  """
+  The keys of the root arg ports in this group; a port belongs to at most one group
+  """
+  ports: [String!]! = []
+
+  """The title of the port group, displayed in the UI"""
+  title: String = null
 }
 
-"""The kind of port."""
+"""
+The kind of a port: its structural type. Decides which of children, identifier and choices the port must, may or must not carry (see docs/design/ports.md).
+"""
 enum PortKind {
+  """A boolean. No children."""
   BOOL
+
+  """An ISO-8601 date or datetime string. No children."""
   DATE
+
+  """
+  A string-keyed map. One child keyed '...' describes a homogeneous value type; several named children describe the known keys.
+  """
   DICT
+
+  """One of a fixed set of values; `choices` required."""
   ENUM
+
+  """A floating point number. No children; choices optional."""
   FLOAT
+
+  """An integer. No children; choices optional."""
   INT
+
+  """
+  A reference to any object implementing an interface, typed by `identifier` (required). No children.
+  """
   INTERFACE
+
+  """
+  A list; exactly one child describes the item type (conventionally keyed '...').
+  """
   LIST
+
+  """
+  A reference to an object that lives in the agent's memory, typed by `identifier` (required). Makes the action LOCAL-scoped. No children.
+  """
   MEMORY_STRUCTURE
+
+  """
+  An object with named fields; at least one child per field, `identifier` optional.
+  """
   MODEL
+
+  """
+  A physical quantity with a unit; `reference_unit` required, `dimension` derived. No children.
+  """
   QUANTITY
+
+  """A string. No children; choices optional."""
   STRING
+
+  """
+  A reference to an object held by a service, typed by `identifier` (@package/key, required). Values are ids. No children.
+  """
   STRUCTURE
+
+  """One of several variants; at least two children, each a variant."""
   UNION
 }
 
@@ -3343,34 +3414,23 @@ input ProtocolOrder @oneOf {
 
 type Provides {
   key: String!
-  operator: ProvidesOperator!
-  value: Arg!
+  operator: DescriptorOperator!
+  value: Arg
 }
 
 input ProvidesInput {
   """
-  The key of the provision. This is used to uniquely identify the provision
+  The key of the provision: the path into the object the constraint reads
   """
   key: String!
 
   """The operator for the provision"""
-  operator: ProvidesOperator!
+  operator: DescriptorOperator!
 
-  """The value of the provision. This can be any JSON serializable value"""
-  value: Arg!
-}
-
-"""The operator for matching descriptors."""
-enum ProvidesOperator {
-  CONTAINS
-  EQUALS
-  EXISTS
-  GTE
-  IN
-  LTE
-  MATCHES
-  NOT_EQUALS
-  NOT_IN
+  """
+  The value of the provision. This can be any JSON serializable value; IN/NOT_IN take a list, LTE/GTE a number, EXISTS none
+  """
+  value: Arg = null
 }
 
 """Delegates the port to a port of another action."""
@@ -3695,34 +3755,23 @@ input RequestMediaUploadInput {
 
 type Requires {
   key: String!
-  operator: RequiresOperator!
-  value: Arg!
+  operator: DescriptorOperator!
+  value: Arg
 }
 
 input RequiresInput {
   """
-  The key of the requirement. This is used to uniquely identify the requirement
+  The key of the requirement: the path into the object the constraint reads
   """
   key: String!
 
   """The operator for the requirement"""
-  operator: RequiresOperator!
+  operator: DescriptorOperator!
 
-  """The value of the requirement. This can be any JSON serializable value"""
-  value: Arg!
-}
-
-"""The operator for matching descriptors."""
-enum RequiresOperator {
-  CONTAINS
-  EQUALS
-  EXISTS
-  GTE
-  IN
-  LTE
-  MATCHES
-  NOT_EQUALS
-  NOT_IN
+  """
+  The value of the requirement. This can be any JSON serializable value; IN/NOT_IN take a list, LTE/GTE a number, EXISTS none
+  """
+  value: Arg = null
 }
 
 """Represents a resolution for a blok."""
@@ -3838,7 +3887,6 @@ input ResumeProbeInput {
 type ReturnPort {
   children: [ReturnPort!]
   choices: [Choice!]
-  default: AnyDefault
   description: String
   dimension: String
   effects: [Effect!]
@@ -3853,16 +3901,15 @@ type ReturnPort {
   widget: ReturnWidget
 }
 
-"Port\n\n    A Port is a single input or output of a action. It is composed of a key and a kind\n    which are used to uniquely identify the port.\n\n    If the Port is a structure, we need to define a identifier and scope,\n    Identifiers uniquely identify a specific type of model for the scopes (e.g\n    all the ports that have the identifier \"@mikro/image\" are of the same type, and\n    are hence compatible with each other). Scopes are used to define in which context\n    the identifier is valid (e.g. a port with the identifier \"@mikro/image\" and the\n    scope \"local\", can only be wired to other ports that have the same identifier and\n    are running in the same app). Global ports are ports that have the scope \"global\",\n    and can be wired to any other port that has the same identifier, as there exists a\n    mechanism to resolve and retrieve the object for each app. Please check the rekuest\n    documentation for more information on how this works.\n\n\n    "
+"A Port is a single input or output of an action, identified by its `key` and typed by its `kind`.\n\n    STRUCTURE, MEMORY_STRUCTURE and INTERFACE ports carry an `identifier` of the form `@package/key`\n    (e.g. `@mikro/image`); ports with the same identifier are compatible. LIST and DICT ports have one\n    child (the item type), UNION ports two or more (the variants), MODEL ports one per field. ENUM ports\n    declare `choices`. See docs/design/ports.md for the full table.\n    "
 input ReturnPortInput {
   """The child ports (used for list, dict, union and model ports)."""
   children: [ReturnPortInput!] = null
 
-  """The options for the port. This is used for dropdowns and text inputs"""
+  """
+  The values the port accepts (required for ENUM; optional for INT, FLOAT, STRING). Rendered by CHOICE widgets.
+  """
   choices: [ChoiceInput!] = null
-
-  """The default value for the port."""
-  default: AnyDefault = null
 
   """
   The description of the port. This is the text that is displayed in the UI when the user hovers over the port
@@ -3882,7 +3929,9 @@ input ReturnPortInput {
   """
   identifier: String = null
 
-  """The key of the port"""
+  """
+  The key of the port: unique among its siblings, free of '..', not 'value'. LIST/DICT item ports are conventionally keyed '...'.
+  """
   key: String!
 
   """
@@ -3912,9 +3961,6 @@ input ReturnPortInput {
   For QUANTITY ports: the canonical/reference unit of the physical quantity, e.g. "volt" or "farad". It is the default selection and the key used to resolve the concrete quantity type; other units of the same dimension are still allowed.
   """
   referenceUnit: String = null
-
-  """The validators for the port"""
-  validators: [ValidatorInput!] = null
 
   """The return widget to use for this port, discriminated by `kind`."""
   widget: ReturnWidgetInput = null

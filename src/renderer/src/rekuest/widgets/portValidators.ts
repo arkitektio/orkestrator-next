@@ -1,4 +1,5 @@
 import { runPortCall } from "./portCalls";
+import { resolveDependencyValue } from "./portPaths";
 
 /** The validator shape both the rekuest and fluss fragments provide. */
 export type PortValidatorLike = {
@@ -10,7 +11,11 @@ export type PortValidatorLike = {
 };
 
 /**
- * Run a port's validators against its value and the form's values.
+ * Run a port's validators against its value and the values around it.
+ *
+ * `local` is the object holding the port's siblings; `root` the object holding
+ * the top-level ports (defaults to `local`). Dependency names are resolved by
+ * `resolveDependencyValue` (`a..b` walks into a sibling, `/a` reads from root).
  *
  * Returns one message per failing validator. A validator's call returns a
  * boolean meaning "valid"; the message comes from `errorMessage` (or
@@ -22,7 +27,8 @@ export type PortValidatorLike = {
 export const runPortValidators = (
   validators: readonly PortValidatorLike[] | null | undefined,
   value: unknown,
-  values: Record<string, unknown>,
+  local: Record<string, unknown>,
+  root: unknown = local,
 ): string[] => {
   if (!validators || validators.length === 0) return [];
 
@@ -32,12 +38,12 @@ export const runPortValidators = (
     const dependencies: Record<string, unknown> = {};
     let allSet = true;
     for (const name of names) {
-      const dependencyValue = values[name];
-      if (dependencyValue === undefined) {
+      const resolved = resolveDependencyValue(name, local, root);
+      if (!resolved.found || resolved.value === undefined) {
         allSet = false;
         break;
       }
-      dependencies[name] = dependencyValue;
+      dependencies[name] = resolved.value;
     }
     if (!allSet) continue;
 

@@ -1,3 +1,4 @@
+import { portHash } from "@/rekuest/widgets/utils";
 import { StringField } from "@/components/fields/StringField";
 import { SwitchField } from "@/components/fields/SwitchField";
 import { Badge } from "@/components/ui/badge";
@@ -34,11 +35,7 @@ export type FilledGroup = PortGroup & {
   filledPorts: Port[];
 };
 
-export const portHash = (port: Port[]) => {
-  return port
-    .map((port) => `${port.key}-${port.kind}-${port.identifier}`)
-    .join("-");
-};
+export { portHash };
 
 export const NanaContainer = () => {
   return (
@@ -117,6 +114,7 @@ const ArgsContainer = ({
                         key={index}
                         effects={port.effects || []}
                         port={port}
+                        path={[...path, port.key]}
                         registry={registry}
                       >
                         <Widget

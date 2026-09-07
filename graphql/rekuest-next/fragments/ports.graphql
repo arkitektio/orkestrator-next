@@ -99,21 +99,20 @@ fragment ChoiceAssignWidget on ChoiceAssignWidget {
   placeholder
 }
 
-fragment ArgChildPortNested on ArgPort {
+# Child ports (list items, dict values, union variants, model fields) carry
+# the same effects, validators and defaults as top-level ports; the client
+# renders and validates them at every depth. Fragments cannot recurse, so the
+# tree is selected three levels deep; the deepest level keeps enough to render
+# a leaf widget.
+fragment ArgChildPortDeep on ArgPort {
   __typename
   kind
   key
+  label
   identifier
   referenceUnit
   proposedUnits
   dimension
-  children {
-    kind
-    identifier
-    widget {
-      ...AssignWidget
-    }
-  }
   choices {
     value
     label
@@ -124,12 +123,55 @@ fragment ArgChildPortNested on ArgPort {
   }
   description
   nullable
+  default
+  children {
+    __typename
+    kind
+    key
+    identifier
+    nullable
+    widget {
+      ...AssignWidget
+    }
+  }
+}
+
+fragment ArgChildPortNested on ArgPort {
+  __typename
+  kind
+  key
+  label
+  identifier
+  referenceUnit
+  proposedUnits
+  dimension
+  children {
+    ...ArgChildPortDeep
+  }
+  choices {
+    value
+    label
+    description
+  }
+  widget {
+    ...AssignWidget
+  }
+  effects {
+    ...PortEffect
+  }
+  validators {
+    ...Validator
+  }
+  description
+  nullable
+  default
 }
 
 fragment ArgChildPort on ArgPort {
   __typename
   kind
   key
+  label
   identifier
   referenceUnit
   proposedUnits
@@ -140,6 +182,12 @@ fragment ArgChildPort on ArgPort {
   widget {
     ...AssignWidget
   }
+  effects {
+    ...PortEffect
+  }
+  validators {
+    ...Validator
+  }
   choices {
     value
     label
@@ -147,23 +195,18 @@ fragment ArgChildPort on ArgPort {
   }
   nullable
   description
+  default
 }
 
-fragment ReturnChildPortNested on ReturnPort {
+fragment ReturnChildPortDeep on ReturnPort {
   __typename
   kind
   key
+  label
   identifier
   referenceUnit
   proposedUnits
   dimension
-  children {
-    kind
-    identifier
-    widget {
-      ...ReturnWidget
-    }
-  }
   choices {
     value
     label
@@ -174,13 +217,50 @@ fragment ReturnChildPortNested on ReturnPort {
   }
   description
   nullable
+  children {
+    __typename
+    kind
+    key
+    identifier
+    nullable
+    widget {
+      ...ReturnWidget
+    }
+  }
 }
 
+fragment ReturnChildPortNested on ReturnPort {
+  __typename
+  kind
+  key
+  label
+  identifier
+  referenceUnit
+  proposedUnits
+  dimension
+  children {
+    ...ReturnChildPortDeep
+  }
+  choices {
+    value
+    label
+    description
+  }
+  widget {
+    ...ReturnWidget
+  }
+  effects {
+    ...PortEffect
+  }
+  description
+  nullable
+}
 
 fragment ReturnChildPort on ReturnPort {
   __typename
   kind
   key
+  label
   identifier
   referenceUnit
   proposedUnits
@@ -190,6 +270,9 @@ fragment ReturnChildPort on ReturnPort {
   }
   widget {
     ...ReturnWidget
+  }
+  effects {
+    ...PortEffect
   }
   choices {
     value
@@ -319,7 +402,6 @@ fragment ReturnPort on ReturnPort {
     label
     description
   }
-  default
   nullable
   provides {
     key

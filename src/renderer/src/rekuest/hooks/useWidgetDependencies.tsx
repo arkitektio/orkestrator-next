@@ -67,13 +67,16 @@ export const useWidgetDependencies = (props: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [watchedKey]);
 
-  return {
-    values: foundValues,
-    met:
+  const met = useMemo(
+    () =>
       !dependencies ||
       dependencies.length == 0 ||
-      Object.keys(foundValues).length == dependencies.length,
-  };
+      watched.every((value) => value !== undefined && value !== null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [dependencies, watchedKey],
+  );
+
+  return { values: foundValues, met };
 };
 
 export default useWidgetDependencies;

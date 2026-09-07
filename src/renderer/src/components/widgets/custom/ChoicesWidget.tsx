@@ -13,14 +13,12 @@ export const ChoicesWidget = (
 
   const search = useCallback(
     async (searching: SearchOptions) => {
-      console.log("Searching", searching);
       if (searching.search) {
         return choices
           .filter(notEmpty)
           .filter((c) => c.label.startsWith(searching.search || ""));
       }
       if (searching.values) {
-        console.log("Searching", searching.values);
         return choices
           .filter(notEmpty)
           .filter((c) => searching.values?.includes(c.value));
@@ -37,7 +35,7 @@ export const ChoicesWidget = (
       search={search}
       description={props.port.description || undefined}
       noOptionFoundPlaceholder="No options found"
-      commandPlaceholder="Search..."
+      commandPlaceholder={props.widget?.placeholder || "Search..."}
     />
   );
 };

@@ -343,8 +343,9 @@ async function fetchChunkBytes(
   path: `/${string}`,
   requestInit?: SerializedRequestInit,
   timing = false,
+  signal?: AbortSignal,
 ): Promise<{ bytes: Uint8Array | undefined; transport: TransportInfo }> {
-  const init = deserializeRequestInit(requestInit) ?? {}
+  const init: RequestInit = { ...(deserializeRequestInit(requestInit) ?? {}), signal }
   const response = await fetchS3Path(store, path, init)
 
   if (response.status === 404) {
@@ -403,6 +404,10 @@ export interface FetchDecodePart {
 
 type WorkerMessage =
   | { type: 'init'; id: number; metaId: number; meta: CodecChunkMeta }
+  /** Abort the in-flight request `id` (its fetch, and the decode if it has
+   * not started). Several requests share one worker now, so cancellation is
+   * per request — the main thread never terminates a worker to cancel one. */
+  | { type: 'cancel'; id: number }
   | (FetchDecodeCommon & { type: 'fetch_decode'; actualChunkShape?: number[] })
   | (FetchDecodeCommon & {
       /** Coalesced read: ONE ranged GET covering `range`, sliced into
@@ -491,8 +496,24 @@ function transferListOf(parts: (DecodedPartMessage | null)[]): ArrayBufferLike[]
   return out
 }
 
+/** In-flight fetch/decode requests by id — the target of `cancel`. */
+const inFlight = new Map<number, AbortController>()
+
+function beginRequest(id: number): AbortSignal {
+  const controller = new AbortController()
+  inFlight.set(id, controller)
+  return controller.signal
+}
+
 ctx.onmessage = async (event: MessageEvent<WorkerMessage>) => {
   const msg = event.data
+
+  if (msg.type === 'cancel') {
+    // The request's own `finally` removes the entry; keeping it until then
+    // lets the catch below tell an abort from a real failure.
+    inFlight.get(msg.id)?.abort()
+    return
+  }
 
   try {
     if (msg.type === 'init') {
@@ -514,14 +535,19 @@ ctx.onmessage = async (event: MessageEvent<WorkerMessage>) => {
       // Register a piggybacked meta (same effect as an `init` message).
       ensurePipeline(msg.metaId, msg.meta)
       getPipeline(msg.metaId)
+      const signal = beginRequest(msg.id)
       const fetchStartedAt = now()
       const { bytes: rawBytes, transport } = await fetchChunkBytes(
         msg.store,
         msg.path,
         msg.requestInit,
         msg.timing === true,
+        signal,
       )
       const fetchMs = now() - fetchStartedAt
+      // Canceled while the bytes were in transit: the main thread already
+      // dropped its pending entry, so decoding would only burn worker time.
+      if (signal.aborted) return
       if (!rawBytes) {
         ctx.postMessage({
           type: 'fetch_decode_ok',
@@ -574,6 +600,7 @@ ctx.onmessage = async (event: MessageEvent<WorkerMessage>) => {
       const init = deserializeRequestInit(msg.requestInit) ?? {}
       const headers = new Headers(init.headers)
       headers.set('Range', `bytes=${msg.range.offset}-${msg.range.offset + msg.range.length - 1}`)
+      const signal = beginRequest(msg.id)
       const fetchStartedAt = now()
       const { bytes: body, transport } = await fetchChunkBytes(
         msg.store,
@@ -583,8 +610,10 @@ ctx.onmessage = async (event: MessageEvent<WorkerMessage>) => {
           headers: Array.from(headers.entries()),
         },
         msg.timing === true,
+        signal,
       )
       const fetchMs = now() - fetchStartedAt
+      if (signal.aborted) return
       if (!body) {
         // The shard vanished between index read and chunk read: every part
         // is missing (fill) — the caller treats it like a 404 per chunk.
@@ -598,6 +627,8 @@ ctx.onmessage = async (event: MessageEvent<WorkerMessage>) => {
       }
       const parts: (DecodedPartMessage | null)[] = []
       for (const part of msg.parts) {
+        // A multi-part decode can be long; bail between parts once canceled.
+        if (signal.aborted) return
         const start = part.offset - msg.range.offset
         const slice = body.subarray(start, start + part.length)
         if (slice.byteLength !== part.length) {
@@ -627,10 +658,15 @@ ctx.onmessage = async (event: MessageEvent<WorkerMessage>) => {
       return
     }
   } catch (error) {
+    // A canceled request's rejection is expected (its fetch was aborted) and
+    // the main thread no longer listens for this id — stay silent.
+    if (inFlight.get(msg.id)?.signal.aborted) return
     ctx.postMessage({
       type: 'init_ok',
       id: msg.id,
       error: error instanceof Error ? error.message : String(error),
     })
+  } finally {
+    inFlight.delete(msg.id)
   }
 }

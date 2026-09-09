@@ -311,3 +311,69 @@ claims still want a human with the React Profiler / DebugPanel.
   forms from every module) — the next split, if wanted.
 - Scene streaming: DebugPanel frame stats unchanged, no main-process CPU
   spike while chunks stream (the header listener no longer sees S3).
+
+# Pass III — 2026-09-04 (branch `refactor/task-system`)
+
+Whole-codebase audit after Passes I/II; the three highest cost × frequency ×
+breadth offenders still present, verified in code before fixing.
+
+## Done
+
+- **Codec worker pool shared workers** (`lib/zarr/pool/workerpool.ts`,
+  `runner/worker-rpc.ts`, `runner/codec-worker.ts`, `runner/get-worker.ts`,
+  `mikro-next/workers/pool.ts`). Exclusive one-task-per-worker checkout
+  capped HTTP concurrency at the pool size (8 on a laptop) while residency
+  asks for `maxInflightBricks × 2` bricks × chunks — and a worker's slot was
+  held for the whole socket wait, so decodes queued behind idle threads.
+  The pool now has slots `{worker, inFlight}` with `maxInFlightPerWorker`
+  (default 4 → 32 concurrent fetches on 8 workers), least-loaded pick, an
+  owning `factory`, and `retire(worker)`. Consequence handled: cancellation
+  and per-request errors used to `terminate()` the worker, which would now
+  kill siblings — so cancellation is a per-request `{type:'cancel', id}`
+  message (worker-side `AbortController` into `fetchS3Path`, decode skipped
+  once aborted), per-request failures keep the worker, and only a
+  worker-level `error` event (`WorkerCrashedError`) disposes + retires.
+  `insertTask`/`removeQueuedTask` are binary searches (were O(n) scans per
+  insert → O(n²) on a big replan). `prewarm()` fills the whole pool (the
+  literal 8 left half cold on 16+ cores). `openSceneArrays` opens stores in
+  parallel (was one serial metadata RTT per store on the cold-open path).
+  Tests: `pool/workerpool.test.ts`.
+- **Annotation selection no longer re-uploads outlines**
+  (`annotations/layer/placedAnnotations.ts`, `AnnotationLayerRenderer.tsx`).
+  `selectedRoiIds` was a dep of the point/shape split, whose fresh `others`
+  array re-ran `buildOutlineBatches` (new Float32Arrays) and the batch's
+  `setPositions` GPU upload on every click — exactly the cost the batch
+  exists to avoid. Split into selection-independent `partitionEntries` and
+  `pointGroupsOf` (styling); the outline batches memo on `[others,
+  flattenToPlane]`. `shownEntries` also returns a value-stable array so a
+  z-scrub tick that keeps the same visible set skips the whole chain. The
+  repair/prune effect reads the selection via the store api instead of
+  listing it as a dep (four O(N) passes per click).
+- **Command palette queries debounced** (`command/Menu.tsx`). The four
+  result lists received the raw `context.query` as the GraphQL filter — 4–5
+  requests across two services per keystroke; they now get
+  `debouncedContext.query` (the input keeps the raw value), and
+  `objects={props.objects || []}` is one memo instead of a fresh literal per
+  child.
+
+## Not done (verified runners-up)
+
+- Task fan-out hydrate is N+1 (`rekuest/lib/taskCache.ts` `fetchTask`,
+  `network-only` per created task); `TaskFilter.ids` exists, so a 50 ms
+  buffer + one `tasks(filters:{ids})` would batch it.
+- `LayerRenderer.tsx` `map().join()` selectors per store write;
+  `layerPlanKey.ts` already has the memoized key.
+- `codec-worker.ts` raw16 passthrough memcpy + scalar `copySubRegion`.
+- `TrackFlow.tsx` unmemoized edges/context; `spaces/task/store.tsx` fresh
+  Sets at 3 Hz feeding `CallingPathTubes`; `CameraController.tsx` React
+  subscription to the HOT `probedCoordinate`.
+
+## Verify by hand (Pass III)
+
+- `globalThis.__ZARR_TIMING__ = true`, open a large sharded volume:
+  `queueWaitMs` collapses and the DebugPanel in-flight brick count reaches
+  the tier's `maxInflightBricks` instead of pinning at the worker count.
+  Cancel mid-stream (scrub away): no worker respawn, siblings finish.
+- Click through ROIs in a large collection with a perf recording armed: no
+  `setPositions` upload per click; only the batch's color effect runs.
+- Palette with the Network panel on graphql: one burst per 100 ms pause.

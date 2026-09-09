@@ -177,6 +177,13 @@ export const CommandMenu = (props: {
     () => ({ ...debouncedContext, activateModifier, removeModifier }),
     [debouncedContext, activateModifier, removeModifier],
   );
+  // The search the query children see: the DEBOUNCED query, so a keystroke
+  // does not fan out into one request per extension (shortcuts, actions ×2,
+  // definitions ×2). The raw `context.query` stays on the input itself.
+  const searchFilter = debouncedContext.query;
+  // One stable array: `props.objects || []` inline handed every child a fresh
+  // literal per render, defeating their memos.
+  const objects = useMemo(() => props.objects ?? [], [props.objects]);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === "m" && (e.metaKey || e.ctrlKey)) {
@@ -282,29 +289,29 @@ export const CommandMenu = (props: {
                 <ExtensionContext.Provider value={extensionContextValue}>
                   <Guard.Rekuest>
                     <ApplicableShortcuts
-                      filter={context.query}
-                      objects={props.objects || []}
+                      filter={searchFilter}
+                      objects={objects}
                       partners={props.partners}
                       onDone={() => setContext((c) => ({ ...c, open: false }))}
                     />
                     <ApplicableActions
-                      filter={context.query}
-                      objects={props.objects || []}
+                      filter={searchFilter}
+                      objects={objects}
                       collection={props.collection}
                       partners={props.partners}
                       onDone={() => setContext((c) => ({ ...c, open: false }))}
                     />
                   </Guard.Rekuest>
                   <ApplicableLocalActions
-                    filter={context.query}
-                    objects={props.objects || []}
+                    filter={searchFilter}
+                    objects={objects}
                     partners={props.partners}
                     onDone={() => setContext((c) => ({ ...c, open: false }))}
                   />
                   <Guard.Kabinet>
                     <ApplicableDefinitions
-                      filter={context.query}
-                      objects={props.objects || []}
+                      filter={searchFilter}
+                      objects={objects}
                       partners={props.partners}
                       returns={props.returns || []}
                     />

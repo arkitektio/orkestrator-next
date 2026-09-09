@@ -34,6 +34,7 @@ import type { ChunkCache, CodecChunkMeta, GetWorkerOptions, TextureFidelity } fr
 import {
   disposeWorker,
   getMetaId,
+  isWorkerCrashedError,
   workerFetchDecode,
   workerFetchDecodeMulti,
 } from "./worker-rpc"
@@ -183,16 +184,24 @@ function enqueueWorkerTask<T>(
   pool: GetWorkerOptions["pool"],
   workerUrl: string | URL | undefined,
   signal: AbortSignal | undefined,
-  task: (worker: Worker) => Promise<T>,
+  task: (worker: Worker, signal: AbortSignal | undefined) => Promise<T>,
   priority?: number,
 ): WorkerPoolTaskHandle<T> {
-  return pool.enqueue(createWorkerTask(workerUrl, signal, task, priority))
+  return pool.enqueue(createWorkerTask(pool, workerUrl, signal, task, priority))
 }
 
+/**
+ * Wrap a worker RPC as a pool task. The worker is SHARED with other in-flight
+ * requests, so neither an abort nor an ordinary failure may terminate it:
+ * cancellation rides `signal` into the RPC (a per-request `cancel` message),
+ * and only a worker-level crash (`WorkerCrashedError`) disposes the worker
+ * and retires its slot.
+ */
 function createWorkerTask<T>(
+  pool: GetWorkerOptions["pool"],
   workerUrl: string | URL | undefined,
   signal: AbortSignal | undefined,
-  task: (worker: Worker) => Promise<T>,
+  task: (worker: Worker, signal: AbortSignal | undefined) => Promise<T>,
   priority?: number,
 ): WorkerPoolTaskInput<T> {
   return {
@@ -204,22 +213,22 @@ function createWorkerTask<T>(
           ? new Worker(workerUrl, { type: "module" })
           : createDefaultWorker())
 
-      return abortable(
-        signal,
-        async () => ({ worker, result: await task(worker) }),
-        () => {
-          disposeWorker(worker, createAbortError())
-        },
-      )
-        .catch((error) => {
-          if (!(error instanceof Error && error.name === "AbortError")) {
+      return abortable(signal, async () => ({ worker, result: await task(worker, signal) })).catch(
+        (error) => {
+          if (isWorkerCrashedError(error)) {
+            disposeWorker(worker, error)
+            pool.retire(worker)
+          } else if (workerSlot === null) {
+            // Nobody else knows this worker (the task spawned it and the pool
+            // only adopts it on success) — don't leak it.
             disposeWorker(
               worker,
               error instanceof Error ? error : new Error(String(error)),
             )
           }
           throw error
-        })
+        },
+      )
     },
   }
 }
@@ -629,7 +638,7 @@ function executeShardRun(ctx: ShardRunContext, run: CoalescedRange<ShardBatchIte
     ctx.pool,
     ctx.workerUrl,
     runSignal,
-    async (worker) => {
+    async (worker, signal) => {
       const result = await workerFetchDecodeMulti(
         worker,
         ctx.workerStore,
@@ -641,6 +650,7 @@ function executeShardRun(ctx: ShardRunContext, run: CoalescedRange<ShardBatchIte
         ctx.requestInit,
         ctx.textureFidelity,
         ctx.useShared,
+        signal,
       )
       result.chunks.forEach((chunk, k) => members[k].onChunk(chunk ?? undefined))
       if (zarrTimingEnabled()) logChunkTiming("[zarr run timing]", {
@@ -979,7 +989,7 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
     pool,
     workerUrl,
     opts.signal,
-    async (worker) => {
+    async (worker, signal) => {
       const queueWaitMs = performance.now() - enqueuedAt
       const { chunk: fetchedChunk, timings: workerTimings } = await workerFetchDecode<D>(
         worker,
@@ -996,6 +1006,7 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
         // (it defaulted to false and the SAB path never engaged).
         textureFidelity,
         useShared,
+        signal,
       )
 
       let chunkToReturn: Chunk<D>
@@ -1273,7 +1284,7 @@ export async function getWorker<
         pool,
         workerUrl,
         opts.signal,
-        async (worker) => {
+        async (worker, signal) => {
           const queueWaitMs = performance.now() - enqueuedAt
           const { chunk: fetchedChunk, timings: workerTimings } = await workerFetchDecode<D>(
             worker,
@@ -1285,6 +1296,9 @@ export async function getWorker<
               requestInitFor(storeOptsWithSignal as RequestInit | undefined, location),
             ),
             isEdgeChunk ? edgeChunkShape : undefined,
+            "default",
+            false,
+            signal,
           )
 
           let chunkToWrite: Chunk<D>

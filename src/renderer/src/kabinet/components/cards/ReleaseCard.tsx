@@ -13,7 +13,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ActionDescription } from "@/lib/rekuest/ActionDescription";
 import { KabinetRelease } from "@/linkers";
 import {
   DemandKind,
@@ -151,12 +150,7 @@ const TheCard = ({ item }: Props) => {
                 {item.app?.identifier}:{item.version}
               </KabinetRelease.DetailLink>
             </CardTitle>
-            <CardDescription>
-              {item?.description && (
-                <ActionDescription description={item?.description} />
-              )}
-              {progress}
-            </CardDescription>
+            <CardDescription>{progress}</CardDescription>
           </div>
           <div>
             <InstallDialog item={item} />

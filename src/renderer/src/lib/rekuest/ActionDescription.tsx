@@ -34,11 +34,14 @@ const compileDescription = (description: string) => {
   return template;
 };
 
+// `description` is nullable on the wire (graph nodes and actions may carry
+// none), so an absent description renders as empty rather than throwing.
 export const useActionDescription = (props: {
-  description: string;
+  description?: string | null;
   variables?: { [key: string]: any };
 }) => {
   return useMemo(() => {
+    if (!props.description) return "";
     if (props.variables) {
       return compileDescription(props.description)(
         replaceUndefinedValuesWithKeyName({ ...props.variables }),
@@ -49,7 +52,7 @@ export const useActionDescription = (props: {
 };
 
 export const ActionDescription = (props: {
-  description: string;
+  description?: string | null;
   variables?: { [key: string]: any };
 }) => {
   const text = useActionDescription(props);
@@ -64,7 +67,7 @@ export const ActionDescription = (props: {
  * rerenders itself.
  */
 export const FormActionDescription = (props: {
-  description: string;
+  description?: string | null;
   control: Control<FieldValues>;
 }) => {
   const variables = useWatch({ control: props.control });

@@ -108,30 +108,27 @@ const flussEffectKindMap: Record<
   MessageEffect: EffectKind.Message,
 };
 
+// Choices live on the port now, not on the widget, so a widget round-trips by
+// dropping `__typename` at every depth (`fallback`, `filters`, `props`,
+// `stateCall`, `stateAccessors` are all nested output objects).
 const flussAssignWidgetToInput = (
   widget: FlussAssignWidgetFragment,
 ): AssignWidgetInput => {
-  const { __typename, ...rest } = widget;
-  const input: AssignWidgetInput = {
+  const { __typename, ...rest } = stripTypenames(widget);
+  return {
     ...rest,
-    kind: flussAssignWidgetKindMap[__typename],
-  };
-  if (input.choices)
-    input.choices = input.choices.map((c) => ({ ...c, __typename: undefined }));
-  return input;
+    kind: flussAssignWidgetKindMap[widget.__typename],
+  } as AssignWidgetInput;
 };
 
 const flussReturnWidgetToInput = (
   widget: FlussReturnWidgetFragment,
 ): ReturnWidgetInput => {
-  const { __typename, ...rest } = widget;
-  const input: ReturnWidgetInput = {
+  const { __typename, ...rest } = stripTypenames(widget);
+  return {
     ...rest,
-    kind: flussReturnWidgetKindMap[__typename],
-  };
-  if (input.choices)
-    input.choices = input.choices.map((c) => ({ ...c, __typename: undefined }));
-  return input;
+    kind: flussReturnWidgetKindMap[widget.__typename],
+  } as ReturnWidgetInput;
 };
 
 /**
@@ -259,7 +256,8 @@ const flowPortToArgSignature = (port: AnyFlussPort): RekuestArgPortInput => ({
   description: port.description,
   kind: port.kind,
   identifier: port.identifier,
-  default: port.default,
+  // `default` is an ArgPort-only field; a ReturnPort never carries one.
+  default: "default" in port ? port.default : undefined,
   choices: port.choices?.map(({ __typename, ...c }) => c),
   children: port.children?.map((c) => flowChildToArgSignature(c as AnyFlussChild)),
 });
@@ -271,7 +269,6 @@ const flowPortToReturnSignature = (port: AnyFlussPort): RekuestReturnPortInput =
   description: port.description,
   kind: port.kind,
   identifier: port.identifier,
-  default: port.default,
   choices: port.choices?.map(({ __typename, ...c }) => c),
   children: port.children?.map((c) => flowChildToReturnSignature(c as AnyFlussChild)),
 });

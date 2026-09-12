@@ -31,6 +31,7 @@ import {
 } from "../../platform/quality/qualityGovernor";
 import {
   SETTLE_REFINE_DELAY_MS,
+  buildVolumeStructureKey,
   createCompositorStats,
   decideSettleRefine,
   decideVolumeFrame,
@@ -109,17 +110,6 @@ const fitQuadToCamera = (quad: THREE.Mesh, camera: THREE.Camera): void => {
   scratchQuadLocal.makeScale(halfWidth, halfHeight, 1);
   scratchQuadLocal.setPosition(0, 0, -distance);
   quad.matrixWorld.multiplyMatrices(camera.matrixWorld, scratchQuadLocal);
-};
-
-/** Tagged-mesh count + material ids + world matrices: catches structural
- * changes (mount/unmount, material rebuild, affine edit) no counter covers. */
-const buildStructureKey = (sets: PassSets): string => {
-  let key = `${sets.volumeMeshes.length}`;
-  for (const mesh of sets.volumeMeshes) {
-    const material = mesh.material as THREE.Material;
-    key += `|${material.id}:${mesh.matrixWorld.elements.join(",")}`;
-  }
-  return key;
 };
 
 export const VolumeCompositor = () => {
@@ -390,7 +380,7 @@ export const VolumeCompositor = () => {
       // Thunk: `decideVolumeFrame` calls this only if the camera/size/version
       // compares all pass. During a gesture they never do, so the per-frame
       // string build below simply does not happen.
-      structureKey: () => buildStructureKey(sets),
+      structureKey: () => buildVolumeStructureKey(sets),
       residencyVersion: viewer.residencyVersion,
       poolsVersion: viewer.poolsVersion,
       qualityVersion: qualityGovernor.getVersion(),

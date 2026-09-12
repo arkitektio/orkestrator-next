@@ -750,8 +750,13 @@ export class FabriksCollectionManager {
    * Layer visibility WITHOUT teardown. Hiding stops planning and abandons the
    * in-flight drain (hidden work is superseded work) but keeps everything
    * paid for — open footers, byte cache, geometry LRU, catalogs, batch — so
-   * showing again replays the last settle from cache instead of refetching
-   * the collection. (Unmounting the layer still disposes it all.)
+   * showing again re-plans from cache instead of refetching the collection.
+   * (Unmounting the layer still disposes it all.)
+   *
+   * The re-show REPLAN is the driver's (`CollectionDriver.update`), not this
+   * method's: it owns that edge for both collection formats, and planning here
+   * too would run the whole plan+drain twice per toggle. `lastView` is still
+   * recorded while hidden for `setPlanConfig` / `setVoxelToWorld`.
    */
   setVisible(visible: boolean): void {
     const hidden = !visible;
@@ -761,8 +766,6 @@ export class FabriksCollectionManager {
     if (hidden) {
       this.bumpGeneration(); // stale-mark the current drain; it stops at its next await
       this.pendingView = null;
-    } else if (!this.planConfig.frozen && this.lastView) {
-      this.runPlan(this.lastView); // replay the settle recorded while hidden
     }
     this.opts.onInvalidate();
   }

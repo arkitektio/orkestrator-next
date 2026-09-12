@@ -97,10 +97,31 @@ const FabriksCollectionGroup = ({
   layer: MeshLayerView;
   collection: MeshCollectionRef;
 }) => {
-  const invalidate = useThree((state) => state.invalidate);
+  const rawInvalidate = useThree((state) => state.invalidate);
   const transformContext = useSceneStore((s) => s.transformContext);
   const viewApi = useViewStoreApi();
   const viewerApi = useMeshStoreApi();
+  /**
+   * Every manager-driven change goes through here — a landed LOD cell, a
+   * material flip, the slab clip, visibility.
+   *
+   * The bump is NOT optional bookkeeping: an OPAQUE fabriks mesh is a volume
+   * OCCLUDER (`platform/visibility/passVisibility.ts`), so its depth feeds the
+   * compositor's offscreen depth prepass, and that target is CACHED. A frame
+   * request alone leaves `decideVolumeFrame` on "cached" and the volume keeps
+   * the stale occlusion until the camera moves — the "I have to pan for it to
+   * update" symptom.
+   *
+   * `buildVolumeStructureKey` now folds the occluder SET, which catches a
+   * layer appearing or disappearing; this catches everything inside an
+   * unchanged set — cells mounting into the same BatchedMesh under the same
+   * material. Same contract as every uniform-write site (OCTREE_RENDERER.md
+   * §7 R1).
+   */
+  const invalidate = useCallback(() => {
+    viewerApi.getState().volumeInputs.bump("mesh-collection");
+    rawInvalidate();
+  }, [viewerApi, rawInvalidate]);
   const datalayer = useDatalayerEndpoint();
   const client = useMikro();
 
@@ -323,10 +344,9 @@ const FabriksCollectionGroup = ({
     manager?.setPlanConfig({ pixelBudget: DETAIL_BUDGETS[layer.detail ?? "balanced"] });
   }, [manager, layer.detail]);
 
+  // Visibility rides the driver (`inputs.visible` below): it must also REPLAN
+  // on the show edge, which the driver owns for both collection formats.
   const visible = layer.visible !== false;
-  useEffect(() => {
-    manager?.setVisible(visible);
-  }, [manager, visible]);
 
   const flatNormals = effectiveFlatNormals(layer);
   useEffect(() => {
@@ -388,6 +408,7 @@ const FabriksCollectionGroup = ({
     {
       matrix,
       slab: displayMode === "3D" ? null : { thickness: slabThickness },
+      visible,
     },
   );
 
